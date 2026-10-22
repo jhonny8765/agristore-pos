@@ -44,7 +44,7 @@ try {
   run([
     "pg_restore",
     "-U",
-    "postgres",
+    "supabase_admin",
     "--dbname=" + database,
     "--no-owner",
     "--exit-on-error",
