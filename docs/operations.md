@@ -34,3 +34,5 @@ CI contains a disposable Postgres dump/restore drill which checks restored Auth 
 Run the physical Windows restart test and a real timed outage on each intended store PC. Verify browser persistence and restore an exported recovery file. If browser storage fails the durability gate, do not pilot this PWA: implement the Windows SQLite deployment using the same domain rules and transaction contracts.
 
 Pilot one branch, reconcile daily, and only expand after the owner approves the results. Configure a separate production Supabase project and commercial Vercel hosting; remove the Git production-build gate only after release approval. Official tax invoices remain outside this pilot.
+
+Use [the pilot sign-off checklist](pilot-checklist.md) to record actual hardware, outage and recovery evidence.

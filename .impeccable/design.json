@@ -1,0 +1,361 @@
+{
+  "schemaVersion": 2,
+  "generatedAt": "2026-10-22T14:15:32.677Z",
+  "title": "Design System: AgriStore POS",
+  "extensions": {
+    "colorMeta": {
+      "forest": {
+        "role": "primary",
+        "displayName": "Forest",
+        "tonalRamp": [
+          "oklch(15.00% 0.0494 170.31)",
+          "oklch(26.43% 0.0494 170.31)",
+          "oklch(37.86% 0.0494 170.31)",
+          "oklch(49.29% 0.0494 170.31)",
+          "oklch(60.71% 0.0494 170.31)",
+          "oklch(72.14% 0.0494 170.31)",
+          "oklch(83.57% 0.0494 170.31)",
+          "oklch(95.00% 0.0494 170.31)"
+        ]
+      },
+      "green": {
+        "role": "primary",
+        "displayName": "Working Green",
+        "tonalRamp": [
+          "oklch(15.00% 0.0619 164.32)",
+          "oklch(26.43% 0.0619 164.32)",
+          "oklch(37.86% 0.0619 164.32)",
+          "oklch(49.29% 0.0619 164.32)",
+          "oklch(60.71% 0.0619 164.32)",
+          "oklch(72.14% 0.0619 164.32)",
+          "oklch(83.57% 0.0619 164.32)",
+          "oklch(95.00% 0.0619 164.32)"
+        ]
+      },
+      "lime": {
+        "role": "primary",
+        "displayName": "Pale Leaf",
+        "tonalRamp": [
+          "oklch(15.00% 0.0406 125.55)",
+          "oklch(26.43% 0.0406 125.55)",
+          "oklch(37.86% 0.0406 125.55)",
+          "oklch(49.29% 0.0406 125.55)",
+          "oklch(60.71% 0.0406 125.55)",
+          "oklch(72.14% 0.0406 125.55)",
+          "oklch(83.57% 0.0406 125.55)",
+          "oklch(95.00% 0.0406 125.55)"
+        ]
+      },
+      "paper": {
+        "role": "neutral",
+        "displayName": "Warm Paper",
+        "tonalRamp": [
+          "oklch(15.00% 0.0067 115.70)",
+          "oklch(26.43% 0.0067 115.70)",
+          "oklch(37.86% 0.0067 115.70)",
+          "oklch(49.29% 0.0067 115.70)",
+          "oklch(60.71% 0.0067 115.70)",
+          "oklch(72.14% 0.0067 115.70)",
+          "oklch(83.57% 0.0067 115.70)",
+          "oklch(95.00% 0.0067 115.70)"
+        ]
+      },
+      "white": {
+        "role": "neutral",
+        "displayName": "White",
+        "tonalRamp": [
+          "oklch(15.00% 0.0000 89.88)",
+          "oklch(26.43% 0.0000 89.88)",
+          "oklch(37.86% 0.0000 89.88)",
+          "oklch(49.29% 0.0000 89.88)",
+          "oklch(60.71% 0.0000 89.88)",
+          "oklch(72.14% 0.0000 89.88)",
+          "oklch(83.57% 0.0000 89.88)",
+          "oklch(95.00% 0.0000 89.88)"
+        ]
+      },
+      "ink": {
+        "role": "neutral",
+        "displayName": "Stock Ink",
+        "tonalRamp": [
+          "oklch(15.00% 0.0296 159.73)",
+          "oklch(26.43% 0.0296 159.73)",
+          "oklch(37.86% 0.0296 159.73)",
+          "oklch(49.29% 0.0296 159.73)",
+          "oklch(60.71% 0.0296 159.73)",
+          "oklch(72.14% 0.0296 159.73)",
+          "oklch(83.57% 0.0296 159.73)",
+          "oklch(95.00% 0.0296 159.73)"
+        ]
+      },
+      "muted": {
+        "role": "neutral",
+        "displayName": "Muted Ledger",
+        "tonalRamp": [
+          "oklch(15.00% 0.0249 149.40)",
+          "oklch(26.43% 0.0249 149.40)",
+          "oklch(37.86% 0.0249 149.40)",
+          "oklch(49.29% 0.0249 149.40)",
+          "oklch(60.71% 0.0249 149.40)",
+          "oklch(72.14% 0.0249 149.40)",
+          "oklch(83.57% 0.0249 149.40)",
+          "oklch(95.00% 0.0249 149.40)"
+        ]
+      },
+      "line": {
+        "role": "neutral",
+        "displayName": "Fine Rule",
+        "tonalRamp": [
+          "oklch(15.00% 0.0140 124.56)",
+          "oklch(26.43% 0.0140 124.56)",
+          "oklch(37.86% 0.0140 124.56)",
+          "oklch(49.29% 0.0140 124.56)",
+          "oklch(60.71% 0.0140 124.56)",
+          "oklch(72.14% 0.0140 124.56)",
+          "oklch(83.57% 0.0140 124.56)",
+          "oklch(95.00% 0.0140 124.56)"
+        ]
+      },
+      "soft": {
+        "role": "neutral",
+        "displayName": "Soft Leaf",
+        "tonalRamp": [
+          "oklch(15.00% 0.0139 124.55)",
+          "oklch(26.43% 0.0139 124.55)",
+          "oklch(37.86% 0.0139 124.55)",
+          "oklch(49.29% 0.0139 124.55)",
+          "oklch(60.71% 0.0139 124.55)",
+          "oklch(72.14% 0.0139 124.55)",
+          "oklch(83.57% 0.0139 124.55)",
+          "oklch(95.00% 0.0139 124.55)"
+        ]
+      },
+      "amber": {
+        "role": "neutral",
+        "displayName": "Stock Amber",
+        "tonalRamp": [
+          "oklch(15.00% 0.0981 73.68)",
+          "oklch(26.43% 0.0981 73.68)",
+          "oklch(37.86% 0.0981 73.68)",
+          "oklch(49.29% 0.0981 73.68)",
+          "oklch(60.71% 0.0981 73.68)",
+          "oklch(72.14% 0.0981 73.68)",
+          "oklch(83.57% 0.0981 73.68)",
+          "oklch(95.00% 0.0981 73.68)"
+        ],
+        "purpose": "Operational caution and offline status."
+      },
+      "danger": {
+        "role": "neutral",
+        "displayName": "Correction Red",
+        "tonalRamp": [
+          "oklch(15.00% 0.1509 27.29)",
+          "oklch(26.43% 0.1509 27.29)",
+          "oklch(37.86% 0.1509 27.29)",
+          "oklch(49.29% 0.1509 27.29)",
+          "oklch(60.71% 0.1509 27.29)",
+          "oklch(72.14% 0.1509 27.29)",
+          "oklch(83.57% 0.1509 27.29)",
+          "oklch(95.00% 0.1509 27.29)"
+        ],
+        "purpose": "Destructive actions and errors."
+      },
+      "focus": {
+        "role": "neutral",
+        "displayName": "Focus Green",
+        "tonalRamp": [
+          "oklch(15.00% 0.1084 135.95)",
+          "oklch(26.43% 0.1084 135.95)",
+          "oklch(37.86% 0.1084 135.95)",
+          "oklch(49.29% 0.1084 135.95)",
+          "oklch(60.71% 0.1084 135.95)",
+          "oklch(72.14% 0.1084 135.95)",
+          "oklch(83.57% 0.1084 135.95)",
+          "oklch(95.00% 0.1084 135.95)"
+        ],
+        "purpose": "Keyboard focus outline."
+      }
+    },
+    "typographyMeta": {
+      "headline": {
+        "displayName": "Page heading",
+        "purpose": "Desktop operational page heading; 25px on mobile."
+      },
+      "title": {
+        "displayName": "Section title",
+        "purpose": "Ordinary record and form section headings."
+      },
+      "body": {
+        "displayName": "Operational body",
+        "purpose": "Inherited application copy and controls; tabular numerals."
+      },
+      "label": {
+        "displayName": "Form label",
+        "purpose": "Compact labels above operational fields."
+      }
+    },
+    "shadows": [
+      {
+        "name": "product-hover",
+        "value": "0 6px 16px #23352b0b",
+        "purpose": "Subtle hover response on available products."
+      },
+      {
+        "name": "mobile-basket",
+        "value": "0 8px 24px #173e3233",
+        "purpose": "Separate fixed mobile checkout summary from scrolling content."
+      }
+    ],
+    "motion": [
+      {
+        "name": "control-state",
+        "value": "background 0.16s ease, color 0.16s ease",
+        "purpose": "Button state changes."
+      },
+      {
+        "name": "product-state",
+        "value": "border-color 0.18s ease, box-shadow 0.18s ease",
+        "purpose": "Catalog product hover."
+      },
+      {
+        "name": "sync-spin",
+        "value": "spin 1s linear infinite",
+        "purpose": "Ongoing synchronization; disabled by reduced-motion preference."
+      }
+    ],
+    "breakpoints": [
+      {
+        "name": "mobile",
+        "value": "730px"
+      },
+      {
+        "name": "icon-rail",
+        "value": "950px"
+      },
+      {
+        "name": "compact-desktop",
+        "value": "1250px"
+      },
+      {
+        "name": "wide-desktop",
+        "value": "1600px"
+      }
+    ]
+  },
+  "components": [
+    {
+      "name": "Primary Button",
+      "kind": "button",
+      "refersTo": "button-primary",
+      "description": "Forest action for submitting an operational form.",
+      "html": "<button class=\"ds-button ds-primary\">Complete sale</button>",
+      "css": ".ds-button{display:inline-flex;align-items:center;justify-content:center;gap:9px;min-height:43px;padding:10px 17px;border:1px solid transparent;border-radius:8px;font-family:var(--font-sans);font-size:14px;line-height:1.3;font-weight:650;white-space:nowrap;cursor:pointer;transition:background .16s ease,color .16s ease}.ds-button:disabled{opacity:.5;cursor:not-allowed}.ds-button:focus-visible{outline:3px solid var(--focus);outline-offset:3px}.ds-primary{background:var(--forest);color:#fff}.ds-primary:hover:not(:disabled){background:#285441}"
+    },
+    {
+      "name": "Outline Button",
+      "kind": "button",
+      "refersTo": "button-outline",
+      "description": "Bordered secondary operational action.",
+      "html": "<button class=\"ds-button ds-outline\">Export recovery file</button>",
+      "css": ".ds-button{display:inline-flex;align-items:center;justify-content:center;gap:9px;min-height:43px;padding:10px 17px;border:1px solid transparent;border-radius:8px;font-family:var(--font-sans);font-size:14px;line-height:1.3;font-weight:650;white-space:nowrap;cursor:pointer;transition:background .16s ease,color .16s ease}.ds-button:disabled{opacity:.5;cursor:not-allowed}.ds-button:focus-visible{outline:3px solid var(--focus);outline-offset:3px}.ds-outline{background:#fff;color:var(--forest);border-color:#d6ddcf}.ds-outline:hover:not(:disabled){background:var(--soft)}"
+    },
+    {
+      "name": "Ghost Button",
+      "kind": "button",
+      "refersTo": "button-ghost",
+      "description": "Quiet secondary action without a resting surface.",
+      "html": "<button class=\"ds-button ds-ghost\">Cancel</button>",
+      "css": ".ds-button{display:inline-flex;align-items:center;justify-content:center;gap:9px;min-height:43px;padding:10px 17px;border:1px solid transparent;border-radius:8px;font-family:var(--font-sans);font-size:14px;line-height:1.3;font-weight:650;white-space:nowrap;cursor:pointer;transition:background .16s ease,color .16s ease}.ds-button:disabled{opacity:.5;cursor:not-allowed}.ds-button:focus-visible{outline:3px solid var(--focus);outline-offset:3px}.ds-ghost{background:transparent;color:var(--forest)}.ds-ghost:hover{background:var(--soft)}"
+    },
+    {
+      "name": "Destructive Button",
+      "kind": "button",
+      "refersTo": "button-danger",
+      "description": "Correction Red for a destructive action; inherits the shared focus and disabled states.",
+      "html": "<button class=\"ds-button ds-danger\">Remove</button>",
+      "css": ".ds-button{display:inline-flex;align-items:center;justify-content:center;gap:9px;min-height:43px;padding:10px 17px;border:1px solid transparent;border-radius:8px;font-family:var(--font-sans);font-size:14px;line-height:1.3;font-weight:650;white-space:nowrap;cursor:pointer;transition:background .16s ease,color .16s ease}.ds-button:disabled{opacity:.5;cursor:not-allowed}.ds-button:focus-visible{outline:3px solid var(--focus);outline-offset:3px}.ds-danger{background:var(--danger);color:#fff}"
+    },
+    {
+      "name": "Labeled Field",
+      "kind": "input",
+      "refersTo": "input",
+      "description": "The shared white field and compact label used in operational forms.",
+      "html": "<label class=\"ds-field\"><span>Cash received (₱)</span><input class=\"ds-input\" inputmode=\"decimal\" placeholder=\"0.00\"></label>",
+      "css": ".ds-field{display:flex;flex-direction:column;gap:6px;min-width:0;font-family:var(--font-sans)}.ds-field>span{font-size:12px;font-weight:650;color:#4c5a4e}.ds-input{min-width:0;width:100%;border:1px solid #d6ddcf;background:#fff;border-radius:7px;padding:11px 12px;color:var(--ink);min-height:43px;font:14px/1.5 var(--font-sans);caret-color:var(--forest)}.ds-input::placeholder{color:#737d70}.ds-input:disabled{background:#f2f4ef}.ds-input:focus-visible{outline:3px solid var(--focus);outline-offset:3px}"
+    },
+    {
+      "name": "Rail Navigation",
+      "kind": "nav",
+      "description": "Forest rail with Pale Leaf selection and line SVG icons.",
+      "html": "<nav class=\"ds-rail\" aria-label=\"Workspace\"><button class=\"ds-nav ds-active\" aria-current=\"page\"><svg width=\"18\" height=\"18\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><rect width=\"16\" height=\"20\" x=\"4\" y=\"2\" rx=\"2\"/><path d=\"M8 6h8M8 10h8M8 14h2m4 0h2M8 18h2m4 0h2\"/></svg>Checkout</button><button class=\"ds-nav\"><svg width=\"18\" height=\"18\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><path d=\"m21 8-9 5-9-5m9 5v9\"/><path d=\"m3 7 9-5 9 5v10l-9 5-9-5Z\"/></svg>Inventory</button></nav>",
+      "css": ".ds-rail{width:220px;padding:16px;background:var(--forest);display:flex;flex-direction:column;gap:5px;font-family:var(--font-sans)}.ds-nav{display:flex;align-items:center;gap:12px;width:100%;padding:12px 15px;border:0;background:transparent;color:#c4d2bf;border-radius:7px;text-align:left;font-family:inherit;font-size:13px;font-weight:550;min-height:45px;cursor:pointer;transition:background .16s ease,color .16s ease}.ds-nav:hover{background:#254d3b;color:#fff}.ds-nav.ds-active{background:var(--lime);color:var(--forest);font-weight:750}.ds-nav:focus-visible{outline:3px solid var(--focus);outline-offset:3px}"
+    },
+    {
+      "name": "Category Filters",
+      "kind": "chip",
+      "description": "Compact catalog filters with an explicit forest selected state.",
+      "html": "<div class=\"ds-categories\" role=\"group\" aria-label=\"Product categories\"><button class=\"ds-category ds-selected\" aria-pressed=\"true\">All products</button><button class=\"ds-category\" aria-pressed=\"false\">Feeds</button><button class=\"ds-category\" aria-pressed=\"false\">Seeds</button></div>",
+      "css": ".ds-categories{display:flex;gap:7px;overflow-x:auto;padding-bottom:8px;font-family:var(--font-sans)}.ds-category{background:transparent;border:1px solid transparent;border-radius:6px;padding:7px 11px;white-space:nowrap;font-family:inherit;font-size:12px;color:#6a7565;font-weight:550;cursor:pointer;transition:background .16s ease,color .16s ease}.ds-category:hover{background:#e9eedf}.ds-category.ds-selected{background:var(--forest);color:#fff}.ds-category:focus-visible{outline:3px solid var(--focus);outline-offset:3px}"
+    },
+    {
+      "name": "Record Panel",
+      "kind": "card",
+      "refersTo": "panel",
+      "description": "Flat ruled container for operational records and forms.",
+      "html": "<section class=\"ds-panel\"><h2>Cashier shift</h2><p>Review the cash drawer and the current shift.</p><dl class=\"ds-details\"><div><dt>Branch</dt><dd>Main branch</dd></div><div><dt>Cashier</dt><dd>Current cashier</dd></div></dl></section>",
+      "css": ".ds-panel{background:#fff;border:1px solid var(--line);border-radius:12px;padding:25px;color:var(--ink);font:14px/1.5 var(--font-sans);min-width:0}.ds-panel h2{font:750 18px/1.5 var(--font-display);letter-spacing:-.025em;margin:0 0 17px}.ds-panel p{font-size:12px;max-width:72ch;margin:0 0 20px;color:var(--muted)}.ds-details{margin:0 0 22px;font-size:12px}.ds-details>div{display:flex;justify-content:space-between;gap:18px;padding:11px 0;border-bottom:1px solid var(--line)}.ds-details dt{color:var(--muted)}.ds-details dd{margin:0;text-align:right}"
+    },
+    {
+      "name": "Product Button",
+      "kind": "card",
+      "description": "Flat agricultural category strip above a compact actionable product record.",
+      "html": "<button class=\"ds-product\" aria-label=\"Add Layer feeds\"><span class=\"ds-product-art\"><svg width=\"23\" height=\"23\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><path d=\"M2 22 16 8m3-6 3 3-3 3-3-3 3-3ZM12 8l-1-5 5 1M8 12l-5-1 1 5m12-4 5 1-1-5m-8 8 1 5-5-1\"/></svg><span>Feeds</span></span><span class=\"ds-product-body\"><strong class=\"ds-product-name\">Layer feeds</strong><span class=\"ds-unit\">Sack</span><span class=\"ds-price\">₱1,450.00</span><span class=\"ds-stock\">24 in stock</span></span></button>",
+      "css": ".ds-product{width:220px;background:#fff;border:1px solid var(--line);padding:0;border-radius:10px;overflow:hidden;text-align:left;color:var(--ink);font-family:var(--font-sans);cursor:pointer;transition:border-color .18s ease,box-shadow .18s ease}.ds-product:hover:not(:disabled){border-color:#9aaa8b;box-shadow:0 6px 16px #23352b0b}.ds-product:disabled{opacity:.75;cursor:not-allowed}.ds-product:focus-visible{outline:3px solid var(--focus);outline-offset:3px}.ds-product-art{min-height:54px;padding:12px 14px;background:#edf0e3;display:flex;align-items:center;gap:9px;color:#4c6650}.ds-product-art>span{font-size:11px;font-weight:650;color:#4c6043}.ds-product-body{display:block;padding:14px 14px 13px}.ds-product-name{display:block;font-size:14px;font-weight:700;line-height:1.35;margin:5px 0 3px;letter-spacing:-.01em}.ds-unit,.ds-stock{display:block;font-size:11px;color:var(--muted);line-height:1.5}.ds-price{display:block;margin-top:12px;font-size:14px;font-weight:750;color:var(--forest);font-variant-numeric:tabular-nums}.ds-stock{margin-top:8px}"
+    },
+    {
+      "name": "Current Sale",
+      "kind": "custom",
+      "description": "Receipt-style ruled grouping with a prominent aligned amount due.",
+      "html": "<section class=\"ds-receipt\"><header class=\"ds-receipt-heading\"><div><h2>Current sale</h2><span>1 item · Cash payment</span></div><svg width=\"21\" height=\"21\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><circle cx=\"8\" cy=\"21\" r=\"1\"/><circle cx=\"19\" cy=\"21\" r=\"1\"/><path d=\"M2.05 2.05h2l2.66 12.42a2 2 0 0 0 2 1.58h9.78a2 2 0 0 0 2-1.58L22.2 7H5.12\"/></svg></header><div class=\"ds-payment\"><div class=\"ds-subtotal\"><span>Subtotal</span><span>₱1,450.00</span></div><div class=\"ds-due\"><span>Amount due</span><strong>₱1,450.00</strong></div><p class=\"ds-receipt-note\">Cash sales only</p></div></section>",
+      "css": ".ds-receipt{width:335px;background:#fff;border:1px solid var(--line);border-radius:12px;overflow:hidden;color:var(--ink);font:14px/1.5 var(--font-sans);font-variant-numeric:tabular-nums}.ds-receipt-heading{display:flex;align-items:center;justify-content:space-between;color:var(--green);padding:21px 22px;border-bottom:1px solid var(--line)}.ds-receipt-heading h2{color:var(--ink);font:750 16px/1.5 var(--font-display);letter-spacing:-.025em;margin:0}.ds-receipt-heading span{display:block;font-size:11px;color:var(--muted);margin-top:3px}.ds-payment{border-top:1px solid var(--line);padding:19px 22px;background:#fcfcf9}.ds-subtotal{display:flex;justify-content:space-between;font-size:11px;color:var(--muted);margin-bottom:16px}.ds-due{display:flex;justify-content:space-between;align-items:center;font-size:12px;font-weight:650;margin-bottom:21px;padding-bottom:17px;border-bottom:1px dashed #d6ddcd;gap:12px}.ds-due strong{font-family:var(--font-display);font-size:26px;line-height:1.5;color:var(--forest);letter-spacing:-.03em;white-space:nowrap}.ds-receipt-note{font-size:10px;color:var(--muted);text-align:center;margin:12px 0 0}"
+    }
+  ],
+  "narrative": {
+    "northStar": "The Cooperative Stock Book",
+    "overview": "The cooperative stock book pairs forest ink with warm paper, quiet rules, and precise figures. It feels practical and orderly for cashiers completing sales and owners tracing stock changes to their source.\n\nCompact sans-serif typography and restrained tonal surfaces keep operational information close together. Flat category illustrations identify agricultural goods; borders and alignment organize the work rather than decorative effects.",
+    "keyCharacteristics": [
+      "Forest navigation and primary actions against warm paper.",
+      "Ruled records, aligned figures, and explicit operational states.",
+      "Compact controls with rounded corners and clear focus outlines."
+    ],
+    "rules": [
+      {
+        "name": "The Forest Anchor Rule",
+        "body": "Use forest for navigation, selected category filters, primary actions, and financial emphasis; use pale green for selected navigation and supporting surfaces.",
+        "section": "colors"
+      },
+      {
+        "name": "The Precise Figures Rule",
+        "body": "Keep tabular numerals throughout the interface and right-align numerical table columns so quantities and money can be scanned vertically.",
+        "section": "typography"
+      },
+      {
+        "name": "The Ruled Record Rule",
+        "body": "Separate record rows, receipt sections, and workspace regions with fine rules; retain tonal surfaces as the primary means of grouping.",
+        "section": "elevation"
+      }
+    ],
+    "dos": [
+      "Do use the shared forest, paper, ink, muted, and rule tokens for new operational surfaces.",
+      "Do keep currency and quantities aligned and retain tabular numerals.",
+      "Do provide a visible focus outline and explicit text for connection, stock, and save states.",
+      "Do preserve the responsive receipt access and fixed mobile basket summary on checkout."
+    ],
+    "donts": [
+      "Don't substitute emoji or text glyphs for the existing line SVG icon vocabulary.",
+      "Don't turn operational surfaces into decorative illustrations or marketing panels.",
+      "Don't introduce heavy resting shadows on record panels.",
+      "Don't reduce essential product and payment copy to the smallest incidental text sizes present in older supporting UI."
+    ]
+  }
+}

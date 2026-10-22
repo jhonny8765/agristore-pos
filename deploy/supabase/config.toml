@@ -1,4 +1,4 @@
 project_id = "agristore-pos-staging"
 [auth]
-site_url = "https://agristore-kplx9b46r-team-payaman2.vercel.app"
+site_url = "https://agristore-qacexeh8e-team-payaman2.vercel.app"
 additional_redirect_urls = ["http://localhost:3000", "http://127.0.0.1:3000", "http://127.0.0.1:3100", "https://agristore-*-team-payaman2.vercel.app/**"]

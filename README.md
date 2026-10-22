@@ -6,7 +6,7 @@ This is a development implementation. The real Windows restart test, an actual t
 
 ## Open the application
 
-Development preview: https://agristore-kplx9b46r-team-payaman2.vercel.app — Vercel authentication protects previews. Select **Try practice checkout** for a separate, local-only sample business. Practice transactions never upload to Supabase.
+Development preview: https://agristore-qacexeh8e-team-payaman2.vercel.app — Vercel authentication protects previews. Select **Try practice checkout** for a separate, local-only sample business. Practice transactions never upload to Supabase.
 
 For your real business: create and confirm your account, sign in, and create the business. This creates three empty branches. Rename them under Settings. Add the catalog, import each branch’s verified opening stock once, register its dedicated PC, and open a cashier shift. Employees create their own accounts; the owner assigns their role and branch under Staff access.
 
@@ -56,6 +56,8 @@ The checkout never displays success until its IndexedDB transaction commits. A s
 Vercel project: `team-payaman2/agristore-pos`, root `apps/web`; install `cd ../.. && npm ci`; build `cd ../.. && npm run build`; Node 24. Workbox generation runs in Next’s post-compilation hook so Vercel’s adapter includes the offline assets. The cached HTML shell contains no server-rendered personal information.
 
 `apps/web/vercel.json` ignores Git-triggered production builds until pilot approval. Previews remain available. Do not remove that gate until the deployment checklist passes. The connected Vercel account is Hobby; arrange a commercial hosting plan before live use. No paid plan was purchased by this implementation.
+
+The preview was deployed with the authenticated Vercel CLI. Automatic Git deployments are not connected yet: Vercel requires this account's GitHub login connection. Add it under Vercel account settings, then connect `jhonny8765/agristore-pos` to the existing project. Until then, deploy previews from the repository root with `npx vercel deploy --yes --target preview --scope team-payaman2`. Keep the production gate in place.
 
 Staging Auth URL settings are declared separately under `deploy/supabase/config.toml`; pushing the local development config would disable email confirmation, so never use the development config to configure the hosted project.
 
