@@ -38,7 +38,7 @@ Run the physical Windows restart test and a real timed outage on each intended s
 Pilot one branch, reconcile daily, and only expand after the owner approves the results. Configure a separate production Supabase project and commercial Vercel hosting; remove the Git production-build gate only after release approval. Official tax invoices remain outside this pilot.
 
 Use [the pilot sign-off checklist](pilot-checklist.md) to record actual hardware, outage and recovery evidence.
-# Adding more branches
+## Adding more branches
 
 The owner can add branches online under Settings → Branches. Enter the store name and select Add branch; its permanent branch code is assigned automatically. The business starts with three branches and has no fixed three- or five-branch limit. An interrupted request keeps its ID in Sync center; retry the original request there before submitting different details.
 

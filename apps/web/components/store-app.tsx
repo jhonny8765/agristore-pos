@@ -679,7 +679,7 @@ export function StoreApp() {
             </p>
             <div className="auth-proof">
               <ShieldCheck size={21} />
-              <span>Cash checkout · Three branches · Offline ready</span>
+              <span>Cash checkout · Growing with your stores · Offline ready</span>
             </div>
           </div>
           <span className="auth-foot">
