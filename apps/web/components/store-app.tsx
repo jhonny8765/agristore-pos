@@ -296,10 +296,12 @@ export function StoreApp() {
     setSyncing(true);
     try {
       await syncOnce(db, cloudTransport(lease));
-      await refreshLocal();
     } catch (e) {
       fail(e);
     } finally {
+      // A failed snapshot can follow committed outbox state changes. Show the
+      // retained retry/authentication state even when the network step fails.
+      await refreshLocal().catch(fail);
       syncingRef.current = false;
       setSyncing(false);
     }
