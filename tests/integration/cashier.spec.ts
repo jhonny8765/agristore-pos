@@ -186,6 +186,49 @@ test("registered cashier recovers real offline sales after a lost acknowledgment
   await page.goto("/");
   // Exercise the manager's real PC registration, shift closure, and user switch.
   await login(page, ownerEmail, password);
+  await page.getByRole("button", { name: "Settings", exact: true }).click();
+  for (const name of [
+    "Integration fourth branch",
+    "Integration fifth branch",
+  ]) {
+    await page.getByLabel("New branch name", { exact: true }).fill(name);
+    await page.getByRole("button", { name: "Add branch", exact: true }).click();
+    await expect(
+      page.getByLabel("New branch name", { exact: true }),
+    ).toHaveValue("");
+    await expect(
+      page
+        .getByRole("combobox", { name: "Current branch", exact: true })
+        .locator("option", {}),
+    ).toContainText([name]);
+  }
+  const concurrent = await Promise.all(
+    [6, 7].map((n) =>
+      command<{ id: string }>(owner, "create_branch", {
+        organizationId,
+        newBranchId: randomUUID(),
+        name: `Concurrent branch ${n}`,
+      }),
+    ),
+  );
+  expect(new Set(concurrent.map((result) => result.id)).size).toBe(2);
+  const expanded = await owner
+    .from("branches")
+    .select("code")
+    .eq("organization_id", organizationId);
+  expect(expanded.error).toBeNull();
+  expect(expanded.data).toHaveLength(7);
+  expect(new Set(expanded.data!.map((branch) => branch.code)).size).toBe(7);
+  const deniedBranch = await cashier.rpc("agri_command", {
+    action: "create_branch",
+    data: {
+      organizationId,
+      newBranchId: randomUUID(),
+      name: "Forbidden cashier branch",
+    },
+  });
+  expect(deniedBranch.error?.code).toBe("42501");
+  await page.getByRole("button", { name: /^Checkout/ }).click();
   await openShift(page, "0");
   await page.getByRole("button", { name: "Settings", exact: true }).click();
   await page.getByLabel("Cash counted in drawer (₱)").fill("0");

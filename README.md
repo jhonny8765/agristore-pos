@@ -1,6 +1,6 @@
 # AgriStore POS
 
-Cash checkout and auditable inventory for three agricultural stores in the Philippines. One Windows cashier PC per branch, PHP currency, Asia/Manila time, and a 12-hour offline authorization window.
+Cash checkout and auditable inventory for a growing network of agricultural stores in the Philippines. One Windows cashier PC per branch, PHP currency, Asia/Manila time, and a 12-hour offline authorization window.
 
 This is a development implementation. The real Windows restart test, an actual timed eight-hour outage, off-site production backups, and the one-branch operational pilot must be signed off before live store use. Simulated elapsed-time tests do not replace those checks.
 
@@ -10,7 +10,7 @@ Development preview: https://agristore-pos-staging-team-payaman2.vercel.app — 
 
 Use this stable staging address for browser-storage and update tests. Records saved under an older preview URL remain at that original browser origin; synchronize or export them there before moving to the stable address.
 
-For your real business: create and confirm your account, sign in, and create the business. This creates three empty branches. Rename them under Settings. Add the catalog, import each branch’s verified opening stock once, register its dedicated PC, and open a cashier shift. Employees create their own accounts; the owner assigns their role and branch under Staff access.
+For your real business: create and confirm your account, sign in, and create the business. This creates three starter branches. Under Settings → Branches, rename them and add as many additional branches as needed. Codes are assigned automatically, and interrupted creation requests can be retried from Sync center without duplicating a branch. Add the catalog, import each branch’s verified opening stock once, register its dedicated PC, and open a cashier shift. Employees create their own accounts; the owner assigns their role and branch under Staff access.
 
 The selected Supabase project (`vbmnnouwmxcuibywdkjw`) is the staging database. Rollback-only SQL tests leave no test businesses or transactions in it. Create a separate production project before the pilot.
 

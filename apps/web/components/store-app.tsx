@@ -276,6 +276,9 @@ export function StoreApp() {
   }, [db, lease, member, branchId]);
   const refreshCloud = useCallback(async () => {
     if (practice || !member || !branchId || !navigator.onLine) return;
+    const nextBranches = await fetchBranches(member.organizationId);
+    setBranchList(nextBranches);
+    await setSetting(db, "branches", nextBranches);
     const results = await Promise.all(
       tables.map(
         async (t) => [t, await rows(t, member.organizationId)] as const,
@@ -289,7 +292,7 @@ export function StoreApp() {
             branchId,
           });
     setCloud({ ...Object.fromEntries(results), summary: [summary] });
-  }, [practice, member, branchId]);
+  }, [practice, member, branchId, db]);
   const sync = useCallback(async () => {
     if (practice || !lease || !navigator.onLine || syncingRef.current) return;
     syncingRef.current = true;
@@ -485,7 +488,7 @@ export function StoreApp() {
       await setSetting(db, "membership", m);
       await setSetting(db, "branches", b);
       notify(
-        "Your business and three branches are ready. Add products and opening stock before selling.",
+        "Your business is ready with three starter branches. Add more under Settings, then prepare products and opening stock.",
       );
     });
   }
@@ -766,7 +769,7 @@ export function StoreApp() {
           <p>
             If you’re an employee, ask your owner to add your account under
             Staff access, then sign in again. Business owners can create their
-            three branches below.
+            business below. Start with three branches and add more in Settings.
           </p>
           {Notice}
           <form onSubmit={bootstrap}>
@@ -781,9 +784,7 @@ export function StoreApp() {
             <Field label="Your name">
               <input name="name" required placeholder="Owner name" />
             </Field>
-            <Button disabled={busy || !online}>
-              Create business & three branches
-            </Button>
+            <Button disabled={busy || !online}>Create business</Button>
           </form>
           <Button variant="ghost" onClick={() => void logout()}>
             Sign out
@@ -2976,7 +2977,11 @@ export function StoreApp() {
                     )}
                   </section>
                   <section className="panel">
-                    <h2>Branch names</h2>
+                    <h2>Branches</h2>
+                    <p className="muted">
+                      Rename your stores or add another branch as your business
+                      grows.
+                    </p>
                     <div className="branch-forms">
                       {branchList.map((b) => (
                         <form
@@ -3000,17 +3005,70 @@ export function StoreApp() {
                           }}
                         >
                           <Field label={b.code}>
-                            <input name="name" defaultValue={b.name} required />
+                            <input
+                              name="name"
+                              defaultValue={b.name}
+                              required
+                              maxLength={120}
+                            />
                           </Field>
                           <Button
                             variant="outline"
                             disabled={!online || busy || practice}
                           >
-                            Save
+                            <span className="sr-only">
+                              Save {b.code} branch name
+                            </span>
+                            <span aria-hidden="true">Save</span>
                           </Button>
                         </form>
                       ))}
                     </div>
+                    <form
+                      className="form-grid"
+                      onSubmit={(e) => {
+                        e.preventDefault();
+                        const form = e.currentTarget;
+                        const f = new FormData(form);
+                        void run(async () => {
+                          await onlineOperation(
+                            db,
+                            member.userId,
+                            "create_branch",
+                            {
+                              organizationId: member.organizationId,
+                              name: inputValue(f, "name"),
+                            },
+                            "newBranchId",
+                          );
+                          const next = await fetchBranches(
+                            member.organizationId,
+                          );
+                          setBranchList(next);
+                          await setSetting(db, "branches", next);
+                          form.reset();
+                          notify(
+                            "Branch added. Choose it from the branch menu to prepare its stock and cashier PC.",
+                          );
+                        });
+                      }}
+                    >
+                      <Field label="New branch name">
+                        <input
+                          name="name"
+                          required
+                          maxLength={120}
+                          placeholder="Store name or location"
+                        />
+                      </Field>
+                      <Button disabled={!online || busy || practice}>
+                        Add branch
+                      </Button>
+                    </form>
+                    <p className="muted">
+                      Branch codes are assigned automatically. Adding a branch
+                      requires an internet connection.
+                    </p>
                   </section>
                 </>
               )}
