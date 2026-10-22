@@ -1,0 +1,140 @@
+import { createClient } from "@supabase/supabase-js";
+import type {
+  Branch,
+  Lease,
+  Membership,
+  Sale,
+  Snapshot,
+  SyncAck,
+} from "@agristore/domain";
+import type { Transport } from "@agristore/offline";
+
+export const supabase = createClient(
+  process.env.NEXT_PUBLIC_SUPABASE_URL ??
+    "https://vbmnnouwmxcuibywdkjw.supabase.co",
+  process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY ??
+    "sb_publishable_A6uf2-Je7dOIj5kv0Vx88A_k7mvkaxZ",
+  {
+    auth: {
+      persistSession: true,
+      autoRefreshToken: true,
+      detectSessionInUrl: true,
+    },
+    global: {
+      fetch: (input, init) =>
+        fetch(input, {
+          ...init,
+          signal: init?.signal ?? AbortSignal.timeout(15000),
+        }),
+    },
+  },
+);
+export async function command<T = Record<string, unknown>>(
+  action: string,
+  data: Record<string, unknown>,
+): Promise<T> {
+  if (!navigator.onLine)
+    throw new Error(
+      "Reconnect to use this action. Completed cash sales remain on this PC.",
+    );
+  const { data: result, error } = await supabase.rpc("agri_command", {
+    action,
+    data,
+  });
+  if (error)
+    throw Object.assign(new Error(error.message), { code: error.code });
+  return result as T;
+}
+export async function memberships(): Promise<Membership[]> {
+  const {
+    data: { user },
+    error,
+  } = await supabase.auth.getUser();
+  if (error || !user) return [];
+  const { data, error: queryError } = await supabase
+    .from("staff_memberships")
+    .select("*,organizations(name)")
+    .eq("user_id", user.id)
+    .eq("active", true);
+  if (queryError) throw new Error(queryError.message);
+  return (data ?? []).map((m) => ({
+    organizationId: m.organization_id,
+    organizationName:
+      (m.organizations as { name: string })?.name ?? "AgriStore",
+    branchId: m.branch_id,
+    role: m.role,
+    userId: m.user_id,
+    name: m.name,
+  }));
+}
+export async function branches(org: string): Promise<Branch[]> {
+  const { data, error } = await supabase
+    .from("branches")
+    .select("id,name,code")
+    .eq("organization_id", org)
+    .order("code");
+  if (error) throw new Error(error.message);
+  return data ?? [];
+}
+export function cloudTransport(lease: Lease): Transport {
+  const context = {
+    organizationId: lease.organizationId,
+    branchId: lease.branchId,
+    deviceId: lease.deviceId,
+  };
+  return {
+    async authorize() {
+      if (!navigator.onLine) return false;
+      const {
+        data: { user },
+        error,
+      } = await supabase.auth.getUser();
+      if (error || user?.id !== lease.cashierId) return false;
+      try {
+        return (
+          await command<{ authorized: boolean }>("authorize_shift", context)
+        ).authorized;
+      } catch (e) {
+        if ((e as { code?: string }).code === "42501") return false;
+        throw e;
+      }
+    },
+    push: async (sale: Sale) => {
+      try {
+        return await command<SyncAck>(
+          "record_sale",
+          sale as unknown as Record<string, unknown>,
+        );
+      } catch (e) {
+        const code = (e as { code?: string }).code;
+        if (code && /^(P0001|22|23)/.test(code))
+          return {
+            transactionId: sale.transactionId,
+            status: "review",
+            reason: e instanceof Error ? e.message : "Owner review required",
+          };
+        throw e;
+      }
+    },
+    snapshot: (transactionIds: string[]) =>
+      command<Snapshot>("snapshot", { ...context, transactionIds }),
+  };
+}
+export async function rows(table: string, org: string, branch?: string) {
+  let query = supabase.from(table).select("*").eq("organization_id", org);
+  if (branch) query = query.eq("branch_id", branch);
+  const dateColumn = ["sales"].includes(table)
+    ? "occurred_at"
+    : ["cashier_shifts"].includes(table)
+      ? "opened_at"
+      : ["stock_transfers"].includes(table)
+        ? "dispatched_at"
+        : ["devices", "staff_memberships", "suppliers"].includes(table)
+          ? "id"
+          : "created_at";
+  const { data, error } = await query
+    .order(dateColumn, { ascending: false })
+    .limit(1000);
+  if (error) throw new Error(error.message);
+  return data ?? [];
+}
