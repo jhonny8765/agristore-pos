@@ -26,6 +26,8 @@ import {
   ClipboardCheck,
   CloudOff,
   FileText,
+  FlaskConical,
+  HeartPulse,
   Leaf,
   LogOut,
   Minus,
@@ -37,11 +39,12 @@ import {
   ShieldCheck,
   ShoppingBasket,
   ShoppingCart,
-  SlidersHorizontal,
   Sprout,
   Truck,
   Wifi,
   WifiOff,
+  Wheat,
+  Wrench,
   X,
 } from "lucide-react";
 import Decimal from "decimal.js";
@@ -1032,14 +1035,15 @@ export function StoreApp() {
                     <kbd>↵</kbd>
                   </label>
                   <button
-                    className="icon-control"
-                    aria-label="Clear search and filters"
+                    className="reset-search"
+                    aria-label="Reset search and filters"
                     onClick={() => {
                       setQuery("");
                       setCategory("All products");
                     }}
                   >
-                    <SlidersHorizontal size={19} />
+                    <RefreshCw size={16} />
+                    <span>Reset</span>
                   </button>
                 </div>
                 <div className="category-tabs" aria-label="Product categories">
@@ -1059,7 +1063,7 @@ export function StoreApp() {
                 </div>
                 {visible.length ? (
                   <div className="product-grid">
-                    {visible.map((p, index) => {
+                    {visible.map((p) => {
                       const available = p.units[0]
                         ? new Decimal(
                             stock.get(batchKey(p.id, null)) ??
@@ -1082,34 +1086,22 @@ export function StoreApp() {
                           <div
                             className={`product-art art-${p.category.toLowerCase().replace(/\W/g, "")}`}
                           >
+                            {p.category === "Feeds" ? (
+                              <Wheat size={23} />
+                            ) : p.category === "Fertilizers" ? (
+                              <FlaskConical size={23} />
+                            ) : p.category === "Tools" ? (
+                              <Wrench size={23} />
+                            ) : p.category === "Animal care" ? (
+                              <HeartPulse size={23} />
+                            ) : p.category === "Seeds" ? (
+                              <Sprout size={23} />
+                            ) : (
+                              <Leaf size={23} />
+                            )}
                             <span className="product-category">
                               {p.category}
                             </span>
-                            {p.baseUnit === "kg" ? (
-                              <div className={`sack sack-${index % 3}`}>
-                                <span className="sack-seam" />
-                                <Sprout size={28} strokeWidth={1.3} />
-                                <span className="sack-name">
-                                  {p.category === "Feeds"
-                                    ? "AGRI FEEDS"
-                                    : p.category === "Fertilizers"
-                                      ? "PLANT NUTRITION"
-                                      : "GROW WELL"}
-                                </span>
-                                <span className="sack-weight">
-                                  {p.units[0]?.factor} {p.baseUnit}
-                                </span>
-                              </div>
-                            ) : p.category === "Tools" ? (
-                              <ShoppingBasket size={64} strokeWidth={1} />
-                            ) : (
-                              <div className="seed-pack">
-                                <Sprout size={40} strokeWidth={1.3} />
-                                <span>
-                                  {p.category === "Seeds" ? "SEEDS" : "CARE"}
-                                </span>
-                              </div>
-                            )}
                           </div>
                           <div className="product-details">
                             <span className="product-sku">{p.sku}</span>
@@ -1161,7 +1153,12 @@ export function StoreApp() {
                   </span>
                 </div>
               </section>
-              <aside className="receipt-panel">
+              <aside
+                className="receipt-panel"
+                id="current-sale"
+                tabIndex={-1}
+                aria-label="Current sale"
+              >
                 <div className="receipt-heading">
                   <div>
                     <h2>Current sale</h2>
@@ -1413,6 +1410,18 @@ export function StoreApp() {
                   </span>
                 </form>
               </aside>
+              <div className="mobile-basket">
+                <div>
+                  <span>
+                    {cart.items.length}{" "}
+                    {cart.items.length === 1 ? "item" : "items"} · Amount due
+                  </span>
+                  <strong>{money(grandTotal)}</strong>
+                </div>
+                <a className="button" href="#current-sale">
+                  Review sale <ArrowRight size={17} />
+                </a>
+              </div>
             </div>
           )}
 
@@ -2036,9 +2045,8 @@ export function StoreApp() {
                         const file = e.target.files?.[0];
                         if (!file) return;
                         void run(async () => {
-                          const { parseOpeningCSV } = await import(
-                            "../lib/import"
-                          );
+                          const { parseOpeningCSV } =
+                            await import("../lib/import");
                           const records = parseOpeningCSV(
                             await file.text(),
                             products,

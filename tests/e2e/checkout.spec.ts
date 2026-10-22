@@ -131,6 +131,7 @@ test("desktop and mobile inspection captures with no horizontal page overflow", 
     fullPage: true,
   });
   await page.setViewportSize({ width: 390, height: 844 });
+  expect((await page.locator(".product-art").first().boundingBox())?.height).toBeLessThanOrEqual(64);
   await expect(
     page.getByRole("heading", { name: "Checkout", exact: true }),
   ).toBeVisible();
@@ -143,6 +144,15 @@ test("desktop and mobile inspection captures with no horizontal page overflow", 
     path: ".impeccable/review/mobile.png",
     fullPage: true,
   });
+  await page.getByRole("button", { name: "Add Grower feeds" }).click();
+  await expect(page.locator(".mobile-basket")).toContainText("1 item");
+  await expect(page.locator(".mobile-basket")).toContainText("1,580.00");
+  await page.getByRole("link", { name: "Review sale" }).click();
+  await expect(page.locator("#current-sale .receipt-heading")).toBeInViewport();
+  await page.getByRole("textbox", { name: "Search products" }).fill("sprayer");
+  await expect(page.locator(".product")).toHaveCount(1);
+  await page.getByRole("button", { name: "Reset search and filters" }).click();
+  await expect(page.locator(".product")).toHaveCount(8);
 });
 test("200 browser checkouts persist through a simulated hour offline", async ({
   page,
