@@ -17,6 +17,7 @@
     "test:e2e": "playwright test",
     "test:db": "supabase test db",
     "test:restore": "node scripts/restore-drill.mjs",
+    "test:integration": "node scripts/integration-test.mjs",
     "db:start": "supabase start",
     "db:reset": "supabase db reset",
     "check": "npm run typecheck && npm run lint && npm test && npm run build"

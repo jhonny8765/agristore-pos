@@ -41,5 +41,12 @@ jobs:
       - run: npx supabase db lint --local --level warning
       - run: npm run test:db
       - run: npm run test:restore
+      - run: npx playwright install --with-deps chromium
+      - run: npm run test:integration
+      - uses: actions/upload-artifact@v4
+        if: failure()
+        with:
+          name: integration-failure-screenshots
+          path: test-results/**/*.png
       - run: npx supabase stop --no-backup
         if: always()
