@@ -187,6 +187,21 @@ test("registered cashier recovers real offline sales after a lost acknowledgment
   // Exercise the manager's real PC registration, shift closure, and user switch.
   await login(page, ownerEmail, password);
   await page.getByRole("button", { name: "Settings", exact: true }).click();
+  const branchPanel = page
+    .locator(".panel")
+    .filter({
+      has: page.getByRole("heading", { name: "Branches", exact: true }),
+    });
+  await branchPanel.getByLabel("New branch name", { exact: true }).fill("   ");
+  await branchPanel
+    .getByRole("button", { name: "Add branch", exact: true })
+    .click();
+  await expect(branchPanel.getByRole("alert")).toContainText(
+    "Enter a branch name",
+  );
+  await expect(
+    branchPanel.getByLabel("New branch name", { exact: true }),
+  ).toHaveValue("   ");
   for (const name of [
     "Integration fourth branch",
     "Integration fifth branch",
@@ -196,6 +211,9 @@ test("registered cashier recovers real offline sales after a lost acknowledgment
     await expect(
       page.getByLabel("New branch name", { exact: true }),
     ).toHaveValue("");
+    await expect(branchPanel.getByRole("status")).toContainText(
+      "Branch added.",
+    );
     await expect(
       page
         .getByRole("combobox", { name: "Current branch", exact: true })

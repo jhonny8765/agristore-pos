@@ -220,6 +220,10 @@ export function StoreApp() {
     [cash, setCash] = useState(""),
     [checkoutDone, setCheckoutDone] = useState<LocalSale>();
   const [authMode, setAuthMode] = useState<"login" | "signup">("login");
+  const [branchFeedback, setBranchFeedback] = useState<{
+    kind: "pending" | "success" | "error";
+    text: string;
+  }>();
   const cart = useCart();
   const committing = useRef(false);
   const operationBusy = useRef(false);
@@ -3031,25 +3035,48 @@ export function StoreApp() {
                         const form = e.currentTarget;
                         const f = new FormData(form);
                         void run(async () => {
-                          await onlineOperation(
-                            db,
-                            member.userId,
-                            "create_branch",
-                            {
-                              organizationId: member.organizationId,
-                              name: inputValue(f, "name"),
-                            },
-                            "newBranchId",
-                          );
-                          const next = await fetchBranches(
-                            member.organizationId,
-                          );
-                          setBranchList(next);
-                          await setSetting(db, "branches", next);
+                          setBranchFeedback({
+                            kind: "pending",
+                            text: "Adding branch…",
+                          });
+                          try {
+                            await onlineOperation(
+                              db,
+                              member.userId,
+                              "create_branch",
+                              {
+                                organizationId: member.organizationId,
+                                name: inputValue(f, "name"),
+                              },
+                              "newBranchId",
+                            );
+                          } catch (error) {
+                            setBranchFeedback({
+                              kind: "error",
+                              text: `${error instanceof Error ? error.message : "Could not confirm the branch."} Check Sync center for any request awaiting confirmation.`,
+                            });
+                            throw error;
+                          }
+                          // A confirmed write stays a success even if refreshing
+                          // the list fails. Never invite another creation attempt.
                           form.reset();
-                          notify(
-                            "Branch added. Choose it from the branch menu to prepare its stock and cashier PC.",
-                          );
+                          setBranchFeedback({
+                            kind: "success",
+                            text: "Branch added. Choose it from the branch menu to prepare its stock and cashier PC.",
+                          });
+                          try {
+                            const next = await fetchBranches(
+                              member.organizationId,
+                            );
+                            setBranchList(next);
+                            await setSetting(db, "branches", next);
+                          } catch (error) {
+                            setBranchFeedback({
+                              kind: "success",
+                              text: "Branch added. Select Refresh to load it in the branch menu.",
+                            });
+                            throw error;
+                          }
                         });
                       }}
                     >
@@ -3062,9 +3089,25 @@ export function StoreApp() {
                         />
                       </Field>
                       <Button disabled={!online || busy || practice}>
-                        Add branch
+                        {branchFeedback?.kind === "pending"
+                          ? "Adding branch…"
+                          : "Add branch"}
                       </Button>
                     </form>
+                    {branchFeedback && (
+                      <p
+                        role={
+                          branchFeedback.kind === "error" ? "alert" : "status"
+                        }
+                        className={
+                          branchFeedback.kind === "error"
+                            ? "notice error"
+                            : "muted"
+                        }
+                      >
+                        {branchFeedback.text}
+                      </p>
+                    )}
                     <p className="muted">
                       Branch codes are assigned automatically. Adding a branch
                       requires an internet connection.
