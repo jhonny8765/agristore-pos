@@ -886,6 +886,7 @@ export function StoreApp() {
           </div>
           <button
             className="profile"
+            disabled={busy}
             onClick={() => void logout()}
             title={practice ? "Leave practice mode" : "Sign out"}
           >
