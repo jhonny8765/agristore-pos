@@ -5,7 +5,7 @@ Tests are executable evidence, not a blanket claim of production readiness.
 | Check | Evidence / status |
 |---|---|
 | Exact cash, conversions, authorization, immutable checkout IDs, queue recovery, import/export, ambiguous receiving requests | 40 Vitest checks passed locally |
-| Atomic server sales, RLS, role restrictions, price versions, transfers, owner counts, refunds, failed-PC recovery and revoked sessions | 77 pgTAP assertions passed against the selected empty staging project, inside rolled-back transactions |
+| Atomic server sales, RLS, role restrictions, price versions, transfers, owner counts, refunds, failed-PC recovery, revoked sessions and expandable branches | 98 pgTAP assertions passed against the disposable CI database, including 21 branch creation/retry/isolation checks |
 | Browser cash checkout, separate identical sales, offline reload, expired local authorization, fractional kilos, persistent browser-process restart | 7 Playwright checks passed locally and in CI; the responsive check also verifies the basket shortcut and reset control |
 | Real Auth → registered PC → cashier switch → offline sale → PostgreSQL → UI | Passed against the disposable Supabase stack. Two identical purchases produced two sales, two payments and two stock deductions. A committed sale with a lost response retried its original UUID. Revoked access retained a third local sale without uploading it. |
 | Interrupted browser upload lock | Passed with a real persisted lock initially showing 44.1 seconds remaining; automatic processing resumed after expiry |
@@ -14,7 +14,7 @@ Tests are executable evidence, not a blanket claim of production readiness.
 | 200 offline browser checkouts with simulated one-hour elapsed time | Passed in Chromium using real IndexedDB and service-worker reload |
 | 200 queued transactions and simulated eight-hour elapsed time, zero repeated server effects | Passed in Vitest using IndexedDB emulation and a deterministic server transport |
 | Type checks, lint and optimized PWA build | Passed locally; CI repeats them |
-| Security advisors on staging | No security findings after the initial migrations. The original rollback checks left no business records; the user has since created a staging test business and authorized clearly labelled sample data. |
+| Security advisors on staging | No database/RLS findings after the branch migration. Auth reports [leaked-password protection disabled](https://supabase.com/docs/guides/auth/password-security#password-strength-and-leaked-password-protection), to review before production. The user has created a staging test business and authorized labelled sample data. |
 | Fresh migrations and database dump/restore | Passed in the disposable GitHub Actions database job: complete database dump restored into an isolated database; authenticated snapshot API returned the expected ledger-derived stock |
 | Actual Windows reboot during outage | Not performed; requires the intended store PC |
 | Actual timed 60-minute / eight-hour outage | Not performed; automated elapsed-time simulation is a separate check |

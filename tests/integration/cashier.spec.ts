@@ -187,11 +187,9 @@ test("registered cashier recovers real offline sales after a lost acknowledgment
   // Exercise the manager's real PC registration, shift closure, and user switch.
   await login(page, ownerEmail, password);
   await page.getByRole("button", { name: "Settings", exact: true }).click();
-  const branchPanel = page
-    .locator(".panel")
-    .filter({
-      has: page.getByRole("heading", { name: "Branches", exact: true }),
-    });
+  const branchPanel = page.locator(".panel").filter({
+    has: page.getByRole("heading", { name: "Branches", exact: true }),
+  });
   await branchPanel.getByLabel("New branch name", { exact: true }).fill("   ");
   await branchPanel
     .getByRole("button", { name: "Add branch", exact: true })
@@ -247,6 +245,22 @@ test("registered cashier recovers real offline sales after a lost acknowledgment
   });
   expect(deniedBranch.error?.code).toBe("42501");
   await page.getByRole("button", { name: /^Checkout/ }).click();
+  const branchPicker = page.getByRole("combobox", {
+    name: "Current branch",
+    exact: true,
+  });
+  await branchPicker.selectOption({ label: "Integration fourth branch" });
+  await expect(
+    page.getByRole("button", { name: "Add Integration feeds", exact: true }),
+  ).toContainText("0 sack (50 kg) on hand");
+  await branchPicker.selectOption(branchId);
+  await expect(
+    page.getByRole("button", { name: "Add Integration feeds", exact: true }),
+  ).toContainText("10 sack (50 kg) on hand");
+  await expect(branchPicker).toBeEnabled();
+  await context.setOffline(true);
+  await expect(branchPicker).toBeDisabled();
+  await context.setOffline(false);
   await openShift(page, "0");
   await page.getByRole("button", { name: "Settings", exact: true }).click();
   await page.getByLabel("Cash counted in drawer (₱)").fill("0");

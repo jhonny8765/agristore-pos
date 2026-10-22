@@ -201,6 +201,12 @@ The rail uses Forest with muted pale text and line SVG icons. Active entries use
 
 The receipt groups heading, items, and payment into ruled sections. Quantities use a compact three-part stepper. Amount due is larger, forest-colored, and aligned opposite its label. The completion button spans the payment area. A completed sale replaces the editable receipt with explicit saved-state feedback; printed output isolates the receipt in an (80mm) column.
 
+### Settings / Branches
+
+The owner’s branch panel extends the existing ruled record surface. Rename fields retain branch-code labels and outline Save buttons; Add branch sits beneath that grid with a labeled name field and the shared forest primary action. Branch codes are assigned automatically. Names allow up to (120 characters). The rename grid collapses to one column on narrower layouts, and the addition form follows the shared responsive form layout.
+
+Creation requires an online connection and is disabled during practice or another pending operation. Keep feedback beside the form: the button reads “Adding branch…” while pending, errors use the existing error notice and preserve the name, and confirmed success clears the field before refreshing the branch list. If confirmation is uncertain, feedback directs the owner to the Sync center, where the original request can be recovered; if only the list refresh fails, retain the success message and offer Refresh. Use explicit local text and the existing status colors so the outcome stays visible within the branch panel.
+
 ## Do's and Don'ts
 
 ### Do:

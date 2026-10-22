@@ -679,7 +679,9 @@ export function StoreApp() {
             </p>
             <div className="auth-proof">
               <ShieldCheck size={21} />
-              <span>Cash checkout · Growing with your stores · Offline ready</span>
+              <span>
+                Cash checkout · Growing with your stores · Offline ready
+              </span>
             </div>
           </div>
           <span className="auth-foot">
@@ -917,8 +919,31 @@ export function StoreApp() {
             <select
               aria-label="Current branch"
               value={branchId}
-              disabled={!!lease}
-              onChange={(e) => setBranchId(e.target.value)}
+              disabled={!!lease || busy || (!online && !practice)}
+              onChange={(e) => {
+                const nextBranchId = e.target.value;
+                void run(async () => {
+                  const snapshot = await command<Snapshot>("snapshot", {
+                    organizationId: member.organizationId,
+                    branchId: nextBranchId,
+                    transactionIds: (
+                      await db.sales
+                        .where("status")
+                        .notEqual("synced")
+                        .toArray()
+                    ).map((sale) => sale.id),
+                  });
+                  await applySnapshot(db, snapshot);
+                  const nextStock = await localStock(db);
+                  // Change the displayed branch and its stock together. Failed
+                  // downloads leave the previously loaded branch selected.
+                  setBranchId(nextBranchId);
+                  setProducts(snapshot.products);
+                  setStock(nextStock);
+                  setSnapshotAt(snapshot.asOf);
+                  notify("Branch stock loaded.");
+                });
+              }}
             >
               {branchList
                 .filter((b) => isOwner || b.id === member.branchId)
