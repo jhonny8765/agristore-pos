@@ -12,10 +12,14 @@ insert into public.products(id,organization_id,name,sku,base_unit) values('55000
 insert into public.inventory_movements(organization_id,branch_id,product_id,quantity,kind,source_id,created_by) values('55000000-0000-4000-8000-000000000002','55000000-0000-4000-8000-000000000003','55000000-0000-4000-8000-000000000004',14.5,'opening','55000000-0000-4000-8000-000000000005','55000000-0000-4000-8000-000000000001');
 `;
 run(['psql','-U','postgres','-d','postgres','-v','ON_ERROR_STOP=1'],seed);
-run(['pg_dump','-U','postgres','-d','postgres','--format=custom','--schema=public','--schema=app_private','--schema=auth','--file=/tmp/agristore-drill.dump']);
+run(['pg_dump','-U','postgres','-d','postgres','--format=custom','--file=/tmp/agristore-drill.dump']);
 run(['createdb','-U','postgres','--template=template0',database]);
 try{
- run(['pg_restore','-U','postgres','--dbname='+database,'--no-owner','--clean','--if-exists','--exit-on-error','/tmp/agristore-drill.dump']);
+ // A new database still has the default public schema. Restore the complete
+ // dump (including extension definitions) without issuing DROP POLICY against
+ // tables that do not exist in this empty target.
+ run(['psql','-U','postgres','-d',database,'-v','ON_ERROR_STOP=1'], 'drop schema public;');
+ run(['pg_restore','-U','postgres','--dbname='+database,'--no-owner','--exit-on-error','/tmp/agristore-drill.dump']);
  const verify=`set role authenticated; select set_config('request.jwt.claims','{"sub":"55000000-0000-4000-8000-000000000001","session_id":"55000000-0000-4000-8000-000000000001","role":"authenticated"}',false); select public.agri_command('snapshot','{"organizationId":"55000000-0000-4000-8000-000000000002","branchId":"55000000-0000-4000-8000-000000000003","transactionIds":[]}')->'stocks'->0->>'quantity';`;
  const result=run(['psql','-U','postgres','-d',database,'-v','ON_ERROR_STOP=1','-At'],verify);
  if(!result.includes('14.500000'))throw new Error('Restored authorization, transaction API, or stock projection failed');

@@ -36,6 +36,7 @@ export async function buildOffline(distDir, projectDir) {
     skipWaiting: false,
     clientsClaim: false,
     disableDevLogs: true,
+    sourcemap: false,
   });
   if (result.warnings.length) throw new Error(result.warnings.join("\n"));
   console.log(
