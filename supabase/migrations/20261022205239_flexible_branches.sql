@@ -23,7 +23,7 @@ begin
   if ident is null then raise exception 'A permanent branch request ID is required'; end if;
   select * into existing from public.branches where id=ident;
   if found then
-   select * into prior from public.audit_events where organization_id=org and source_id=ident and action='create_branch' order by id limit 1;
+   select * into prior from public.audit_events ev where ev.organization_id=org and ev.source_id=ident and ev.action='create_branch' order by ev.id limit 1;
    if existing.organization_id=org and prior.actor_id=uid and prior.details=data then
     return jsonb_build_object('id',ident,'duplicate',true);
    end if;

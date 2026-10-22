@@ -14,12 +14,12 @@ Tests are executable evidence, not a blanket claim of production readiness.
 | 200 offline browser checkouts with simulated one-hour elapsed time | Passed in Chromium using real IndexedDB and service-worker reload |
 | 200 queued transactions and simulated eight-hour elapsed time, zero repeated server effects | Passed in Vitest using IndexedDB emulation and a deterministic server transport |
 | Type checks, lint and optimized PWA build | Passed locally; CI repeats them |
-| Security advisors on staging | No security findings after the final migration; staging contains zero organizations, sales and inventory movements after rolled-back tests |
+| Security advisors on staging | No security findings after the initial migrations. The original rollback checks left no business records; the user has since created a staging test business and authorized clearly labelled sample data. |
 | Fresh migrations and database dump/restore | Passed in the disposable GitHub Actions database job: complete database dump restored into an isolated database; authenticated snapshot API returned the expected ledger-derived stock |
 | Actual Windows reboot during outage | Not performed; requires the intended store PC |
 | Actual timed 60-minute / eight-hour outage | Not performed; automated elapsed-time simulation is a separate check |
 | Production encrypted off-site backup and restoration | Not configured or verified; required before live use |
-| Actual three-branch opening stock and daily cash reconciliation | Not performed; requires the owner’s verified business data and branch pilot |
+| Actual opening stock and daily cash reconciliation across the growing branch network | Not performed; requires the owner’s verified business data and branch pilot |
 
 Latest verification run: [GitHub Actions 39849243671](https://github.com/jhonny8765/agristore-pos/actions/runs/39849243671), implementation commit `639b9fd`, completed successfully. The application checks include type checks, lint, 40 unit assertions, optimized build and seven practice-browser scenarios. The fresh Supabase stack applies all migrations, passes database lint and 77 pgTAP assertions, performs the restore drill, and runs the additional real cashier integration scenario. The drill uses the disposable container's local `supabase_admin` role to restore built-in Supabase functions; it does not use or request a production administrator credential.
 
