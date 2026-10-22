@@ -4,7 +4,7 @@ Record the PC, Windows version, Edge version, tester, dates, results and retaine
 
 ## Cashier PC durability
 
-1. Install the Edge PWA, sign in online, register the dedicated branch PC, download its catalog and open a shift. Verify the displayed branch and authorization expiry.
+1. Have the owner or manager register the dedicated branch PC using a setup shift and close it. On the same browser profile, sign in as the cashier, install the Edge PWA, download its catalog and open the actual shift. Verify the displayed branch and authorization expiry.
 2. Disconnect the network. Complete 200 cash purchases, including two identical purchases. Save their transaction IDs and cash totals. Confirm every completed sale appears in Sync center with its own permanent ID.
 3. Keep the network disconnected for at least 60 actual minutes. Close and reopen Edge. Restart Windows during the outage and reopen the installed app in the same Windows/browser profile. Verify every completed sale, ID and total is still present.
 4. Continue the storage test for eight actual hours. Do not change the PC clock. Complete additional sales within the 12-hour authorization period and verify their persistence. Export a recovery file before maintenance.

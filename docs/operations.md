@@ -2,6 +2,8 @@
 
 ## Before each shift
 
+For a new cashier PC, the owner or branch manager signs in first and opens a setup shift to register the PC. Close that empty shift with its counted cash, then sign out. The cashier signs in on the same browser profile and opens their own shift with the actual drawer float. A cashier cannot register a new device independently.
+
 Sign in online on the registered branch PC, open the shift with the counted cash float, and verify the catalog has downloaded. Install the production PWA from Edge’s app menu. Keep the dedicated Windows/browser profile; do not use private browsing or automatic site-data cleanup. Export a recovery file at shift boundaries and before PC maintenance.
 
 Offline checkout is available only to the already authorized cashier and shift, for 12 hours from authorization. New logins, cashier changes, receiving, adjustments, transfers, refunds, and shift closure require connectivity. Stock on an offline device is an estimate based on its last confirmed snapshot and local pending sales.

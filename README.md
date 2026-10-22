@@ -6,7 +6,9 @@ This is a development implementation. The real Windows restart test, an actual t
 
 ## Open the application
 
-Development preview: https://agristore-qacexeh8e-team-payaman2.vercel.app — Vercel authentication protects previews. Select **Try practice checkout** for a separate, local-only sample business. Practice transactions never upload to Supabase.
+Development preview: https://agristore-pos-staging-team-payaman2.vercel.app — Vercel authentication protects previews. Select **Try practice checkout** for a separate, local-only sample business. Practice transactions never upload to Supabase.
+
+Use this stable staging address for browser-storage and update tests. Records saved under an older preview URL remain at that original browser origin; synchronize or export them there before moving to the stable address.
 
 For your real business: create and confirm your account, sign in, and create the business. This creates three empty branches. Rename them under Settings. Add the catalog, import each branch’s verified opening stock once, register its dedicated PC, and open a cashier shift. Employees create their own accounts; the owner assigns their role and branch under Staff access.
 
@@ -36,6 +38,8 @@ npm run test:e2e
 
 The browser tests use a production build at `http://127.0.0.1:3100`. Development mode intentionally does not install the service worker. Install Chromium for tests with `npx playwright install chromium`.
 
+The database CI job also runs `npm run test:integration` against its disposable local Supabase stack. This builds the PWA with the stack's public API key and exercises real Auth, registered-PC user switching, offline checkout, a committed upload with a lost response, stock reconciliation, and employee revocation. The runner requires Linux CI and the exact loopback API; hosted projects are prohibited. It never passes administrative credentials to the application, and authenticated traces are disabled.
+
 ## What is implemented
 
 - Cash checkout, exact centavo calculations, sack/kilo conversions, batch selection, expiry checks, cash change, and printable sale records.
@@ -58,6 +62,8 @@ Vercel project: `team-payaman2/agristore-pos`, root `apps/web`; install `cd ../.
 `apps/web/vercel.json` ignores Git-triggered production builds until pilot approval. Previews remain available. Do not remove that gate until the deployment checklist passes. The connected Vercel account is Hobby; arrange a commercial hosting plan before live use. No paid plan was purchased by this implementation.
 
 The preview was deployed with the authenticated Vercel CLI. Automatic Git deployments are not connected yet: Vercel requires this account's GitHub login connection. Add it under Vercel account settings, then connect `jhonny8765/agristore-pos` to the existing project. Until then, deploy previews from the repository root with `npx vercel deploy --yes --target preview --scope team-payaman2`. Keep the production gate in place.
+
+After a preview is ready and its checks pass, move the staging alias with `npx vercel alias set <ready-preview-hostname> agristore-pos-staging-team-payaman2.vercel.app --scope team-payaman2`. This keeps the staging browser origin stable without promoting a production release.
 
 Staging Auth URL settings are declared separately under `deploy/supabase/config.toml`; pushing the local development config would disable email confirmation, so never use the development config to configure the hosted project.
 
