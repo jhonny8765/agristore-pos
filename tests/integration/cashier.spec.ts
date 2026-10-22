@@ -58,6 +58,46 @@ async function buy(page: Page) {
   await expect(page.getByText("₱420.00 change", { exact: true })).toBeVisible();
 }
 
+async function remainingSyncLock(page: Page) {
+  return page.evaluate(
+    () =>
+      new Promise<number>((resolve) => {
+        const request = indexedDB.open("agristore-live-v1");
+        request.onerror = () => resolve(-1);
+        request.onsuccess = () => {
+          const db = request.result;
+          const tx = db.transaction("locks", "readonly");
+          const lock = tx.objectStore("locks").get("sync");
+          lock.onsuccess = () =>
+            resolve(
+              Math.max(0, Number(lock.result?.expiresAt ?? 0) - Date.now()),
+            );
+          tx.oncomplete = () => db.close();
+        };
+      }),
+  );
+}
+
+test.afterEach(async ({ page }, result) => {
+  if (result.status === result.expectedStatus) return;
+  // Account artifact quotas must not hide the failing boundary. These fields
+  // contain only test queue states and UI messages, never Auth headers/tokens.
+  console.log(
+    "Integration failure state:",
+    JSON.stringify({
+      queue: await page
+        .locator(".status-tag")
+        .allTextContents()
+        .catch(() => []),
+      notices: await page
+        .locator(".notice")
+        .allTextContents()
+        .catch(() => []),
+      syncLockMsRemaining: await remainingSyncLock(page).catch(() => -1),
+    }),
+  );
+});
+
 test("registered cashier recovers real offline sales after a lost acknowledgment and retains sales after revocation", async ({
   page,
   context,
@@ -197,14 +237,12 @@ test("registered cashier recovers real offline sales after a lost acknowledgment
   await buy(page);
   await page.reload();
   await page.getByRole("button", { name: "Sync center", exact: false }).click();
-  const queue = page
-    .locator("section")
-    .filter({
-      has: page.getByRole("heading", {
-        name: "Saved transaction queue",
-        exact: true,
-      }),
-    });
+  const queue = page.locator("section").filter({
+    has: page.getByRole("heading", {
+      name: "Saved transaction queue",
+      exact: true,
+    }),
+  });
   await expect(queue.locator("tbody tr")).toHaveCount(2);
   const before = await owner
     .from("sales")
@@ -242,8 +280,14 @@ test("registered cashier recovers real offline sales after a lost acknowledgment
     }
     return route.fulfill({ response });
   });
+  console.log(
+    "Interrupted browser sync lock remaining (ms):",
+    await remainingSyncLock(page),
+  );
   await context.setOffline(false);
-  await expect.poll(() => lostId).toBeTruthy();
+  // Reload can interrupt a sync holding its persisted 45-second lease. Allow
+  // lease recovery plus the 15-second automatic sync interval before failing.
+  await expect.poll(() => lostId, { timeout: 75_000 }).toBeTruthy();
   await expect(queue.locator(".status-tag").first()).toContainText("retryable");
   const committed = await owner
     .from("sales")

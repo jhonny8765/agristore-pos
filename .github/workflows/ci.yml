@@ -48,5 +48,7 @@ jobs:
         with:
           name: integration-failure-screenshots
           path: test-results/**/*.png
+          retention-days: 3
+        continue-on-error: true
       - run: npx supabase stop --no-backup
         if: always()
