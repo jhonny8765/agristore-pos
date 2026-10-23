@@ -206,6 +206,8 @@ export function StoreApp() {
   const [ready, setReady] = useState(false),
     [online, setOnline] = useState(true),
     [view, setView] = useState<View>("pos");
+  const contentHeading = useRef<HTMLHeadingElement>(null);
+  const previousView = useRef(view);
   const [lease, setLease] = useState<Lease>(),
     [member, setMember] = useState<Membership>(),
     [branchList, setBranchList] = useState<Branch[]>([]),
@@ -462,6 +464,11 @@ export function StoreApp() {
   useEffect(() => {
     if (ready) void refreshLocal().catch(fail);
   }, [ready, refreshLocal, fail]);
+  useEffect(() => {
+    if (previousView.current === view) return;
+    previousView.current = view;
+    if (ready && signedIn) contentHeading.current?.focus();
+  }, [view, ready, signedIn]);
   useEffect(() => {
     if (ready && view !== "pos") void refreshCloud().catch(fail);
   }, [ready, view, refreshCloud, fail]);
@@ -751,12 +758,12 @@ export function StoreApp() {
     <div
       className={kind ? "table-wrap history-table" : "table-wrap"}
       data-kind={kind}
-      role={kind ? "region" : undefined}
-      tabIndex={kind ? 0 : undefined}
+      role="region"
+      tabIndex={0}
       aria-label={
         kind
           ? `${{ purchases: "Receiving", transfers: "Transfer", counts: "Count", audit: "Audit" }[kind]} history records`
-          : undefined
+          : `${titles[view]}: ${headers.slice(0, 2).join(", ")}`
       }
     >
       <table>
@@ -993,6 +1000,9 @@ export function StoreApp() {
   };
   return (
     <div className="app-shell">
+      <a href="#main" className="skip-link">
+        Skip to main content
+      </a>
       <aside className="sidebar">
         <a href="#main" className="wordmark" aria-label="AgriStore home">
           <Sprout size={28} />
@@ -1009,18 +1019,25 @@ export function StoreApp() {
               <button
                 key={id}
                 title={label}
+                aria-label={label}
                 className={view === id ? "nav-item active" : "nav-item"}
+                aria-current={view === id ? "page" : undefined}
                 onClick={() => setView(id)}
               >
                 <Icon size={19} />
                 {label}
-                {id === "pos" && <span className="nav-shortcut">POS</span>}
+                {id === "pos" && (
+                  <span className="nav-shortcut" aria-hidden="true">
+                    POS
+                  </span>
+                )}
               </button>
             ))}
         </nav>
         <div className="sidebar-bottom">
           <button
             className={view === "sync" ? "nav-item active" : "nav-item"}
+            aria-current={view === "sync" ? "page" : undefined}
             onClick={() => setView("sync")}
           >
             <RefreshCw size={18} />
@@ -1031,6 +1048,7 @@ export function StoreApp() {
           </button>
           <button
             className={view === "settings" ? "nav-item active" : "nav-item"}
+            aria-current={view === "settings" ? "page" : undefined}
             onClick={() => setView("settings")}
           >
             <Settings size={18} />
@@ -1143,10 +1161,12 @@ export function StoreApp() {
             </button>
           </div>
         )}
-        <main id="main" className="main-content">
+        <main id="main" className="main-content" tabIndex={-1}>
           <div className="page-heading">
             <div>
-              <h1>{titles[view]}</h1>
+              <h1 ref={contentHeading} tabIndex={-1}>
+                {titles[view]}
+              </h1>
               <p>{descriptions[view]}</p>
             </div>
             <div className="heading-actions">
@@ -1250,11 +1270,16 @@ export function StoreApp() {
                     <span>Reset</span>
                   </button>
                 </div>
-                <div className="category-tabs" aria-label="Product categories">
+                <div
+                  className="category-tabs"
+                  role="group"
+                  aria-label="Product categories"
+                >
                   {categories.map((c) => (
                     <button
                       key={c}
                       className={c === category ? "selected" : ""}
+                      aria-pressed={c === category}
                       onClick={() => setCategory(c)}
                     >
                       {c}

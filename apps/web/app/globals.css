@@ -18,6 +18,7 @@
   --radius: 12px;
   --font-display: "Manrope Variable", sans-serif;
   --focus: #507c39;
+  --control-line: #7a8873;
   color-scheme: light;
 }
 * {
@@ -71,9 +72,30 @@ input:focus-visible,
 select:focus-visible,
 textarea:focus-visible,
 summary:focus-visible,
-.history-table:focus-visible {
+.table-wrap:focus-visible,
+.main-content:focus-visible,
+.page-heading h1:focus-visible {
   outline: 3px solid var(--focus);
   outline-offset: 3px;
+}
+.sidebar :focus-visible {
+  outline-color: var(--lime);
+}
+.skip-link {
+  position: fixed;
+  top: 12px;
+  left: 16px;
+  z-index: 100;
+  max-width: calc(100vw - 32px);
+  padding: 12px 18px;
+  background: var(--white);
+  color: var(--forest);
+  border: 1px solid var(--control-line);
+  border-radius: 8px;
+  transform: translateY(-200%);
+}
+.skip-link:focus {
+  transform: translateY(0);
 }
 ::selection {
   background: var(--lime);
@@ -207,7 +229,7 @@ select,
 textarea {
   min-width: 0;
   width: 100%;
-  border: 1px solid #d6ddcf;
+  border: 1px solid var(--control-line);
   background: white;
   border-radius: 7px;
   padding: 11px 12px;
@@ -216,7 +238,7 @@ textarea {
 }
 input::placeholder,
 textarea::placeholder {
-  color: #737d70;
+  color: var(--muted);
 }
 input:disabled,
 select:disabled {
@@ -249,8 +271,10 @@ form > .button {
   font-size: 13px;
 }
 .checkbox input {
-  width: 16px;
-  min-height: auto;
+  width: 24px;
+  height: 24px;
+  min-height: 24px;
+  flex: 0 0 24px;
 }
 .notice {
   border-radius: 8px;
@@ -585,7 +609,7 @@ form > .button {
 .branch-picker select {
   border: 0;
   appearance: none;
-  min-height: 0;
+  min-height: 40px;
   background: none;
   font-size: 13px;
   font-weight: 650;
@@ -723,7 +747,7 @@ form > .button {
 .start-shift p {
   font-size: 12px;
   margin-top: 7px;
-  color: var(--muted);
+  color: var(--green);
 }
 .start-shift form {
   display: flex;
@@ -756,11 +780,11 @@ form > .button {
   align-items: center;
   gap: 10px;
   background: white;
-  border: 1px solid #dce2d4;
+  border: 1px solid var(--control-line);
   border-radius: 8px;
   padding: 0 13px;
   flex: 1;
-  color: #7c8778;
+  color: var(--muted);
   min-width: 0;
 }
 .search-box input {
@@ -805,7 +829,7 @@ form > .button {
   padding: 7px 11px;
   white-space: nowrap;
   font-size: 11px;
-  color: #6a7565;
+  color: var(--muted);
   font-weight: 550;
 }
 .category-tabs button:hover {
@@ -1015,8 +1039,10 @@ form > .button {
 .receipt-item-top button {
   background: none;
   border: 0;
-  color: #85907c;
-  padding: 1px;
+  color: var(--muted);
+  min-width: 32px;
+  min-height: 32px;
+  padding: 8px;
 }
 .receipt-item-config {
   display: flex;
@@ -1026,7 +1052,7 @@ form > .button {
 .receipt-item-config select {
   border: 0;
   padding: 2px 10px 2px 0;
-  min-height: 23px;
+  min-height: 32px;
   font-size: 10px;
   background: none;
   color: var(--muted);
@@ -1040,7 +1066,7 @@ form > .button {
 .quantity-control {
   display: flex;
   align-items: center;
-  border: 1px solid #e0e5d8;
+  border: 1px solid var(--control-line);
   border-radius: 5px;
   height: 30px;
 }
@@ -1524,6 +1550,7 @@ tbody tr:last-child td {
 code {
   font-size: 11px;
   background: var(--soft);
+  color: var(--green);
   padding: 2px 4px;
   white-space: normal;
   overflow-wrap: anywhere;
@@ -1986,6 +2013,23 @@ code {
     animation: none !important;
     transition: none !important;
     scroll-behavior: auto !important;
+  }
+}
+@media (forced-colors: active) {
+  input,
+  select,
+  textarea,
+  .search-box,
+  .quantity-control {
+    border-color: ButtonText;
+  }
+  .nav-item[aria-current="page"],
+  .category-tabs button[aria-pressed="true"] {
+    border: 2px solid ButtonText;
+  }
+  :focus-visible,
+  .sidebar :focus-visible {
+    outline-color: Highlight;
   }
 }
 .receipt-print-details {

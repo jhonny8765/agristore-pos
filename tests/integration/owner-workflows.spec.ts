@@ -5,6 +5,7 @@ import { salesPage } from "../../apps/web/lib/api";
 import { historyPage } from "../../apps/web/lib/history-api";
 import type { HistoryCursor, HistoryKind } from "../../apps/web/lib/history";
 import { readFile } from "node:fs/promises";
+import AxeBuilder from "@axe-core/playwright";
 
 const api = process.env.NEXT_PUBLIC_SUPABASE_URL;
 const key = process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY;
@@ -122,6 +123,179 @@ async function closeShift(page: Page) {
     }),
   ).toBeVisible();
 }
+
+test("owner accessibility covers keyboard navigation, narrow reflow and forced colors", async ({
+  page,
+}) => {
+  test.setTimeout(240_000);
+  const a = await business();
+  await page.setViewportSize({ width: 1440, height: 1000 });
+  await page.goto("/");
+  const failures: {
+    screen: string;
+    mode: string;
+    rule: string;
+    targets: unknown[];
+  }[] = [];
+  async function scan(screen: string, mode: string) {
+    const result = await new AxeBuilder({ page })
+      .withTags(["wcag2a", "wcag2aa", "wcag21a", "wcag21aa", "wcag22aa"])
+      .analyze();
+    for (const violation of result.violations)
+      failures.push({
+        screen,
+        mode,
+        rule: violation.id,
+        targets: violation.nodes.map((n) => n.target),
+      });
+  }
+  await expect(
+    page.getByRole("button", { name: "Sign in", exact: true }),
+  ).toBeVisible();
+  await scan("Sign in", "desktop");
+  await login(page, a);
+  const skip = page.getByRole("link", {
+    name: "Skip to main content",
+    exact: true,
+  });
+  await skip.focus();
+  await expect(skip).toBeInViewport();
+  await page.keyboard.press("Enter");
+  await expect(page.locator("#main")).toBeFocused();
+  await skip.focus();
+  await page.keyboard.press("Tab");
+  await expect(
+    page.getByRole("link", { name: "AgriStore home", exact: true }),
+  ).toBeFocused();
+  function contrast(first: string, second: string) {
+    const luminance = (color: string) =>
+      (color.match(/[\d.]+/g) ?? [])
+        .slice(0, 3)
+        .map(Number)
+        .map((v) => {
+          v /= 255;
+          return v <= 0.04045 ? v / 12.92 : ((v + 0.055) / 1.055) ** 2.4;
+        })
+        .reduce((sum, v, i) => sum + v * [0.2126, 0.7152, 0.0722][i], 0);
+    const left = luminance(first),
+      right = luminance(second);
+    return (Math.max(left, right) + 0.05) / (Math.min(left, right) + 0.05);
+  }
+  const ring = await page
+    .getByRole("link", { name: "AgriStore home", exact: true })
+    .evaluate((el) => ({
+      ring: getComputedStyle(el).outlineColor,
+      background: getComputedStyle(el.closest(".sidebar")!).backgroundColor,
+    }));
+  expect(contrast(ring.ring, ring.background)).toBeGreaterThanOrEqual(3);
+  const input = await page
+    .getByLabel("Opening cash (₱)", { exact: true })
+    .evaluate((el) => ({
+      border: getComputedStyle(el).borderColor,
+      background: getComputedStyle(el).backgroundColor,
+    }));
+  expect(contrast(input.border, input.background)).toBeGreaterThanOrEqual(3);
+  await page.getByRole("button", { name: "Open shift", exact: true }).click();
+  await page
+    .getByRole("button", { name: "Add Audit feeds", exact: true })
+    .click();
+  await scan("Checkout with active cart", "desktop");
+  for (const name of [
+    "Remove Audit feeds",
+    "Decrease Audit feeds",
+    "Increase Audit feeds",
+  ]) {
+    const size = await page
+      .getByRole("button", { name, exact: true })
+      .boundingBox();
+    expect(size!.width).toBeGreaterThanOrEqual(24);
+    expect(size!.height).toBeGreaterThanOrEqual(24);
+  }
+  await page
+    .getByRole("button", { name: "Remove Audit feeds", exact: true })
+    .click();
+  await page.getByRole("button", { name: "Feeds", exact: true }).click();
+  await expect(
+    page.getByRole("button", { name: "Feeds", exact: true }),
+  ).toHaveAttribute("aria-pressed", "true");
+  await page.getByRole("button", { name: "All products", exact: true }).click();
+  await closeShift(page);
+  const screens = [
+    "Checkout",
+    "Overview",
+    "Inventory",
+    "Purchasing",
+    "Transfers",
+    "Stock counts",
+    "Sales & receipts",
+    "Sync center",
+    "Settings",
+  ];
+  for (const screen of screens) {
+    await page.setViewportSize({ width: 1440, height: 1000 });
+    await page.getByRole("button", { name: screen, exact: true }).click();
+    await expect(
+      page.getByRole("button", { name: screen, exact: true }),
+    ).toHaveAttribute("aria-current", "page");
+    await expect(page.locator("#main h1")).toBeFocused();
+    if (
+      ["Overview", "Purchasing", "Transfers", "Stock counts"].includes(screen)
+    )
+      await expect(page.locator(".history-register")).toContainText(/loaded ·/);
+    if (screen === "Settings")
+      await expect(
+        page.getByRole("cell", { name: "Test audit owner", exact: true }),
+      ).toBeVisible();
+    await scan(screen, "desktop");
+    const unnamed = await page
+      .locator(".table-wrap")
+      .evaluateAll(
+        (nodes) =>
+          nodes.filter(
+            (el) =>
+              el.getAttribute("role") !== "region" ||
+              !el.getAttribute("aria-label") ||
+              (el as HTMLElement).tabIndex !== 0,
+          ).length,
+      );
+    expect(unnamed).toBe(0);
+    for (const width of [640, 320]) {
+      // 640 CSS pixels exercises the reflow width of 1280px at 200% page zoom.
+      // This does not claim the in-app browser's zoom shortcut changed its scale.
+      await page.setViewportSize({ width, height: 900 });
+      expect(
+        await page.evaluate(
+          () => document.documentElement.scrollWidth <= innerWidth,
+        ),
+        `${screen} at ${width}px`,
+      ).toBe(true);
+      if (width === 320) await scan(screen, "320px reflow");
+    }
+    await page.emulateMedia({
+      forcedColors: "active",
+      reducedMotion: "reduce",
+    });
+    await expect(
+      page.getByRole("button", { name: screen, exact: true }),
+    ).toHaveCSS("border-top-style", "solid");
+    await expect(
+      page.getByRole("button", { name: screen, exact: true }),
+    ).toHaveCSS("border-top-width", "2px");
+    expect(
+      await page.evaluate(() => matchMedia("(forced-colors: active)").matches),
+    ).toBe(true);
+    expect(
+      await page.evaluate(
+        () => document.documentElement.scrollWidth <= innerWidth,
+      ),
+    ).toBe(true);
+    await page.emulateMedia({
+      forcedColors: "none",
+      reducedMotion: "no-preference",
+    });
+  }
+  expect(failures, JSON.stringify(failures, null, 2)).toEqual([]);
+});
 
 test("owner approvals work without browser dialogs, stock refreshes without a shift, and another account cannot see cached data", async ({
   page,
