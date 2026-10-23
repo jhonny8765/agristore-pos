@@ -177,6 +177,9 @@ test("offline mixed sacks, quarters, halves and peso-weight sales synchronize ex
     .getByRole("button", { name: "Complete cash sale", exact: true })
     .click();
   await expect(page.getByText("₱343.70 change", { exact: true })).toBeVisible();
+  await expect(page.getByRole("article").filter({ has: add })).toContainText(
+    "9947.82 kg on hand",
+  );
   const before = await a.owner
     .from("sales")
     .select("id")
@@ -222,6 +225,10 @@ test("offline mixed sacks, quarters, halves and peso-weight sales synchronize ex
     .single();
   expect(stock.error).toBeNull();
   expect(Number(stock.data!.quantity)).toBe(9947.82);
+  await page.getByRole("button", { name: /^Checkout/ }).click();
+  await expect(page.getByRole("article").filter({ has: add })).toContainText(
+    "9947.82 kg on hand",
+  );
   const retry = await command<{ status: string }>(
     a.owner,
     "record_sale",

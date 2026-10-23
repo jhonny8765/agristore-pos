@@ -8,6 +8,40 @@ import {
 } from "../../apps/web/lib/quantity-entry";
 import { useCart } from "../../apps/web/lib/cart";
 import { product, uuid } from "./fixtures";
+import { productStock } from "../../apps/web/lib/stock-display";
+
+describe("exact on-hand display", () => {
+  it("does not round a missing quarter kilo back up to ten sacks", () => {
+    expect(
+      productStock(product, new Map([[product.id + ":none", "499.75"]])),
+    ).toEqual({ quantity: "499.75", unit: "kg" });
+  });
+  it("adds every batch exactly, including when an unbatched row also exists", () => {
+    expect(
+      productStock(
+        product,
+        new Map([
+          [product.id + ":none", "0.1"],
+          [product.id + ":lot-a", "0.2"],
+          [uuid(30) + ":none", "999"],
+        ]),
+      ),
+    ).toEqual({ quantity: "0.3", unit: "kg" });
+  });
+  it("keeps piece packs whole and shows remaining base pieces for a partial pack equivalent", () => {
+    const packed = {
+      ...product,
+      baseUnit: "piece",
+      units: [{ ...product.units[0], name: "Box", factor: "12" }],
+    };
+    expect(
+      productStock(packed, new Map([[product.id + ":none", "24"]])),
+    ).toEqual({ quantity: "2", unit: "box" });
+    expect(
+      productStock(packed, new Map([[product.id + ":none", "23"]])),
+    ).toEqual({ quantity: "23", unit: "piece" });
+  });
+});
 
 describe("cashier quantity entry", () => {
   it.each([
@@ -83,14 +117,12 @@ describe("stable checkout line drafts", () => {
     useCart.getState().add(item);
     useCart.getState().add(item);
     const [first, second] = useCart.getState().lineIds;
-    useCart
-      .getState()
-      .edit(second, {
-        draft: "0.",
-        budgetMode: true,
-        budget: "50",
-        original: item,
-      });
+    useCart.getState().edit(second, {
+      draft: "0.",
+      budgetMode: true,
+      budget: "50",
+      original: item,
+    });
     useCart.getState().quantityError(second, "Confirm scale weight");
     useCart.getState().remove(0);
     expect(useCart.getState().lineIds).toEqual([second]);

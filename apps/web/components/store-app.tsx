@@ -48,6 +48,7 @@ import {
 } from "lucide-react";
 import Decimal from "decimal.js";
 import { SaleLineEditor } from "./sale-line-editor";
+import { productStock } from "../lib/stock-display";
 import {
   makeItem,
   money,
@@ -149,7 +150,6 @@ const cents = (value: string) => {
     throw new Error("Enter a valid amount with up to two decimal places");
   return d.toNumber();
 };
-const batchKey = (p: string, b: string | null) => `${p}:${b ?? "none"}`;
 
 function Field({
   label,
@@ -1312,17 +1312,7 @@ export function StoreApp() {
                 {visible.length ? (
                   <div className="product-grid">
                     {visible.map((p) => {
-                      const available = p.units[0]
-                        ? new Decimal(
-                            stock.get(batchKey(p.id, null)) ??
-                              [...stock.entries()]
-                                .filter(([k]) => k.startsWith(p.id + ":"))
-                                .reduce((s, [, v]) => s + Number(v), 0),
-                          )
-                            .div(p.units[0].factor)
-                            .toDecimalPlaces(2)
-                            .toString()
-                        : "0";
+                      const available = productStock(p, stock);
                       return (
                         <article
                           className={
@@ -1371,13 +1361,12 @@ export function StoreApp() {
                             </div>
                             <span
                               className={
-                                Number(available) <= 0
+                                new Decimal(available.quantity).lte(0)
                                   ? "stock-label low"
                                   : "stock-label"
                               }
                             >
-                              {available} {p.units[0]?.name.toLowerCase()} on
-                              hand
+                              {available.quantity} {available.unit} on hand
                             </span>
                           </div>
                         </article>
