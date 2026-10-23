@@ -1,6 +1,6 @@
 {
   "schemaVersion": 2,
-  "generatedAt": "2026-10-23T14:41:18.839911Z",
+  "generatedAt": "2026-10-23T19:20:45.753265Z",
   "title": "Design System: AgriStore POS",
   "extensions": {
     "colorMeta": {
@@ -368,14 +368,16 @@
       "Do give history table scrolling regions accessible names, keyboard access, and the shared visible focus outline.",
       "Do retain stronger control boundaries, surface-appropriate focus outlines, and explicit current or pressed states.",
       "Do keep catalog metadata legible when adding is disabled, with only the Add control changing appearance.",
-      "Do keep applied dates, loaded counts, end-of-history feedback, and CSV scope explicit beside the records they describe."
+      "Do keep applied dates, loaded counts, end-of-history feedback, and CSV scope explicit beside the records they describe.",
+      "Do keep app update status beside its action, protect pending work before reopening, and preserve local records and browser site data in recovery guidance."
     ],
     "donts": [
       "Don't substitute emoji or text glyphs for the existing line SVG icon vocabulary.",
       "Don't turn operational surfaces into decorative illustrations or marketing panels.",
       "Don't introduce heavy resting shadows on record panels.",
       "Don't reduce essential product and payment copy to the smallest incidental text sizes present in older supporting UI.",
-      "Don't imply that a loaded-row CSV includes matching records that have not been loaded."
+      "Don't imply that a loaded-row CSV includes matching records that have not been loaded.",
+      "Don't describe the open app window as current solely because no new download is available, or force other windows to reload."
     ]
   }
 }

@@ -247,7 +247,9 @@ Audit details expand through a native View details summary with the shared keybo
 
 ### Operational Feedback
 
-Use local status text to describe the actual stage of an operation. App update feedback distinguishes checking and downloading, failure, an up-to-date installation, a downloaded update waiting for checkout and pending records, and restarting. Keep that feedback near its action and expose progress text as a status announcement.
+Use local status text to describe the actual stage of an operation. Place accessible status feedback beside Check for app update in the Application & recovery panel. Distinguish checking and downloading, installation, no new download, pending work, failure, and reopening. No new download does not establish that the currently open window is running the latest installation. Keep the existing paired Settings panels and their narrow-screen stack; update feedback stays inline within its panel.
+
+Disable starting or completing checkout while installation is in progress. Recheck that the cart and pending sales and operations are clear before reopening the requesting window. If work appears while an update becomes ready, direct the operator to finish checkout and confirm every pending record before manually reopening. Recovery guidance preserves saved local records and browser site data, gives a specific next step for the actual failure or delay, and never forces other windows to reload.
 
 ### Settings / Branches
 
@@ -272,6 +274,7 @@ Keep the top-bar branch picker at a minimum height (40px) across viewport sizes.
 - **Do** retain stronger control boundaries, surface-appropriate focus outlines, and explicit current or pressed states.
 - **Do** keep catalog metadata legible when adding is disabled, with only the Add control changing appearance.
 - **Do** keep applied dates, loaded counts, end-of-history feedback, and CSV scope explicit beside the records they describe.
+- **Do** keep app update status beside its action, protect pending work before reopening, and preserve local records and browser site data in recovery guidance.
 
 ### Don't:
 
@@ -280,4 +283,4 @@ Keep the top-bar branch picker at a minimum height (40px) across viewport sizes.
 - **Don't** introduce heavy resting shadows on record panels.
 - **Don't** reduce essential product and payment copy to the smallest incidental text sizes present in older supporting UI.
 - **Don't** imply that a loaded-row CSV includes matching records that have not been loaded.
-
+- **Don't** describe the open app window as current solely because no new download is available, or force other windows to reload.

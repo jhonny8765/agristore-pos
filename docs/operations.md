@@ -16,6 +16,10 @@ Reconnect and confirm every local sale has synchronized. Investigate review-requ
 
 Retry the original record in Sync center. Do not re-enter the customer’s purchase. Transaction IDs and payloads are retained. Deliveries and transfers with an unknown network result also retain their original request IDs under Online operations awaiting confirmation. A definitive database rejection rolls back the operation so corrected input may be submitted.
 
+## App updates
+
+Finish the cart and confirm pending records before using Settings → Check for app update. Read the result beside the button: a new download, installation, a blocked restart and no new download are different states. If an installed update leaves the window open, close and reopen AgriStore in the same dedicated profile; keep its site data. Never clear browser storage or re-enter a sale to resolve an update problem. See [app updates and saved records](app-updates.md) for behavior and verified limits.
+
 ## Failed PC or lost browser profile
 
 1. Keep the original profile and disk if recoverable. Clearing site data can destroy unsynchronized records; cloud backups cannot contain sales that never reached the cloud.
