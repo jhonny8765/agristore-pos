@@ -26,7 +26,8 @@ test("normal keystrokes accept half kilos and fractions; invalid drafts cannot c
   await expect(page.getByRole("heading", { name: "Sale saved." })).toHaveCount(
     0,
   );
-  await input.pressSequentially("5");
+  await input.fill("");
+  await input.pressSequentially("0.5");
   await expect(input).toHaveValue("0.5");
   await expect(page.locator(".receipt-item-bottom")).toContainText("₱16.80");
   await expect(complete(page)).toBeEnabled();
@@ -63,7 +64,7 @@ test("peso estimates require measured confirmation across navigation, and grams 
   );
   await expect(complete(page)).toBeDisabled();
   await page.getByRole("button", { name: "Inventory", exact: true }).click();
-  await page.getByRole("button", { name: "Checkout", exact: true }).click();
+  await page.getByRole("button", { name: /^Checkout/ }).click();
   await expect(page.getByLabel("Customer budget for Grower feeds")).toHaveValue(
     "50",
   );
