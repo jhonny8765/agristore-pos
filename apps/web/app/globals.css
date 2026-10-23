@@ -1036,7 +1036,7 @@ form > .button {
   margin-top: 5px;
 }
 .receipt-items {
-  max-height: 360px;
+  max-height: 490px;
   overflow-y: auto;
   padding: 0 21px;
   min-height: 160px;
@@ -1084,32 +1084,110 @@ form > .button {
   align-items: center;
   justify-content: space-between;
   font-size: 12px;
+  gap: 8px;
+  flex-wrap: wrap;
 }
 .quantity-control {
   display: flex;
   align-items: center;
   border: 1px solid var(--control-line);
   border-radius: 5px;
-  height: 30px;
+  height: 38px;
 }
 .quantity-control button {
   display: grid;
   place-items: center;
-  width: 25px;
-  height: 28px;
+  width: 32px;
+  height: 36px;
   background: none;
   border: 0;
   color: var(--green);
 }
 .quantity-control input {
   min-height: 0;
-  height: 26px;
-  width: 37px;
+  height: 34px;
+  width: 78px;
   padding: 3px;
   border: 0;
   font-size: 11px;
   text-align: center;
   background: none;
+}
+.line-rate,
+.line-measure {
+  color: var(--muted);
+  font-size: 12px;
+  line-height: 1.5;
+  margin: 6px 0;
+}
+.quantity-entry label,
+.peso-entry label {
+  display: block;
+  font-size: 12px;
+  margin-bottom: 5px;
+}
+.quantity-entry-controls,
+.peso-entry-controls,
+.peso-entry-actions,
+.weight-shortcuts {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+  align-items: center;
+}
+.quantity-entry-controls select {
+  width: 58px;
+  min-height: 38px;
+  padding: 5px;
+  font-size: 12px;
+}
+.quantity-error {
+  color: var(--danger);
+  font-size: 12px;
+  line-height: 1.5;
+  margin: 8px 0;
+}
+.weight-shortcuts {
+  margin-top: 10px;
+}
+.weight-shortcuts button {
+  background: var(--paper);
+  border: 1px solid var(--control-line);
+  border-radius: 4px;
+  color: var(--green);
+  min-height: 34px;
+  padding: 5px 9px;
+  font-size: 12px;
+}
+.peso-entry-toggle {
+  margin-top: 8px;
+  min-height: 32px;
+}
+.peso-entry {
+  border-top: 1px solid var(--line);
+  margin-top: 12px;
+  padding-top: 12px;
+}
+.peso-entry-controls input {
+  flex: 1 1 85px;
+  min-width: 0;
+  width: 85px;
+}
+.peso-entry > p {
+  font-size: 12px;
+  line-height: 1.6;
+  color: var(--muted);
+}
+.peso-entry > .quantity-error {
+  color: var(--danger);
+}
+.peso-entry-actions {
+  margin-top: 10px;
+}
+@media (max-width: 730px) {
+  .receipt-items {
+    max-height: none;
+  }
 }
 .payment-form {
   border-top: 1px solid var(--line);

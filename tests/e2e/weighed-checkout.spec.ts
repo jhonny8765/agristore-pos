@@ -1,0 +1,153 @@
+import { test, expect, type Page } from "@playwright/test";
+import AxeBuilder from "@axe-core/playwright";
+
+async function practice(page: Page) {
+  await page.goto("/");
+  await page.getByRole("button", { name: "Try practice checkout" }).click();
+  await page.getByRole("button", { name: "Add Grower feeds" }).click();
+}
+const complete = (page: Page) =>
+  page.getByRole("button", { name: "Complete cash sale" });
+
+test("normal keystrokes accept half kilos and fractions; invalid drafts cannot charge the previous quantity", async ({
+  page,
+}) => {
+  await practice(page);
+  await page
+    .getByLabel("Unit for Grower feeds")
+    .selectOption({ label: "Kilo" });
+  const input = page.getByLabel("Quantity for Grower feeds");
+  await input.fill("");
+  await input.pressSequentially("0.");
+  await expect(input).toHaveValue("0.");
+  await expect(complete(page)).toBeDisabled();
+  await page.getByLabel("Cash received", { exact: true }).fill("100");
+  await page.getByLabel("Cash received", { exact: true }).press("Enter");
+  await expect(page.getByRole("heading", { name: "Sale saved." })).toHaveCount(
+    0,
+  );
+  await input.pressSequentially("5");
+  await expect(input).toHaveValue("0.5");
+  await expect(page.locator(".receipt-item-bottom")).toContainText("₱16.80");
+  await expect(complete(page)).toBeEnabled();
+  await input.fill("");
+  await input.pressSequentially("1/4");
+  await input.press("Tab");
+  await expect(input).toHaveValue("0.25");
+  await expect(page.locator(".receipt-item-bottom")).toContainText("₱8.40");
+  await expect(
+    page.getByRole("button", { name: "Decrease Grower feeds" }),
+  ).toBeDisabled();
+  await complete(page).click();
+  await expect(page.getByText("₱91.60 change")).toBeVisible();
+});
+
+test("peso estimates require measured confirmation across navigation, and grams set the final amount", async ({
+  page,
+  context,
+}) => {
+  await practice(page);
+  await page.waitForFunction(() =>
+    navigator.serviceWorker.ready.then(() => true),
+  );
+  await context.setOffline(true);
+  await page
+    .getByRole("button", { name: "By peso amount", exact: true })
+    .click();
+  await page.getByLabel("Customer budget for Grower feeds").fill("50");
+  await page
+    .getByRole("button", { name: "Estimate weight", exact: true })
+    .click();
+  await expect(page.getByLabel("Quantity for Grower feeds")).toHaveValue(
+    "1.488",
+  );
+  await expect(complete(page)).toBeDisabled();
+  await page.getByRole("button", { name: "Inventory", exact: true }).click();
+  await page.getByRole("button", { name: "Checkout", exact: true }).click();
+  await expect(page.getByLabel("Customer budget for Grower feeds")).toHaveValue(
+    "50",
+  );
+  await expect(complete(page)).toBeDisabled();
+  await page.getByLabel("Weight entry for Grower feeds").selectOption("g");
+  await page.getByLabel("Quantity for Grower feeds").fill("1500");
+  await expect(page.locator(".receipt-item-bottom")).toContainText("₱50.40");
+  await expect(complete(page)).toBeDisabled();
+  await page
+    .getByRole("button", { name: "Confirm weighed amount", exact: true })
+    .click();
+  await page.getByLabel("Cash received", { exact: true }).fill("100");
+  await complete(page).click();
+  await expect(page.getByText("₱49.60 change")).toBeVisible();
+  await page.reload();
+  await page
+    .getByRole("button", { name: "Sales & receipts", exact: true })
+    .click();
+  await expect(page.locator("tbody tr")).toHaveCount(1);
+  await expect(page.locator("tbody tr")).toContainText("50.40");
+});
+
+test("shortcuts select the retail kilo price, cancel restores a sack, and duplicate drafts stay on their own row", async ({
+  page,
+}) => {
+  await practice(page);
+  await page.getByLabel("Quantity for Grower feeds").fill("2");
+  await page
+    .getByRole("button", { name: "By peso amount", exact: true })
+    .click();
+  await page
+    .getByRole("button", { name: "Cancel peso entry", exact: true })
+    .click();
+  await expect(page.getByLabel("Quantity for Grower feeds")).toHaveValue("2");
+  await expect(page.getByLabel("Unit for Grower feeds")).toHaveValue(/.+/);
+  await expect(page.locator(".receipt-item-bottom")).toContainText("₱3,160.00");
+  await page.getByRole("button", { name: "¼ kg", exact: true }).click();
+  await expect(page.locator(".line-rate")).toContainText("₱33.60 / Kilo");
+  await page.getByLabel("Weight entry for Grower feeds").selectOption("g");
+  await expect(page.getByLabel("Quantity for Grower feeds")).toHaveValue("250");
+  await page.getByRole("button", { name: "Add Grower feeds" }).click();
+  await page.getByLabel("Quantity for Grower feeds").nth(1).fill("0.");
+  await page
+    .getByRole("button", { name: "Remove Grower feeds" })
+    .first()
+    .click();
+  await expect(page.getByLabel("Quantity for Grower feeds")).toHaveValue("0.");
+  await expect(complete(page)).toBeDisabled();
+  await page.getByRole("button", { name: "Remove Grower feeds" }).click();
+  await expect(page.locator(".receipt-item")).toHaveCount(0);
+});
+
+test("piece products cannot be sold as half a sealed packet; weighed controls reflow accessibly", async ({
+  page,
+}) => {
+  await practice(page);
+  await page.getByRole("button", { name: "Remove Grower feeds" }).click();
+  await page.getByRole("button", { name: "Add Hybrid corn seeds" }).click();
+  await page.getByLabel("Quantity for Hybrid corn seeds").fill("0.5");
+  await expect(
+    page.getByText("Piece stock must be a whole number", { exact: true }),
+  ).toBeVisible();
+  await expect(complete(page)).toBeDisabled();
+  await expect(
+    page.getByRole("button", { name: "By peso amount", exact: true }),
+  ).toHaveCount(0);
+  await page.getByLabel("Quantity for Hybrid corn seeds").fill("1");
+  await expect(complete(page)).toBeEnabled();
+  await page.getByRole("button", { name: "Remove Hybrid corn seeds" }).click();
+  await page.getByRole("button", { name: "Add Grower feeds" }).click();
+  await page
+    .getByRole("button", { name: "By peso amount", exact: true })
+    .click();
+  for (const width of [1440, 390, 418, 320]) {
+    await page.setViewportSize({ width, height: 900 });
+    expect(
+      await page.evaluate(
+        () => document.documentElement.scrollWidth <= innerWidth,
+      ),
+    ).toBe(true);
+    const result = await new AxeBuilder({ page })
+      .include("#current-sale")
+      .withTags(["wcag2a", "wcag2aa", "wcag21aa", "wcag22aa"])
+      .analyze();
+    expect(result.violations).toEqual([]);
+  }
+});

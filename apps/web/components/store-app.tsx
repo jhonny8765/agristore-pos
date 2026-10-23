@@ -30,7 +30,6 @@ import {
   HeartPulse,
   Leaf,
   LogOut,
-  Minus,
   Package,
   Plus,
   RefreshCw,
@@ -48,6 +47,7 @@ import {
   X,
 } from "lucide-react";
 import Decimal from "decimal.js";
+import { SaleLineEditor } from "./sale-line-editor";
 import {
   makeItem,
   money,
@@ -659,6 +659,10 @@ export function StoreApp() {
       requireLease(lease);
       if (!cart.items.length)
         throw new Error("Add a product to the receipt first");
+      if (Object.keys(useCart.getState().quantityErrors).length)
+        throw new Error(
+          "Check quantities and confirm weighed amounts before checkout.",
+        );
       const payload: Sale = {
         version: 1,
         transactionId: cart.attempt(),
@@ -1461,138 +1465,16 @@ export function StoreApp() {
                   </div>
                 ) : cart.items.length ? (
                   <div className="receipt-items">
-                    {cart.items.map((item, i) => {
-                      const p = products.find((p) => p.id === item.productId)!;
-                      return (
-                        <div className="receipt-item" key={i}>
-                          <div className="receipt-item-top">
-                            <strong>{item.name}</strong>
-                            <button
-                              aria-label={`Remove ${item.name}`}
-                              onClick={() => cart.remove(i)}
-                            >
-                              <X size={15} />
-                            </button>
-                          </div>
-                          <div className="receipt-item-config">
-                            <select
-                              aria-label={`Unit for ${item.name}`}
-                              value={item.unitId}
-                              onChange={(e) => {
-                                try {
-                                  cart.replace(
-                                    i,
-                                    makeItem(
-                                      p,
-                                      e.target.value,
-                                      item.quantity,
-                                      item.batchId,
-                                    ),
-                                  );
-                                } catch (e) {
-                                  fail(e);
-                                }
-                              }}
-                            >
-                              {p.units.map((u) => (
-                                <option key={u.id} value={u.id}>
-                                  {u.name}
-                                </option>
-                              ))}
-                            </select>
-                            {p.batches.length > 0 && (
-                              <select
-                                aria-label={`Batch for ${item.name}`}
-                                value={item.batchId ?? ""}
-                                onChange={(e) => {
-                                  try {
-                                    cart.replace(
-                                      i,
-                                      makeItem(
-                                        p,
-                                        item.unitId,
-                                        item.quantity,
-                                        e.target.value || null,
-                                      ),
-                                    );
-                                  } catch (e) {
-                                    fail(e);
-                                  }
-                                }}
-                              >
-                                {p.batches.map((b) => (
-                                  <option key={b.id} value={b.id}>
-                                    {b.lot} {b.expiresOn ?? ""}
-                                  </option>
-                                ))}
-                              </select>
-                            )}
-                          </div>
-                          <div className="receipt-item-bottom">
-                            <div className="quantity-control">
-                              <button
-                                aria-label={`Decrease ${item.name}`}
-                                onClick={() => {
-                                  if (new Decimal(item.quantity).lte(1))
-                                    cart.remove(i);
-                                  else
-                                    cart.replace(
-                                      i,
-                                      makeItem(
-                                        p,
-                                        item.unitId,
-                                        new Decimal(item.quantity)
-                                          .minus(1)
-                                          .toString(),
-                                        item.batchId,
-                                      ),
-                                    );
-                                }}
-                              >
-                                <Minus size={13} />
-                              </button>
-                              <input
-                                aria-label={`Quantity for ${item.name}`}
-                                value={item.quantity}
-                                inputMode="decimal"
-                                onChange={(e) => {
-                                  try {
-                                    cart.replace(
-                                      i,
-                                      makeItem(
-                                        p,
-                                        item.unitId,
-                                        e.target.value,
-                                        item.batchId,
-                                      ),
-                                    );
-                                  } catch {}
-                                }}
-                              />
-                              <button
-                                aria-label={`Increase ${item.name}`}
-                                onClick={() =>
-                                  cart.replace(
-                                    i,
-                                    makeItem(
-                                      p,
-                                      item.unitId,
-                                      new Decimal(item.quantity)
-                                        .plus(1)
-                                        .toString(),
-                                      item.batchId,
-                                    ),
-                                  )
-                                }
-                              >
-                                <Plus size={13} />
-                              </button>
-                            </div>
-                            <strong>{money(item.lineTotal)}</strong>
-                          </div>
-                        </div>
-                      );
-                    })}
+                    {cart.items.map((item, i) => (
+                      <SaleLineEditor
+                        key={cart.lineIds[i]}
+                        lineId={cart.lineIds[i]}
+                        item={item}
+                        product={products.find((p) => p.id === item.productId)!}
+                        index={i}
+                        disabled={busy || installingUpdate}
+                      />
+                    ))}
                   </div>
                 ) : (
                   <div className="receipt-empty">
@@ -1644,6 +1526,12 @@ export function StoreApp() {
                     <span>Change</span>
                     <strong>{money(change)}</strong>
                   </div>
+                  {Object.keys(cart.quantityErrors).length > 0 && (
+                    <p className="quantity-error" role="alert">
+                      Check quantities and confirm weighed amounts before
+                      checkout.
+                    </p>
+                  )}
                   <Button
                     type="submit"
                     disabled={
@@ -1651,6 +1539,7 @@ export function StoreApp() {
                       installingUpdate ||
                       !lease ||
                       !cart.items.length ||
+                      Object.keys(cart.quantityErrors).length > 0 ||
                       isStock
                     }
                     className="complete-sale"

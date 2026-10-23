@@ -1,0 +1,120 @@
+import { beforeEach, describe, expect, it } from "vitest";
+import { makeItem } from "@agristore/domain";
+import {
+  enteredQuantity,
+  estimateBudget,
+  kiloUnit,
+  quantityFromDisplay,
+} from "../../apps/web/lib/quantity-entry";
+import { useCart } from "../../apps/web/lib/cart";
+import { product, uuid } from "./fixtures";
+
+describe("cashier quantity entry", () => {
+  it.each([
+    ["0.5", "0.5"],
+    [".5", "0.5"],
+    ["1/4", "0.25"],
+    [" 1 / 2 ", "0.5"],
+    ["¼", "0.25"],
+    ["½", "0.5"],
+    ["¾", "0.75"],
+    ["0.000001", "0.000001"],
+  ])("normalizes %s exactly", (input, expected) => {
+    expect(enteredQuantity(input)).toBe(expected);
+  });
+  it.each([
+    "",
+    "0",
+    "0.",
+    "-1",
+    "1e2",
+    "1/0",
+    "1/3",
+    "1.0000001",
+    "1000000000000",
+  ])("rejects incomplete or unsupported %s", (input) => {
+    expect(() => enteredQuantity(input)).toThrow();
+  });
+  it("converts scale grams exactly and rejects excessive canonical precision", () => {
+    expect(quantityFromDisplay("250", true)).toBe("0.25");
+    expect(quantityFromDisplay("1428.5", true)).toBe("1.4285");
+    expect(() => quantityFromDisplay("0.000001", true)).toThrow();
+  });
+  it("uses an explicitly configured kilo unit instead of dividing sack price", () => {
+    expect(kiloUnit(product)?.price).toBe(3200);
+    expect(kiloUnit({ ...product, units: [product.units[0]] })).toBeUndefined();
+    expect(kiloUnit({ ...product, baseUnit: "piece" })).toBeUndefined();
+    const quarter = makeItem(
+      product,
+      kiloUnit(product)!.id,
+      enteredQuantity("1/4"),
+      null,
+    );
+    expect(quarter.lineTotal).toBe(800);
+  });
+  it("estimates a peso budget conservatively in whole grams, with half-up centavos", () => {
+    expect(estimateBudget("50", 3500)).toEqual({
+      quantity: "1.428",
+      grams: "1428",
+      amount: 4998,
+    });
+    expect(estimateBudget("0.04", 3500)).toEqual({
+      quantity: "0.001",
+      grams: "1",
+      amount: 4,
+    });
+    expect(estimateBudget("50", 3360).quantity).toBe("1.488");
+  });
+  it.each([
+    ["0", 3500],
+    ["1", 0],
+    ["50.123", 3500],
+    ["1e2", 3500],
+    ["0.01", 3500],
+  ])("rejects impossible budget %s at %s", (budget, price) => {
+    expect(() => estimateBudget(budget, price)).toThrow();
+  });
+});
+
+describe("stable checkout line drafts", () => {
+  beforeEach(() => useCart.getState().clear());
+  it("retains the other duplicate product's draft and blocking error after removing a row", () => {
+    const item = makeItem(product, uuid(12), "1", null);
+    useCart.getState().add(item);
+    useCart.getState().add(item);
+    const [first, second] = useCart.getState().lineIds;
+    useCart
+      .getState()
+      .edit(second, {
+        draft: "0.",
+        budgetMode: true,
+        budget: "50",
+        original: item,
+      });
+    useCart.getState().quantityError(second, "Confirm scale weight");
+    useCart.getState().remove(0);
+    expect(useCart.getState().lineIds).toEqual([second]);
+    expect(useCart.getState().drafts[second]).toMatchObject({
+      draft: "0.",
+      budgetMode: true,
+      budget: "50",
+    });
+    expect(useCart.getState().quantityErrors).toEqual({
+      [second]: "Confirm scale weight",
+    });
+    expect(useCart.getState().drafts[first]).toBeUndefined();
+    useCart.getState().remove(0);
+    expect(useCart.getState().quantityErrors).toEqual({});
+    expect(useCart.getState().drafts).toEqual({});
+  });
+  it("clears drafts with a completed cart and assigns separate checkout attempts", () => {
+    const item = makeItem(product, uuid(12), "0.5", null);
+    useCart.getState().add(item);
+    const first = useCart.getState().attempt();
+    expect(useCart.getState().attempt()).toBe(first);
+    useCart.getState().clear();
+    useCart.getState().add(item);
+    expect(useCart.getState().attempt()).not.toBe(first);
+    expect(Object.values(useCart.getState().drafts)[0].draft).toBe("0.5");
+  });
+});

@@ -27,7 +27,10 @@ async function command<T = Record<string, unknown>>(
   if (result.error) throw new Error(`${action}: ${result.error.message}`);
   return result.data as T;
 }
-async function business(productName = "Audit feeds") {
+async function business(
+  productName = "Audit feeds",
+  units = [{ name: "Kilo", factor: "1", price: 100, cost: 50 }],
+) {
   const owner = createClient(api!, key!, {
     auth: { persistSession: false, autoRefreshToken: false },
   });
@@ -61,13 +64,14 @@ async function business(productName = "Audit feeds") {
       baseUnit: "kg",
       minimumStock: "0",
       tracksExpiry: false,
-      units: [{ name: "Kilo", factor: "1", price: 100, cost: 50 }],
+      units,
     },
   );
   const unit = await owner
     .from("product_units")
     .select("id")
     .eq("product_id", productId)
+    .eq("name", "Kilo")
     .single();
   expect(unit.error).toBeNull();
   await command(owner, "receive_stock", {
@@ -124,6 +128,115 @@ async function closeShift(page: Page) {
   ).toBeVisible();
 }
 
+test("offline mixed sacks, quarters, halves and peso-weight sales synchronize exact stock and retail prices", async ({
+  page,
+  context,
+}) => {
+  test.setTimeout(120_000);
+  const name = "TEST measured feeds";
+  const a = await business(name, [
+    { name: "Sack (50 kg)", factor: "50", price: 158000, cost: 138000 },
+    { name: "Kilo", factor: "1", price: 3500, cost: 2760 },
+  ]);
+  await page.goto("/");
+  await login(page, a, name);
+  await page.getByRole("button", { name: "Open shift", exact: true }).click();
+  const add = page.getByRole("button", { name: `Add ${name}`, exact: true });
+  await expect(add).toBeEnabled();
+  await context.setOffline(true);
+  await add.click();
+  await page
+    .getByLabel(`Unit for ${name}`)
+    .selectOption({ label: "Sack (50 kg)" });
+  await add.click();
+  await page.getByRole("button", { name: "¼ kg", exact: true }).nth(1).click();
+  await add.click();
+  await page.getByRole("button", { name: "½ kg", exact: true }).nth(2).click();
+  await add.click();
+  await page
+    .getByRole("button", { name: "By peso amount", exact: true })
+    .nth(3)
+    .click();
+  await page.getByLabel(`Customer budget for ${name}`).fill("50");
+  await page
+    .getByRole("button", { name: "Estimate weight", exact: true })
+    .click();
+  await expect(page.getByLabel(`Quantity for ${name}`).nth(3)).toHaveValue(
+    "1.428",
+  );
+  await expect(
+    page.getByRole("button", { name: "Complete cash sale" }),
+  ).toBeDisabled();
+  await page.getByLabel(`Weight entry for ${name}`).nth(2).selectOption("g");
+  await page.getByLabel(`Quantity for ${name}`).nth(3).fill("1430");
+  await page
+    .getByRole("button", { name: "Confirm weighed amount", exact: true })
+    .click();
+  await page.getByLabel("Cash received", { exact: true }).fill("2000");
+  await page
+    .getByRole("button", { name: "Complete cash sale", exact: true })
+    .click();
+  await expect(page.getByText("₱343.70 change", { exact: true })).toBeVisible();
+  const before = await a.owner
+    .from("sales")
+    .select("id")
+    .eq("organization_id", a.organizationId);
+  expect(before.error).toBeNull();
+  expect(before.data).toEqual([]);
+  await context.setOffline(false);
+  await page.getByRole("button", { name: "Sync center", exact: true }).click();
+  await expect(page.locator(".status-tag")).toContainText("synced", {
+    timeout: 60_000,
+  });
+  const saved = await a.owner
+    .from("sales")
+    .select("id,total,payload")
+    .eq("organization_id", a.organizationId)
+    .single();
+  expect(saved.error).toBeNull();
+  expect(Number(saved.data!.total)).toBe(165630);
+  const items = saved.data!.payload.items;
+  expect(items.map((item: { quantity: string }) => item.quantity)).toEqual([
+    "1",
+    "0.25",
+    "0.5",
+    "1.43",
+  ]);
+  expect(items.map((item: { unitPrice: number }) => item.unitPrice)).toEqual([
+    158000, 3500, 3500, 3500,
+  ]);
+  const movements = await a.owner
+    .from("inventory_movements")
+    .select("quantity")
+    .eq("source_id", saved.data!.id)
+    .eq("kind", "sale");
+  expect(movements.error).toBeNull();
+  expect(
+    movements.data!.map((row) => Number(row.quantity)).sort((x, y) => x - y),
+  ).toEqual([-50, -1.43, -0.5, -0.25]);
+  const stock = await a.owner
+    .from("branch_inventory")
+    .select("quantity")
+    .eq("branch_id", a.branchId)
+    .eq("product_id", a.productId)
+    .single();
+  expect(stock.error).toBeNull();
+  expect(Number(stock.data!.quantity)).toBe(9947.82);
+  const retry = await command<{ status: string }>(
+    a.owner,
+    "record_sale",
+    saved.data!.payload,
+  );
+  expect(retry.status).toBe("duplicate");
+  const after = await a.owner
+    .from("inventory_movements")
+    .select("id")
+    .eq("source_id", saved.data!.id)
+    .eq("kind", "sale");
+  expect(after.error).toBeNull();
+  expect(after.data).toHaveLength(4);
+});
+
 test("owner accessibility covers keyboard navigation, narrow reflow and forced colors", async ({
   page,
 }) => {
@@ -165,7 +278,10 @@ test("owner accessibility covers keyboard navigation, narrow reflow and forced c
   await skip.focus();
   await page.keyboard.press("Tab");
   await expect(
-    page.getByRole("link", { name: "AgriStore Point of Sale home", exact: true }),
+    page.getByRole("link", {
+      name: "AgriStore Point of Sale home",
+      exact: true,
+    }),
   ).toBeFocused();
   function contrast(first: string, second: string) {
     const luminance = (color: string) =>
@@ -245,7 +361,9 @@ test("owner accessibility covers keyboard navigation, narrow reflow and forced c
   for (const screen of screens) {
     const navigationName = screen === "Checkout" ? "Checkout POS" : screen;
     await page.setViewportSize({ width: 1440, height: 1000 });
-    await page.getByRole("button", { name: navigationName, exact: true }).click();
+    await page
+      .getByRole("button", { name: navigationName, exact: true })
+      .click();
     await expect(
       page.getByRole("button", { name: navigationName, exact: true }),
     ).toHaveAttribute("aria-current", "page");
