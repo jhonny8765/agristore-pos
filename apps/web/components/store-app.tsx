@@ -94,7 +94,7 @@ import {
   type PendingOperation,
 } from "../lib/operations";
 import { Button } from "./ui/button";
-import { findReadyUpdate } from "../lib/pwa-update";
+import { activateReadyUpdate, findReadyUpdate } from "../lib/pwa-update";
 import { ApprovalForm } from "./approval-form";
 import { HistoryRegister } from "./history-register";
 import type { HistoryKind } from "../lib/history";
@@ -233,6 +233,8 @@ export function StoreApp() {
   const [savingSale, setSavingSale] = useState(false);
   const [historyRevision, setHistoryRevision] = useState(0);
   const [updateFeedback, setUpdateFeedback] = useState("");
+  const [installingUpdate, setInstallingUpdate] = useState(false);
+  const updateLock = useRef(false);
   const [openingImport, setOpeningImport] = useState<{
     name: string;
     branchId: string;
@@ -491,6 +493,13 @@ export function StoreApp() {
     return () => clearInterval(timer);
   }, [ready, online, sync]);
   useEffect(() => {
+    const location = new URL(window.location.href);
+    if (location.searchParams.has("app-update")) {
+      location.searchParams.delete("app-update");
+      window.history.replaceState(window.history.state, "", location.href);
+    }
+  }, []);
+  useEffect(() => {
     if (
       process.env.NODE_ENV !== "production" ||
       !("serviceWorker" in navigator)
@@ -642,7 +651,7 @@ export function StoreApp() {
   }
   async function finishSale(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
-    if (committing.current) return;
+    if (committing.current || updateLock.current) return;
     committing.current = true;
     setBusy(true);
     setSavingSale(true);
@@ -683,6 +692,7 @@ export function StoreApp() {
     }
   }
   function addProduct(p: Product, unitId?: string, batchId?: string | null) {
+    if (updateLock.current) return;
     try {
       const batch = p.batches.find(
         (b) =>
@@ -1312,7 +1322,7 @@ export function StoreApp() {
                       return (
                         <article
                           className={
-                            !lease || isStock
+                            !lease || isStock || installingUpdate
                               ? "product product-unavailable"
                               : "product"
                           }
@@ -1349,7 +1359,7 @@ export function StoreApp() {
                               <button
                                 className="add-product"
                                 onClick={() => addProduct(p)}
-                                disabled={!lease || isStock}
+                                disabled={!lease || isStock || installingUpdate}
                                 aria-label={`Add ${p.name}`}
                               >
                                 <Plus size={17} />
@@ -1636,7 +1646,13 @@ export function StoreApp() {
                   </div>
                   <Button
                     type="submit"
-                    disabled={busy || !lease || !cart.items.length || isStock}
+                    disabled={
+                      busy ||
+                      installingUpdate ||
+                      !lease ||
+                      !cart.items.length ||
+                      isStock
+                    }
                     className="complete-sale"
                   >
                     {savingSale ? "Saving sale…" : "Complete cash sale"}
@@ -3265,6 +3281,7 @@ export function StoreApp() {
                       !registration ||
                       !online ||
                       busy ||
+                      installingUpdate ||
                       !!cart.items.length ||
                       allPendingCount > 0 ||
                       allOperationCount > 0
@@ -3286,34 +3303,66 @@ export function StoreApp() {
                           throw error;
                         }
                         if (!waiting) {
-                          setUpdateFeedback("The installed app is up to date.");
-                          notify("The installed app is up to date.");
-                          return;
-                        }
-                        if (
-                          useCart.getState().items.length ||
-                          committing.current ||
-                          (await db.sales
-                            .where("status")
-                            .notEqual("synced")
-                            .count()) ||
-                          (await pendingOperations(db)).length
-                        ) {
                           setUpdateFeedback(
-                            "Update downloaded. Finish checkout and confirm every pending record before installing it.",
+                            "No new download is available. If an earlier update is not visible, close and reopen AgriStore. Keep this browser's site data.",
                           );
+                          notify("No new app download is available.");
                           return;
                         }
-                        setUpdateFeedback(
-                          "Update downloaded. Restarting the app…",
-                        );
-                        navigator.serviceWorker.addEventListener(
-                          "controllerchange",
-                          () => window.location.reload(),
-                          { once: true },
-                        );
-                        waiting.postMessage({ type: "SKIP_WAITING" });
-                      })
+                        const canRestart = async () => {
+                          const [sales, operations] = await Promise.all([
+                            db.sales.where("status").notEqual("synced").count(),
+                            pendingOperations(db),
+                          ]);
+                          return (
+                            !useCart.getState().items.length &&
+                            !committing.current &&
+                            !sales &&
+                            !operations.length
+                          );
+                        };
+                        updateLock.current = true;
+                        setInstallingUpdate(true);
+                        let restarting = false;
+                        try {
+                          setUpdateFeedback(
+                            "Update downloaded. Installing it before reopening AgriStore…",
+                          );
+                          const result = await activateReadyUpdate(
+                            waiting,
+                            canRestart,
+                            () => {
+                              setUpdateFeedback(
+                                "Update installed. Reopening AgriStore… If this window stays open, close it and reopen AgriStore. Keep this browser's site data.",
+                              );
+                              const destination = new URL(window.location.href);
+                              destination.searchParams.set(
+                                "app-update",
+                                String(Date.now()),
+                              );
+                              destination.hash = "";
+                              window.location.replace(destination.href);
+                            },
+                          );
+                          restarting = result === "restarting";
+                          if (!restarting)
+                            setUpdateFeedback(
+                              "Update ready. Finish checkout and confirm every pending record before reopening AgriStore.",
+                            );
+                        } catch (error) {
+                          setUpdateFeedback(
+                            error instanceof Error
+                              ? error.message
+                              : "Could not install the update. Check again online.",
+                          );
+                          throw error;
+                        } finally {
+                          if (!restarting) {
+                            updateLock.current = false;
+                            setInstallingUpdate(false);
+                          }
+                        }
+                      }, false)
                     }
                   >
                     Check for app update

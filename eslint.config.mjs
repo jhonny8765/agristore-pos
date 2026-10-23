@@ -12,6 +12,7 @@ export default defineConfig([
     "coverage/**",
     "playwright-report/**",
     "test-results/**",
+    ".impeccable/review/**",
   ]),
   {
     settings: { next: { rootDir: "apps/web/" } },
