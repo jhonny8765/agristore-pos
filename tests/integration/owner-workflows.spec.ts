@@ -165,7 +165,7 @@ test("owner accessibility covers keyboard navigation, narrow reflow and forced c
   await skip.focus();
   await page.keyboard.press("Tab");
   await expect(
-    page.getByRole("link", { name: "AgriStore home", exact: true }),
+    page.getByRole("link", { name: "AgriStore Point of Sale home", exact: true }),
   ).toBeFocused();
   function contrast(first: string, second: string) {
     const luminance = (color: string) =>
@@ -182,7 +182,7 @@ test("owner accessibility covers keyboard navigation, narrow reflow and forced c
     return (Math.max(left, right) + 0.05) / (Math.min(left, right) + 0.05);
   }
   const ring = await page
-    .getByRole("link", { name: "AgriStore home", exact: true })
+    .getByRole("link", { name: "AgriStore Point of Sale home", exact: true })
     .evaluate((el) => ({
       ring: getComputedStyle(el).outlineColor,
       background: getComputedStyle(el.closest(".sidebar")!).backgroundColor,
@@ -196,9 +196,19 @@ test("owner accessibility covers keyboard navigation, narrow reflow and forced c
     }));
   expect(contrast(input.border, input.background)).toBeGreaterThanOrEqual(3);
   await page.getByRole("button", { name: "Open shift", exact: true }).click();
-  await page
-    .getByRole("button", { name: "Add Audit feeds", exact: true })
-    .click();
+  const addProduct = page.getByRole("button", {
+    name: "Add Audit feeds",
+    exact: true,
+  });
+  const productTile = page.locator(".product").filter({ has: addProduct });
+  // The tile remains a full-size pointer target; its named button is also
+  // reachable by keyboard without treating every piece of metadata as a label.
+  await productTile.click({ position: { x: 16, y: 16 } });
+  await expect(
+    page.getByRole("button", { name: "Remove Audit feeds", exact: true }),
+  ).toBeVisible();
+  await addProduct.focus();
+  await expect(productTile).toHaveCSS("outline-style", "solid");
   await scan("Checkout with active cart", "desktop");
   for (const name of [
     "Remove Audit feeds",
@@ -232,10 +242,11 @@ test("owner accessibility covers keyboard navigation, narrow reflow and forced c
     "Settings",
   ];
   for (const screen of screens) {
+    const navigationName = screen === "Checkout" ? "Checkout POS" : screen;
     await page.setViewportSize({ width: 1440, height: 1000 });
-    await page.getByRole("button", { name: screen, exact: true }).click();
+    await page.getByRole("button", { name: navigationName, exact: true }).click();
     await expect(
-      page.getByRole("button", { name: screen, exact: true }),
+      page.getByRole("button", { name: navigationName, exact: true }),
     ).toHaveAttribute("aria-current", "page");
     await expect(page.locator("#main h1")).toBeFocused();
     if (
@@ -276,10 +287,10 @@ test("owner accessibility covers keyboard navigation, narrow reflow and forced c
       reducedMotion: "reduce",
     });
     await expect(
-      page.getByRole("button", { name: screen, exact: true }),
+      page.getByRole("button", { name: navigationName, exact: true }),
     ).toHaveCSS("border-top-style", "solid");
     await expect(
-      page.getByRole("button", { name: screen, exact: true }),
+      page.getByRole("button", { name: navigationName, exact: true }),
     ).toHaveCSS("border-top-width", "2px");
     expect(
       await page.evaluate(() => matchMedia("(forced-colors: active)").matches),

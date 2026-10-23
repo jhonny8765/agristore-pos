@@ -1004,10 +1004,14 @@ export function StoreApp() {
         Skip to main content
       </a>
       <aside className="sidebar">
-        <a href="#main" className="wordmark" aria-label="AgriStore home">
+        <a
+          href="#main"
+          className="wordmark"
+          aria-label="AgriStore Point of Sale home"
+        >
           <Sprout size={28} />
           <span>
-            AgriStore<small>POINT OF SALE</small>
+            AgriStore <small>POINT OF SALE</small>
           </span>
         </a>
         <nav aria-label="Main navigation">
@@ -1019,7 +1023,7 @@ export function StoreApp() {
               <button
                 key={id}
                 title={label}
-                aria-label={label}
+                aria-label={id === "pos" ? `${label} POS` : label}
                 className={view === id ? "nav-item active" : "nav-item"}
                 aria-current={view === id ? "page" : undefined}
                 onClick={() => setView(id)}
@@ -1305,12 +1309,13 @@ export function StoreApp() {
                             .toString()
                         : "0";
                       return (
-                        <button
-                          className="product"
+                        <article
+                          className={
+                            !lease || isStock
+                              ? "product product-unavailable"
+                              : "product"
+                          }
                           key={p.id}
-                          onClick={() => addProduct(p)}
-                          disabled={!lease || isStock}
-                          aria-label={`Add ${p.name}`}
                         >
                           <div
                             className={`product-art art-${p.category.toLowerCase().replace(/\W/g, "")}`}
@@ -1340,9 +1345,14 @@ export function StoreApp() {
                             </span>
                             <div className="product-footer">
                               <strong>{money(p.units[0]?.price ?? 0)}</strong>
-                              <span className="add-product">
+                              <button
+                                className="add-product"
+                                onClick={() => addProduct(p)}
+                                disabled={!lease || isStock}
+                                aria-label={`Add ${p.name}`}
+                              >
                                 <Plus size={17} />
-                              </span>
+                              </button>
                             </div>
                             <span
                               className={
@@ -1355,7 +1365,7 @@ export function StoreApp() {
                               hand
                             </span>
                           </div>
-                        </button>
+                        </article>
                       );
                     })}
                   </div>

@@ -492,6 +492,7 @@ form > .button {
   font-size: 13px;
   font-weight: 550;
   min-height: 45px;
+  transition: none;
 }
 .nav-item:hover {
   background: #254d3b;
@@ -853,6 +854,7 @@ form > .button {
   gap: 17px;
 }
 .product {
+  position: relative;
   background: white;
   border: 1px solid var(--line);
   padding: 0;
@@ -864,12 +866,16 @@ form > .button {
     border-color 0.18s ease,
     box-shadow 0.18s ease;
 }
-.product:hover:not(:disabled) {
+.product:hover:not(.product-unavailable) {
   border-color: #9aaa8b;
   box-shadow: 0 6px 16px #23352b0b;
 }
-.product:disabled {
+.product-unavailable {
   opacity: 0.75;
+}
+.product:focus-within {
+  outline: 3px solid var(--focus);
+  outline-offset: 3px;
 }
 .product-art {
   min-height: 54px;
@@ -939,6 +945,9 @@ form > .button {
   font-weight: 750;
 }
 .add-product {
+  border: 0;
+  padding: 0;
+  flex-shrink: 0;
   width: 25px;
   height: 25px;
   display: grid;
@@ -946,6 +955,17 @@ form > .button {
   background: var(--soft);
   border-radius: 5px;
   color: var(--green);
+}
+.add-product::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+}
+.add-product:focus-visible {
+  outline: none;
+}
+.add-product:disabled {
+  opacity: 1;
 }
 .stock-label {
   font-size: 9px;
@@ -2030,6 +2050,7 @@ code {
     border: 2px solid ButtonText;
   }
   :focus-visible,
+  .product:focus-within,
   .sidebar :focus-visible {
     outline-color: Highlight;
   }
