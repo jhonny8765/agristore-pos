@@ -162,9 +162,7 @@ test("a requested update reopens an uncontrolled window while another window kee
     await expect(buildMarker(page)).toHaveAttribute("content", "two");
     await expect.poll(() => completedRecords(page)).toHaveLength(1);
     await page.reload();
-    await page
-      .getByRole("button", { name: "Sync center", exact: true })
-      .click();
+    await page.getByRole("button", { name: /^Sync center/ }).click();
     await expect(page.locator("tbody tr")).toHaveCount(1);
   } finally {
     await app.close();
@@ -180,6 +178,15 @@ test("a waiting update preserves the exact pending sale across offline browser-p
   try {
     let page = context.pages()[0];
     await openPractice(page, app.origin);
+    // The previous scenario intentionally starts uncontrolled. Here the old
+    // worker must control the window so the new revision actually waits.
+    await page.reload();
+    await expect(
+      page.getByRole("button", { name: "Add Grower feeds", exact: true }),
+    ).toBeEnabled();
+    expect(
+      await page.evaluate(() => navigator.serviceWorker.controller !== null),
+    ).toBe(true);
     await page
       .getByRole("button", { name: "Add Grower feeds", exact: true })
       .click();
@@ -222,9 +229,7 @@ test("a waiting update preserves the exact pending sale across offline browser-p
       page.getByRole("button", { name: "Add Grower feeds", exact: true }),
     ).toBeEnabled();
     expect(await completedRecords(page)).toEqual(before);
-    await page
-      .getByRole("button", { name: "Sync center", exact: true })
-      .click();
+    await page.getByRole("button", { name: /^Sync center/ }).click();
     await expect(page.locator("tbody tr")).toHaveCount(1);
   } finally {
     await context.close();
