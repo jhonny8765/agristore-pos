@@ -1,6 +1,6 @@
 {
   "schemaVersion": 2,
-  "generatedAt": "2026-10-23T08:21:41.563Z",
+  "generatedAt": "2026-10-23T09:31:42.836Z",
   "title": "Design System: AgriStore POS",
   "extensions": {
     "colorMeta": {
@@ -350,13 +350,16 @@
       "Do keep currency and quantities aligned and retain tabular numerals.",
       "Do provide a visible focus outline and explicit text for connection, stock, and save states.",
       "Do preserve the responsive receipt access and fixed mobile basket summary on checkout.",
-      "Do keep approval reasons, errors, and keyboard focus within the affected record, with forms contained inside horizontally scrolling tables."
+      "Do keep approval reasons, errors, and keyboard focus within the affected record, with forms contained inside horizontally scrolling tables.",
+      "Do give history table scrolling regions accessible names, keyboard access, and the shared visible focus outline.",
+      "Do keep applied dates, loaded counts, end-of-history feedback, and CSV scope explicit beside the records they describe."
     ],
     "donts": [
       "Don't substitute emoji or text glyphs for the existing line SVG icon vocabulary.",
       "Don't turn operational surfaces into decorative illustrations or marketing panels.",
       "Don't introduce heavy resting shadows on record panels.",
-      "Don't reduce essential product and payment copy to the smallest incidental text sizes present in older supporting UI."
+      "Don't reduce essential product and payment copy to the smallest incidental text sizes present in older supporting UI.",
+      "Don't imply that a loaded-row CSV includes matching records that have not been loaded."
     ]
   }
 }

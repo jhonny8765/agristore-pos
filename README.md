@@ -55,6 +55,8 @@ Receipt history loads 50 records at a time with **Load older receipts**. Refunds
 
 See the [overall review and improvement plan](docs/improvement-plan.md) for repaired bugs, measured scope and the remaining priorities.
 
+Purchasing, transfer, count and audit registers offer branch-scoped older pages, Manila date ranges and CSV export of the loaded rows. See [finding and exporting older records](docs/reports.md) for scope and date meanings.
+
 ## Architecture and deployment
 
 `apps/web` contains the Next.js PWA. `packages/domain` owns exact arithmetic and versioned sale contracts; `packages/offline` owns IndexedDB persistence and synchronization. `supabase/migrations` is the canonical schema history. The public API is `agri_command(action, data)`; privileged implementations stay in an unexposed private schema and independently authorize every command.

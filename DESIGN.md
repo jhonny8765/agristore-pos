@@ -128,6 +128,8 @@ The palette carries agricultural familiarity through forest and pale leaf greens
 - **Correction Red:** destructive actions and error emphasis.
 - **Focus Green:** keyboard focus outlines.
 
+History tables use Stock Ink for column headers and Muted Ledger for supporting identifiers, preserving a clear hierarchy between scan labels, record values, and references.
+
 **The Forest Anchor Rule.** Use forest for navigation, selected category filters, primary actions, and financial emphasis; use pale green for selected navigation and supporting surfaces.
 
 ## Typography
@@ -148,6 +150,8 @@ The palette carries agricultural familiarity through forest and pale leaf greens
 
 **The Precise Figures Rule.** Keep tabular numerals throughout the interface and right-align numerical table columns so quantities and money can be scanned vertically.
 
+Align quantity column headers with their right-aligned values, including receiving line counts, transferred quantities, and physical-count figures.
+
 ## Layout
 
 The desktop shell uses a fixed forest rail (220px) and a white branch and connection bar (73px tall). The workspace has horizontal gutters (36px) and a maximum content width (1900px). The rail narrows at (1250px), becomes an icon rail at (950px), and reaches (61px) at the mobile breakpoint.
@@ -159,6 +163,8 @@ At (730px) and below, checkout stacks into one column, retains a two-column prod
 Spacing is compact and contextual, using the repeated frontmatter steps rather than a uniform large-card rhythm. Tables remain horizontally scrollable; numeric columns align right. Panel supporting prose is bounded to (72ch).
 
 Inline forms inside tables size to the available table viewport, wrap their copy and actions, and retain clearance for the shared focus outline. Expanding a row action keeps horizontal overflow inside the record panel.
+
+History registers retain the branch bar, connection state, navigation, and main operational task within the existing shell. Date filters, footer copy, and action groups wrap at narrow widths. Keep wide records scrolling inside their panel; each history table viewport is a named, keyboard-focusable region with the shared visible focus outline.
 
 ## Elevation & Depth
 
@@ -213,6 +219,16 @@ Keep the entered reason visible when validation or submission fails, associate t
 
 Keep confirmed receipts in the ruled table, with the loaded count and branch beside an explicit older-receipts action. Distinguish more available records from the end of history in text. Loading older records extends the existing list; offline and pending states disable the action.
 
+### History Registers
+
+Receiving, transfers, physical counts, and audit history share a ruled record panel. Place the branch scope and Asia/Manila date context beneath its heading; identify transfer dates as dispatch dates and other register dates as recorded dates. The audit scope also identifies business-level events.
+
+Use labeled From date and Through date fields with explicit Apply dates and Clear dates actions. Keep draft field values separate from the applied range. The footer reports the applied range, loaded row count, and whether older records remain or matching history has ended. Loading older records appends to the visible list; a failed next-page request preserves the loaded pages and provides Retry history alongside its error.
+
+The export action reads “Export loaded rows (CSV)” and nearby copy explains that it includes only rows loaded in the current register. Include branch scope in the export and retain the instruction to load older records before exporting more. Empty results offer another range or Clear dates; offline feedback explains that refreshing and loading older records require reconnection.
+
+Audit details expand through a native View details summary with the shared keyboard focus outline. Wrap the expanded detail content within its column instead of widening the page.
+
 ### Operational Feedback
 
 Use local status text to describe the actual stage of an operation. App update feedback distinguishes checking and downloading, failure, an up-to-date installation, a downloaded update waiting for checkout and pending records, and restarting. Keep that feedback near its action and expose progress text as a status announcement.
@@ -234,6 +250,8 @@ The Current branch picker in the top bar changes the displayed branch and its st
 - **Do** provide a visible focus outline and explicit text for connection, stock, and save states.
 - **Do** preserve the responsive receipt access and fixed mobile basket summary on checkout.
 - **Do** keep approval reasons, errors, and keyboard focus within the affected record, with forms contained inside horizontally scrolling tables.
+- **Do** give history table scrolling regions accessible names, keyboard access, and the shared visible focus outline.
+- **Do** keep applied dates, loaded counts, end-of-history feedback, and CSV scope explicit beside the records they describe.
 
 ### Don't:
 
@@ -241,4 +259,5 @@ The Current branch picker in the top bar changes the displayed branch and its st
 - **Don't** turn operational surfaces into decorative illustrations or marketing panels.
 - **Don't** introduce heavy resting shadows on record panels.
 - **Don't** reduce essential product and payment copy to the smallest incidental text sizes present in older supporting UI.
+- **Don't** imply that a loaded-row CSV includes matching records that have not been loaded.
 
