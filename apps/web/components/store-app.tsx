@@ -97,6 +97,7 @@ import { Button } from "./ui/button";
 import { findReadyUpdate } from "../lib/pwa-update";
 import { ApprovalForm } from "./approval-form";
 import { HistoryRegister } from "./history-register";
+import type { HistoryKind } from "../lib/history";
 
 type View =
   | "pos"
@@ -742,13 +743,29 @@ export function StoreApp() {
     products.find((p) => p.id === id)?.name ?? String(id ?? "");
   const branchName = (id: unknown) =>
     branchList.find((b) => b.id === id)?.name ?? "Branch";
-  const table = (headers: string[], body: React.ReactNode) => (
-    <div className="table-wrap">
+  const table = (
+    headers: string[],
+    body: React.ReactNode,
+    kind?: HistoryKind,
+  ) => (
+    <div
+      className={kind ? "table-wrap history-table" : "table-wrap"}
+      data-kind={kind}
+      role={kind ? "region" : undefined}
+      tabIndex={kind ? 0 : undefined}
+      aria-label={
+        kind
+          ? `${{ purchases: "Receiving", transfers: "Transfer", counts: "Count", audit: "Audit" }[kind]} history records`
+          : undefined
+      }
+    >
       <table>
         <thead>
           <tr>
             {headers.map((h) => (
-              <th key={h}>{h}</th>
+              <th key={h} scope="col">
+                {h}
+              </th>
             ))}
           </tr>
         </thead>
@@ -1163,8 +1180,8 @@ export function StoreApp() {
           {!practice && view === "overview" && (
             <p className="muted">
               Sales totals include all confirmed records. Flag, reconciliation
-              and movement previews show up to the most recent 1,000 entries. The
-              audit register below has its own branch and date filters.
+              and movement previews show up to the most recent 1,000 entries.
+              The audit register below has its own branch and date filters.
             </p>
           )}
           {!practice &&
@@ -1830,6 +1847,7 @@ export function StoreApp() {
                           </td>
                         </tr>
                       )),
+                      "audit",
                     )
                   }
                 </HistoryRegister>
@@ -2407,6 +2425,7 @@ export function StoreApp() {
                           </td>
                         </tr>
                       )),
+                      "purchases",
                     )
                   }
                 </HistoryRegister>
@@ -2485,6 +2504,7 @@ export function StoreApp() {
                           </td>
                         </tr>
                       )),
+                      "transfers",
                     )
                   }
                 </HistoryRegister>
@@ -2636,6 +2656,7 @@ export function StoreApp() {
                           </td>
                         </tr>
                       )),
+                      "counts",
                     )
                   }
                 </HistoryRegister>

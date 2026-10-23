@@ -490,6 +490,18 @@ test("branch history pages beyond 1000, filters Manila days, recovers a failed p
     await expect(
       register.getByRole("button", { name: "Apply dates", exact: true }),
     ).toBeVisible();
+    if (width === 390) {
+      const scrollArea = register.getByRole("region", {
+        name: "Receiving history records",
+        exact: true,
+      });
+      await scrollArea.focus();
+      const before = await scrollArea.evaluate((el) => el.scrollLeft);
+      await scrollArea.press("ArrowRight");
+      await expect
+        .poll(() => scrollArea.evaluate((el) => el.scrollLeft))
+        .toBeGreaterThan(before);
+    }
   }
   await page
     .getByRole("combobox", { name: "Current branch", exact: true })

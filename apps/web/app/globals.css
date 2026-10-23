@@ -69,7 +69,9 @@ button:focus-visible,
 a:focus-visible,
 input:focus-visible,
 select:focus-visible,
-textarea:focus-visible {
+textarea:focus-visible,
+summary:focus-visible,
+.history-table:focus-visible {
   outline: 3px solid var(--focus);
   outline-offset: 3px;
 }
@@ -1453,6 +1455,19 @@ tbody tr:last-child td {
 }
 .history-register > .muted {
   margin: 8px 0 18px;
+}
+.history-table th {
+  color: var(--ink);
+}
+.history-table td small {
+  color: var(--muted);
+}
+.history-table[data-kind="purchases"] :is(th, td):nth-child(5),
+.history-table[data-kind="transfers"] :is(th, td):nth-child(3),
+.history-table[data-kind="counts"] :is(th, td):nth-child(2),
+.history-table[data-kind="counts"] :is(th, td):nth-child(3),
+.history-table[data-kind="counts"] :is(th, td):nth-child(4) {
+  text-align: right;
 }
 .history-filters {
   display: flex;
