@@ -870,8 +870,9 @@ form > .button {
   border-color: #9aaa8b;
   box-shadow: 0 6px 16px #23352b0b;
 }
-.product-unavailable {
-  opacity: 0.75;
+.product-unavailable .add-product {
+  background: var(--line);
+  color: var(--muted);
 }
 .product:focus-within {
   outline: 3px solid var(--focus);
