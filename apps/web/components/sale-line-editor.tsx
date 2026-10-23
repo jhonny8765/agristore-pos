@@ -237,7 +237,7 @@ export function SaleLineEditor({
           g{budgetMode ? " · weight not confirmed" : ""}
         </p>
       )}
-      {kilo && (
+      {kilo && !budgetMode && (
         <div
           className="weight-shortcuts"
           role="group"
@@ -369,6 +369,7 @@ export function SaleLineEditor({
               type="button"
               size="sm"
               variant="ghost"
+              aria-label="Cancel peso entry"
               disabled={disabled}
               onClick={() => {
                 const previous = original!;
@@ -380,7 +381,7 @@ export function SaleLineEditor({
                 setBudgetError("");
               }}
             >
-              Cancel peso entry
+              Cancel
             </Button>
           </div>
         </div>
