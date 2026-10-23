@@ -2,6 +2,9 @@ import { randomUUID } from "node:crypto";
 import { createClient, type SupabaseClient } from "@supabase/supabase-js";
 import { expect, test, type Page } from "@playwright/test";
 import { salesPage } from "../../apps/web/lib/api";
+import { historyPage } from "../../apps/web/lib/history-api";
+import type { HistoryCursor, HistoryKind } from "../../apps/web/lib/history";
+import { readFile } from "node:fs/promises";
 
 const api = process.env.NEXT_PUBLIC_SUPABASE_URL;
 const key = process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY;
@@ -215,15 +218,13 @@ test("owner approvals work without browser dialogs, stock refreshes without a sh
     .getByRole("combobox", { name: "Current branch", exact: true })
     .selectOption(a.branches[1].id);
   await page.getByRole("button", { name: "Purchasing", exact: true }).click();
-  await page
-    .getByLabel("Opening stock CSV", { exact: true })
-    .setInputFiles({
-      name: "test-opening.csv",
-      mimeType: "text/csv",
-      buffer: Buffer.from(
-        "sku,unit,quantity,lot,expiresOn\nAUDIT-FEED,Kilo,20,,\n",
-      ),
-    });
+  await page.getByLabel("Opening stock CSV", { exact: true }).setInputFiles({
+    name: "test-opening.csv",
+    mimeType: "text/csv",
+    buffer: Buffer.from(
+      "sku,unit,quantity,lot,expiresOn\nAUDIT-FEED,Kilo,20,,\n",
+    ),
+  });
   const opening = page.getByRole("form", {
     name: "Confirm opening stock",
     exact: true,
@@ -295,6 +296,220 @@ test("owner approvals work without browser dialogs, stock refreshes without a sh
     page.getByRole("heading", { name: "No transfers yet", exact: true }),
   ).toBeVisible();
   expect(errors).toEqual([]);
+});
+
+test("branch history pages beyond 1000, filters Manila days, recovers a failed page and exports only loaded rows", async ({
+  page,
+  context,
+}) => {
+  test.setTimeout(240_000);
+  const a = await business();
+  const expected = new Set<string>();
+  for (let start = 0; start < 1005; start += 25) {
+    await Promise.all(
+      Array.from({ length: Math.min(25, 1005 - start) }, async (_, index) => {
+        const receiptId = randomUUID();
+        expected.add(receiptId);
+        await command(a.owner, "receive_stock", {
+          organizationId: a.organizationId,
+          branchId: a.branchId,
+          receiptId,
+          source: "purchase",
+          reference: `TEST history ${start + index}`,
+          items: [
+            {
+              productId: a.productId,
+              unitId: a.unitId,
+              quantity: "1",
+              lot: "",
+              expiresOn: null,
+            },
+          ],
+        });
+      }),
+    );
+  }
+  const destination = a.branches[1].id as string;
+  for (let i = 0; i < 55; i++) {
+    await command(a.owner, "dispatch_transfer", {
+      organizationId: a.organizationId,
+      branchId: a.branchId,
+      destinationBranchId: destination,
+      transferId: randomUUID(),
+      productId: a.productId,
+      batchId: null,
+      quantity: "1",
+    });
+    await command(a.owner, "submit_count", {
+      organizationId: a.organizationId,
+      branchId: a.branchId,
+      countId: randomUUID(),
+      productId: a.productId,
+      batchId: null,
+      counted: "10000",
+      reason: "TEST report history fixture",
+    });
+  }
+  const today = new Intl.DateTimeFormat("en-CA", {
+    timeZone: "Asia/Manila",
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+  }).format(new Date());
+  const range = { from: today, to: today };
+  async function collect(kind: HistoryKind, branchId = a.branchId) {
+    const ids = new Set<string>();
+    let before: HistoryCursor | undefined;
+    do {
+      const result = await historyPage(
+        { kind, organizationId: a.organizationId, branchId, range, before },
+        a.owner,
+      );
+      for (const row of result.rows) {
+        expect(ids.has(String(row.id))).toBe(false);
+        ids.add(String(row.id));
+      }
+      before = result.next;
+    } while (before);
+    return ids;
+  }
+  // The initial business fixture contributes one additional receiving record.
+  const receipts = await collect("purchases");
+  expect(receipts.size).toBe(1006);
+  for (const id of expected) expect(receipts.has(id)).toBe(true);
+  expect((await collect("transfers")).size).toBe(55);
+  expect((await collect("transfers", destination)).size).toBe(55);
+  expect((await collect("counts")).size).toBe(55);
+  expect((await collect("audit")).size).toBeGreaterThan(1000);
+  for (const kind of ["purchases", "transfers", "counts"] as const)
+    expect((await collect(kind, a.branches[2].id as string)).size).toBe(0);
+  expect(
+    (
+      await historyPage(
+        {
+          kind: "purchases",
+          organizationId: a.organizationId,
+          branchId: a.branchId,
+          range: { from: "2099-01-01", to: "2099-01-01" },
+        },
+        a.owner,
+      )
+    ).rows,
+  ).toEqual([]);
+  const b = await business("Other business product");
+  expect(
+    (
+      await historyPage(
+        {
+          kind: "purchases",
+          organizationId: a.organizationId,
+          branchId: a.branchId,
+          range,
+        },
+        b.owner,
+      )
+    ).rows,
+  ).toEqual([]);
+
+  await page.goto("/");
+  await login(page, a);
+  await page.getByRole("button", { name: "Purchasing", exact: true }).click();
+  const register = page.getByRole("region", {
+    name: "Receiving history",
+    exact: true,
+  });
+  await expect(register.locator("tbody tr")).toHaveCount(50);
+  let failPage = true;
+  await page.route("**/rest/v1/purchase_receipts?*", async (route) => {
+    if (failPage) {
+      failPage = false;
+      await route.abort("failed");
+    } else await route.continue();
+  });
+  await register
+    .getByRole("button", { name: "Load older records", exact: true })
+    .click();
+  await expect(register.getByRole("alert")).toBeVisible();
+  await expect(register.locator("tbody tr")).toHaveCount(50);
+  await register
+    .getByRole("button", { name: "Retry history", exact: true })
+    .click();
+  await expect(register.locator("tbody tr")).toHaveCount(100);
+  const downloadPromise = page.waitForEvent("download");
+  await register
+    .getByRole("button", { name: "Export loaded rows (CSV)", exact: true })
+    .click();
+  const download = await downloadPromise;
+  const csv = await readFile((await download.path())!, "utf8");
+  expect(csv.split("\r\n")).toHaveLength(101);
+  expect(csv).toContain('"Branch scope","ID","Reference"');
+  expect(csv).toContain("TEST history");
+  await context.setOffline(true);
+  await expect(
+    register.getByRole("button", { name: "Apply dates", exact: true }),
+  ).toBeDisabled();
+  await expect(register.locator("tbody tr")).toHaveCount(100);
+  await context.setOffline(false);
+  await expect(register.locator("tbody tr")).toHaveCount(50);
+  await register.getByLabel("From date", { exact: true }).fill("2099-01-01");
+  await register.getByLabel("Through date", { exact: true }).fill("2099-01-01");
+  await register
+    .getByRole("button", { name: "Apply dates", exact: true })
+    .click();
+  await expect(
+    register.getByRole("heading", {
+      name: "No records match these dates.",
+      exact: true,
+    }),
+  ).toBeVisible();
+  await expect(
+    register.getByRole("button", {
+      name: "Export loaded rows (CSV)",
+      exact: true,
+    }),
+  ).toBeDisabled();
+  await register.getByLabel("From date", { exact: true }).fill("2099-01-02");
+  await register
+    .getByRole("button", { name: "Apply dates", exact: true })
+    .click();
+  await expect(register.getByRole("alert")).toContainText("end date");
+  await expect(register.getByLabel("From date", { exact: true })).toHaveValue(
+    "2099-01-02",
+  );
+  await register
+    .getByRole("button", { name: "Clear dates", exact: true })
+    .click();
+  await expect(register.locator("tbody tr")).toHaveCount(50);
+  for (const width of [1440, 390, 418]) {
+    await page.setViewportSize({ width, height: 900 });
+    expect(
+      await page.evaluate(
+        () => document.documentElement.scrollWidth <= window.innerWidth,
+      ),
+    ).toBe(true);
+    await expect(
+      register.getByRole("button", { name: "Apply dates", exact: true }),
+    ).toBeVisible();
+  }
+  await page
+    .getByRole("combobox", { name: "Current branch", exact: true })
+    .selectOption(a.branches[2].id as string);
+  const empty = page.getByRole("region", {
+    name: "Receiving history",
+    exact: true,
+  });
+  await expect(
+    empty.getByRole("heading", {
+      name: "No receiving records yet",
+      exact: true,
+    }),
+  ).toBeVisible();
+  await expect(
+    empty.getByRole("button", {
+      name: "Export loaded rows (CSV)",
+      exact: true,
+    }),
+  ).toBeDisabled();
 });
 
 test("receipt history crosses 1000 rows without losing equal-microsecond timestamps", async ({

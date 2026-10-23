@@ -1443,8 +1443,55 @@ tbody tr:last-child td {
   padding: 6px;
   white-space: normal;
 }
-.approval-form p { margin-bottom: 12px; }
-.approval-actions { display: flex; flex-wrap: wrap; gap: 8px; }
+.approval-form p {
+  margin-bottom: 12px;
+}
+.approval-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+.history-register > .muted {
+  margin: 8px 0 18px;
+}
+.history-filters {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  gap: 12px;
+  margin-bottom: 20px;
+}
+.history-filters .field {
+  flex: 1 1 160px;
+  min-width: 0;
+  max-width: 240px;
+  margin: 0;
+}
+.history-filters .button {
+  min-height: 43px;
+}
+.history-footer {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  align-items: center;
+  gap: 14px;
+  margin: 20px 0 10px;
+}
+.history-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+.history-empty {
+  padding: 22px 0;
+}
+.history-details {
+  max-width: 50ch;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  padding: 12px 0;
+}
 .branch-forms form {
   display: flex;
   gap: 10px;

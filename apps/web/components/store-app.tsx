@@ -96,6 +96,7 @@ import {
 import { Button } from "./ui/button";
 import { findReadyUpdate } from "../lib/pwa-update";
 import { ApprovalForm } from "./approval-form";
+import { HistoryRegister } from "./history-register";
 
 type View =
   | "pos"
@@ -122,8 +123,8 @@ const viewTables: Record<View, string[]> = {
   overview: ["audit_events", "cashier_shifts", "inventory_movements"],
   inventory: [],
   receiving: ["suppliers"],
-  transfers: ["stock_transfers"],
-  counts: ["stock_counts"],
+  transfers: [],
+  counts: [],
   sales: [],
   sync: [],
   settings: ["devices", "staff_memberships"],
@@ -227,6 +228,7 @@ export function StoreApp() {
   const [authMode, setAuthMode] = useState<"login" | "signup">("login");
   const [salesCursor, setSalesCursor] = useState<SalesCursor>();
   const [savingSale, setSavingSale] = useState(false);
+  const [historyRevision, setHistoryRevision] = useState(0);
   const [updateFeedback, setUpdateFeedback] = useState("");
   const [openingImport, setOpeningImport] = useState<{
     name: string;
@@ -519,8 +521,10 @@ export function StoreApp() {
             "Could not confirm this action. Your original request is retained.",
           );
     } finally {
-      if (generation === contextGeneration.current && refresh)
+      if (generation === contextGeneration.current && refresh) {
+        setHistoryRevision((revision) => revision + 1);
         await refreshLocal().catch(fail);
+      }
       operationBusy.current = false;
       setBusy(false);
     }
@@ -752,6 +756,14 @@ export function StoreApp() {
       </table>
     </div>
   );
+  const historyProps = {
+    organizationId: member?.organizationId ?? "",
+    branchId,
+    branchName: selectedBranch?.name ?? "Branch",
+    online,
+    disabled: busy,
+    revision: historyRevision,
+  };
   const Notice = (
     <>
       {error && (
@@ -1136,6 +1148,7 @@ export function StoreApp() {
                     void run(async () => {
                       await refreshCloud();
                       if (lease) await sync();
+                      setHistoryRevision((revision) => revision + 1);
                       notify("Records refreshed.");
                     }, false)
                   }
@@ -1149,8 +1162,9 @@ export function StoreApp() {
           {Notice}
           {!practice && view === "overview" && (
             <p className="muted">
-              Sales totals include all confirmed records. Activity and
-              reconciliation lists show up to the most recent 1,000 entries.
+              Sales totals include all confirmed records. Flag, reconciliation
+              and movement previews show up to the most recent 1,000 entries. The
+              audit register below has its own branch and date filters.
             </p>
           )}
           {!practice &&
@@ -1768,6 +1782,58 @@ export function StoreApp() {
                   />
                 )}
               </section>
+              {!practice && (
+                <HistoryRegister
+                  {...historyProps}
+                  key={`audit:${member.organizationId}:${branchId}`}
+                  title="Audit register"
+                  kind="audit"
+                  emptyTitle="No audit events recorded"
+                  columns={[
+                    { label: "Event ID", value: (r) => r.id },
+                    { label: "Action", value: (r) => r.action },
+                    {
+                      label: "Branch",
+                      value: (r) =>
+                        r.branch_id ? branchName(r.branch_id) : "Business",
+                    },
+                    { label: "Actor ID", value: (r) => r.actor_id },
+                    { label: "Source ID", value: (r) => r.source_id },
+                    {
+                      label: "Details",
+                      value: (r) => JSON.stringify(r.details),
+                    },
+                    { label: "Recorded at", value: (r) => r.created_at },
+                  ]}
+                >
+                  {(records) =>
+                    table(
+                      ["Recorded", "Action", "Scope", "Reference", "Details"],
+                      records.map((r) => (
+                        <tr key={str(r, "id")}>
+                          <td>{when(r.created_at)}</td>
+                          <td>{str(r, "action").replaceAll("_", " ")}</td>
+                          <td>
+                            {r.branch_id ? branchName(r.branch_id) : "Business"}
+                          </td>
+                          <td>
+                            {str(r, "source_id").slice(0, 8) || "—"}
+                            <small>Event {str(r, "id")}</small>
+                          </td>
+                          <td>
+                            <details>
+                              <summary>View details</summary>
+                              <pre className="history-details">
+                                {JSON.stringify(r.details, null, 2)}
+                              </pre>
+                            </details>
+                          </td>
+                        </tr>
+                      )),
+                    )
+                  }
+                </HistoryRegister>
+              )}
             </>
           )}
 
@@ -2049,307 +2115,380 @@ export function StoreApp() {
           )}
 
           {view === "receiving" && (
-            <div className="two-column">
-              <section className="panel">
-                <h2>Receive a delivery</h2>
-                <p className="muted">
-                  Record actual goods received. Each receipt creates stock
-                  journal entries.
-                </p>
-                <form
-                  onSubmit={(e) => {
-                    e.preventDefault();
-                    const form = e.currentTarget,
-                      f = new FormData(form);
-                    void run(async () => {
-                      const p = products.find((p) =>
-                        p.units.some((u) => u.id === inputValue(f, "unit")),
-                      );
-                      if (!p) throw new Error("Select a product");
-                      await onlineOperation(
-                        db,
-                        member.userId,
-                        "receive_stock",
-                        {
-                          ...context(),
-                          reference: inputValue(f, "reference"),
-                          source: "purchase",
-                          supplierId: inputValue(f, "supplier") || null,
-                          items: [
-                            {
-                              productId: p.id,
-                              unitId: inputValue(f, "unit"),
-                              quantity: inputValue(f, "quantity"),
-                              lot: inputValue(f, "lot"),
-                              expiresOn: inputValue(f, "expires") || null,
-                            },
-                          ],
-                        },
-                        "receiptId",
-                      );
-                      await applySnapshot(
-                        db,
-                        await command<Snapshot>("snapshot", {
-                          ...context(),
-                          transactionIds: sales.map((s) => s.id),
-                        }),
-                      );
-                      form.reset();
-                      notify("Delivery received and stock updated.");
-                    });
-                  }}
-                >
-                  <Field label="Supplier">
-                    <select name="supplier">
-                      <option value="">No supplier selected</option>
-                      {(cloud.suppliers ?? []).map((r) => (
-                        <option key={str(r, "id")} value={str(r, "id")}>
-                          {str(r, "name")}
-                        </option>
-                      ))}
-                    </select>
-                  </Field>
-                  <Field label="Delivery / invoice reference">
-                    <input name="reference" required />
-                  </Field>
-                  <Field label="Product and unit">
-                    <select name="unit" required>
-                      {products.flatMap((p) =>
-                        p.units.map((u) => (
-                          <option key={u.id} value={u.id}>
-                            {p.name} · {u.name}
-                          </option>
-                        )),
-                      )}
-                    </select>
-                  </Field>
-                  <Field label="Quantity received">
-                    <input
-                      name="quantity"
-                      type="number"
-                      min="0.000001"
-                      step="0.000001"
-                      required
-                    />
-                  </Field>
-                  <div className="form-grid">
-                    <Field label="Lot / batch">
-                      <input name="lot" />
-                    </Field>
-                    <Field label="Expiry date">
-                      <input name="expires" type="date" />
-                    </Field>
-                  </div>
-                  <Button
-                    disabled={
-                      busy || !online || practice || member.role === "cashier"
-                    }
-                  >
-                    Receive stock
-                    <ArrowDownToLine size={16} />
-                  </Button>
-                </form>
-              </section>
-              <div>
+            <>
+              <div className="two-column">
                 <section className="panel">
-                  <h2>Suppliers</h2>
-                  {(cloud.suppliers ?? []).length ? (
-                    <ul className="plain-list">
-                      {(cloud.suppliers ?? []).map((s) => (
-                        <li key={str(s, "id")}>
-                          <strong>{str(s, "name")}</strong>
-                          <small>
-                            {str(s, "contact") || "No contact details"}
-                          </small>
-                        </li>
-                      ))}
-                    </ul>
-                  ) : (
-                    <p className="muted">No suppliers added yet.</p>
-                  )}
+                  <h2>Receive a delivery</h2>
+                  <p className="muted">
+                    Record actual goods received. Each receipt creates stock
+                    journal entries.
+                  </p>
                   <form
                     onSubmit={(e) => {
                       e.preventDefault();
-                      const f = new FormData(e.currentTarget);
+                      const form = e.currentTarget,
+                        f = new FormData(form);
                       void run(async () => {
-                        await command("create_supplier", {
-                          ...context(),
-                          name: inputValue(f, "name"),
-                          contact: inputValue(f, "contact"),
-                        });
-                        notify("Supplier added.");
+                        const p = products.find((p) =>
+                          p.units.some((u) => u.id === inputValue(f, "unit")),
+                        );
+                        if (!p) throw new Error("Select a product");
+                        await onlineOperation(
+                          db,
+                          member.userId,
+                          "receive_stock",
+                          {
+                            ...context(),
+                            reference: inputValue(f, "reference"),
+                            source: "purchase",
+                            supplierId: inputValue(f, "supplier") || null,
+                            items: [
+                              {
+                                productId: p.id,
+                                unitId: inputValue(f, "unit"),
+                                quantity: inputValue(f, "quantity"),
+                                lot: inputValue(f, "lot"),
+                                expiresOn: inputValue(f, "expires") || null,
+                              },
+                            ],
+                          },
+                          "receiptId",
+                        );
+                        await applySnapshot(
+                          db,
+                          await command<Snapshot>("snapshot", {
+                            ...context(),
+                            transactionIds: sales.map((s) => s.id),
+                          }),
+                        );
+                        form.reset();
+                        notify("Delivery received and stock updated.");
                       });
                     }}
                   >
-                    <Field label="Supplier name">
-                      <input name="name" required />
+                    <Field label="Supplier">
+                      <select name="supplier">
+                        <option value="">No supplier selected</option>
+                        {(cloud.suppliers ?? []).map((r) => (
+                          <option key={str(r, "id")} value={str(r, "id")}>
+                            {str(r, "name")}
+                          </option>
+                        ))}
+                      </select>
                     </Field>
-                    <Field label="Contact details">
-                      <input name="contact" />
+                    <Field label="Delivery / invoice reference">
+                      <input name="reference" required />
                     </Field>
+                    <Field label="Product and unit">
+                      <select name="unit" required>
+                        {products.flatMap((p) =>
+                          p.units.map((u) => (
+                            <option key={u.id} value={u.id}>
+                              {p.name} · {u.name}
+                            </option>
+                          )),
+                        )}
+                      </select>
+                    </Field>
+                    <Field label="Quantity received">
+                      <input
+                        name="quantity"
+                        type="number"
+                        min="0.000001"
+                        step="0.000001"
+                        required
+                      />
+                    </Field>
+                    <div className="form-grid">
+                      <Field label="Lot / batch">
+                        <input name="lot" />
+                      </Field>
+                      <Field label="Expiry date">
+                        <input name="expires" type="date" />
+                      </Field>
+                    </div>
                     <Button
-                      variant="outline"
                       disabled={
-                        !online ||
-                        busy ||
-                        practice ||
-                        !["owner", "manager"].includes(member.role)
+                        busy || !online || practice || member.role === "cashier"
                       }
                     >
-                      Add supplier
+                      Receive stock
+                      <ArrowDownToLine size={16} />
                     </Button>
                   </form>
                 </section>
-                {isOwner && (
+                <div>
                   <section className="panel">
-                    <h2>Import opening stock</h2>
-                    <p className="muted">
-                      CSV columns: <code>sku,unit,quantity,lot,expiresOn</code>.
-                      Use one branch’s verified opening count per file. Import
-                      once; correct mistakes through approved counts.
-                    </p>
-                    <input
-                      aria-label="Opening stock CSV"
-                      type="file"
-                      accept=".csv,text/csv"
-                      disabled={!online || busy || practice}
-                      onChange={(e) => {
-                        const file = e.target.files?.[0];
-                        if (!file) return;
-                        void run(async () => {
-                          const { parseOpeningCSV } =
-                            await import("../lib/import");
-                          const records = parseOpeningCSV(
-                            await file.text(),
-                            products,
-                          );
-                          setOpeningImport({
-                            name: file.name,
-                            branchId,
-                            items: records,
-                          });
-                        });
-                        e.currentTarget.value = "";
-                      }}
-                    />
-                    {openingImport && openingImport.branchId === branchId && (
-                      <form
-                        className="spaced-form"
-                        aria-label="Confirm opening stock"
-                        onSubmit={(e) => {
-                          e.preventDefault();
-                          void run(async () => {
-                            await onlineOperation(
-                              db,
-                              member.userId,
-                              "receive_stock",
-                              {
-                                ...context(),
-                                source: "opening",
-                                reference: openingImport.name,
-                                items: openingImport.items,
-                              },
-                              "receiptId",
-                            );
-                            await applySnapshot(
-                              db,
-                              await command<Snapshot>("snapshot", {
-                                ...context(),
-                                transactionIds: sales.map((s) => s.id),
-                              }),
-                            );
-                            notify(
-                              "Opening stock imported. Verify the Inventory totals before selling.",
-                            );
-                            setOpeningImport(undefined);
-                          });
-                        }}
-                      >
-                        <p>
-                          {openingImport.name}: {openingImport.items.length}{" "}
-                          opening-stock lines for {selectedBranch?.name}.
-                        </p>
-                        <label className="checkbox">
-                          <input type="checkbox" required />I verified this
-                          branch’s physical opening count.
-                        </label>
-                        <Button disabled={!online || busy || practice}>
-                          Confirm opening stock import
-                        </Button>
-                        <Button
-                          type="button"
-                          variant="ghost"
-                          disabled={busy}
-                          onClick={() => setOpeningImport(undefined)}
-                        >
-                          Cancel import
-                        </Button>
-                      </form>
+                    <h2>Suppliers</h2>
+                    {(cloud.suppliers ?? []).length ? (
+                      <ul className="plain-list">
+                        {(cloud.suppliers ?? []).map((s) => (
+                          <li key={str(s, "id")}>
+                            <strong>{str(s, "name")}</strong>
+                            <small>
+                              {str(s, "contact") || "No contact details"}
+                            </small>
+                          </li>
+                        ))}
+                      </ul>
+                    ) : (
+                      <p className="muted">No suppliers added yet.</p>
                     )}
+                    <form
+                      onSubmit={(e) => {
+                        e.preventDefault();
+                        const f = new FormData(e.currentTarget);
+                        void run(async () => {
+                          await command("create_supplier", {
+                            ...context(),
+                            name: inputValue(f, "name"),
+                            contact: inputValue(f, "contact"),
+                          });
+                          notify("Supplier added.");
+                        });
+                      }}
+                    >
+                      <Field label="Supplier name">
+                        <input name="name" required />
+                      </Field>
+                      <Field label="Contact details">
+                        <input name="contact" />
+                      </Field>
+                      <Button
+                        variant="outline"
+                        disabled={
+                          !online ||
+                          busy ||
+                          practice ||
+                          !["owner", "manager"].includes(member.role)
+                        }
+                      >
+                        Add supplier
+                      </Button>
+                    </form>
                   </section>
-                )}
+                  {isOwner && (
+                    <section className="panel">
+                      <h2>Import opening stock</h2>
+                      <p className="muted">
+                        CSV columns:{" "}
+                        <code>sku,unit,quantity,lot,expiresOn</code>. Use one
+                        branch’s verified opening count per file. Import once;
+                        correct mistakes through approved counts.
+                      </p>
+                      <input
+                        aria-label="Opening stock CSV"
+                        type="file"
+                        accept=".csv,text/csv"
+                        disabled={!online || busy || practice}
+                        onChange={(e) => {
+                          const file = e.target.files?.[0];
+                          if (!file) return;
+                          void run(async () => {
+                            const { parseOpeningCSV } =
+                              await import("../lib/import");
+                            const records = parseOpeningCSV(
+                              await file.text(),
+                              products,
+                            );
+                            setOpeningImport({
+                              name: file.name,
+                              branchId,
+                              items: records,
+                            });
+                          });
+                          e.currentTarget.value = "";
+                        }}
+                      />
+                      {openingImport && openingImport.branchId === branchId && (
+                        <form
+                          className="spaced-form"
+                          aria-label="Confirm opening stock"
+                          onSubmit={(e) => {
+                            e.preventDefault();
+                            void run(async () => {
+                              await onlineOperation(
+                                db,
+                                member.userId,
+                                "receive_stock",
+                                {
+                                  ...context(),
+                                  source: "opening",
+                                  reference: openingImport.name,
+                                  items: openingImport.items,
+                                },
+                                "receiptId",
+                              );
+                              await applySnapshot(
+                                db,
+                                await command<Snapshot>("snapshot", {
+                                  ...context(),
+                                  transactionIds: sales.map((s) => s.id),
+                                }),
+                              );
+                              notify(
+                                "Opening stock imported. Verify the Inventory totals before selling.",
+                              );
+                              setOpeningImport(undefined);
+                            });
+                          }}
+                        >
+                          <p>
+                            {openingImport.name}: {openingImport.items.length}{" "}
+                            opening-stock lines for {selectedBranch?.name}.
+                          </p>
+                          <label className="checkbox">
+                            <input type="checkbox" required />I verified this
+                            branch’s physical opening count.
+                          </label>
+                          <Button disabled={!online || busy || practice}>
+                            Confirm opening stock import
+                          </Button>
+                          <Button
+                            type="button"
+                            variant="ghost"
+                            disabled={busy}
+                            onClick={() => setOpeningImport(undefined)}
+                          >
+                            Cancel import
+                          </Button>
+                        </form>
+                      )}
+                    </section>
+                  )}
+                </div>
               </div>
-            </div>
+              {!practice && (
+                <HistoryRegister
+                  {...historyProps}
+                  key={`purchases:${member.organizationId}:${branchId}`}
+                  title="Receiving history"
+                  kind="purchases"
+                  emptyTitle="No receiving records yet"
+                  columns={[
+                    { label: "ID", value: (r) => r.id },
+                    { label: "Reference", value: (r) => r.reference },
+                    { label: "Source", value: (r) => r.source },
+                    { label: "Supplier ID", value: (r) => r.supplier_id },
+                    { label: "Recorded at", value: (r) => r.created_at },
+                  ]}
+                >
+                  {(records) =>
+                    table(
+                      ["Recorded", "Reference", "Source", "Supplier", "Lines"],
+                      records.map((r) => (
+                        <tr key={str(r, "id")}>
+                          <td>{when(r.created_at)}</td>
+                          <td>
+                            <strong>{str(r, "reference")}</strong>
+                            <small>{str(r, "id").slice(0, 8)}</small>
+                          </td>
+                          <td>
+                            {str(r, "source") === "opening"
+                              ? "Opening stock"
+                              : "Purchase"}
+                          </td>
+                          <td>
+                            {r.supplier_id
+                              ? str(
+                                  (cloud.suppliers ?? []).find(
+                                    (s) => s.id === r.supplier_id,
+                                  ) ?? r,
+                                  "name",
+                                ) || str(r, "supplier_id")
+                              : "No supplier"}
+                          </td>
+                          <td>
+                            {Array.isArray(
+                              (r.payload as { items?: unknown[] })?.items,
+                            )
+                              ? (r.payload as { items: unknown[] }).items.length
+                              : "—"}
+                          </td>
+                        </tr>
+                      )),
+                    )
+                  }
+                </HistoryRegister>
+              )}
+            </>
           )}
 
           {view === "transfers" && (
             <>
-              <section className="panel">
-                <h2>Transfer register</h2>
-                {(cloud.stock_transfers ?? []).length ? (
-                  table(
-                    [
-                      "Product",
-                      "From → to",
-                      "Base quantity",
-                      "Status",
-                      "Action",
-                    ],
-                    (cloud.stock_transfers ?? []).map((t) => (
-                      <tr key={str(t, "id")}>
-                        <td>{productName(t.product_id)}</td>
-                        <td>
-                          {branchName(t.branch_id)} →{" "}
-                          {branchName(t.destination_branch_id)}
-                        </td>
-                        <td>{str(t, "quantity")}</td>
-                        <td>
-                          <span className="status-tag">
-                            {str(t, "state").replaceAll("_", " ")}
-                          </span>
-                        </td>
-                        <td>
-                          {t.state === "in_transit" &&
-                            t.destination_branch_id === branchId && (
-                              <Button
-                                size="sm"
-                                disabled={!online || busy || practice}
-                                onClick={() =>
-                                  void run(async () => {
-                                    await command("receive_transfer", {
-                                      ...context(),
-                                      transferId: t.id,
-                                    });
-                                    if (lease) await sync();
-                                    notify("Transfer received.");
-                                  })
-                                }
-                              >
-                                Confirm receipt
-                              </Button>
-                            )}
-                        </td>
-                      </tr>
-                    )),
-                  )
-                ) : (
-                  <Empty
-                    icon={ArrowLeftRight}
-                    title="No transfers yet"
-                    body="Dispatch stock here, then confirm receipt at the destination branch."
-                  />
-                )}
-              </section>
+              {!practice && (
+                <HistoryRegister
+                  {...historyProps}
+                  key={`transfers:${member.organizationId}:${branchId}`}
+                  title="Transfer register"
+                  kind="transfers"
+                  emptyTitle="No transfers yet"
+                  columns={[
+                    { label: "ID", value: (r) => r.id },
+                    {
+                      label: "Product",
+                      value: (r) => productName(r.product_id),
+                    },
+                    { label: "From", value: (r) => branchName(r.branch_id) },
+                    {
+                      label: "To",
+                      value: (r) => branchName(r.destination_branch_id),
+                    },
+                    { label: "Base quantity", value: (r) => r.quantity },
+                    { label: "State", value: (r) => r.state },
+                    { label: "Dispatched at", value: (r) => r.dispatched_at },
+                    { label: "Received at", value: (r) => r.received_at },
+                  ]}
+                >
+                  {(records) =>
+                    table(
+                      [
+                        "Product",
+                        "From → to",
+                        "Base quantity",
+                        "Status",
+                        "Action",
+                      ],
+                      records.map((t) => (
+                        <tr key={str(t, "id")}>
+                          <td>{productName(t.product_id)}</td>
+                          <td>
+                            {branchName(t.branch_id)} →{" "}
+                            {branchName(t.destination_branch_id)}
+                          </td>
+                          <td>{str(t, "quantity")}</td>
+                          <td>
+                            <span className="status-tag">
+                              {str(t, "state").replaceAll("_", " ")}
+                            </span>
+                          </td>
+                          <td>
+                            {t.state === "in_transit" &&
+                              t.destination_branch_id === branchId && (
+                                <Button
+                                  size="sm"
+                                  disabled={!online || busy || practice}
+                                  onClick={() =>
+                                    void run(async () => {
+                                      await command("receive_transfer", {
+                                        ...context(),
+                                        transferId: t.id,
+                                      });
+                                      if (lease) await sync();
+                                      notify("Transfer received.");
+                                    })
+                                  }
+                                >
+                                  Confirm receipt
+                                </Button>
+                              )}
+                          </td>
+                        </tr>
+                      )),
+                    )
+                  }
+                </HistoryRegister>
+              )}
               <section className="panel narrow-panel">
                 <h2>Dispatch a transfer</h2>
                 <form
@@ -2428,21 +2567,37 @@ export function StoreApp() {
                   count before approval.
                 </span>
               </div>
-              <section className="panel">
-                <h2>Count register</h2>
-                {(cloud.stock_counts ?? []).length ? (
-                  table(
-                    [
-                      "Product",
-                      "Expected",
-                      "Counted",
-                      "Difference",
-                      "Status",
-                      "Action",
-                    ],
-                    (cloud.stock_counts ?? [])
-                      .filter((c) => c.branch_id === branchId)
-                      .map((c) => (
+              {!practice && (
+                <HistoryRegister
+                  {...historyProps}
+                  key={`counts:${member.organizationId}:${branchId}`}
+                  title="Count register"
+                  kind="counts"
+                  emptyTitle="No counts recorded"
+                  columns={[
+                    { label: "ID", value: (r) => r.id },
+                    {
+                      label: "Product",
+                      value: (r) => productName(r.product_id),
+                    },
+                    { label: "Expected", value: (r) => r.expected },
+                    { label: "Counted", value: (r) => r.counted },
+                    { label: "State", value: (r) => r.state },
+                    { label: "Reason", value: (r) => r.reason },
+                    { label: "Recorded at", value: (r) => r.created_at },
+                  ]}
+                >
+                  {(records) =>
+                    table(
+                      [
+                        "Product",
+                        "Expected",
+                        "Counted",
+                        "Difference",
+                        "Status",
+                        "Action",
+                      ],
+                      records.map((c) => (
                         <tr key={str(c, "id")}>
                           <td>{productName(c.product_id)}</td>
                           <td>{str(c, "expected")}</td>
@@ -2481,15 +2636,10 @@ export function StoreApp() {
                           </td>
                         </tr>
                       )),
-                  )
-                ) : (
-                  <Empty
-                    icon={ClipboardCheck}
-                    title="No counts recorded"
-                    body="A count preserves the expected stock, physical quantity, and reason for investigation."
-                  />
-                )}
-              </section>
+                    )
+                  }
+                </HistoryRegister>
+              )}
               <section className="panel narrow-panel">
                 <h2>Submit a physical count</h2>
                 <form
