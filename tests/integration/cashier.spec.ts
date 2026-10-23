@@ -251,11 +251,15 @@ test("registered cashier recovers real offline sales after a lost acknowledgment
   });
   await branchPicker.selectOption({ label: "Integration fourth branch" });
   await expect(
-    page.getByRole("button", { name: "Add Integration feeds", exact: true }),
+    page.getByRole("article").filter({
+      has: page.getByRole("button", { name: "Add Integration feeds", exact: true }),
+    }),
   ).toContainText("0 sack (50 kg) on hand");
   await branchPicker.selectOption(branchId);
   await expect(
-    page.getByRole("button", { name: "Add Integration feeds", exact: true }),
+    page.getByRole("article").filter({
+      has: page.getByRole("button", { name: "Add Integration feeds", exact: true }),
+    }),
   ).toContainText("10 sack (50 kg) on hand");
   await expect(branchPicker).toBeEnabled();
   await context.setOffline(true);
@@ -424,7 +428,9 @@ test("registered cashier recovers real offline sales after a lost acknowledgment
   expect(Number(stock.data!.quantity)).toBe(400);
   await page.getByRole("button", { name: /^Checkout/ }).click();
   await expect(
-    page.getByRole("button", { name: "Add Integration feeds", exact: true }),
+    page.getByRole("article").filter({
+      has: page.getByRole("button", { name: "Add Integration feeds", exact: true }),
+    }),
   ).toContainText("8 sack (50 kg) on hand");
 
   await context.setOffline(true);

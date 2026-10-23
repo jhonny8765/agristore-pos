@@ -201,6 +201,7 @@ test("owner accessibility covers keyboard navigation, narrow reflow and forced c
     exact: true,
   });
   const productTile = page.locator(".product").filter({ has: addProduct });
+  await expect(addProduct).toBeEnabled();
   // The tile remains a full-size pointer target; its named button is also
   // reachable by keyboard without treating every piece of metadata as a label.
   await productTile.click({ position: { x: 16, y: 16 } });
