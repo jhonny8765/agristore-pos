@@ -177,6 +177,30 @@ test("offline mixed sacks, quarters, halves and peso-weight sales synchronize ex
     .getByRole("button", { name: "Complete cash sale", exact: true })
     .click();
   await expect(page.getByText("₱343.70 change", { exact: true })).toBeVisible();
+  // The success icon must not constrain the printable item list to 53px.
+  const printed = page.locator(".receipt-print-details");
+  await expect(printed).toBeHidden();
+  await page.emulateMedia({ media: "print" });
+  await expect(printed).toBeVisible();
+  await expect(printed).toContainText("0.25 Kilo");
+  await expect(printed).toContainText("0.5 Kilo");
+  await expect(printed).toContainText("1.43 Kilo");
+  const printLayout = await printed.evaluate((el) => {
+    const details = el.getBoundingClientRect();
+    const last = el.lastElementChild!.getBoundingClientRect();
+    const footer = el.nextElementSibling!.getBoundingClientRect();
+    return {
+      width: details.width,
+      fits: el.scrollWidth <= el.clientWidth,
+      containsLines: last.bottom <= details.bottom,
+      footerAfter: footer.top >= details.bottom,
+    };
+  });
+  expect(printLayout.width).toBeGreaterThan(180);
+  expect(printLayout.fits).toBe(true);
+  expect(printLayout.containsLines).toBe(true);
+  expect(printLayout.footerAfter).toBe(true);
+  await page.emulateMedia({ media: "screen" });
   await expect(page.getByRole("article").filter({ has: add })).toContainText(
     "9947.82 kg on hand",
   );

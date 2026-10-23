@@ -81,6 +81,9 @@ summary:focus-visible,
 .sidebar :focus-visible {
   outline-color: var(--lime);
 }
+.table-wrap button:focus-visible {
+  outline-offset: -3px;
+}
 .skip-link {
   position: fixed;
   top: 12px;
@@ -1278,7 +1281,7 @@ form > .button {
   text-align: center;
   padding: 23px 15px;
 }
-.checkout-success > div {
+.checkout-success > .sale-success-mark {
   width: 53px;
   height: 53px;
   display: grid;

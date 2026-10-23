@@ -1415,7 +1415,7 @@ export function StoreApp() {
                 </div>
                 {checkoutDone && !cart.items.length ? (
                   <div className="checkout-success">
-                    <div>
+                    <div className="sale-success-mark">
                       <CheckCheck size={30} />
                     </div>
                     <h3>Sale saved.</h3>
