@@ -10,6 +10,7 @@ colors:
   ink: "#23352b"
   muted: "#667468"
   line: "#e3e7dd"
+  control-line: "#7a8873"
   soft: "#edf1e7"
   amber: "#865b16"
   danger: "#a3312b"
@@ -120,6 +121,7 @@ The palette carries agricultural familiarity through forest and pale leaf greens
 - **Stock Ink:** primary text and record values.
 - **Muted Ledger:** secondary descriptions and supporting operational copy.
 - **Fine Rule:** panel outlines and table or receipt separators.
+- **Control Rule:** visible boundaries for fields, search, and quantity controls; keep these stronger than record separators.
 - **Soft Leaf:** restrained control backgrounds and hover surfaces.
 
 ### Operational colors
@@ -129,6 +131,8 @@ The palette carries agricultural familiarity through forest and pale leaf greens
 - **Focus Green:** keyboard focus outlines.
 
 History tables use Stock Ink for column headers and Muted Ledger for supporting identifiers, preserving a clear hierarchy between scan labels, record values, and references.
+
+Use Muted Ledger for placeholders and unselected category text. Working Green supplies text on tinted helper and code surfaces. These supporting roles retain their contrast without competing with primary values.
 
 **The Forest Anchor Rule.** Use forest for navigation, selected category filters, primary actions, and financial emphasis; use pale green for selected navigation and supporting surfaces.
 
@@ -166,13 +170,15 @@ Inline forms inside tables size to the available table viewport, wrap their copy
 
 History registers retain the branch bar, connection state, navigation, and main operational task within the existing shell. Date filters, footer copy, and action groups wrap at narrow widths. Keep wide records scrolling inside their panel; each history table viewport is a named, keyboard-focusable region with the shared visible focus outline.
 
+All record table viewports share named, keyboard-focusable scrolling regions. Narrow page headings wrap their actions beneath the heading instead of widening the workspace.
+
 ## Elevation & Depth
 
 The application is flat at rest: thin borders, pale fills, and forest navigation establish hierarchy. Product hover receives a faint lift; the fixed mobile basket uses a stronger ambient shadow to remain distinguishable over scrolled content. Other record panels have no resting shadow.
 
 ### Shadow Vocabulary
 
-- **Product hover** (`0 6px 16px #23352b0b`): subtle response on available product buttons.
+- **Product hover** (`0 6px 16px #23352b0b`): subtle response on available product records.
 - **Mobile basket** (`0 8px 24px #173e3233`): separates the fixed checkout summary from content behind it.
 
 **The Ruled Record Rule.** Separate record rows, receipt sections, and workspace regions with fine rules; retain tonal surfaces as the primary means of grouping.
@@ -189,25 +195,35 @@ Compact and decisive. The primary, outline, ghost, and destructive variants shar
 
 Primary hover darkens the forest fill. Outline and ghost hover use Soft Leaf. Disabled buttons reduce opacity to (0.5) and use a not-allowed cursor. Button color transitions last (0.16s) with ease timing. All interactive controls receive a Focus Green outline (3px), offset (3px), on keyboard focus.
 
+The forest sidebar uses Pale Leaf for its focus outline. A focused product Add action outlines its entire parent record. The skip-to-content link appears on focus and uses an inset outline offset (-5px), keeping the ring inside the viewport.
+
+Respect reduced motion globally by removing animations and transitions and using automatic scrolling. In forced-colors mode, use system ButtonText for field boundaries and selected navigation/filter borders, and Highlight for focus outlines. Selection remains explicit through a border as well as state semantics.
+
 ### Chips
 
-Category filters use compact rounded rectangular buttons, with transparent default surfaces and forest selected fill. Status tags are quiet, compact labels with Soft Leaf default, amber warning, and pale green success variants. Status text carries the meaning alongside color.
+Category filters use compact rounded rectangular buttons, with transparent default surfaces and forest selected fill. Expose the active filter through its pressed state. Status tags are quiet, compact labels with Soft Leaf default, amber warning, and pale green success variants. Status text carries the meaning alongside color.
 
 ### Cards / Containers
 
-White record panels use the panel radius, a Fine Rule outline, and panel spacing. On mobile the panel padding reduces to (18px). Product buttons use the product radius and a flat tinted category strip with a line SVG icon; their name, unit, price, and available stock remain in the content area. Product hover changes the outline and adds the subtle elevation above.
+White record panels use the panel radius, a Fine Rule outline, and panel spacing. On mobile the panel padding reduces to (18px). Product records are semantic articles with the product radius and a flat tinted category strip with a line SVG icon; their name, unit, price, and available stock remain in the content area. A separately named Add button extends its pointer target over the entire tile through a pseudo-element; keyboard focus outlines the parent article. Product hover changes the outline and adds the subtle elevation above.
+
+When adding is unavailable before a shift opens or in the stock view, change only the Add control's surface and text. Keep product metadata fully legible; do not dim the whole article.
 
 ### Inputs / Fields
 
-White fields have a thin muted green border, the field radius, and the padding defined in frontmatter. Labels sit above their fields with a gap (6px). Search is a bordered container with an inline icon and a borderless text input. Cash received is right-aligned and enlarged to (17px). Disabled fields use a subdued pale surface.
+White fields have the stronger Control Rule border, the field radius, and the padding defined in frontmatter. Labels sit above their fields with a gap (6px). Search is a bordered container with an inline icon and a borderless text input. Quantity steppers share the stronger boundary. Cash received is right-aligned and enlarged to (17px). Disabled fields use a subdued pale surface. Checkboxes use a (24px) square control.
 
 ### Navigation
 
 The rail uses Forest with muted pale text and line SVG icons. Active entries use Pale Leaf, forest text, and stronger weight. Hover uses a darker green tonal surface. Narrow layouts retain the icon rail and hide visible labels; accessible button names remain supplied by the application.
 
+Expose the current destination with the current-page state and change navigation colors immediately so intermediate transition colors cannot obscure the label. Move keyboard focus to the main page heading only when the view changes; routine data updates retain the user's current focus. The skip link leads directly to the focusable main content.
+
 ### Current Sale
 
 The receipt groups heading, items, and payment into ruled sections. Quantities use a compact three-part stepper. Amount due is larger, forest-colored, and aligned opposite its label. The completion button spans the payment area. A completed sale replaces the editable receipt with explicit saved-state feedback; printed output isolates the receipt in an (80mm) column.
+
+Receipt removal controls and unit selectors have a minimum target height (32px); removal controls also have a minimum width (32px).
 
 ### Inline Approvals
 
@@ -241,6 +257,8 @@ Creation requires an online connection and is disabled during practice or anothe
 
 The Current branch picker in the top bar changes the displayed branch and its stock together after the selected branch’s data finishes loading. A failed download retains the previously loaded branch selection. Disable live branch switching while offline, during an active cashier lease, or while another operation is pending, and confirm a successful change with “Branch stock loaded.”
 
+Keep the top-bar branch picker at a minimum height (40px) across viewport sizes.
+
 ## Do's and Don'ts
 
 ### Do:
@@ -251,6 +269,8 @@ The Current branch picker in the top bar changes the displayed branch and its st
 - **Do** preserve the responsive receipt access and fixed mobile basket summary on checkout.
 - **Do** keep approval reasons, errors, and keyboard focus within the affected record, with forms contained inside horizontally scrolling tables.
 - **Do** give history table scrolling regions accessible names, keyboard access, and the shared visible focus outline.
+- **Do** retain stronger control boundaries, surface-appropriate focus outlines, and explicit current or pressed states.
+- **Do** keep catalog metadata legible when adding is disabled, with only the Add control changing appearance.
 - **Do** keep applied dates, loaded counts, end-of-history feedback, and CSV scope explicit beside the records they describe.
 
 ### Don't:
