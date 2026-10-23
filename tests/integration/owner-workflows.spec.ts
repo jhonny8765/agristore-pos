@@ -184,7 +184,7 @@ test("offline mixed sacks, quarters, halves and peso-weight sales synchronize ex
   expect(before.error).toBeNull();
   expect(before.data).toEqual([]);
   await context.setOffline(false);
-  await page.getByRole("button", { name: "Sync center", exact: true }).click();
+  await page.getByRole("button", { name: "Sync center", exact: false }).click();
   await expect(page.locator(".status-tag")).toContainText("synced", {
     timeout: 60_000,
   });
