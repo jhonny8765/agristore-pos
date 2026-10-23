@@ -257,7 +257,7 @@ test("registered cashier recovers real offline sales after a lost acknowledgment
         exact: true,
       }),
     }),
-  ).toContainText("0 sack (50 kg) on hand");
+  ).toContainText("0 kg on hand");
   await branchPicker.selectOption(branchId);
   await expect(
     page.getByRole("article").filter({
@@ -266,7 +266,7 @@ test("registered cashier recovers real offline sales after a lost acknowledgment
         exact: true,
       }),
     }),
-  ).toContainText("10 sack (50 kg) on hand");
+  ).toContainText("500 kg on hand");
   await expect(branchPicker).toBeEnabled();
   await context.setOffline(true);
   await expect(branchPicker).toBeDisabled();
