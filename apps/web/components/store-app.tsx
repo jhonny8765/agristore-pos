@@ -3350,12 +3350,73 @@ export function StoreApp() {
                     {table(
                       ["PC", "Branch", "Status", "Last sync", "Action"],
                       (cloud.devices ?? []).map((d) => (
-                        <tr key={str(d, "id")}>
+                        <tr key={str(d, "id")} data-device-id={str(d, "id")}>
                           <td>{str(d, "name")}</td>
                           <td>{branchName(d.branch_id)}</td>
                           <td>{d.active ? "Active" : "Retired"}</td>
                           <td>{when(d.last_sync)}</td>
                           <td>
+                            {d.active === false && (
+                              <Button
+                                size="sm"
+                                variant="outline"
+                                disabled={
+                                  !online ||
+                                  busy ||
+                                  practice ||
+                                  allPendingCount > 0 ||
+                                  allOperationCount > 0 ||
+                                  cart.items.length > 0
+                                }
+                                onClick={() =>
+                                  void run(async () => {
+                                    if (
+                                      (await setting<string>(
+                                        db,
+                                        "deviceId",
+                                      )) !== d.id
+                                    )
+                                      throw new Error(
+                                        "This retired registration belongs to a different browser. Use the browser registered to it.",
+                                      );
+                                    if (
+                                      useCart.getState().items.length ||
+                                      (await db.sales
+                                        .where("status")
+                                        .notEqual("synced")
+                                        .count()) ||
+                                      (await pendingOperations(db)).length
+                                    )
+                                      throw new Error(
+                                        "Finish the basket and resolve pending records before releasing this PC setup. Saved records are retained.",
+                                      );
+                                    const retired = await supabase
+                                      .from("devices")
+                                      .select("active")
+                                      .eq("id", str(d, "id"))
+                                      .eq(
+                                        "organization_id",
+                                        member.organizationId,
+                                      )
+                                      .eq("branch_id", str(d, "branch_id"))
+                                      .single();
+                                    if (retired.error)
+                                      throw new Error(retired.error.message);
+                                    if (retired.data.active !== false)
+                                      throw new Error(
+                                        "This PC is still active. Refresh the registered PC list first.",
+                                      );
+                                    await forgetRetiredDevice(db, str(d, "id"));
+                                    setLease(undefined);
+                                    notify(
+                                      "Retired setup released on this browser. Saved sales are retained. Open a shift to register its replacement.",
+                                    );
+                                  })
+                                }
+                              >
+                                Release retired setup
+                              </Button>
+                            )}
                             {d.active === true && (
                               <ApprovalForm
                                 action="Retire PC"

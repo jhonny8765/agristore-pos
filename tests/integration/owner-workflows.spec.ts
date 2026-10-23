@@ -523,6 +523,77 @@ test("owner approvals work without browser dialogs, stock refreshes without a sh
     .single();
   expect(nextPC.error).toBeNull();
   expect(nextPC.data!.id).not.toBe(firstPC.data!.id);
+  // A remote retirement (or an older app) can leave this browser holding a
+  // retired identity. Recovery must preserve its saved receipts and its cart.
+  await page.getByRole("button", { name: /^Checkout/ }).click();
+  await page
+    .getByRole("button", { name: "Add Audit feeds", exact: true })
+    .click();
+  await command(a.owner, "retire_device", {
+    organizationId: a.organizationId,
+    branchId: a.branchId,
+    deviceId: nextPC.data!.id,
+    reason: "TEST remote retirement with retained browser setup",
+    countedCash: 0,
+  });
+  await page.getByRole("button", { name: "Settings", exact: true }).click();
+  await page.getByRole("button", { name: "Refresh", exact: true }).click();
+  const retiredRows = page.locator("tr").filter({
+    has: page.getByRole("button", {
+      name: "Release retired setup",
+      exact: true,
+    }),
+  });
+  await expect(retiredRows).toHaveCount(2);
+  await expect(
+    retiredRows
+      .last()
+      .getByRole("button", { name: "Release retired setup", exact: true }),
+  ).toBeDisabled();
+  await page.getByRole("button", { name: /^Checkout/ }).click();
+  await expect(page.getByLabel("Quantity for Audit feeds")).toHaveValue("1");
+  await page
+    .getByRole("button", { name: "Remove Audit feeds", exact: true })
+    .click();
+  await page.getByRole("button", { name: "Settings", exact: true }).click();
+  await page
+    .locator(`tr[data-device-id="${firstPC.data!.id}"]`)
+    .getByRole("button", { name: "Release retired setup", exact: true })
+    .click();
+  await expect(
+    page.getByText(
+      "This retired registration belongs to a different browser. Use the browser registered to it.",
+      { exact: true },
+    ),
+  ).toBeVisible();
+  await page
+    .locator(`tr[data-device-id="${nextPC.data!.id}"]`)
+    .getByRole("button", { name: "Release retired setup", exact: true })
+    .click();
+  await expect(
+    page.getByText(
+      "Retired setup released on this browser. Saved sales are retained. Open a shift to register its replacement.",
+      { exact: true },
+    ),
+  ).toBeVisible();
+  await page.getByRole("button", { name: /^Checkout/ }).click();
+  await page.getByRole("button", { name: "Open shift", exact: true }).click();
+  await expect(
+    page.getByRole("button", { name: "Add Audit feeds", exact: true }),
+  ).toBeEnabled();
+  const replacement = await a.owner
+    .from("devices")
+    .select("id")
+    .eq("organization_id", a.organizationId)
+    .eq("active", true)
+    .single();
+  expect(replacement.error).toBeNull();
+  expect(replacement.data!.id).not.toBe(nextPC.data!.id);
+  await page.getByRole("button", { name: /Sync center/ }).click();
+  await expect(
+    page.locator(".status-tag").filter({ hasText: /^synced$/ }),
+  ).toHaveCount(1);
+
   await closeShift(page);
 
   await page
