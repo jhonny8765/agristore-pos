@@ -422,7 +422,6 @@ test("branch history pages beyond 1000, filters Manila days, recovers a failed p
   let failPage = true;
   await page.route("**/rest/v1/purchase_receipts?*", async (route) => {
     if (failPage) {
-      failPage = false;
       await route.abort("failed");
     } else await route.continue();
   });
@@ -431,6 +430,7 @@ test("branch history pages beyond 1000, filters Manila days, recovers a failed p
     .click();
   await expect(register.getByRole("alert")).toBeVisible();
   await expect(register.locator("tbody tr")).toHaveCount(50);
+  failPage = false;
   await register
     .getByRole("button", { name: "Retry history", exact: true })
     .click();

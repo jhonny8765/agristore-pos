@@ -53,6 +53,7 @@ export function HistoryRegister({
   const [loading, setLoading] = useState(true);
   const [loaded, setLoaded] = useState(false);
   const [error, setError] = useState("");
+  const [dateError, setDateError] = useState("");
   const [retry, setRetry] = useState(0);
   const lifecycle = useRef({ request: 0, active: false }).current;
   const load = useCallback(
@@ -125,7 +126,8 @@ export function HistoryRegister({
       <p className="muted">
         {branchName}
         {kind === "audit" ? " and business-level events" : ""} · Dates in
-        Asia/Manila
+        Asia/Manila ·{" "}
+        {kind === "transfers" ? "Dispatch dates" : "Recorded dates"}
       </p>
       <form
         className="history-filters"
@@ -134,14 +136,14 @@ export function HistoryRegister({
           e.preventDefault();
           try {
             historyBounds(draft);
-            setError("");
+            setDateError("");
             setRows([]);
             setNext(undefined);
             setLoaded(false);
             setLoading(true);
             setRange({ ...draft });
           } catch (e) {
-            setError(e instanceof Error ? e.message : "Check your dates.");
+            setDateError(e instanceof Error ? e.message : "Check your dates.");
           }
         }}
       >
@@ -177,6 +179,7 @@ export function HistoryRegister({
           disabled={disabled || !online || loading}
           onClick={() => {
             setDraft({ from: "", to: "" });
+            setDateError("");
             setRows([]);
             setNext(undefined);
             setLoaded(false);
@@ -190,6 +193,11 @@ export function HistoryRegister({
       {error && (
         <p role="alert" className="notice error">
           {error}
+        </p>
+      )}
+      {dateError && (
+        <p role="alert" className="notice error">
+          {dateError}
         </p>
       )}
       {!online && (
