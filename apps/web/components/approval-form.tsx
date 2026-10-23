@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useId, useRef, useState } from "react";
 import { Button } from "./ui/button";
 
 export function ApprovalForm({
@@ -22,11 +22,16 @@ export function ApprovalForm({
   const [reason, setReason] = useState("");
   const [error, setError] = useState("");
   const [pending, setPending] = useState(false);
+  const errorId = useId();
   const actionButton = useRef<HTMLButtonElement>(null);
+  const form = useRef<HTMLFormElement>(null);
   const reasonInput = useRef<HTMLInputElement>(null);
   const previouslyOpen = useRef(false);
   useEffect(() => {
-    if (open) reasonInput.current?.focus();
+    if (open) {
+      form.current?.scrollIntoView({ block: "nearest", inline: "nearest" });
+      reasonInput.current?.focus({ preventScroll: true });
+    }
     else if (previouslyOpen.current) actionButton.current?.focus();
     previouslyOpen.current = open;
   }, [open]);
@@ -45,6 +50,7 @@ export function ApprovalForm({
     );
   return (
     <form
+      ref={form}
       className="approval-form"
       aria-label={action}
       onSubmit={async (e) => {
@@ -85,6 +91,8 @@ export function ApprovalForm({
           minLength={3}
           maxLength={1000}
           disabled={pending}
+          aria-invalid={!!error}
+          aria-describedby={error ? errorId : undefined}
         />
       </label>
       <div className="approval-actions">
@@ -105,7 +113,7 @@ export function ApprovalForm({
         </Button>
       </div>
       {error && (
-        <p role="alert" className="notice error">
+        <p id={errorId} role="alert" className="notice error">
           {error}
         </p>
       )}

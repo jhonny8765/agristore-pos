@@ -161,6 +161,17 @@ test("owner approvals work without browser dialogs, stock refreshes without a sh
   await expect(refund.getByLabel("Refund reason", { exact: true })).toHaveValue(
     "   ",
   );
+  for (const width of [390, 418]) {
+    await page.setViewportSize({ width, height: 844 });
+    await refund.getByLabel("Refund reason", { exact: true }).focus();
+    const fits = await refund.evaluate((form) => {
+      const field = form.querySelector("input")!.getBoundingClientRect();
+      const area = form.closest(".table-wrap")!.getBoundingClientRect();
+      return field.left - 6 >= area.left && field.right + 6 <= area.right;
+    });
+    expect(fits).toBe(true);
+  }
+  await page.setViewportSize({ width: 1440, height: 1000 });
   await refund
     .getByLabel("Refund reason", { exact: true })
     .fill("TEST return and restore stock");

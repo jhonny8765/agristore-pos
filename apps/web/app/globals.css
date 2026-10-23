@@ -1205,6 +1205,7 @@ form > .button {
 .table-wrap {
   overflow: auto;
   width: 100%;
+  container-type: inline-size;
 }
 table {
   width: 100%;
@@ -1437,8 +1438,9 @@ tbody tr:last-child td {
   margin-bottom: 24px;
 }
 .approval-form {
-  min-width: min(260px, 70vw);
-  max-width: 360px;
+  width: min(360px, calc(100cqi - 26px));
+  min-width: 0;
+  padding: 6px;
   white-space: normal;
 }
 .approval-form p { margin-bottom: 12px; }
