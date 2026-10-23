@@ -1030,6 +1030,7 @@ export function StoreApp() {
               >
                 <Icon size={19} />
                 {label}
+                {id === "pos" ? " " : ""}
                 {id === "pos" && (
                   <span className="nav-shortcut" aria-hidden="true">
                     POS
