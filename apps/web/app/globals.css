@@ -96,6 +96,7 @@ summary:focus-visible,
 }
 .skip-link:focus {
   transform: translateY(0);
+  outline-offset: -5px;
 }
 ::selection {
   background: var(--lime);
@@ -1775,6 +1776,7 @@ code {
   .page-heading {
     margin-bottom: 23px;
     align-items: start;
+    flex-wrap: wrap;
   }
   .page-heading p {
     font-size: 11px;
