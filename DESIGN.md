@@ -158,6 +158,8 @@ At (730px) and below, checkout stacks into one column, retains a two-column prod
 
 Spacing is compact and contextual, using the repeated frontmatter steps rather than a uniform large-card rhythm. Tables remain horizontally scrollable; numeric columns align right. Panel supporting prose is bounded to (72ch).
 
+Inline forms inside tables size to the available table viewport, wrap their copy and actions, and retain clearance for the shared focus outline. Expanding a row action keeps horizontal overflow inside the record panel.
+
 ## Elevation & Depth
 
 The application is flat at rest: thin borders, pale fills, and forest navigation establish hierarchy. Product hover receives a faint lift; the fixed mobile basket uses a stronger ambient shadow to remain distinguishable over scrolled content. Other record panels have no resting shadow.
@@ -201,6 +203,20 @@ The rail uses Forest with muted pale text and line SVG icons. Active entries use
 
 The receipt groups heading, items, and payment into ruled sections. Quantities use a compact three-part stepper. Amount due is larger, forest-colored, and aligned opposite its label. The completion button spans the payment area. A completed sale replaces the editable receipt with explicit saved-state feedback; printed output isolates the receipt in an (80mm) column.
 
+### Inline Approvals
+
+Refund, recovery approval, and PC retirement expand into a reason form beside the affected record. Explain the consequence before the labeled reason field, then provide an explicit confirmation action and Cancel. Reuse the existing fields, buttons, and error notice. Opening brings the form into view and focuses its reason field; closing returns focus to the triggering action.
+
+Keep the entered reason visible when validation or submission fails, associate the inline error with the field, and disable duplicate confirmation while pending. Clear the reason after confirmed success. Preserve these contextual forms instead of moving operational approvals into browser-native prompts.
+
+### Receipt History
+
+Keep confirmed receipts in the ruled table, with the loaded count and branch beside an explicit older-receipts action. Distinguish more available records from the end of history in text. Loading older records extends the existing list; offline and pending states disable the action.
+
+### Operational Feedback
+
+Use local status text to describe the actual stage of an operation. App update feedback distinguishes checking and downloading, failure, an up-to-date installation, a downloaded update waiting for checkout and pending records, and restarting. Keep that feedback near its action and expose progress text as a status announcement.
+
 ### Settings / Branches
 
 The owner’s branch panel extends the existing ruled record surface. Rename fields retain branch-code labels and outline Save buttons; Add branch sits beneath that grid with a labeled name field and the shared forest primary action. Branch codes are assigned automatically. Names allow up to (120 characters). The rename grid collapses to one column on narrower layouts, and the addition form follows the shared responsive form layout.
@@ -217,6 +233,7 @@ The Current branch picker in the top bar changes the displayed branch and its st
 - **Do** keep currency and quantities aligned and retain tabular numerals.
 - **Do** provide a visible focus outline and explicit text for connection, stock, and save states.
 - **Do** preserve the responsive receipt access and fixed mobile basket summary on checkout.
+- **Do** keep approval reasons, errors, and keyboard focus within the affected record, with forms contained inside horizontally scrolling tables.
 
 ### Don't:
 

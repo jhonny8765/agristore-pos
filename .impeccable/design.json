@@ -1,6 +1,6 @@
 {
   "schemaVersion": 2,
-  "generatedAt": "2026-10-22T14:15:32.677Z",
+  "generatedAt": "2026-10-23T08:21:41.563Z",
   "title": "Design System: AgriStore POS",
   "extensions": {
     "colorMeta": {
@@ -349,7 +349,8 @@
       "Do use the shared forest, paper, ink, muted, and rule tokens for new operational surfaces.",
       "Do keep currency and quantities aligned and retain tabular numerals.",
       "Do provide a visible focus outline and explicit text for connection, stock, and save states.",
-      "Do preserve the responsive receipt access and fixed mobile basket summary on checkout."
+      "Do preserve the responsive receipt access and fixed mobile basket summary on checkout.",
+      "Do keep approval reasons, errors, and keyboard focus within the affected record, with forms contained inside horizontally scrolling tables."
     ],
     "donts": [
       "Don't substitute emoji or text glyphs for the existing line SVG icon vocabulary.",

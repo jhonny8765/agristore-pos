@@ -51,6 +51,10 @@ The database CI job also runs `npm run test:integration` against its disposable 
 
 AI, customer credit, electronic payments, marketing, full accounting, and official tax invoicing are excluded.
 
+Receipt history loads 50 records at a time with **Load older receipts**. Refunds, recovered sales and PC retirement use explicit inline approvals with recorded reasons. Local recovery exports follow the current account/branch permissions; signing out clears cached account data while preserving unresolved transaction records. Application updates wait for the cart and every pending record to clear.
+
+See the [overall review and improvement plan](docs/improvement-plan.md) for repaired bugs, measured scope and the remaining priorities.
+
 ## Architecture and deployment
 
 `apps/web` contains the Next.js PWA. `packages/domain` owns exact arithmetic and versioned sale contracts; `packages/offline` owns IndexedDB persistence and synchronization. `supabase/migrations` is the canonical schema history. The public API is `agri_command(action, data)`; privileged implementations stay in an unexposed private schema and independently authorize every command.

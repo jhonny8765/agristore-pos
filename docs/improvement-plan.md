@@ -9,16 +9,24 @@ Scope: the five-branch staging test business, cashier checkout, inventory operat
 3. Improve feedback, update handling, history navigation and avoid unnecessary data downloads. Inspect desktop, mobile and the user's browser width together.
 4. Run type checks, lint, unit, browser, database and restore checks. Deploy the verified staging build, repeat affected workflows, and document remaining pilot requirements.
 
-## Initial confirmed findings
+## Findings and repairs
 
 | Priority | Finding | Intended result | Status |
 |---|---|---|---|
-| P1 | Signing in does not replace the previous cached catalog; signing out leaves prior cloud/UI records in memory | A signed-in account sees only its own branch data; unresolved records remain recoverable | Investigating regression coverage |
-| P1 | History queries silently stop at the most recent 1,000 organization records | Branch receipts can be paged beyond the API limit; other bounded report lists state their scope | Planned |
-| P2 | Password fields use a generic trimming helper | Preserve the exact password typed by the user | Confirmed in source |
-| P2 | Update checking inspects `waiting` before a newly downloading worker finishes installation | Show downloading/ready/failed accurately and recheck cart/queue protection before activation | Confirmed during previous staging updates |
-| P2 | Retiring this browser's PC keeps its retired device UUID in local settings | A permitted owner can register a new device identity without clearing transaction/recovery storage | Confirmed in source |
-| P2 | Generic busy state says “Saving sale…” during unrelated work | Describe checkout saving only while checkout is committing | Confirmed in UI |
+| P1 | Prior account catalog and cloud records survive an account change | Clear account caches on login/logout, discard late responses, preserve immutable local records | Implemented; cache preservation unit tests and full account-switch scenario passed |
+| P1 | Refund, recovery and PC-retirement actions use unsupported browser prompts | Inline consequence/reason forms with explicit confirm/cancel, retained input and visible failure | Implemented; actual staging sale refunded and stock restored |
+| P1 | Receipt history silently stops at the most recent 1,000 organization records | Branch-filtered keyset pagination with stable UUID ordering and exact timestamp precision | Implemented; real database test passed for 1,005 equal-microsecond sales |
+| P1 | A cashier's recovery download may include another account's retained records | Scope UI exports to current organization, branch and cashier permissions without deleting retained records | Implemented; scoped export/preservation unit test passed |
+| P2 | Stock can remain stale after owner operations without an open shift | Download the selected branch snapshot after online inventory operations | Implemented; receiving and approved-count UI assertions passed in the first integration run |
+| P2 | Generic password helper trims spaces | Preserve the exact password typed | Implemented; real Auth login uses a password with leading/trailing spaces |
+| P2 | Update checking reports success before installation finishes | Await installation; show downloading, ready and failed states; recheck all pending records and cart before activation | Implemented; five worker-state unit tests and browser pending-sale guard |
+| P2 | Retired browser retains a dead device UUID | Forget only the retired identity and lease; retain transaction and recovery storage | Implemented; unit test and owner device re-registration scenario |
+| P2 | Unrelated work says “Saving sale…” | Separate checkout-saving state from general activity | Implemented |
+| P2 | Overview downloads unrelated records and reverses an already descending stock ledger | Load only tables required by the current screen; show newest movements first | Implemented |
+| P2 | Pending online commands can disappear from view after a refresh error | Refresh local recovery state even if the following cloud snapshot fails; isolate records by current context | Implemented |
+| P2 | Narrow receipt tables clip the approval field's focus outline | Size forms to the actual scroll container and reserve outline clearance | Implemented; final visual verdict **ship** for the scored containment fix at desktop, 390px and 418px |
+
+No P0 issue was reproduced in the reviewed scope. This does not certify untested hardware or every possible workflow.
 
 ## Workflow checks
 
@@ -31,3 +39,34 @@ Scope: the five-branch staging test business, cashier checkout, inventory operat
 ## Release requirements that need the owner or chosen hardware
 
 The cashier PC is not selected. Actual Windows reboot recovery and timed 60-minute/eight-hour outage tests remain required on that PC. Production backup retention/restoration, verified real opening stock, cash reconciliation and branch pilot sign-off remain separate from this staging review. Review the existing Auth password-protection advisory before production. No production deployment or paid plan change is part of this pass.
+
+## Next improvements, in order
+
+1. **P1 — Pilot reliability gate:** select the Windows cashier PC, install Edge PWA, test actual one-hour/eight-hour outages and Windows restart recovery. Confirm backup recovery and daily cash/stock reconciliation before real sales.
+2. **P2 — Report navigation:** add date ranges, server pagination and scoped exports for purchasing, transfers, counts and audit history. Those screens currently disclose their most recent 1,000-record bound; receipt history is paginated separately. Keep all-time overview totals computed on the server.
+3. **P2 — Accessibility coverage:** expand keyboard, screen-reader, 200% zoom and Windows forced-colors checks across the remaining owner screens. The current measured view is not a whole-product WCAG certification.
+4. **P2 — Maintainability:** split the large store component into screen modules and a shared session/synchronization controller without changing the transaction contracts. Preserve current regression coverage while doing so.
+5. **P2 — Store operations:** rehearse verified stock imports, permissions, two-person transfer reconciliation and approved counts with staff at the first pilot branch. Confirm receipt and cash-drawer hardware expectations before buying peripherals.
+6. **P3 — Delivery maintenance:** complete the owner's Git/Vercel login connection if automatic preview deployment is desired; review upstream development-tool advisories and diagnostic-artifact storage. Current staging deployment remains protected.
+
+## Measured review boundaries
+
+The scoped Sales & receipts screen had no horizontal page overflow at desktop, 390px and the actual 418px user width; wide tables scroll inside their panels. The sampled lowest visible text contrast was 4.58:1, and no enabled control in that view was below 24px. The final review checks field/focus containment separately. Other screens, forced-colors mode and assistive technologies require their own measurements.
+
+The optimized PWA shell is approximately 1.64 MB in this build. Screen-specific downloads replace the previous broad refresh; this is a source/build observation, not a measured field speedup or Core Web Vitals result.
+
+Heuristic review scores use a 0–4 scale (4: no material finding within the measured scope); they are not certification or a whole-product score:
+
+| Dimension | Score | Basis and remaining work |
+|---|---|---|
+| Accessibility | 3/4 | Labelled approvals, visible uncut focus, linked errors, sampled contrast and control sizes; wider assistive-technology/forced-colors coverage remains |
+| Performance | 2/4 | Bounded receipt pages and screen-specific refresh, optimized build; field latency, long-lived memory and Core Web Vitals were not measured |
+| Responsive behavior | 3/4 | Scoped desktop/390px/418px captures passed the containment review; other owner screens need full zoom/device coverage |
+| Theming | 4/4 | Reviewed changes preserve existing forest/paper tokens, type and control styles; no alternate theme is shipped |
+| Integrity and recovery | 3/4 | Exact IDs, scoped caches/exports, retained ambiguous operations, real database regression checks; physical-PC/timed outage gates remain |
+
+Staging manual evidence: receipt `B01-A5ACCC76AE7A`, one TEST feed sack at ₱1,580, ₱2,000 tendered, ₱420 change. Insufficient cash was blocked. A linked full refund restored Magpet feeds to 500 kg. The shift then reconciled and closed at ₱0 expected / ₱0 counted, with no unconfirmed local sales. Original sale and reversal remain in the audit trail.
+
+The second staging receipt `B01-EBE680995C3A` used one TEST Vegetable Seeds packet from lot TEST-LOT-001 (expiry 2027-12-31), ₱65 due, ₱100 tendered and ₱35 change. The new build's safe update flow downloaded and activated successfully before this test. Its linked refund restored the lot to 50 packets; the second shift also reconciled and closed at ₱0 expected / ₱0 counted.
+
+Final automated verification: [GitHub Actions 39923425067](https://github.com/jhonny8765/agristore-pos/actions/runs/39923425067), source `b6f2d2f`, passed type checks, lint, 48 unit tests, eight practice-browser scenarios, 98 pgTAP assertions, the restore drill and three database-connected browser workflows. Staging runs the same application source at the protected stable address.
