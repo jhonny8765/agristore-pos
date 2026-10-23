@@ -152,6 +152,35 @@ export async function applySnapshot(db: PosDatabase, snapshot: Snapshot) {
     },
   );
 }
+export async function clearAccountCache(db: PosDatabase) {
+  // Account-specific caches must not cross sign-ins. Immutable sales and online
+  // operation requests remain intact for the original cashier/owner to recover.
+  await db.transaction(
+    "rw",
+    [db.products, db.stocks, db.settings],
+    async () => {
+      await db.products.clear();
+      await db.stocks.clear();
+      await db.settings.bulkDelete([
+        "lease",
+        "membership",
+        "branches",
+        "snapshotAsOf",
+        "confirmedIds",
+        "lastSync",
+      ]);
+    },
+  );
+}
+
+export async function forgetRetiredDevice(db: PosDatabase, deviceId: string) {
+  await db.transaction("rw", db.settings, async () => {
+    if ((await setting<string>(db, "deviceId")) === deviceId)
+      await db.settings.delete("deviceId");
+    if ((await setting<Lease>(db, "lease"))?.deviceId === deviceId)
+      await db.settings.delete("lease");
+  });
+}
 export async function localStock(
   db: PosDatabase,
 ): Promise<Map<string, string>> {
@@ -294,15 +323,45 @@ export async function retrySale(db: PosDatabase, id: string) {
     error: undefined,
   });
 }
-export async function exportRecovery(db: PosDatabase) {
+export interface RecoveryScope {
+  organizationId: string;
+  branchId: string;
+  cashierId?: string;
+}
+export async function exportRecovery(db: PosDatabase, scope?: RecoveryScope) {
+  const lease = await setting<Lease>(db, "lease");
+  const matches = (sale: LocalSale) =>
+    !scope ||
+    (sale.payload.organizationId === scope.organizationId &&
+      sale.payload.branchId === scope.branchId &&
+      (!scope.cashierId || sale.payload.cashierId === scope.cashierId));
   return {
     version: 1,
     exportedAt: new Date().toISOString(),
-    sales: await db.sales.toArray(),
+    sales: (await db.sales.toArray()).filter(matches),
     pendingOperations: (
       await db.settings.where("key").startsWith("operation:").toArray()
-    ).map((s) => s.value),
-    lease: await setting<Lease>(db, "lease"),
+    )
+      .map((s) => s.value)
+      .filter((value) => {
+        if (!scope) return true;
+        const op = value as {
+          actorId?: string;
+          data?: { organizationId?: string; branchId?: string };
+        };
+        return (
+          op.data?.organizationId === scope.organizationId &&
+          (!op.data.branchId || op.data.branchId === scope.branchId) &&
+          (!scope.cashierId || op.actorId === scope.cashierId)
+        );
+      }),
+    lease:
+      !scope ||
+      (lease?.organizationId === scope.organizationId &&
+        lease.branchId === scope.branchId &&
+        (!scope.cashierId || lease.cashierId === scope.cashierId))
+        ? lease
+        : undefined,
   };
 }
 export async function importRecovery(db: PosDatabase, input: unknown) {

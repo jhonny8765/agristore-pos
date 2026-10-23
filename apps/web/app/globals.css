@@ -1436,6 +1436,13 @@ tbody tr:last-child td {
   gap: 22px;
   margin-bottom: 24px;
 }
+.approval-form {
+  min-width: min(260px, 70vw);
+  max-width: 360px;
+  white-space: normal;
+}
+.approval-form p { margin-bottom: 12px; }
+.approval-actions { display: flex; flex-wrap: wrap; gap: 8px; }
 .branch-forms form {
   display: flex;
   gap: 10px;

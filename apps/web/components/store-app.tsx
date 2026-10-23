@@ -63,7 +63,9 @@ import {
 import {
   PosDatabase,
   applySnapshot,
+  clearAccountCache,
   exportRecovery,
+  forgetRetiredDevice,
   importRecovery,
   localStock,
   retrySale,
@@ -79,6 +81,8 @@ import {
   command,
   memberships,
   rows,
+  salesPage,
+  type SalesCursor,
   supabase,
 } from "../lib/api";
 import { practiceBranch, startPractice } from "../lib/practice";
@@ -90,6 +94,8 @@ import {
   type PendingOperation,
 } from "../lib/operations";
 import { Button } from "./ui/button";
+import { findReadyUpdate } from "../lib/pwa-update";
+import { ApprovalForm } from "./approval-form";
 
 type View =
   | "pos"
@@ -111,19 +117,17 @@ const navigation = [
   { id: "counts", label: "Stock counts", icon: ClipboardCheck },
   { id: "sales", label: "Sales & receipts", icon: FileText },
 ] as const;
-const tables = [
-  "sales",
-  "payments",
-  "cashier_shifts",
-  "inventory_movements",
-  "stock_transfers",
-  "stock_counts",
-  "suppliers",
-  "devices",
-  "staff_memberships",
-  "audit_events",
-  "sale_reversals",
-] as const;
+const viewTables: Record<View, string[]> = {
+  pos: [],
+  overview: ["audit_events", "cashier_shifts", "inventory_movements"],
+  inventory: [],
+  receiving: ["suppliers"],
+  transfers: ["stock_transfers"],
+  counts: ["stock_counts"],
+  sales: [],
+  sync: [],
+  settings: ["devices", "staff_memberships"],
+};
 const str = (row: Row, key: string) => String(row[key] ?? "");
 const when = (value: unknown) =>
   value
@@ -189,6 +193,7 @@ function download(name: string, data: unknown) {
 
 export function StoreApp() {
   const [allPendingCount, setAllPendingCount] = useState(0);
+  const [allOperationCount, setAllOperationCount] = useState(0);
   const [practice, setPractice] = useState(false);
   const [operations, setOperations] = useState<PendingOperation[]>([]);
   const db = useMemo(
@@ -220,6 +225,14 @@ export function StoreApp() {
     [cash, setCash] = useState(""),
     [checkoutDone, setCheckoutDone] = useState<LocalSale>();
   const [authMode, setAuthMode] = useState<"login" | "signup">("login");
+  const [salesCursor, setSalesCursor] = useState<SalesCursor>();
+  const [savingSale, setSavingSale] = useState(false);
+  const [updateFeedback, setUpdateFeedback] = useState("");
+  const [openingImport, setOpeningImport] = useState<{
+    name: string;
+    branchId: string;
+    items: Record<string, unknown>[];
+  }>();
   const [branchFeedback, setBranchFeedback] = useState<{
     kind: "pending" | "success" | "error";
     text: string;
@@ -228,6 +241,8 @@ export function StoreApp() {
   const committing = useRef(false);
   const operationBusy = useRef(false);
   const syncingRef = useRef(false);
+  const contextGeneration = useRef(0);
+  const cloudRequest = useRef(0);
   const notify = useCallback((text: string) => {
     setMessage(text);
     setError("");
@@ -274,29 +289,80 @@ export function StoreApp() {
           b.payload.occurredAt.localeCompare(a.payload.occurredAt),
         ),
     );
-    setOperations(await pendingOperations(db));
+    const allOperations = await pendingOperations(db);
+    setAllOperationCount(allOperations.length);
+    setOperations(
+      allOperations.filter(
+        (op) =>
+          op.data.organizationId === org &&
+          (!op.data.branchId || op.data.branchId === b) &&
+          (role === "owner" || op.actorId === user),
+      ),
+    );
     setLastSync(await setting<string>(db, "lastSync"));
     setSnapshotAt(await setting<string>(db, "snapshotAsOf"));
   }, [db, lease, member, branchId]);
   const refreshCloud = useCallback(async () => {
     if (practice || !member || !branchId || !navigator.onLine) return;
-    const nextBranches = await fetchBranches(member.organizationId);
-    setBranchList(nextBranches);
-    await setSetting(db, "branches", nextBranches);
-    const results = await Promise.all(
-      tables.map(
-        async (t) => [t, await rows(t, member.organizationId)] as const,
+    const generation = contextGeneration.current;
+    const request = ++cloudRequest.current;
+    const [nextBranches, results, summary, snapshot, page] = await Promise.all([
+      fetchBranches(member.organizationId),
+      Promise.all(
+        viewTables[view].map(
+          async (t) => [t, await rows(t, member.organizationId)] as const,
+        ),
       ),
-    );
-    const summary =
-      member.role === "stock_staff"
-        ? {}
-        : await command<Row>("dashboard", {
+      view !== "overview" || member.role === "stock_staff"
+        ? Promise.resolve({})
+        : command<Row>("dashboard", {
             organizationId: member.organizationId,
             branchId,
-          });
-    setCloud({ ...Object.fromEntries(results), summary: [summary] });
-  }, [practice, member, branchId, db]);
+          }),
+      !lease
+        ? command<Snapshot>("snapshot", {
+            organizationId: member.organizationId,
+            branchId,
+            transactionIds: (
+              await db.sales.where("status").notEqual("synced").toArray()
+            ).map((s) => s.id),
+          })
+        : Promise.resolve(undefined),
+      view === "sales"
+        ? salesPage(member.organizationId, branchId)
+        : Promise.resolve(undefined),
+    ]);
+    if (
+      generation !== contextGeneration.current ||
+      request !== cloudRequest.current
+    )
+      return;
+    if (snapshot) {
+      await applySnapshot(db, snapshot);
+      const nextStock = await localStock(db);
+      if (
+        generation !== contextGeneration.current ||
+        request !== cloudRequest.current
+      )
+        return;
+      setProducts(snapshot.products);
+      setStock(nextStock);
+      setSnapshotAt(snapshot.asOf);
+    }
+    setBranchList(nextBranches);
+    await setSetting(db, "branches", nextBranches);
+    if (
+      generation !== contextGeneration.current ||
+      request !== cloudRequest.current
+    )
+      return;
+    setCloud({
+      ...Object.fromEntries(results),
+      ...(page ? { sales: page.rows } : {}),
+      summary: [summary],
+    });
+    setSalesCursor(page?.next);
+  }, [practice, member, branchId, db, view, lease]);
   const sync = useCallback(async () => {
     if (practice || !lease || !navigator.onLine || syncingRef.current) return;
     syncingRef.current = true;
@@ -314,6 +380,7 @@ export function StoreApp() {
     }
   }, [db, lease, practice, refreshLocal, fail]);
   useEffect(() => {
+    contextGeneration.current++;
     let alive = true;
     (async () => {
       setReady(false);
@@ -407,8 +474,10 @@ export function StoreApp() {
   }, []);
   useEffect(() => {
     if (!ready || !online) return;
-    void sync();
-    const timer = setInterval(() => void sync(), 15_000);
+    if (!operationBusy.current) void sync();
+    const timer = setInterval(() => {
+      if (!operationBusy.current) void sync();
+    }, 15_000);
     return () => clearInterval(timer);
   }, [ready, online, sync]);
   useEffect(() => {
@@ -428,18 +497,30 @@ export function StoreApp() {
       alive = false;
     };
   }, [fail]);
-  const run = async (fn: () => Promise<void>) => {
-    if (operationBusy.current) return;
+  const run = async (fn: () => Promise<void>, refresh = true) => {
+    if (operationBusy.current)
+      return new Error(
+        "Wait for the current operation to finish, then try again.",
+      );
     operationBusy.current = true;
     setBusy(true);
     setError("");
+    const generation = contextGeneration.current;
     try {
       await fn();
-      await refreshLocal();
-      await refreshCloud();
+      if (generation === contextGeneration.current && refresh) {
+        await refreshCloud();
+      }
     } catch (e) {
       fail(e);
+      return e instanceof Error
+        ? e
+        : new Error(
+            "Could not confirm this action. Your original request is retained.",
+          );
     } finally {
+      if (generation === contextGeneration.current && refresh)
+        await refreshLocal().catch(fail);
       operationBusy.current = false;
       setBusy(false);
     }
@@ -448,8 +529,13 @@ export function StoreApp() {
     event.preventDefault();
     const form = new FormData(event.currentTarget);
     await run(async () => {
+      contextGeneration.current++;
+      setCloud({});
+      setProducts([]);
+      setStock(new Map());
+      await clearAccountCache(db);
       const email = inputValue(form, "email"),
-        password = inputValue(form, "password");
+        password = String(form.get("password") ?? "");
       const result =
         authMode === "login"
           ? await supabase.auth.signInWithPassword({ email, password })
@@ -463,16 +549,31 @@ export function StoreApp() {
         notify("Check your email to confirm your account, then sign in.");
         return;
       }
-      setSignedIn(true);
       const found = await memberships();
-      setMember(found[0]);
       if (found[0]) {
         const b = await fetchBranches(found[0].organizationId);
+        const target = found[0].branchId ?? b[0]?.id;
+        if (!target) throw new Error("Ask your owner to assign your branch.");
+        const snapshot = await command<Snapshot>("snapshot", {
+          organizationId: found[0].organizationId,
+          branchId: target,
+          transactionIds: (
+            await db.sales.where("status").notEqual("synced").toArray()
+          ).map((s) => s.id),
+        });
+        await applySnapshot(db, snapshot);
+        const nextStock = await localStock(db);
+        setProducts(snapshot.products);
+        setStock(nextStock);
+        setSnapshotAt(snapshot.asOf);
         setBranchList(b);
-        setBranchId(found[0].branchId ?? b[0]?.id ?? "");
+        setBranchId(target);
         await setSetting(db, "membership", found[0]);
         await setSetting(db, "branches", b);
       }
+      setMember(found[0]);
+      setView(found[0]?.role === "stock_staff" ? "inventory" : "pos");
+      setSignedIn(true);
       notify("Signed in.");
     });
   }
@@ -485,6 +586,7 @@ export function StoreApp() {
         ownerName: inputValue(f, "name"),
       });
       const m = (await memberships())[0];
+      contextGeneration.current++;
       setMember(m);
       const b = await fetchBranches(m.organizationId);
       setBranchList(b);
@@ -531,6 +633,7 @@ export function StoreApp() {
     if (committing.current) return;
     committing.current = true;
     setBusy(true);
+    setSavingSale(true);
     try {
       requireLease(lease);
       if (!cart.items.length)
@@ -564,6 +667,7 @@ export function StoreApp() {
     } finally {
       committing.current = false;
       setBusy(false);
+      setSavingSale(false);
     }
   }
   function addProduct(p: Product, unitId?: string, batchId?: string | null) {
@@ -602,10 +706,28 @@ export function StoreApp() {
         throw new Error(
           "Reconnect before signing out. Your current shift can continue offline.",
         );
-      await supabase.auth.signOut();
-      await db.settings.delete("lease");
-      await db.settings.delete("membership");
+      if (syncingRef.current)
+        throw new Error(
+          "Wait for the current synchronization to finish before signing out.",
+        );
+      contextGeneration.current++;
+      const result = await supabase.auth.signOut();
+      if (result.error) throw result.error;
+      await clearAccountCache(db);
       cart.clear();
+      setCloud({});
+      setProducts([]);
+      setStock(new Map());
+      setBranchList([]);
+      setBranchId("");
+      setSales([]);
+      setSnapshotAt(undefined);
+      setLastSync(undefined);
+      setSalesCursor(undefined);
+      setCheckoutDone(undefined);
+      setBranchFeedback(undefined);
+      setOpeningImport(undefined);
+      setUpdateFeedback("");
       setLease(undefined);
       setMember(undefined);
       setSignedIn(false);
@@ -895,7 +1017,7 @@ export function StoreApp() {
           </div>
           <button
             className="profile"
-            disabled={busy}
+            disabled={busy || syncing}
             onClick={() => void logout()}
             title={practice ? "Leave practice mode" : "Sign out"}
           >
@@ -923,6 +1045,7 @@ export function StoreApp() {
               onChange={(e) => {
                 const nextBranchId = e.target.value;
                 void run(async () => {
+                  contextGeneration.current++;
                   const snapshot = await command<Snapshot>("snapshot", {
                     organizationId: member.organizationId,
                     branchId: nextBranchId,
@@ -938,6 +1061,9 @@ export function StoreApp() {
                   // Change the displayed branch and its stock together. Failed
                   // downloads leave the previously loaded branch selected.
                   setBranchId(nextBranchId);
+                  setOpeningImport(undefined);
+                  setCloud({});
+                  setSalesCursor(undefined);
                   setProducts(snapshot.products);
                   setStock(nextStock);
                   setSnapshotAt(snapshot.asOf);
@@ -1011,7 +1137,7 @@ export function StoreApp() {
                       await refreshCloud();
                       if (lease) await sync();
                       notify("Records refreshed.");
-                    })
+                    }, false)
                   }
                 >
                   <RefreshCw size={15} />
@@ -1021,6 +1147,20 @@ export function StoreApp() {
             </div>
           </div>
           {Notice}
+          {!practice && view === "overview" && (
+            <p className="muted">
+              Sales totals include all confirmed records. Activity and
+              reconciliation lists show up to the most recent 1,000 entries.
+            </p>
+          )}
+          {!practice &&
+            view !== "sales" &&
+            Object.values(cloud).some((list) => list.length >= 1000) && (
+              <p role="status" className="notice error">
+                Showing the most recent 1,000 entries in this view. Older
+                records remain stored.
+              </p>
+            )}
           {!lease && !isStock && view === "pos" && (
             <section className="start-shift">
               <div>
@@ -1432,7 +1572,7 @@ export function StoreApp() {
                     disabled={busy || !lease || !cart.items.length || isStock}
                     className="complete-sale"
                   >
-                    {busy ? "Saving sale…" : "Complete cash sale"}
+                    {savingSale ? "Saving sale…" : "Complete cash sale"}
                     <ArrowRight size={18} />
                   </Button>
                   <span className="payment-note">
@@ -1606,7 +1746,6 @@ export function StoreApp() {
                   table(
                     ["Product", "Branch", "Movement", "Quantity", "Recorded"],
                     [...(cloud.inventory_movements ?? [])]
-                      .reverse()
                       .slice(0, 12)
                       .map((r) => (
                         <tr key={str(r, "id")}>
@@ -2084,37 +2223,69 @@ export function StoreApp() {
                             await file.text(),
                             products,
                           );
-                          if (
-                            !window.confirm(
-                              `Import ${records.length} opening-stock lines for ${selectedBranch?.name}?`,
-                            )
-                          )
-                            return;
-                          await onlineOperation(
-                            db,
-                            member.userId,
-                            "receive_stock",
-                            {
-                              ...context(),
-                              source: "opening",
-                              reference: file.name,
-                              items: records,
-                            },
-                            "receiptId",
-                          );
-                          await applySnapshot(
-                            db,
-                            await command<Snapshot>("snapshot", {
-                              ...context(),
-                              transactionIds: sales.map((s) => s.id),
-                            }),
-                          );
-                          notify(
-                            "Opening stock imported. Verify the Inventory totals before selling.",
-                          );
+                          setOpeningImport({
+                            name: file.name,
+                            branchId,
+                            items: records,
+                          });
                         });
+                        e.currentTarget.value = "";
                       }}
                     />
+                    {openingImport && openingImport.branchId === branchId && (
+                      <form
+                        className="spaced-form"
+                        aria-label="Confirm opening stock"
+                        onSubmit={(e) => {
+                          e.preventDefault();
+                          void run(async () => {
+                            await onlineOperation(
+                              db,
+                              member.userId,
+                              "receive_stock",
+                              {
+                                ...context(),
+                                source: "opening",
+                                reference: openingImport.name,
+                                items: openingImport.items,
+                              },
+                              "receiptId",
+                            );
+                            await applySnapshot(
+                              db,
+                              await command<Snapshot>("snapshot", {
+                                ...context(),
+                                transactionIds: sales.map((s) => s.id),
+                              }),
+                            );
+                            notify(
+                              "Opening stock imported. Verify the Inventory totals before selling.",
+                            );
+                            setOpeningImport(undefined);
+                          });
+                        }}
+                      >
+                        <p>
+                          {openingImport.name}: {openingImport.items.length}{" "}
+                          opening-stock lines for {selectedBranch?.name}.
+                        </p>
+                        <label className="checkbox">
+                          <input type="checkbox" required />I verified this
+                          branch’s physical opening count.
+                        </label>
+                        <Button disabled={!online || busy || practice}>
+                          Confirm opening stock import
+                        </Button>
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          disabled={busy}
+                          onClick={() => setOpeningImport(undefined)}
+                        >
+                          Cancel import
+                        </Button>
+                      </form>
+                    )}
                   </section>
                 )}
               </div>
@@ -2436,24 +2607,22 @@ export function StoreApp() {
                         <td>{money(Number(s.cash_received))}</td>
                         <td>{when(s.occurred_at)}</td>
                         <td>
-                          {(cloud.sale_reversals ?? []).some(
-                            (r) => r.sale_id === s.id,
-                          ) ? (
+                          {s.sale_reversals &&
+                          (!Array.isArray(s.sale_reversals) ||
+                            s.sale_reversals.length > 0) ? (
                             <span className="status-tag">Refunded</span>
                           ) : (
                             isOwner && (
-                              <Button
-                                variant="outline"
-                                size="sm"
+                              <ApprovalForm
+                                action="Full refund"
+                                label="Refund reason"
+                                description={`Return ${money(Number(s.total))} in cash and restore this sale’s stock to ${selectedBranch?.name}. The original receipt is preserved.`}
+                                confirmLabel="Confirm full refund"
                                 disabled={
                                   !online || busy || !lease || !!pending.length
                                 }
-                                onClick={() => {
-                                  const reason = window.prompt(
-                                    "Reason for a full cash refund (stock will return to this branch):",
-                                  );
-                                  if (!reason) return;
-                                  void run(async () => {
+                                onConfirm={(reason) =>
+                                  run(async () => {
                                     await onlineOperation(
                                       db,
                                       member.userId,
@@ -2470,11 +2639,9 @@ export function StoreApp() {
                                     notify(
                                       "Refund recorded as a linked reversal. Original sale retained.",
                                     );
-                                  });
-                                }}
-                              >
-                                Full refund
-                              </Button>
+                                  })
+                                }
+                              />
                             )
                           )}
                         </td>
@@ -2487,6 +2654,53 @@ export function StoreApp() {
                   title="No confirmed sales yet"
                   body="Sales appear here after synchronization. Pending local records remain in the Sync center."
                 />
+              )}
+              {!practice && branchSales.length > 0 && (
+                <div className="section-heading">
+                  <p className="muted" role="status">
+                    {branchSales.length} receipts loaded for{" "}
+                    {selectedBranch?.name}.{" "}
+                    {salesCursor
+                      ? "Older receipts are available."
+                      : "End of receipt history."}
+                  </p>
+                  {salesCursor && (
+                    <Button
+                      variant="outline"
+                      disabled={!online || busy}
+                      onClick={() => {
+                        const before = salesCursor;
+                        void run(async () => {
+                          const generation = contextGeneration.current;
+                          const request = ++cloudRequest.current;
+                          const page = await salesPage(
+                            member.organizationId,
+                            branchId,
+                            before,
+                          );
+                          if (
+                            generation !== contextGeneration.current ||
+                            request !== cloudRequest.current
+                          )
+                            return;
+                          setCloud((current) => ({
+                            ...current,
+                            sales: [
+                              ...new Map(
+                                [...(current.sales ?? []), ...page.rows].map(
+                                  (row) => [String(row.id), row],
+                                ),
+                              ).values(),
+                            ],
+                          }));
+                          setSalesCursor(page.next);
+                        }, false);
+                      }}
+                    >
+                      Load older receipts
+                    </Button>
+                  )}
+                </div>
               )}
             </section>
           )}
@@ -2549,7 +2763,11 @@ export function StoreApp() {
                             <Button
                               size="sm"
                               variant="outline"
-                              disabled={s.payload.cashierId !== member.userId}
+                              disabled={
+                                !online ||
+                                busy ||
+                                s.payload.cashierId !== member.userId
+                              }
                               onClick={() =>
                                 void run(async () => {
                                   await retrySale(db, s.id);
@@ -2561,16 +2779,14 @@ export function StoreApp() {
                             </Button>
                           )}
                           {isOwner && !practice && s.status !== "synced" && (
-                            <Button
-                              size="sm"
-                              variant="outline"
+                            <ApprovalForm
+                              action="Approve recovery"
+                              label="Recovery approval reason"
+                              description="Verify the original receipt before approving this saved sale. The original cashier and transaction ID remain unchanged."
+                              confirmLabel="Confirm recovery"
                               disabled={!online || busy}
-                              onClick={() => {
-                                const reason = window.prompt(
-                                  "Verify the original receipt and enter your reason for approving this recovered sale:",
-                                );
-                                if (!reason) return;
-                                void run(async () => {
+                              onConfirm={(reason) =>
+                                run(async () => {
                                   const ack = await command<{
                                     status: string;
                                     receipt?: string;
@@ -2605,11 +2821,9 @@ export function StoreApp() {
                                   notify(
                                     "Recovered sale approved. Original cashier, sale, and owner approval are preserved.",
                                   );
-                                });
-                              }}
-                            >
-                              Approve recovery
-                            </Button>
+                                })
+                              }
+                            />
                           )}
                         </td>
                       </tr>
@@ -2676,7 +2890,11 @@ export function StoreApp() {
                 <Button
                   variant="outline"
                   onClick={() =>
-                    void exportRecovery(db)
+                    void exportRecovery(db, {
+                      organizationId: member.organizationId,
+                      branchId,
+                      cashierId: isOwner ? undefined : member.userId,
+                    })
                       .then((data) =>
                         download(
                           `agristore-${practice ? "practice" : "recovery"}-${Date.now()}.json`,
@@ -2821,7 +3039,11 @@ export function StoreApp() {
                   <Button
                     variant="outline"
                     onClick={() =>
-                      void exportRecovery(db)
+                      void exportRecovery(db, {
+                        organizationId: member.organizationId,
+                        branchId,
+                        cashierId: isOwner ? undefined : member.userId,
+                      })
                         .then((d) =>
                           download(`agristore-recovery-${Date.now()}.json`, d),
                         )
@@ -2834,18 +3056,50 @@ export function StoreApp() {
                     variant="outline"
                     disabled={
                       !registration ||
+                      !online ||
+                      busy ||
                       !!cart.items.length ||
                       allPendingCount > 0 ||
-                      operations.length > 0
+                      allOperationCount > 0
                     }
                     onClick={() =>
                       void run(async () => {
-                        await registration?.update();
-                        const waiting = registration?.waiting;
+                        setUpdateFeedback(
+                          "Checking and downloading any available update…",
+                        );
+                        let waiting: ServiceWorker | null;
+                        try {
+                          waiting = await findReadyUpdate(registration!);
+                        } catch (error) {
+                          setUpdateFeedback(
+                            error instanceof Error
+                              ? error.message
+                              : "Could not check for an update. Try again online.",
+                          );
+                          throw error;
+                        }
                         if (!waiting) {
+                          setUpdateFeedback("The installed app is up to date.");
                           notify("The installed app is up to date.");
                           return;
                         }
+                        if (
+                          useCart.getState().items.length ||
+                          committing.current ||
+                          (await db.sales
+                            .where("status")
+                            .notEqual("synced")
+                            .count()) ||
+                          (await pendingOperations(db)).length
+                        ) {
+                          setUpdateFeedback(
+                            "Update downloaded. Finish checkout and confirm every pending record before installing it.",
+                          );
+                          return;
+                        }
+                        setUpdateFeedback(
+                          "Update downloaded. Restarting the app…",
+                        );
                         navigator.serviceWorker.addEventListener(
                           "controllerchange",
                           () => window.location.reload(),
@@ -2860,6 +3114,11 @@ export function StoreApp() {
                   <small className="muted block">
                     Updates wait until the cart and upload queue are clear.
                   </small>
+                  {updateFeedback && (
+                    <p role="status" className="muted">
+                      {updateFeedback}
+                    </p>
+                  )}
                 </section>
               </div>
               {isOwner && (
@@ -2964,9 +3223,11 @@ export function StoreApp() {
                           <td>{when(d.last_sync)}</td>
                           <td>
                             {d.active === true && (
-                              <Button
-                                variant="outline"
-                                size="sm"
+                              <ApprovalForm
+                                action="Retire PC"
+                                label="PC retirement reason"
+                                description="Retire this PC and close its open shift. Its saved records remain recoverable; counted cash will need owner review."
+                                confirmLabel="Confirm PC retirement"
                                 disabled={
                                   !online ||
                                   busy ||
@@ -2974,12 +3235,8 @@ export function StoreApp() {
                                   (d.id === lease?.deviceId &&
                                     pending.length > 0)
                                 }
-                                onClick={() => {
-                                  const reason = window.prompt(
-                                    "Retire this PC and close any open shift? Enter a reason. Counted cash will require owner review.",
-                                  );
-                                  if (!reason) return;
-                                  void run(async () => {
+                                onConfirm={(reason) =>
+                                  run(async () => {
                                     await command("retire_device", {
                                       organizationId: member.organizationId,
                                       branchId: d.branch_id,
@@ -2987,18 +3244,16 @@ export function StoreApp() {
                                       reason,
                                       countedCash: null,
                                     });
+                                    await forgetRetiredDevice(db, str(d, "id"));
                                     if (d.id === lease?.deviceId) {
-                                      await db.settings.delete("lease");
                                       setLease(undefined);
                                     }
                                     notify(
                                       "PC retired. Its records remain available; recover original pending sales through the Sync center.",
                                     );
-                                  });
-                                }}
-                              >
-                                Retire PC
-                              </Button>
+                                  })
+                                }
+                              />
                             )}
                           </td>
                         </tr>

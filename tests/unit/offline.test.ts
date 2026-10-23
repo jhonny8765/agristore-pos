@@ -3,6 +3,8 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 import {
   PosDatabase,
   applySnapshot,
+  clearAccountCache,
+  forgetRetiredDevice,
   exportRecovery,
   importRecovery,
   localStock,
@@ -27,6 +29,81 @@ afterEach(async () => {
     d.close();
     await d.delete();
   }
+});
+describe("account and retired-device cache boundaries", () => {
+  it("removes private account caches while preserving unresolved sales, operations and PC identity", async () => {
+    const d = await db();
+    const original = await saveCheckout(d, sale());
+    await setSetting(d, "deviceId", uuid(3));
+    await setSetting(d, "membership", { name: "Previous cashier" });
+    await setSetting(d, "branches", [{ name: "Private branch" }]);
+    await setSetting(d, "operation:receive_stock:retained", {
+      action: "receive_stock",
+      data: { receiptId: uuid(700) },
+    });
+    await clearAccountCache(d);
+    expect(await d.products.count()).toBe(0);
+    expect(await d.stocks.count()).toBe(0);
+    expect(await setting(d, "membership")).toBeUndefined();
+    expect(await setting(d, "branches")).toBeUndefined();
+    expect(await setting(d, "lease")).toBeUndefined();
+    expect(await setting(d, "snapshotAsOf")).toBeUndefined();
+    expect(await setting(d, "deviceId")).toBe(uuid(3));
+    expect(await d.sales.get(original.id)).toEqual(original);
+    expect(await setting(d, "operation:receive_stock:retained")).toEqual({
+      action: "receive_stock",
+      data: { receiptId: uuid(700) },
+    });
+  });
+  it("releases only the retired PC identity and keeps its unresolved records", async () => {
+    const d = await db();
+    const original = await saveCheckout(d, sale());
+    await setSetting(d, "deviceId", uuid(3));
+    await forgetRetiredDevice(d, uuid(900));
+    expect(await setting(d, "deviceId")).toBe(uuid(3));
+    expect(await setting(d, "lease")).toBeDefined();
+    await forgetRetiredDevice(d, uuid(3));
+    expect(await setting(d, "deviceId")).toBeUndefined();
+    expect(await setting(d, "lease")).toBeUndefined();
+    expect(await d.sales.get(original.id)).toEqual(original);
+    expect(await d.products.count()).toBe(1);
+  });
+  it("exports only the selected business, branch and authorized cashier without deleting others", async () => {
+    const d = await db();
+    const own = await saveCheckout(d, sale());
+    const other = sale({
+      organizationId: uuid(90),
+      branchId: uuid(91),
+      cashierId: uuid(92),
+    });
+    await d.sales.add({ ...own, id: other.transactionId, payload: other });
+    await setSetting(d, "operation:own", {
+      actorId: uuid(4),
+      data: { organizationId: uuid(1), branchId: uuid(2) },
+    });
+    await setSetting(d, "operation:other", {
+      actorId: uuid(92),
+      data: { organizationId: uuid(90), branchId: uuid(91) },
+    });
+    const backup = await exportRecovery(d, {
+      organizationId: uuid(1),
+      branchId: uuid(2),
+      cashierId: uuid(4),
+    });
+    expect(backup.sales.map((row) => row.id)).toEqual([own.id]);
+    expect(backup.pendingOperations).toHaveLength(1);
+    expect(backup.lease?.cashierId).toBe(uuid(4));
+    const otherBackup = await exportRecovery(d, {
+      organizationId: uuid(90),
+      branchId: uuid(91),
+      cashierId: uuid(92),
+    });
+    expect(otherBackup.sales.map((row) => row.id)).toEqual([
+      other.transactionId,
+    ]);
+    expect(otherBackup.lease).toBeUndefined();
+    expect(await d.sales.count()).toBe(2);
+  });
 });
 function server() {
   const saved = new Map<string, Sale>();

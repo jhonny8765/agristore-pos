@@ -74,6 +74,23 @@ test("expired authorization blocks a new sale and retains the old record", async
   await page.getByRole("button", { name: "Sync center" }).click();
   await expect(page.locator("tbody tr")).toHaveCount(1);
 });
+test("pending checkout keeps manual app updates blocked across reload", async ({
+  page,
+}) => {
+  await practice(page);
+  await buy(page);
+  await page.getByRole("button", { name: "Settings", exact: true }).click();
+  await expect(
+    page.getByRole("button", { name: "Check for app update", exact: true }),
+  ).toBeDisabled();
+  await page.reload();
+  await page.getByRole("button", { name: "Settings", exact: true }).click();
+  await expect(
+    page.getByRole("button", { name: "Check for app update", exact: true }),
+  ).toBeDisabled();
+  await page.getByRole("button", { name: "Sync center", exact: true }).click();
+  await expect(page.locator("tbody tr")).toHaveCount(1);
+});
 test("quantity conversion and cash underpayment validation", async ({
   page,
 }) => {
@@ -131,7 +148,9 @@ test("desktop and mobile inspection captures with no horizontal page overflow", 
     fullPage: true,
   });
   await page.setViewportSize({ width: 390, height: 844 });
-  expect((await page.locator(".product-art").first().boundingBox())?.height).toBeLessThanOrEqual(64);
+  expect(
+    (await page.locator(".product-art").first().boundingBox())?.height,
+  ).toBeLessThanOrEqual(64);
   await expect(
     page.getByRole("heading", { name: "Checkout", exact: true }),
   ).toBeVisible();

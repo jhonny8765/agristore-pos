@@ -134,7 +134,56 @@ export async function rows(table: string, org: string, branch?: string) {
           : "created_at";
   const { data, error } = await query
     .order(dateColumn, { ascending: false })
+    .order("id", { ascending: false })
     .limit(1000);
   if (error) throw new Error(error.message);
   return data ?? [];
+}
+
+export interface SalesCursor {
+  occurredAt: string;
+  id: string;
+}
+export async function salesPage(
+  org: string,
+  branch: string,
+  before?: SalesCursor,
+  client = supabase,
+) {
+  let query = client
+    .from("sales")
+    .select("*,sale_reversals(id)")
+    .eq("organization_id", org)
+    .eq("branch_id", branch)
+    .order("occurred_at", { ascending: false })
+    .order("id", { ascending: false });
+  if (before) {
+    if (
+      !/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(
+        before.id,
+      ) ||
+      !/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(?:\.\d{1,6})?(?:Z|[+-]\d{2}:\d{2})$/.test(
+        before.occurredAt,
+      ) ||
+      !Number.isFinite(Date.parse(before.occurredAt))
+    )
+      throw new Error("Invalid receipt history cursor. Refresh the list.");
+    // Preserve PostgreSQL microseconds; Date.toISOString() would truncate the
+    // cursor and could skip receipts sharing the same millisecond.
+    const date = before.occurredAt;
+    query = query.or(
+      `occurred_at.lt.${date},and(occurred_at.eq.${date},id.lt.${before.id})`,
+    );
+  }
+  const { data, error } = await query.limit(51);
+  if (error) throw new Error(error.message);
+  const result = (data ?? []).slice(0, 50) as Record<string, unknown>[];
+  const last = result.at(-1);
+  return {
+    rows: result,
+    next:
+      data && data.length > 50 && last
+        ? { occurredAt: String(last.occurred_at), id: String(last.id) }
+        : undefined,
+  };
 }
