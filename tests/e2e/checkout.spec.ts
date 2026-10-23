@@ -88,7 +88,7 @@ test("pending checkout keeps manual app updates blocked across reload", async ({
   await expect(
     page.getByRole("button", { name: "Check for app update", exact: true }),
   ).toBeDisabled();
-  await page.getByRole("button", { name: "Sync center", exact: true }).click();
+  await page.getByRole("button", { name: /^Sync center/ }).click();
   await expect(page.locator("tbody tr")).toHaveCount(1);
 });
 test("quantity conversion and cash underpayment validation", async ({

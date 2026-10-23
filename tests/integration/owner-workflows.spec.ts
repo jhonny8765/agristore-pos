@@ -249,7 +249,7 @@ test("owner approvals work without browser dialogs, stock refreshes without a sh
   ).toContainText("19 kg");
   await page.getByRole("button", { name: "Transfers", exact: true }).click();
   await page
-    .getByLabel("Destination branch", { exact: true })
+    .getByRole("combobox", { name: "Destination branch", exact: true })
     .selectOption(a.branchId);
   await page
     .getByLabel("Quantity in base units (kg / liter / piece)", { exact: true })
