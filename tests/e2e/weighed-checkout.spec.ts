@@ -9,8 +9,9 @@ test("catalog weight and peso choices start at the right field without charging 
   await page
     .getByRole("button", { name: "Sell Grower feeds by weight", exact: true })
     .click();
-  const quantity = page.getByLabel("Quantity for Grower feeds");
+  const quantity = page.getByLabel(/^Quantity \(.+\) for Grower feeds$/);
   await expect(quantity).toHaveValue("");
+  await expect(quantity).toHaveAccessibleName("Quantity (kg) for Grower feeds");
   await expect(quantity).toBeFocused();
   await expect(page.locator(".amount-due")).toContainText("₱0.00");
   await expect(complete(page)).toBeDisabled();
@@ -23,8 +24,11 @@ test("catalog weight and peso choices start at the right field without charging 
     })
     .click();
   await expect(
-    page.getByLabel("Customer budget for Grower feeds"),
+    page.getByLabel("Customer budget (₱) for Grower feeds"),
   ).toBeFocused();
+  await expect(
+    page.getByLabel("Customer budget (₱) for Grower feeds"),
+  ).toHaveAccessibleName("Customer budget (₱) for Grower feeds");
   await expect(complete(page)).toBeDisabled();
   await page
     .getByRole("button", { name: "Cancel peso entry", exact: true })
@@ -67,7 +71,7 @@ test("normal keystrokes accept half kilos and fractions; invalid drafts cannot c
   await page
     .getByLabel("Unit for Grower feeds")
     .selectOption({ label: "Kilo" });
-  const input = page.getByLabel("Quantity for Grower feeds");
+  const input = page.getByLabel(/^Quantity \(.+\) for Grower feeds$/);
   await input.fill("");
   await input.pressSequentially("0.");
   await expect(input).toHaveValue("0.");
@@ -106,22 +110,25 @@ test("peso estimates require measured confirmation across navigation, and grams 
   await page
     .getByRole("button", { name: "By peso amount", exact: true })
     .click();
-  await page.getByLabel("Customer budget for Grower feeds").fill("50");
+  await page.getByLabel("Customer budget (₱) for Grower feeds").fill("50");
   await page
     .getByRole("button", { name: "Estimate weight", exact: true })
     .click();
-  await expect(page.getByLabel("Quantity for Grower feeds")).toHaveValue(
+  await expect(page.getByLabel(/^Quantity \(.+\) for Grower feeds$/)).toHaveValue(
     "1.488",
   );
   await expect(complete(page)).toBeDisabled();
   await page.getByRole("button", { name: "Inventory", exact: true }).click();
   await page.getByRole("button", { name: /^Checkout/ }).click();
-  await expect(page.getByLabel("Customer budget for Grower feeds")).toHaveValue(
+  await expect(page.getByLabel("Customer budget (₱) for Grower feeds")).toHaveValue(
     "50",
   );
   await expect(complete(page)).toBeDisabled();
   await page.getByLabel("Weight entry for Grower feeds").selectOption("g");
-  await page.getByLabel("Quantity for Grower feeds").fill("1500");
+  await expect(
+    page.getByLabel(/^Quantity \(.+\) for Grower feeds$/),
+  ).toHaveAccessibleName("Quantity (g) for Grower feeds");
+  await page.getByLabel(/^Quantity \(.+\) for Grower feeds$/).fill("1500");
   await expect(page.locator(".receipt-item-bottom")).toContainText("₱50.40");
   await expect(complete(page)).toBeDisabled();
   await page
@@ -142,27 +149,27 @@ test("shortcuts select the retail kilo price, cancel restores a sack, and duplic
   page,
 }) => {
   await practice(page);
-  await page.getByLabel("Quantity for Grower feeds").fill("2");
+  await page.getByLabel(/^Quantity \(.+\) for Grower feeds$/).fill("2");
   await page
     .getByRole("button", { name: "By peso amount", exact: true })
     .click();
   await page
     .getByRole("button", { name: "Cancel peso entry", exact: true })
     .click();
-  await expect(page.getByLabel("Quantity for Grower feeds")).toHaveValue("2");
+  await expect(page.getByLabel(/^Quantity \(.+\) for Grower feeds$/)).toHaveValue("2");
   await expect(page.getByLabel("Unit for Grower feeds")).toHaveValue(/.+/);
   await expect(page.locator(".receipt-item-bottom")).toContainText("₱3,160.00");
   await page.getByRole("button", { name: "¼ kg", exact: true }).click();
   await expect(page.locator(".line-rate")).toContainText("₱33.60 / Kilo");
   await page.getByLabel("Weight entry for Grower feeds").selectOption("g");
-  await expect(page.getByLabel("Quantity for Grower feeds")).toHaveValue("250");
+  await expect(page.getByLabel(/^Quantity \(.+\) for Grower feeds$/)).toHaveValue("250");
   await page.getByRole("button", { name: "Add Grower feeds" }).click();
-  await page.getByLabel("Quantity for Grower feeds").nth(1).fill("0.");
+  await page.getByLabel(/^Quantity \(.+\) for Grower feeds$/).nth(1).fill("0.");
   await page
     .getByRole("button", { name: "Remove Grower feeds" })
     .first()
     .click();
-  await expect(page.getByLabel("Quantity for Grower feeds")).toHaveValue("0.");
+  await expect(page.getByLabel(/^Quantity \(.+\) for Grower feeds$/)).toHaveValue("0.");
   await expect(complete(page)).toBeDisabled();
   await page.getByRole("button", { name: "Remove Grower feeds" }).click();
   await expect(page.locator(".receipt-item")).toHaveCount(0);
@@ -174,7 +181,7 @@ test("piece products cannot be sold as half a sealed packet; weighed controls re
   await practice(page);
   await page.getByRole("button", { name: "Remove Grower feeds" }).click();
   await page.getByRole("button", { name: "Add Hybrid corn seeds" }).click();
-  await page.getByLabel("Quantity for Hybrid corn seeds").fill("0.5");
+  await page.getByLabel(/^Quantity \(.+\) for Hybrid corn seeds$/).fill("0.5");
   await expect(
     page.getByText("Piece stock must be a whole number", { exact: true }),
   ).toBeVisible();
@@ -182,7 +189,7 @@ test("piece products cannot be sold as half a sealed packet; weighed controls re
   await expect(
     page.getByRole("button", { name: "By peso amount", exact: true }),
   ).toHaveCount(0);
-  await page.getByLabel("Quantity for Hybrid corn seeds").fill("1");
+  await page.getByLabel(/^Quantity \(.+\) for Hybrid corn seeds$/).fill("1");
   await expect(complete(page)).toBeEnabled();
   await page.getByRole("button", { name: "Remove Hybrid corn seeds" }).click();
   await page.getByRole("button", { name: "Add Grower feeds" }).click();

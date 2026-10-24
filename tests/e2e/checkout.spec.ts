@@ -103,7 +103,7 @@ test("quantity conversion and cash underpayment validation", async ({
   await page
     .getByLabel("Unit for Grower feeds")
     .selectOption({ label: "Kilo" });
-  await page.getByLabel("Quantity for Grower feeds").fill("2.5");
+  await page.getByLabel(/^Quantity \(.+\) for Grower feeds$/).fill("2.5");
   await page.getByLabel("Cash received", { exact: true }).fill("1");
   await page.getByRole("button", { name: "Complete cash sale" }).click();
   await expect(page.locator(".notice[role=alert]")).toContainText(

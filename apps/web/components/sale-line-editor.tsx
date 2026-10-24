@@ -56,6 +56,7 @@ export function SaleLineEditor({
   const kilo = kiloUnit(product);
   const loose = !!kilo && item.unitId === kilo.id;
   const grams = loose && display === "g";
+  const quantityLabel = `Quantity (${loose ? (grams ? "g" : "kg") : item.unitName})`;
   const error = cart.quantityErrors[lineId];
   const increment = loose ? (grams ? "250" : "0.25") : "1";
 
@@ -160,7 +161,7 @@ export function SaleLineEditor({
       <div className="receipt-item-bottom">
         <div className="quantity-entry">
           <label htmlFor={errorId + "-quantity"}>
-            Quantity {loose ? `(${grams ? "g" : "kg"})` : `(${item.unitName})`}
+            {quantityLabel}
           </label>
           <div className="quantity-entry-controls">
             <div className="quantity-control">
@@ -174,7 +175,7 @@ export function SaleLineEditor({
               <input
                 ref={field}
                 id={errorId + "-quantity"}
-                aria-label={`Quantity for ${item.name}`}
+                aria-label={`${quantityLabel} for ${item.name}`}
                 value={draft}
                 inputMode="decimal"
                 autoComplete="off"
@@ -315,7 +316,7 @@ export function SaleLineEditor({
             <input
               ref={budgetField}
               id={errorId + "-budget"}
-              aria-label={`Customer budget for ${item.name}`}
+              aria-label={`Customer budget (₱) for ${item.name}`}
               inputMode="decimal"
               aria-invalid={!!budgetError}
               aria-describedby={

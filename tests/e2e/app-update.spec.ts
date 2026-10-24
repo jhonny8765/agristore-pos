@@ -135,7 +135,7 @@ test("a requested update reopens an uncontrolled window while another window kee
     await expect(buildMarker(other)).toHaveAttribute("content", "one");
     await expect(other.locator(".receipt-heading")).toContainText("1 item");
     await expect(
-      other.getByLabel("Quantity for Grower feeds", { exact: true }),
+      other.getByLabel(/^Quantity \(.+\) for Grower feeds$/, { exact: true }),
     ).toHaveValue("1");
     await other.getByLabel("Cash received", { exact: true }).fill("2000");
     await other
