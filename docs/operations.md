@@ -12,6 +12,8 @@ Offline checkout is available only to the already authorized cashier and shift, 
 
 Reconnect and confirm every local sale has synchronized. Investigate review-required records in Sync center. Count drawer cash, reconcile the shift under Settings, and close it. Count physical stock only after the branch’s shifts are closed and all local transactions have synchronized. Owner approval records a separate adjustment; it never edits the original journal.
 
+Cashiers cannot confirm transfer receipts or submit/approve stock counts. The branch manager or stock staff receives transfers addressed to the branch; only the owner approves count adjustments. See [the staff responsibility matrix](permissions.md) before assigning employee roles.
+
 ## Checking lots in transfer and count history
 
 Match the product, lot and expiry date in the register before confirming a transfer receipt or approving a count. Quantities use the product's base measure: `0.5 kg` means half a kilo, even when the product is also sold by the sack. Count rows show the recorded reason and the expected, counted and difference quantities. Approval applies to that row only; stock changes after counting require a fresh count.

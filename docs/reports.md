@@ -21,6 +21,8 @@ Transfer and count rows identify the product and lot, display its expiry when kn
 
 Transfer/count exports include product ID, batch ID, lot, expiry date and base unit in separate columns. Quantity columns remain numeric; count exports include the exact counted-minus-expected difference. Product/lot descriptions come from the current downloaded catalog, while original IDs and numeric records remain the audit references.
 
+Transfer/count quantities and stock-journal quantities are requested as exact database text before JSON parsing, then displayed/calculated using decimal arithmetic. This avoids losing the last decimal places of a larger balance before exporting its discrepancy. Journal/event identifiers are also retained as text so large IDs cannot round to another record. These changes do not alter stored stock or journal entries. The standard stock measures still support six decimal places; use the actual scale and configured product conversion during selling.
+
 Receipt history under Sales & receipts has its own **Load older receipts** action. Overview totals include all confirmed records; its flag, cash reconciliation and stock movement previews remain bounded to the most recent 1,000 records. The separate audit register supports older pages. Sales, stock movements and corrections remain immutable: an export or filter does not change stock.
 
 These registers supplement reconciliation. They do not provide official tax invoices or a full accounting ledger.

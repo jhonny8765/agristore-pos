@@ -81,4 +81,4 @@ After a preview is ready and its checks pass, move the staging alias with `npx v
 
 Staging Auth URL settings are declared separately under `deploy/supabase/config.toml`; pushing the local development config would disable email confirmation, so never use the development config to configure the hosted project.
 
-See [operations and recovery](docs/operations.md), [acceptance evidence](docs/acceptance.md), and [source references](THIRD_PARTY_NOTICES.md).
+See [operations and recovery](docs/operations.md), [staff roles and branch responsibilities](docs/permissions.md), [acceptance evidence](docs/acceptance.md), and [source references](THIRD_PARTY_NOTICES.md).

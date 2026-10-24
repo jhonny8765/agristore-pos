@@ -36,3 +36,7 @@ No cashier shift was opened and no new cash sale was created. Independent reads 
 ## October 24 lot-history follow-up
 
 This pass used the existing approved count above for deployed visual and CSV checks. Its register now labels kg, no recorded lot and the original reason. The exported difference is numeric −0.25. Separate two-lot transfer/count operations ran only in disposable CI fixtures; no hosted stock, sale, product, transfer, count or shift was added. Server reads again confirmed five branches, three products, three original sales, zero open shifts and unchanged 500/400/50 Magpet balances. Both guarded updates retained the three synced local receipts. The user tab was left signed in at Checkout with an empty basket; temporary review tabs were closed and viewport overrides reset.
+
+## October 25 permission and precision follow-up
+
+No hosted employee, role, stock, count, transfer, product, shift or sale was added or changed for the new tests. Role assignments and deliberately large synthetic balances ran only in the disposable CI database. The current staging owner applied the guarded update, read/exported the existing approved count and retained all three original local receipts as Synced. The count's exported expected/counted values retain six decimal places, with numeric −0.25 difference. Five branches, three products, three sales, no open shifts and baseline 500/400/50 Magpet stock were verified. The existing owner tab remains at Checkout with an empty basket.
