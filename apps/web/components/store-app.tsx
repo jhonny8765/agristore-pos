@@ -1283,7 +1283,7 @@ export function StoreApp() {
                   disabled={!online || busy || practice}
                   onClick={() =>
                     void run(async () => {
-                      await refreshCloud();
+                      await refreshCloud(true);
                       if (lease) await sync();
                       setHistoryRevision((revision) => revision + 1);
                       notify("Records refreshed.");
@@ -2900,21 +2900,10 @@ export function StoreApp() {
                                     flags: ack.flags,
                                     error: undefined,
                                   });
-                                  await applySnapshot(
-                                    db,
-                                    await command<Snapshot>("snapshot", {
-                                      ...context(),
-                                      deviceId: lease?.deviceId,
-                                      transactionIds: [
-                                        s.id,
-                                        ...pending.map((p) => p.id),
-                                      ],
-                                    }),
-                                  );
                                   notify(
                                     "Recovered sale approved. Original cashier, sale, and owner approval are preserved.",
                                   );
-                                })
+                                }, true, true)
                               }
                             />
                           )}

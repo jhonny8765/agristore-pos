@@ -154,8 +154,8 @@ test("confirmed deliveries and opening imports stay saved when the following sto
   await page.getByLabel("Delivery / invoice reference", { exact: true }).fill("TEST confirmed delivery");
   await page.getByLabel("Quantity received", { exact: true }).fill("2");
   await page.getByRole("button", { name: "Receive stock", exact: true }).click();
-  await expect(page.getByRole("alert")).toContainText("Your action completed");
-  await expect(page.getByRole("status")).toContainText("Delivery recorded.");
+  await expect(page.locator(".notice[role=alert]")).toContainText("Your action completed");
+  await expect(page.locator(".notice[role=status]")).toContainText("Delivery recorded.");
   await expect(page.getByLabel("Delivery / invoice reference", { exact: true })).toHaveValue("");
   await expect(page.getByLabel("Quantity received", { exact: true })).toHaveValue("");
   // A second click now meets native required-field validation, not another write.
@@ -171,7 +171,7 @@ test("confirmed deliveries and opening imports stay saved when the following sto
   expect(Number(stock.data!.quantity)).toBe(10002);
   blockSnapshots = false;
   await page.getByRole("button", { name: "Refresh", exact: true }).click();
-  await expect(page.getByRole("alert")).toHaveCount(0);
+  await expect(page.locator(".notice[role=alert]")).toHaveCount(0);
   await page.getByRole("button", { name: "Inventory", exact: true }).click();
   await expect(page.getByRole("row").filter({ hasText: "Audit feeds" })).toContainText("10002 kg");
 
@@ -186,7 +186,7 @@ test("confirmed deliveries and opening imports stay saved when the following sto
   const opening = page.getByRole("form", { name: "Confirm opening stock", exact: true });
   await opening.getByRole("checkbox").check();
   await opening.getByRole("button", { name: "Confirm opening stock import", exact: true }).click();
-  await expect(page.getByRole("alert")).toContainText("Your action completed");
+  await expect(page.locator(".notice[role=alert]")).toContainText("Your action completed");
   await expect(opening).toHaveCount(0);
   const imported = await a.owner.from("purchase_receipts").select("id")
     .eq("organization_id", a.organizationId).eq("branch_id", destination).eq("source", "opening");
