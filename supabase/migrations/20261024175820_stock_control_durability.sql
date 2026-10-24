@@ -81,10 +81,14 @@ begin
  return new;
 end $$;
 create trigger capture_stock_exception after insert on public.audit_events for each row execute function app_private.capture_stock_exception();
-insert into public.stock_exceptions(organization_id,branch_id,kind,source_id,details)
- select organization_id,branch_id,'sale_review',source_id,details from public.audit_events
+insert into public.stock_exceptions(organization_id,branch_id,kind,source_id,details,created_at)
+ select organization_id,branch_id,'sale_review',source_id,details,created_at from public.audit_events
  where action='record_sale' and jsonb_array_length(coalesce(details->'flags','[]'))>0
  on conflict do nothing;
+insert into public.stock_exceptions(organization_id,branch_id,kind,source_id,details,created_at)
+ select c.organization_id,c.branch_id,'count_difference',c.id,
+ jsonb_build_object('productId',c.product_id,'batchId',c.batch_id,'expected',c.expected::text,'counted',c.counted::text,'reason',c.reason,'historicalCountState',c.state),c.created_at
+ from public.stock_counts c where c.counted<>c.expected on conflict do nothing;
 
 -- Keep the proven transaction implementation private; only the new dispatcher
 -- can invoke it. Auth, session and branch checks also precede every new action.
