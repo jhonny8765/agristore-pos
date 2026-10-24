@@ -204,7 +204,7 @@ export async function localStock(
     const lease = await setting<Lease>(db, "lease");
     for (const sale of await db.sales
       .where("status")
-      .notEqual("synced")
+      .anyOf(unresolvedStates)
       .toArray()) {
       if (
         sale.status === "synced" ||
@@ -250,7 +250,7 @@ export async function syncOnce(
     const lease = await setting<Lease>(db, "lease");
     if (!lease) return { sent };
     const eligible = (
-      await db.sales.where("status").notEqual("synced").toArray()
+      await db.sales.where("status").anyOf(unresolvedStates).toArray()
     ).filter(
       (s) =>
         s.payload.branchId === lease.branchId &&
@@ -308,7 +308,7 @@ export async function syncOnce(
         });
       }
     }
-    const ids = (await db.sales.where("status").notEqual("synced").toArray())
+    const ids = (await db.sales.where("status").anyOf(unresolvedStates).toArray())
       .filter(
         (s) =>
           s.payload.branchId === lease.branchId &&
@@ -343,17 +343,17 @@ function scopedSales(db: PosDatabase, scope: RecoveryScope) {
     ? "[payload.organizationId+payload.branchId+payload.cashierId+payload.occurredAt+id]"
     : "[payload.organizationId+payload.branchId+payload.occurredAt+id]";
   const prefix = [scope.organizationId, scope.branchId, ...(scope.cashierId ? [scope.cashierId] : [])];
-  return db.sales.where(fields).between([...prefix, Dexie.minKey, Dexie.minKey], [...prefix, Dexie.maxKey, Dexie.maxKey]);
+  return db.sales.where(fields).between([...prefix, "", ""], [...prefix, "\uffff", "\uffff"]);
 }
 export async function readLocalSales(db: PosDatabase, scope: RecoveryScope, limit = 50) {
   if (!Number.isInteger(limit) || limit < 1 || limit > 10000) throw new Error("Load between 1 and 10000 recent records");
   const [recent, unresolved, total, allPendingCount] = await Promise.all([
     scopedSales(db, scope).reverse().limit(limit).toArray(),
-    db.sales.where("status").notEqual("synced").filter(s =>
+    db.sales.where("status").anyOf(unresolvedStates).filter(s =>
       s.payload.organizationId === scope.organizationId && s.payload.branchId === scope.branchId &&
       (!scope.cashierId || s.payload.cashierId === scope.cashierId)).toArray(),
     scopedSales(db, scope).count(),
-    db.sales.where("status").notEqual("synced").count(),
+    db.sales.where("status").anyOf(unresolvedStates).count(),
   ]);
   return { sales: [...new Map([...recent, ...unresolved].map(s => [s.id, s])).values()]
     .sort((a,b) => b.payload.occurredAt.localeCompare(a.payload.occurredAt) || b.id.localeCompare(a.id)),
@@ -397,7 +397,7 @@ export async function exportRecovery(db: PosDatabase, scope?: RecoveryScope) {
   // Recovery protects unresolved records. Confirmed history remains retained
   // locally and in the cloud; it must not make an emergency export unbounded.
   // Capture immutable IDs once: newly saved sales cannot slip between pages.
-  const ids = (await db.sales.where("status").notEqual("synced").filter(matches).primaryKeys()) as string[];
+  const ids = (await db.sales.where("status").anyOf(unresolvedStates).filter(matches).primaryKeys()) as string[];
   const archive: RecoveryArchive = {
     id: crypto.randomUUID(), scope, ids: ids.sort(), exportedAt: new Date().toISOString(),
     operations: (

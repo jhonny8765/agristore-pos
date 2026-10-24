@@ -81,6 +81,7 @@ import {
   setSetting,
   setting,
   syncOnce,
+  unresolvedStates,
   type LocalSale,
 } from "@agristore/offline";
 import {
@@ -306,7 +307,7 @@ export function StoreApp() {
       setHasOlderLocal(local.hasOlder);
     } else {
       setSales([]);
-      setAllPendingCount(await db.sales.where("status").notEqual("synced").count());
+      setAllPendingCount(await db.sales.where("status").anyOf(unresolvedStates).count());
       setHasOlderLocal(false);
     }
     const allOperations = await pendingOperations(db);
@@ -344,7 +345,7 @@ export function StoreApp() {
             organizationId: member.organizationId,
             branchId,
             transactionIds: (
-              await db.sales.where("status").notEqual("synced").toArray()
+              await db.sales.where("status").anyOf(unresolvedStates).toArray()
             ).map((s) => s.id),
           })
         : Promise.resolve(undefined),
@@ -468,7 +469,7 @@ export function StoreApp() {
                   branchId: target,
                   deviceId: saved?.deviceId,
                   transactionIds: (
-                    await db.sales.where("status").notEqual("synced").toArray()
+                    await db.sales.where("status").anyOf(unresolvedStates).toArray()
                   ).map((s) => s.id),
                 }),
               );
@@ -616,7 +617,7 @@ export function StoreApp() {
           organizationId: found[0].organizationId,
           branchId: target,
           transactionIds: (
-            await db.sales.where("status").notEqual("synced").toArray()
+            await db.sales.where("status").anyOf(unresolvedStates).toArray()
           ).map((s) => s.id),
         });
         await applySnapshot(db, snapshot);
@@ -681,7 +682,7 @@ export function StoreApp() {
       const transport = cloudTransport(next, db);
       await applySnapshot(
         db,
-        await transport.snapshot((await db.sales.where("status").notEqual("synced").toArray()).map((s) => s.id)),
+        await transport.snapshot((await db.sales.where("status").anyOf(unresolvedStates).toArray()).map((s) => s.id)),
       );
       notify("Shift open. Your product catalog is saved on this PC.");
     });
@@ -1223,7 +1224,7 @@ export function StoreApp() {
                     transactionIds: (
                       await db.sales
                         .where("status")
-                        .notEqual("synced")
+                        .anyOf(unresolvedStates)
                         .toArray()
                     ).map((sale) => sale.id),
                   });
@@ -2604,7 +2605,7 @@ export function StoreApp() {
               )}
               <section className="panel narrow-panel">
                 <h2>Submit a physical count</h2>
-                <p className="muted">Count saleable goods independently before checking expected stock. Count held goods separately in Inventory; exclude goods still in transit. A second person's recount is required when the owner approves their own first count.</p>
+                <p className="muted">Count saleable goods independently before checking expected stock. Count held goods separately in Inventory; exclude goods still in transit. A second person must recount when the owner approves their own first count.</p>
                 <form
                   onSubmit={(e) => {
                     e.preventDefault();
@@ -2747,7 +2748,7 @@ export function StoreApp() {
                                         saleId: s.id,
                                         shiftId: lease?.shiftId,
                                         reason,
-                                        returns: ((s.payload as Sale)?.items ?? []).map((_,lineIndex) => ({lineIndex,quantity:inputValue(f,`returned-${lineIndex}`),disposition:inputValue(f,`disposition-${lineIndex}`)})),
+                                        returns: ((s.payload as Sale)?.items ?? []).map((_,lineIndex) => ({lineIndex,quantity:inputValue(f,`returned-${lineIndex}`),disposition:inputValue(f,`disposition-${lineIndex}`),...(inputValue(f,`disposition-${lineIndex}`)==='mixed' ? {resalableQuantity:inputValue(f,`resalable-${lineIndex}`)} : {})})),
                                       },
                                       "refundId",
                                     );
@@ -2761,7 +2762,8 @@ export function StoreApp() {
                                 {((s.payload as Sale)?.items ?? []).map((item,lineIndex) => <div key={lineIndex}>
                                   <p>{item.name} · sold {item.quantity} {item.unitName}</p>
                                   <Field label={`Returned quantity for line ${lineIndex+1} (${item.unitName})`}><input name={`returned-${lineIndex}`} type="number" min="0" max={item.quantity} step="0.000001" required /></Field>
-                                  <Field label={`Disposition for return line ${lineIndex+1}`}><select name={`disposition-${lineIndex}`} defaultValue="hold"><option value="hold">Hold separately for inspection</option><option value="resalable">Inspected and saleable</option><option value="not_returned">No goods returned (quantity zero)</option></select></Field>
+                                  <Field label={`Disposition for return line ${lineIndex+1}`}><select name={`disposition-${lineIndex}`} defaultValue="hold"><option value="hold">Hold separately for inspection</option><option value="resalable">Inspected and saleable</option><option value="mixed">Split between saleable and held goods</option><option value="not_returned">No goods returned (quantity zero)</option></select></Field>
+                                  <Field label={`Saleable portion for mixed return line ${lineIndex+1} (${item.unitName})`}><input name={`resalable-${lineIndex}`} type="number" min="0" max={item.quantity} step="0.000001" /><small>For a split return only. The rest of the returned quantity stays on hold.</small></Field>
                                 </div>)}
                               </ApprovalForm>
                             )
@@ -3191,7 +3193,7 @@ export function StoreApp() {
                         }
                         const canRestart = async () => {
                           const [sales, operations] = await Promise.all([
-                            db.sales.where("status").notEqual("synced").count(),
+                            db.sales.where("status").anyOf(unresolvedStates).count(),
                             pendingOperations(db),
                           ]);
                           return (
@@ -3385,7 +3387,7 @@ export function StoreApp() {
                                       useCart.getState().items.length ||
                                       (await db.sales
                                         .where("status")
-                                        .notEqual("synced")
+                                        .anyOf(unresolvedStates)
                                         .count()) ||
                                       (await pendingOperations(db)).length
                                     )

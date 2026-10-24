@@ -257,7 +257,7 @@ test("transfers and count approvals identify separate lots, base quantities and 
     await page.getByRole("button", { name: "Dispatch stock", exact: true }).click();
     const row = page.locator('.history-table[data-kind="transfers"] tbody tr').filter({ hasText: `Lot ${lot.lot}` });
     await expect(row).toContainText(`Expiry: ${lot.expiresOn}`);
-    await expect(row.getByRole("cell", { name: `${lot.transfer} kg`, exact: true })).toBeVisible();
+    await expect(row.getByRole("cell").filter({hasText: new RegExp(`^${lot.transfer.replace('.', '\\.')} kgAccepted:`)})).toBeVisible();
   }
   async function exportedCsv() {
     const downloadPromise = page.waitForEvent("download");

@@ -71,7 +71,7 @@ it("restores a legacy 10001-record export and uses only server-verified acknowle
   const d=await db(); const rows=Array.from({length:10001},(_,n)=>record(n));
   await importRecovery(d,{version:1,sales:rows},rows.map(s=>s.id));
   expect(await d.sales.count()).toBe(10001);
-  expect(await d.sales.where("status").notEqual("synced").count()).toBe(0);
+  expect(await d.sales.where("status").anyOf(["pending","sending","authentication_required","retryable","review_required"]).count()).toBe(0);
   expect((await localStock(d)).get(`${product.id}:none`)).toBe("500");
   await importRecovery(d,{version:1,sales:rows},rows.map(s=>s.id));
   expect(await d.sales.count()).toBe(10001);

@@ -184,14 +184,17 @@ begin
    select value into ret from jsonb_array_elements(data->'returns') where (value->>'lineIndex')::integer=i;
    if (select count(*) from jsonb_array_elements(data->'returns') where (value->>'lineIndex')::integer=i)<>1 then raise exception 'Each original sale line must have one return disposition'; end if;
    q:=(ret->>'quantity')::numeric; disposition:=ret->>'disposition'; factor:=(item->>'factor')::numeric;
-   if q is null or q<0 or q>(item->>'quantity')::numeric or scale(trim_scale(q*factor))>6 or disposition is null or disposition not in ('resalable','hold','not_returned') or (q=0 and disposition<>'not_returned') or (q>0 and disposition='not_returned') then raise exception 'Enter returned quantities within the original sale and a valid disposition'; end if;
+   if q is null or q<0 or q>(item->>'quantity')::numeric or scale(trim_scale(q*factor))>6 or disposition is null or disposition not in ('resalable','hold','mixed','not_returned') or (q=0 and disposition<>'not_returned') or (q>0 and disposition='not_returned') then raise exception 'Enter returned quantities within the original sale and a valid disposition'; end if;
+   h:=case when disposition='hold' then q when disposition='mixed' then q-(ret->>'resalableQuantity')::numeric else 0 end;
+   if h is null or h<0 or h>q or scale(trim_scale(h*factor))>6 then raise exception 'Record the saleable portion within the total returned quantity'; end if;
    product:=(item->>'productId')::uuid; batch:=(item->>'batchId')::uuid;
-   if (select base_unit from public.products where id=product)='piece' and q*factor<>trunc(q*factor) then raise exception 'Piece stock must be a whole number'; end if;
-   if disposition='resalable' and q>0 then
+   if (select base_unit from public.products where id=product)='piece' and (q*factor<>trunc(q*factor) or h*factor<>trunc(h*factor)) then raise exception 'Piece stock must be a whole number'; end if;
+   if q-h>0 then
     if exists(select 1 from public.product_batches where id=batch and expires_on<(now() at time zone 'Asia/Manila')::date) then raise exception 'Expired returns must be held, not restored to saleable stock'; end if;
-    insert into public.inventory_movements(organization_id,branch_id,product_id,batch_id,quantity,kind,source_id,created_by) values(org,branch,product,batch,q*factor,'refund',ident,uid);
-   elsif disposition='hold' and q>0 then
-    insert into public.stock_holds(organization_id,branch_id,product_id,batch_id,quantity,remaining,reason,source_id) values(org,branch,product,batch,q*factor,q*factor,reason,ident);
+    insert into public.inventory_movements(organization_id,branch_id,product_id,batch_id,quantity,kind,source_id,created_by) values(org,branch,product,batch,(q-h)*factor,'refund',ident,uid);
+   end if;
+   if h>0 then
+    insert into public.stock_holds(organization_id,branch_id,product_id,batch_id,quantity,remaining,reason,source_id) values(org,branch,product,batch,h*factor,h*factor,reason,ident);
    end if;
    if disposition<>'resalable' or q<>(item->>'quantity')::numeric then
     insert into public.stock_exceptions(organization_id,branch_id,kind,source_id,details) values(org,branch,'return_review',ident,jsonb_build_object('saleId',sale.id,'reason',reason)) on conflict do nothing;
@@ -241,7 +244,7 @@ begin
    if exists(select 1 from public.product_batches where id=held.batch_id and expires_on<(now() at time zone 'Asia/Manila')::date) then raise exception 'Expired held goods cannot be released for sale'; end if;
    insert into public.inventory_movements(organization_id,branch_id,product_id,batch_id,quantity,kind,source_id,created_by) values(org,branch,held.product_id,held.batch_id,q,'hold_release',ident,uid);
   end if;
-  update public.stock_holds set remaining=remaining-q where id=held.id;
+  update public.stock_holds h set remaining=h.remaining-q where h.id=held.id;
   insert into public.stock_control_events values(ident,org,branch,action,held.id,uid,data,now());
  elsif action='approve_count' then
   if member.role<>'owner' then raise exception 'Only the owner can approve an adjustment' using errcode='42501'; end if;
