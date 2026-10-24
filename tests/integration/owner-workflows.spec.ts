@@ -1529,7 +1529,7 @@ test("partial transfers, held goods and stock issues reconcile through the owner
   const resolve=page.getByRole("form",{name:"Resolve investigation",exact:true});
   await resolve.getByLabel("Evidence and outcome",{exact:true}).fill("TEST investigation still awaiting physical goods");
   await resolve.getByRole("button",{name:"Record resolution",exact:true}).click();
-  await expect(page.getByRole("alert")).toContainText("Receive or record the missing transfer quantity");
+  await expect(resolve.getByRole("alert")).toContainText("Receive or record the missing transfer quantity");
   await page.getByRole("button",{name:"Transfers",exact:true}).click();
   await row.getByRole("button",{name:"Record missing transfer goods",exact:true}).click();
   await row.getByLabel("Missing transfer quantity (base units)").fill("1");
