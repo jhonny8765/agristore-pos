@@ -275,9 +275,15 @@ test("transfers and count approvals identify separate lots, base quantities and 
   const transferA = page.locator('.history-table[data-kind="transfers"] tbody tr').filter({ hasText: "Lot TEST-LOT-A" });
   const transferB = page.locator('.history-table[data-kind="transfers"] tbody tr').filter({ hasText: "Lot TEST-LOT-B" });
   await transferA.getByRole("button", { name: "Confirm receipt", exact: true }).click();
+  await transferA.getByLabel("Saleable quantity actually received (base units)").fill("0.5");
+  await transferA.getByLabel("Receiving notes", {exact:true}).fill("TEST actual counted delivery");
+  await transferA.getByRole("button", {name:"Record actual receipt",exact:true}).click();
   await expect(transferA.getByRole("cell", { name: "received", exact: true })).toBeVisible();
   await expect(transferB).toContainText("in transit");
   await transferB.getByRole("button", { name: "Confirm receipt", exact: true }).click();
+  await transferB.getByLabel("Saleable quantity actually received (base units)").fill("0.25");
+  await transferB.getByLabel("Receiving notes", {exact:true}).fill("TEST actual counted delivery");
+  await transferB.getByRole("button", {name:"Record actual receipt",exact:true}).click();
   await expect(transferB.getByRole("cell", { name: "received", exact: true })).toBeVisible();
   await page.getByRole("button", { name: "Stock counts", exact: true }).click();
   for (const lot of lots) {
@@ -309,6 +315,10 @@ test("transfers and count approvals identify separate lots, base quantities and 
     await page.screenshot({ path: `test-results/stock-history-${width}.png` });
   }
   await countA.getByRole("button", { name: "Approve adjustment", exact: true }).click();
+  await countA.getByLabel("Approval evidence",{exact:true}).fill("TEST checked independently");
+  await countA.getByLabel("Independent recount quantity (base units)").fill("0.4");
+  await countA.getByLabel("Recount witness name").fill("TEST second counter");
+  await countA.getByRole("button",{name:"Confirm adjustment",exact:true}).click();
   await expect(countA.getByRole("cell", { name: "approved", exact: true })).toBeVisible();
   await expect(countB.getByRole("cell", { name: "pending", exact: true })).toBeVisible();
   const confirmed = await a.owner.from("branch_inventory").select("batch_id,quantity")
@@ -337,7 +347,7 @@ test("exact report quantities survive the real database, JSON, discrepancy displ
   });
   const transfers = await historyPage({ kind: "transfers", organizationId: a.organizationId, branchId: source, range: { from: "", to: "" } }, a.owner);
   expect(transfers.rows.find((row) => row.id === transferId)!.quantity).toBe("9999999999.000001");
-  await command(a.owner, "receive_transfer", { organizationId: a.organizationId, branchId: destination, transferId });
+  await command(a.owner, "receive_transfer", { organizationId: a.organizationId, branchId: destination, transferId, receiptId:randomUUID(), quantity:"9999999999.000001", heldQuantity:"0", reason:"TEST actual receipt" });
   await command(a.owner, "submit_count", {
     organizationId: a.organizationId, branchId: destination, countId,
     productId: a.productId, batchId: null, counted: "9999999999.000000",
@@ -442,7 +452,7 @@ test("staff cannot bypass stock controls, escalate access or read unrelated bran
   const unchanged = await a.owner.from("stock_transfers").select("state").eq("id", incomingTransfer).single();
   expect(unchanged.error).toBeNull();
   expect(unchanged.data!.state).toBe("in_transit");
-  await command(staff[2].owner, "receive_transfer", { organizationId: a.organizationId, branchId: a.branchId, transferId: incomingTransfer });
+  await command(staff[2].owner, "receive_transfer", { organizationId: a.organizationId, branchId: a.branchId, transferId: incomingTransfer, receiptId:randomUUID(), quantity:"0.25", heldQuantity:"0", reason:"TEST actual receipt" });
   const received = await a.owner.from("stock_transfers").select("state").eq("id", incomingTransfer).single();
   expect(received.error).toBeNull();
   expect(received.data!.state).toBe("received");
@@ -958,6 +968,8 @@ test("owner approvals work without browser dialogs, stock refreshes without a sh
     .click();
   await page.getByRole("button", { name: "Full refund", exact: true }).click();
   const refund = page.getByRole("form", { name: "Full refund", exact: true });
+  await refund.getByLabel("Returned quantity for line 1",{exact:false}).fill("1");
+  await refund.getByLabel("Disposition for return line 1").selectOption("resalable");
   await refund.getByLabel("Refund reason", { exact: true }).fill("   ");
   await refund
     .getByRole("button", { name: "Confirm full refund", exact: true })
@@ -1127,6 +1139,10 @@ test("owner approvals work without browser dialogs, stock refreshes without a sh
   await page
     .getByRole("button", { name: "Approve adjustment", exact: true })
     .click();
+  await page.getByLabel("Approval evidence",{exact:true}).fill("TEST checked independently");
+  await page.getByLabel("Independent recount quantity (base units)").fill("19");
+  await page.getByLabel("Recount witness name").fill("TEST second counter");
+  await page.getByRole("button",{name:"Confirm adjustment",exact:true}).click();
   await expect(
     page.getByRole("cell", { name: "approved", exact: true }),
   ).toBeVisible();
@@ -1152,6 +1168,9 @@ test("owner approvals work without browser dialogs, stock refreshes without a sh
   await page
     .getByRole("button", { name: "Confirm receipt", exact: true })
     .click();
+  await page.getByLabel("Saleable quantity actually received (base units)").fill("1");
+  await page.getByLabel("Receiving notes",{exact:true}).fill("TEST counted actual delivery");
+  await page.getByRole("button",{name:"Record actual receipt",exact:true}).click();
   await expect(page.getByText("received", { exact: true })).toBeVisible();
   await page.getByRole("button", { name: "Inventory", exact: true }).click();
   await expect(

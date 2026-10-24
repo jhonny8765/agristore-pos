@@ -1448,6 +1448,9 @@ form > .button {
   width: 100%;
   container-type: inline-size;
 }
+.approval-fields { border: 0; padding: 0; margin: 0; min-width: 0; }
+.stock-evidence { white-space: pre-wrap; overflow-wrap: anywhere; font: inherit; max-width: 55ch; }
+.storage-health { margin-block: 16px; }
 table {
   width: 100%;
   border-collapse: collapse;

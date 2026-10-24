@@ -127,6 +127,8 @@ export interface Snapshot {
   stocks: Stock[];
   confirmedIds: string[];
   asOf: string;
+  catalogVersion?: string;
+  catalogUnchanged?: boolean;
 }
 export interface SyncAck {
   transactionId: string;

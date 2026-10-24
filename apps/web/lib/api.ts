@@ -7,7 +7,7 @@ import type {
   Snapshot,
   SyncAck,
 } from "@agristore/domain";
-import type { Transport } from "@agristore/offline";
+import { setting, type PosDatabase, type Transport } from "@agristore/offline";
 import { recordColumns } from "./record-columns";
 
 export const supabase = createClient(
@@ -80,7 +80,23 @@ export async function branches(org: string): Promise<Branch[]> {
   if (error) throw new Error(error.message);
   return data ?? [];
 }
-export function cloudTransport(lease: Lease): Transport {
+export async function requestSnapshot(db: PosDatabase | undefined, input: Record<string, unknown>): Promise<Snapshot> {
+  let catalogVersion = db ? await setting<string>(db, "catalogVersion") : undefined;
+  const ids = Array.isArray(input.transactionIds) ? input.transactionIds : [];
+  const confirmed = new Set<string>();
+  let fullCatalog: Snapshot["products"] | undefined;
+  let latest: Snapshot | undefined;
+  // All earlier acknowledgments are included in the final, later stock snapshot:
+  // completed sales are immutable. Never submit a lifetime-sized RPC body.
+  for (let offset = 0; offset < Math.max(1,ids.length); offset += 1000) {
+    latest = await command<Snapshot>("snapshot", { ...input, transactionIds: ids.slice(offset,offset+1000), ...(catalogVersion ? {catalogVersion} : {}) });
+    latest.confirmedIds.forEach(id => confirmed.add(id));
+    if (!latest.catalogUnchanged) fullCatalog = latest.products;
+    catalogVersion = latest.catalogVersion;
+  }
+  return {...latest!, confirmedIds:[...confirmed], products:fullCatalog ?? [], catalogUnchanged:fullCatalog === undefined};
+}
+export function cloudTransport(lease: Lease, db?: PosDatabase): Transport {
   const context = {
     organizationId: lease.organizationId,
     branchId: lease.branchId,
@@ -121,7 +137,7 @@ export function cloudTransport(lease: Lease): Transport {
       }
     },
     snapshot: (transactionIds: string[]) =>
-      command<Snapshot>("snapshot", { ...context, transactionIds }),
+      requestSnapshot(db, { ...context, transactionIds }),
   };
 }
 export async function rows(table: string, org: string, branch?: string, client = supabase) {

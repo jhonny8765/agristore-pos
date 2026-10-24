@@ -65,16 +65,17 @@ import {
   type Membership,
   type Product,
   type Sale,
-  type Snapshot,
 } from "@agristore/domain";
 import {
   PosDatabase,
   applySnapshot,
   clearAccountCache,
   exportRecovery,
+  exportRecoveryPart,
   forgetRetiredDevice,
   importRecovery,
   localStock,
+  readLocalSales,
   retrySale,
   saveCheckout,
   setSetting,
@@ -86,6 +87,7 @@ import {
   branches as fetchBranches,
   cloudTransport,
   command,
+  requestSnapshot,
   memberships,
   rows,
   salesPage,
@@ -104,6 +106,9 @@ import { Button } from "./ui/button";
 import { activateReadyUpdate, findReadyUpdate } from "../lib/pwa-update";
 import { ApprovalForm } from "./approval-form";
 import { HistoryRegister } from "./history-register";
+import { StorageHealth } from "./storage-health";
+import { StockControls } from "./stock-controls";
+import { preferredBatch, outstandingTransfer } from "../lib/stock-controls";
 import type { HistoryKind } from "../lib/history";
 
 type View =
@@ -200,6 +205,9 @@ function download(name: string, data: unknown) {
 }
 
 export function StoreApp() {
+  const [localHistoryLimit, setLocalHistoryLimit] = useState(50);
+  const [hasOlderLocal, setHasOlderLocal] = useState(false);
+  const [recoveryArchive, setRecoveryArchive] = useState<{ id: string; next: number; parts: number; scope: string }>();
   const [allPendingCount, setAllPendingCount] = useState(0);
   const [allOperationCount, setAllOperationCount] = useState(0);
   const [practice, setPractice] = useState(false);
@@ -287,24 +295,20 @@ export function StoreApp() {
   const refreshLocal = useCallback(async () => {
     setProducts(await db.products.toArray());
     setStock(await localStock(db));
-    const all = await db.sales.toArray();
-    setAllPendingCount(all.filter((s) => s.status !== "synced").length);
     const org = lease?.organizationId ?? member?.organizationId,
       b = lease?.branchId ?? branchId,
       user = lease?.cashierId ?? member?.userId,
       role = lease?.role ?? member?.role;
-    setSales(
-      all
-        .filter(
-          (s) =>
-            s.payload.organizationId === org &&
-            s.payload.branchId === b &&
-            (role === "owner" || s.payload.cashierId === user),
-        )
-        .sort((a, b) =>
-          b.payload.occurredAt.localeCompare(a.payload.occurredAt),
-        ),
-    );
+    if (org && b) {
+      const local = await readLocalSales(db, { organizationId: org, branchId: b, cashierId: role === "owner" ? undefined : user }, localHistoryLimit);
+      setSales(local.sales);
+      setAllPendingCount(local.allPendingCount);
+      setHasOlderLocal(local.hasOlder);
+    } else {
+      setSales([]);
+      setAllPendingCount(await db.sales.where("status").notEqual("synced").count());
+      setHasOlderLocal(false);
+    }
     const allOperations = await pendingOperations(db);
     setAllOperationCount(allOperations.length);
     setOperations(
@@ -317,7 +321,7 @@ export function StoreApp() {
     );
     setLastSync(await setting<string>(db, "lastSync"));
     setSnapshotAt(await setting<string>(db, "snapshotAsOf"));
-  }, [db, lease, member, branchId]);
+  }, [db, lease, member, branchId, localHistoryLimit]);
   const refreshCloud = useCallback(async (forceStock = false) => {
     if (practice || !member || !branchId || !navigator.onLine) return;
     const generation = contextGeneration.current;
@@ -336,7 +340,7 @@ export function StoreApp() {
             branchId,
           }),
       !lease || forceStock
-        ? command<Snapshot>("snapshot", {
+        ? requestSnapshot(db, {
             organizationId: member.organizationId,
             branchId,
             transactionIds: (
@@ -361,7 +365,7 @@ export function StoreApp() {
         request !== cloudRequest.current
       )
         return;
-      setProducts(snapshot.products);
+      if (!snapshot.catalogUnchanged) setProducts(snapshot.products);
       setStock(nextStock);
       setSnapshotAt(snapshot.asOf);
     }
@@ -384,7 +388,7 @@ export function StoreApp() {
     syncingRef.current = true;
     setSyncing(true);
     try {
-      await syncOnce(db, cloudTransport(lease));
+      await syncOnce(db, cloudTransport(lease, db));
     } catch (e) {
       fail(e);
     } finally {
@@ -459,7 +463,7 @@ export function StoreApp() {
             if (target)
               await applySnapshot(
                 db,
-                await command<Snapshot>("snapshot", {
+                await requestSnapshot(db, {
                   organizationId: m.organizationId,
                   branchId: target,
                   deviceId: saved?.deviceId,
@@ -608,7 +612,7 @@ export function StoreApp() {
         const b = await fetchBranches(found[0].organizationId);
         const target = found[0].branchId ?? b[0]?.id;
         if (!target) throw new Error("Ask your owner to assign your branch.");
-        const snapshot = await command<Snapshot>("snapshot", {
+        const snapshot = await requestSnapshot(db, {
           organizationId: found[0].organizationId,
           branchId: target,
           transactionIds: (
@@ -617,7 +621,7 @@ export function StoreApp() {
         });
         await applySnapshot(db, snapshot);
         const nextStock = await localStock(db);
-        setProducts(snapshot.products);
+        if (!snapshot.catalogUnchanged) setProducts(snapshot.products);
         setStock(nextStock);
         setSnapshotAt(snapshot.asOf);
         setBranchList(b);
@@ -674,13 +678,25 @@ export function StoreApp() {
       });
       await setSetting(db, "lease", next);
       setLease(next);
-      const transport = cloudTransport(next);
+      const transport = cloudTransport(next, db);
       await applySnapshot(
         db,
-        await transport.snapshot((await db.sales.toArray()).map((s) => s.id)),
+        await transport.snapshot((await db.sales.where("status").notEqual("synced").toArray()).map((s) => s.id)),
       );
       notify("Shift open. Your product catalog is saved on this PC.");
     });
+  }
+  async function exportLocalRecovery() {
+    if (!member || !branchId) return;
+    const scope = { organizationId: member.organizationId, branchId, cashierId: isOwner ? undefined : member.userId };
+    const scopeKey = JSON.stringify(scope);
+    const data = recoveryArchive?.scope === scopeKey
+      ? await exportRecoveryPart(db, recoveryArchive.id, recoveryArchive.next, scope)
+      : await exportRecovery(db, scope);
+    download(`agristore-recovery-${data.archive.id}-part-${data.archive.part}-of-${data.archive.parts}.json`, data);
+    setRecoveryArchive(data.archive.part < data.archive.parts
+      ? { id: data.archive.id, next: data.archive.part + 1, parts: data.archive.parts, scope: scopeKey } : undefined);
+    notify(`Recovery part ${data.archive.part} of ${data.archive.parts} downloaded (${data.sales.length} records). Keep every part. New sales after this export need a new recovery file. Confirmed history remains in the cloud and on this PC.`);
   }
   async function finishSale(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -736,18 +752,13 @@ export function StoreApp() {
   ) {
     if (updateLock.current || committing.current || !lease || isStock) return;
     try {
-      const batch = p.batches.find(
-        (b) =>
-          !b.expiresOn ||
-          b.expiresOn >=
-            new Date().toLocaleDateString("en-CA", { timeZone: "Asia/Manila" }),
-      );
+      const batch = preferredBatch(p,stock,new Date().toLocaleDateString("en-CA", { timeZone: "Asia/Manila" }));
       cart.add(
         makeItem(
           p,
           unitId ?? p.units[0].id,
           "1",
-          batchId === undefined ? (batch?.id ?? null) : batchId,
+          batchId === undefined ? batch : batchId,
         ),
         entry,
       );
@@ -1206,7 +1217,7 @@ export function StoreApp() {
                 const nextBranchId = e.target.value;
                 void run(async () => {
                   contextGeneration.current++;
-                  const snapshot = await command<Snapshot>("snapshot", {
+                  const snapshot = await requestSnapshot(db, {
                     organizationId: member.organizationId,
                     branchId: nextBranchId,
                     transactionIds: (
@@ -1224,7 +1235,7 @@ export function StoreApp() {
                   setOpeningImport(undefined);
                   setCloud({});
                   setSalesCursor(undefined);
-                  setProducts(snapshot.products);
+                  if (!snapshot.catalogUnchanged) setProducts(snapshot.products);
                   setStock(nextStock);
                   setSnapshotAt(snapshot.asOf);
                   notify("Branch stock loaded.");
@@ -1758,45 +1769,10 @@ export function StoreApp() {
                   )}
                 </section>
                 <section className="panel">
-                  <h2>Needs a closer look</h2>
-                  {(cloud.audit_events ?? []).filter(
-                    (a) =>
-                      a.action === "record_sale" &&
-                      Array.isArray(
-                        (a.details as { flags?: unknown[] })?.flags,
-                      ) &&
-                      (a.details as { flags: unknown[] }).flags.length,
-                  ).length ? (
-                    <ul className="attention-list">
-                      {(cloud.audit_events ?? [])
-                        .filter(
-                          (a) =>
-                            a.action === "record_sale" &&
-                            (a.details as { flags?: string[] })?.flags?.length,
-                        )
-                        .map((a) => (
-                          <li key={str(a, "id")}>
-                            <ShieldCheck size={19} />
-                            <div>
-                              <strong>
-                                {(a.details as { flags: string[] }).flags
-                                  .join(", ")
-                                  .replaceAll("_", " ")}
-                              </strong>
-                              <small>
-                                {branchName(a.branch_id)} · {when(a.created_at)}
-                              </small>
-                            </div>
-                          </li>
-                        ))}
-                    </ul>
-                  ) : (
-                    <Empty
-                      icon={ClipboardCheck}
-                      title="No flagged transactions"
-                      body="Price conflicts and stock shortages will appear here for investigation."
-                    />
-                  )}
+                  <h2>Stock investigations</h2>
+                  <p>{Number(summary.openStockExceptions ?? 0)} unresolved investigations {isOwner ? "across your branches" : "at this branch"}. They remain open until the owner records the outcome.</p>
+                  <p className="muted">Choose a branch, then open Inventory to review its oldest unresolved cases, held goods and stock issues.</p>
+                  <Button variant="outline" onClick={() => setView("inventory")}>Open stock controls</Button>
                 </section>
               </div>
               <section className="panel">
@@ -1986,6 +1962,7 @@ export function StoreApp() {
                   />
                 )}
               </section>
+              {!practice && member.role !== "cashier" && <StockControls key={`${member.organizationId}:${branchId}`} db={db} organizationId={member.organizationId} branchId={branchId} actorId={member.userId} products={products} owner={isOwner} online={online} disabled={busy} revision={historyRevision} execute={fn => run(fn,true,true)} />}
               {isOwner && (
                 <div className="two-column">
                   <section className="panel">
@@ -2107,6 +2084,8 @@ export function StoreApp() {
                                 productId: p.id,
                                 unitId: inputValue(f, "unit"),
                                 quantity: inputValue(f, "quantity"),
+                                documentQuantity: inputValue(f,"documentQuantity") || null,
+                                deliveryNotes: inputValue(f,"deliveryNotes"),
                                 lot: inputValue(f, "lot"),
                                 expiresOn: inputValue(f, "expires") || null,
                               },
@@ -2152,6 +2131,9 @@ export function StoreApp() {
                         required
                       />
                     </Field>
+                    <p className="muted">Enter only accepted, saleable goods above. Keep rejected or damaged goods separate.</p>
+                    <Field label="Quantity on supplier document (optional)"><input name="documentQuantity" type="number" min="0" step="0.000001" /></Field>
+                    <Field label="Delivery shortage / rejection notes"><input name="deliveryNotes" maxLength={1000} placeholder="Required when accepted goods differ from the supplier document" /></Field>
                     <div className="form-grid">
                       <Field label="Lot / batch">
                         <input name="lot" />
@@ -2403,7 +2385,7 @@ export function StoreApp() {
                             {branchName(t.branch_id)} →{" "}
                             {branchName(t.destination_branch_id)}
                           </td>
-                          <td>{stockQuantity(t, str(t, "quantity"))}</td>
+                          <td>{stockQuantity(t, str(t, "quantity"))}<small>Accepted: {str(t,"received_quantity") || "0"} · Held: {str(t,"held_quantity") || "0"} · Lost: {str(t,"lost_quantity") || "0"}<br />Outstanding: {outstandingTransfer(t)}</small></td>
                           <td>
                             <span className="status-tag">
                               {str(t, "state").replaceAll("_", " ")}
@@ -2412,26 +2394,34 @@ export function StoreApp() {
                           <td>
                             {t.state === "in_transit" &&
                               t.destination_branch_id === branchId && (
-                                <Button
-                                  size="sm"
+                                <ApprovalForm
+                                  action="Confirm receipt"
+                                  label="Receiving notes"
+                                  description={`Outstanding: ${outstandingTransfer(t)} base units. Count what arrived. Enter saleable and held quantities separately; missing goods remain outstanding.`}
+                                  confirmLabel="Record actual receipt"
                                   disabled={
                                     !online || busy || practice ||
                                     !["owner", "manager", "stock_staff"].includes(member.role)
                                   }
-                                  onClick={() =>
-                                    void run(async () => {
-                                      await command("receive_transfer", {
+                                  onConfirm={(reason,f) =>
+                                    run(async () => {
+                                      await onlineOperation(db,member.userId,"receive_transfer", {
                                         ...context(),
                                         transferId: t.id,
-                                      });
-                                      if (lease) await sync();
-                                      notify("Transfer received.");
-                                    })
+                                        quantity: inputValue(f,"quantity"), heldQuantity: inputValue(f,"heldQuantity"), reason,
+                                      },"receiptId");
+                                      notify("Actual transfer quantities recorded. Any shortage remains open.");
+                                    },true,true)
                                   }
                                 >
-                                  Confirm receipt
-                                </Button>
+                                  <Field label="Saleable quantity actually received (base units)"><input name="quantity" type="number" min="0" step="0.000001" max={outstandingTransfer(t)} required /></Field>
+                                  <Field label="Damaged / held quantity received (base units)"><input name="heldQuantity" type="number" min="0" step="0.000001" defaultValue="0" required /></Field>
+                                </ApprovalForm>
                               )}
+                            {isOwner && t.state === "in_transit" && t.destination_branch_id === branchId && <ApprovalForm action="Record missing transfer goods" label="Investigation evidence / loss reason" description={`This closes an investigated shortage from the outstanding ${outstandingTransfer(t)} base units. It does not deduct the source stock again or add destination stock.`} confirmLabel="Record transfer loss" disabled={!online || busy || practice} onConfirm={(reason,f) => run(async () => {
+                              await onlineOperation(db,member.userId,"write_off_transfer",{...context(),transferId:t.id,quantity:inputValue(f,"missingQuantity"),reason},"receiptId");
+                              notify("Missing transfer goods recorded separately. Review and resolve the investigation in Inventory.");
+                            },true,true)}><Field label="Missing transfer quantity (base units)"><input name="missingQuantity" type="number" min="0.000001" max={outstandingTransfer(t)} step="0.000001" required /></Field></ApprovalForm>}
                           </td>
                         </tr>
                       )),
@@ -2574,28 +2564,35 @@ export function StoreApp() {
                           <td>{str(c, "state")}</td>
                           <td>
                             {isOwner && c.state === "pending" && (
-                              <Button
-                                size="sm"
+                              <ApprovalForm
+                                action="Approve adjustment"
+                                label="Approval evidence"
+                                description="Retain this physical count and create a separate adjustment. If you entered the first count, record another person's independent recount. The investigation stays open until its cause is reviewed."
+                                confirmLabel="Confirm adjustment"
                                 disabled={
                                   !online ||
                                   busy ||
                                   practice ||
                                   !!pending.length
                                 }
-                                onClick={() =>
-                                  void run(async () => {
+                                onConfirm={(reason,f) =>
+                                  run(async () => {
                                     await command("approve_count", {
                                       ...context(),
                                       countId: c.id,
+                                      reason, witness: inputValue(f,"witness"), recounted: inputValue(f,"recounted") || null,
                                     });
                                     notify(
                                       "Count approved. The discrepancy is recorded as an adjustment.",
                                     );
-                                  })
+                                  },true,true)
                                 }
                               >
-                                Approve adjustment
-                              </Button>
+                                {c.counted_by === member.userId && <>
+                                  <Field label="Independent recount quantity (base units)"><input name="recounted" type="number" min="0" step="0.000001" required /></Field>
+                                  <Field label="Recount witness name"><input name="witness" minLength={3} maxLength={120} required /></Field>
+                                </>}
+                              </ApprovalForm>
                             )}
                           </td>
                         </tr>
@@ -2607,6 +2604,7 @@ export function StoreApp() {
               )}
               <section className="panel narrow-panel">
                 <h2>Submit a physical count</h2>
+                <p className="muted">Count saleable goods independently before checking expected stock. Count held goods separately in Inventory; exclude goods still in transit. A second person's recount is required when the owner approves their own first count.</p>
                 <form
                   onSubmit={(e) => {
                     e.preventDefault();
@@ -2733,12 +2731,12 @@ export function StoreApp() {
                               <ApprovalForm
                                 action="Full refund"
                                 label="Refund reason"
-                                description={`Return ${money(Number(s.total))} in cash and restore this sale’s stock to ${selectedBranch?.name}. The original receipt is preserved.`}
+                                description={`Refund ${money(Number(s.total))} in cash. Record what physically returned for each line; only inspected saleable goods increase available stock. The original receipt is preserved.`}
                                 confirmLabel="Confirm full refund"
                                 disabled={
                                   !online || busy || !lease || !!pending.length
                                 }
-                                onConfirm={(reason) =>
+                                onConfirm={(reason,f) =>
                                   run(async () => {
                                     await onlineOperation(
                                       db,
@@ -2749,6 +2747,7 @@ export function StoreApp() {
                                         saleId: s.id,
                                         shiftId: lease?.shiftId,
                                         reason,
+                                        returns: ((s.payload as Sale)?.items ?? []).map((_,lineIndex) => ({lineIndex,quantity:inputValue(f,`returned-${lineIndex}`),disposition:inputValue(f,`disposition-${lineIndex}`)})),
                                       },
                                       "refundId",
                                     );
@@ -2758,7 +2757,13 @@ export function StoreApp() {
                                     );
                                   })
                                 }
-                              />
+                              >
+                                {((s.payload as Sale)?.items ?? []).map((item,lineIndex) => <div key={lineIndex}>
+                                  <p>{item.name} · sold {item.quantity} {item.unitName}</p>
+                                  <Field label={`Returned quantity for line ${lineIndex+1} (${item.unitName})`}><input name={`returned-${lineIndex}`} type="number" min="0" max={item.quantity} step="0.000001" required /></Field>
+                                  <Field label={`Disposition for return line ${lineIndex+1}`}><select name={`disposition-${lineIndex}`} defaultValue="hold"><option value="hold">Hold separately for inspection</option><option value="resalable">Inspected and saleable</option><option value="not_returned">No goods returned (quantity zero)</option></select></Field>
+                                </div>)}
+                              </ApprovalForm>
                             )
                           )}
                         </td>
@@ -2942,6 +2947,8 @@ export function StoreApp() {
                     body="Every completed checkout remains listed here, including failed uploads."
                   />
                 )}
+                <p className="muted">All unresolved sales and up to {localHistoryLimit} recent saved records are shown. Earlier confirmed history remains retained.</p>
+                {hasOlderLocal && localHistoryLimit < 10000 && <Button variant="outline" onClick={() => setLocalHistoryLimit(n => Math.min(10000,n + 50))}>Load older saved records</Button>}
               </section>
               {operations.length > 0 && (
                 <section className="panel">
@@ -2977,14 +2984,24 @@ export function StoreApp() {
                   <input
                     type="file"
                     accept="application/json,.json"
-                    disabled={!lease || busy}
+                    disabled={!lease || busy || !online}
                     onChange={(e) => {
                       const file = e.target.files?.[0];
                       if (!file) return;
                       void run(async () => {
+                        if (file.size > 64 * 1024 * 1024) throw new Error("This file exceeds 64 MB. Use the bounded recovery parts from the original PC; keep this file for owner recovery.");
+                        const input = JSON.parse(await file.text());
+                        if (!Array.isArray(input.sales) || input.sales.length > 100000) throw new Error("Invalid recovery file");
+                        const confirmed: string[] = [];
+                        for (let offset = 0; offset < input.sales.length; offset += 1000) {
+                          const snapshot = await requestSnapshot(db, { ...context(), transactionIds: input.sales.slice(offset,offset+1000).map((s: LocalSale) => s.payload.transactionId) });
+                          confirmed.push(...snapshot.confirmedIds);
+                          await applySnapshot(db,snapshot);
+                        }
                         const count = await importRecovery(
                           db,
-                          JSON.parse(await file.text()),
+                          input,
+                          confirmed,
                         );
                         notify(
                           `${count} records checked and restored. Original transaction IDs are retained.`,
@@ -2995,23 +3012,11 @@ export function StoreApp() {
                 </Field>
                 <Button
                   variant="outline"
-                  onClick={() =>
-                    void exportRecovery(db, {
-                      organizationId: member.organizationId,
-                      branchId,
-                      cashierId: isOwner ? undefined : member.userId,
-                    })
-                      .then((data) =>
-                        download(
-                          `agristore-${practice ? "practice" : "recovery"}-${Date.now()}.json`,
-                          data,
-                        ),
-                      )
-                      .catch(fail)
-                  }
+                  disabled={busy}
+                  onClick={() => void exportLocalRecovery().catch(fail)}
                 >
                   <ArrowDownToLine size={16} />
-                  Export recovery file
+                  {recoveryArchive ? `Export recovery part ${recoveryArchive.next} of ${recoveryArchive.parts}` : "Export recovery file"}
                 </Button>
                 <p>
                   Contains transaction records. Keep this file private. Pending
@@ -3115,6 +3120,7 @@ export function StoreApp() {
                 </section>
                 <section className="panel">
                   <h2>Application & recovery</h2>
+                  <StorageHealth />
                   <p className="muted">
                     Install Better Yield from Edge’s app menu after opening your
                     shift online. Keep this dedicated browser profile and its
@@ -3144,19 +3150,10 @@ export function StoreApp() {
                   </dl>
                   <Button
                     variant="outline"
-                    onClick={() =>
-                      void exportRecovery(db, {
-                        organizationId: member.organizationId,
-                        branchId,
-                        cashierId: isOwner ? undefined : member.userId,
-                      })
-                        .then((d) =>
-                          download(`agristore-recovery-${Date.now()}.json`, d),
-                        )
-                        .catch(fail)
-                    }
+                    disabled={busy}
+                    onClick={() => void exportLocalRecovery().catch(fail)}
                   >
-                    Export local recovery file
+                    {recoveryArchive ? `Export recovery part ${recoveryArchive.next} of ${recoveryArchive.parts}` : "Export local recovery file"}
                   </Button>
                   <Button
                     variant="outline"

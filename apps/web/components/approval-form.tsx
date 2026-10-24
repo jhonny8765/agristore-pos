@@ -10,13 +10,15 @@ export function ApprovalForm({
   confirmLabel,
   disabled,
   onConfirm,
+  children,
 }: {
   action: string;
   label: string;
   description: string;
   confirmLabel: string;
   disabled: boolean;
-  onConfirm: (reason: string) => Promise<Error | undefined>;
+  onConfirm: (reason: string, fields: FormData) => Promise<Error | undefined>;
+  children?: React.ReactNode;
 }) {
   const [open, setOpen] = useState(false);
   const [reason, setReason] = useState("");
@@ -63,7 +65,7 @@ export function ApprovalForm({
         setPending(true);
         setError("");
         try {
-          const failure = await onConfirm(reason.trim());
+          const failure = await onConfirm(reason.trim(), new FormData(e.currentTarget));
           if (failure) setError(failure.message);
           else {
             setOpen(false);
@@ -81,6 +83,7 @@ export function ApprovalForm({
       }}
     >
       <p>{description}</p>
+      {children && <fieldset disabled={pending || disabled} className="approval-fields">{children}</fieldset>}
       <label className="field">
         <span>{label}</span>
         <input

@@ -32,6 +32,7 @@ export interface LocalSale {
   flags?: string[];
   error?: string;
 }
+export const unresolvedStates: SyncState[] = ["pending", "sending", "authentication_required", "retryable", "review_required"];
 interface Setting {
   key: string;
   value: unknown;
@@ -55,6 +56,11 @@ export class PosDatabase extends Dexie {
       sales: "id,status,nextAttempt",
       settings: "key",
       locks: "key",
+    });
+    // Nested indexes preserve every v1 record without copying a lifetime of
+    // payloads into memory or changing permanent transaction IDs.
+    this.version(2).stores({
+      sales: "id,status,nextAttempt,[payload.organizationId+payload.branchId+payload.occurredAt+id],[payload.organizationId+payload.branchId+payload.cashierId+payload.occurredAt+id],[payload.organizationId+payload.branchId+status+id],[payload.organizationId+payload.branchId+payload.cashierId+status+id],[status+id]",
     });
   }
 }
@@ -134,8 +140,11 @@ export async function applySnapshot(db: PosDatabase, snapshot: Snapshot) {
     "rw",
     [db.products, db.stocks, db.sales, db.settings],
     async () => {
-      await db.products.clear();
-      await db.products.bulkPut(snapshot.products);
+      if (!snapshot.catalogUnchanged) {
+        await db.products.clear();
+        await db.products.bulkPut(snapshot.products);
+      }
+      if (snapshot.catalogVersion) await setSetting(db, "catalogVersion", snapshot.catalogVersion);
       await db.stocks.clear();
       await db.stocks.bulkPut(snapshot.stocks);
       for (const id of snapshot.confirmedIds) {
@@ -168,6 +177,7 @@ export async function clearAccountCache(db: PosDatabase) {
         "snapshotAsOf",
         "confirmedIds",
         "lastSync",
+        "catalogVersion",
       ]);
     },
   );
@@ -328,6 +338,55 @@ export interface RecoveryScope {
   branchId: string;
   cashierId?: string;
 }
+function scopedSales(db: PosDatabase, scope: RecoveryScope) {
+  const fields = scope.cashierId
+    ? "[payload.organizationId+payload.branchId+payload.cashierId+payload.occurredAt+id]"
+    : "[payload.organizationId+payload.branchId+payload.occurredAt+id]";
+  const prefix = [scope.organizationId, scope.branchId, ...(scope.cashierId ? [scope.cashierId] : [])];
+  return db.sales.where(fields).between([...prefix, Dexie.minKey, Dexie.minKey], [...prefix, Dexie.maxKey, Dexie.maxKey]);
+}
+export async function readLocalSales(db: PosDatabase, scope: RecoveryScope, limit = 50) {
+  if (!Number.isInteger(limit) || limit < 1 || limit > 10000) throw new Error("Load between 1 and 10000 recent records");
+  const [recent, unresolved, total, allPendingCount] = await Promise.all([
+    scopedSales(db, scope).reverse().limit(limit).toArray(),
+    db.sales.where("status").notEqual("synced").filter(s =>
+      s.payload.organizationId === scope.organizationId && s.payload.branchId === scope.branchId &&
+      (!scope.cashierId || s.payload.cashierId === scope.cashierId)).toArray(),
+    scopedSales(db, scope).count(),
+    db.sales.where("status").notEqual("synced").count(),
+  ]);
+  return { sales: [...new Map([...recent, ...unresolved].map(s => [s.id, s])).values()]
+    .sort((a,b) => b.payload.occurredAt.localeCompare(a.payload.occurredAt) || b.id.localeCompare(a.id)),
+    total, allPendingCount, hasOlder: total > recent.length };
+}
+
+export const recoveryOperationIds: Record<string, string> = {
+  receive_stock: "receiptId", dispatch_transfer: "transferId", receive_transfer: "receiptId",
+  submit_count: "countId", refund_sale: "refundId", record_stock_issue: "issueId",
+  disposition_hold: "dispositionId", write_off_transfer: "receiptId",
+};
+const RECOVERY_PART_SIZE = 1000;
+interface RecoveryArchive {
+  id: string; scope?: RecoveryScope; ids: string[]; operations: unknown[]; lease?: Lease; exportedAt: string;
+}
+async function checksum(value: unknown) {
+  return [...new Uint8Array(await crypto.subtle.digest("SHA-256", new TextEncoder().encode(stableJSON(value))))]
+    .map(b => b.toString(16).padStart(2,"0")).join("");
+}
+export async function exportRecoveryPart(db: PosDatabase, archiveId: string, part: number, scope?: RecoveryScope) {
+  const archive = await setting<RecoveryArchive>(db, `recovery:${archiveId}`);
+  if (!archive || stableJSON(archive.scope ?? null) !== stableJSON(scope ?? null)) throw new Error("Recovery archive is not available for this account");
+  const parts = Math.max(1, Math.ceil(archive.ids.length / RECOVERY_PART_SIZE));
+  if (!Number.isInteger(part) || part < 1 || part > parts) throw new Error("Invalid recovery part");
+  const records = await db.sales.bulkGet(archive.ids.slice((part-1)*RECOVERY_PART_SIZE, part*RECOVERY_PART_SIZE));
+  if (records.some(s => !s)) throw new Error("A source record is unavailable. Keep earlier recovery parts and ask the owner to investigate.");
+  const body = { sales: records as LocalSale[], pendingOperations: part === 1 ? archive.operations : [] };
+  const manifest = { id: archive.id, part, parts, totalRecords: archive.ids.length, recordCount: records.length, scope: archive.scope };
+  const result = { version: 2, exportedAt: archive.exportedAt, archive: manifest,
+    ...body, checksum: await checksum({archive:manifest,...body}), lease: archive.lease };
+  if (part === parts) await db.settings.delete(`recovery:${archive.id}`); // IDs only; saved sales are never removed.
+  return result;
+}
 export async function exportRecovery(db: PosDatabase, scope?: RecoveryScope) {
   const lease = await setting<Lease>(db, "lease");
   const matches = (sale: LocalSale) =>
@@ -335,11 +394,13 @@ export async function exportRecovery(db: PosDatabase, scope?: RecoveryScope) {
     (sale.payload.organizationId === scope.organizationId &&
       sale.payload.branchId === scope.branchId &&
       (!scope.cashierId || sale.payload.cashierId === scope.cashierId));
-  return {
-    version: 1,
-    exportedAt: new Date().toISOString(),
-    sales: (await db.sales.toArray()).filter(matches),
-    pendingOperations: (
+  // Recovery protects unresolved records. Confirmed history remains retained
+  // locally and in the cloud; it must not make an emergency export unbounded.
+  // Capture immutable IDs once: newly saved sales cannot slip between pages.
+  const ids = (await db.sales.where("status").notEqual("synced").filter(matches).primaryKeys()) as string[];
+  const archive: RecoveryArchive = {
+    id: crypto.randomUUID(), scope, ids: ids.sort(), exportedAt: new Date().toISOString(),
+    operations: (
       await db.settings.where("key").startsWith("operation:").toArray()
     )
       .map((s) => s.value)
@@ -363,22 +424,34 @@ export async function exportRecovery(db: PosDatabase, scope?: RecoveryScope) {
         ? lease
         : undefined,
   };
+  await setSetting(db, `recovery:${archive.id}`, archive);
+  return exportRecoveryPart(db, archive.id, 1, scope);
 }
-export async function importRecovery(db: PosDatabase, input: unknown) {
+export async function importRecovery(db: PosDatabase, input: unknown, confirmedIds: string[] = []) {
   const lease = await setting<Lease>(db, "lease");
   requireLease(lease);
   const data = input as {
     version?: unknown;
     sales?: unknown;
     pendingOperations?: unknown;
+    checksum?: unknown;
+    archive?: { id: string; part: number; parts: number; totalRecords: number; recordCount: number; scope?: RecoveryScope };
   };
   if (
-    data?.version !== 1 ||
+    ![1,2].includes(Number(data?.version)) ||
     !Array.isArray(data.sales) ||
-    data.sales.length > 10000
+    data.sales.length > (data.version === 2 ? RECOVERY_PART_SIZE : 100000)
   )
     throw new Error("Invalid recovery file");
-  const records = data.sales.map((row) => {
+  if (data.version === 2 && (!data.archive || !/^[\da-f-]{36}$/i.test(data.archive.id) ||
+    !Number.isInteger(data.archive.parts) || !Number.isInteger(data.archive.part) || data.archive.part < 1 ||
+    data.archive.part > data.archive.parts || !Number.isSafeInteger(data.archive.totalRecords) || data.archive.totalRecords < 0 ||
+    data.archive.parts !== Math.max(1,Math.ceil(data.archive.totalRecords/RECOVERY_PART_SIZE)) ||
+    data.archive.recordCount !== data.sales.length ||
+    data.archive.recordCount !== Math.max(0,Math.min(RECOVERY_PART_SIZE,data.archive.totalRecords-(data.archive.part-1)*RECOVERY_PART_SIZE)) ||
+    data.checksum !== await checksum({ archive:data.archive,sales: data.sales, pendingOperations: data.pendingOperations ?? [] })))
+    throw new Error("Recovery part is incomplete or its checksum does not match. Keep the original file.");
+  const normalize = (row: unknown) => {
     const payload = saleSchema.parse((row as { payload: unknown }).payload);
     if (
       payload.organizationId !== lease.organizationId ||
@@ -394,7 +467,22 @@ export async function importRecovery(db: PosDatabase, input: unknown) {
       id: payload.transactionId,
       fingerprint: stableJSON(payload),
     };
-  });
+  };
+  // Validate the complete part/legacy file before writing, without cloning all
+  // payloads. A resumable batch never destroys or overwrites an existing sale.
+  const fingerprints = new Map<string,string>();
+  for (const row of data.sales) {
+    const record = normalize(row);
+    const previous = fingerprints.get(record.id);
+    if (previous && previous !== record.fingerprint) throw new Error("Recovery contains conflicting transaction IDs");
+    fingerprints.set(record.id, record.fingerprint);
+  }
+  if (data.version === 2 && fingerprints.size !== data.sales.length) throw new Error("Recovery part contains repeated transaction IDs");
+  if (data.archive) {
+    const expected = {parts:data.archive.parts,totalRecords:data.archive.totalRecords,scope:data.archive.scope};
+    const previous = await setting(db,`restoredArchive:${data.archive.id}`);
+    if (previous && stableJSON(previous) !== stableJSON(expected)) throw new Error("Recovery parts have conflicting manifests. Keep the originals.");
+  }
   const operations = Array.isArray(data.pendingOperations)
     ? data.pendingOperations
     : [];
@@ -406,14 +494,7 @@ export async function importRecovery(db: PosDatabase, input: unknown) {
       actorId: string;
       error?: string;
     };
-    const idField = (
-      {
-        receive_stock: "receiptId",
-        dispatch_transfer: "transferId",
-        submit_count: "countId",
-        refund_sale: "refundId",
-      } as Record<string, string>
-    )[op.action];
+    const idField = recoveryOperationIds[op.action];
     if (
       !idField ||
       !op.data ||
@@ -442,7 +523,12 @@ export async function importRecovery(db: PosDatabase, input: unknown) {
       },
     };
   });
-  await db.transaction("rw", [db.sales, db.settings], async () => {
+  const verified = new Set(confirmedIds);
+  const sourceRows = data.sales;
+  // Legacy >10k exports remain readable. Every 1000-record transaction can be
+  // retried after interruption; conflicts never replace retained records.
+  for (let offset = 0; offset < Math.max(1,sourceRows.length); offset += RECOVERY_PART_SIZE) {
+   await db.transaction("rw", [db.sales, db.settings], async () => {
     for (const op of safeOperations) {
       const existing = await db.settings.get(op.key);
       if (
@@ -455,7 +541,8 @@ export async function importRecovery(db: PosDatabase, input: unknown) {
         );
       await db.settings.put(op);
     }
-    for (const record of records) {
+    for (const row of sourceRows.slice(offset, offset + RECOVERY_PART_SIZE)) {
+      const record = normalize(row);
       const existing = await db.sales.get(record.id);
       if (existing) {
         if (existing.fingerprint !== record.fingerprint)
@@ -467,18 +554,23 @@ export async function importRecovery(db: PosDatabase, input: unknown) {
       await db.sales.add({
         ...record,
         status:
-          record.payload.cashierId === lease.cashierId
+          verified.has(record.id) ? "synced" : record.payload.cashierId === lease.cashierId
             ? "pending"
             : "review_required",
         attempts: 0,
         nextAttempt: 0,
         updatedAt: Date.now(),
         error:
-          record.payload.cashierId === lease.cashierId
+          verified.has(record.id) || record.payload.cashierId === lease.cashierId
             ? undefined
             : "Restored for owner review; original cashier authentication required",
       });
     }
-  });
-  return records.length;
+    if (data.archive) {
+      await setSetting(db,`restoredArchive:${data.archive.id}`,{parts:data.archive.parts,totalRecords:data.archive.totalRecords,scope:data.archive.scope});
+      await setSetting(db, `restored:${data.archive.id}:${data.archive.part}`, { records: sourceRows.length, importedAt: new Date().toISOString() });
+    }
+   });
+  }
+  return sourceRows.length;
 }
