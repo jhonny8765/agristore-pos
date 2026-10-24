@@ -1701,6 +1701,12 @@ tbody tr:last-child td {
 .history-table td small {
   color: var(--muted);
 }
+.history-table:is([data-kind="transfers"], [data-kind="counts"]) :is(th, td):first-child {
+  min-width: 22ch;
+  max-width: 34ch;
+  white-space: normal;
+  overflow-wrap: anywhere;
+}
 .history-table[data-kind="purchases"] :is(th, td):nth-child(5),
 .history-table[data-kind="transfers"] :is(th, td):nth-child(3),
 .history-table[data-kind="counts"] :is(th, td):nth-child(2),

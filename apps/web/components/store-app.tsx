@@ -54,6 +54,7 @@ import { kiloUnit } from "../lib/quantity-entry";
 import type { SaleEntry } from "../lib/cart";
 import { SaleLineEditor } from "./sale-line-editor";
 import { productStock } from "../lib/stock-display";
+import { historicalStock, stockHistoryColumns } from "../lib/stock-history";
 import {
   makeItem,
   money,
@@ -800,6 +801,18 @@ export function StoreApp() {
   }
   const productName = (id: unknown) =>
     products.find((p) => p.id === id)?.name ?? String(id ?? "");
+  const stockLabel = (row: Row) => {
+    const stock = historicalStock(products, row);
+    return (
+      <>
+        <strong>{stock.name}</strong>
+        <small>{stock.lot}</small>
+        {stock.expiresOn && <small>Expiry: {stock.expiresOn}</small>}
+      </>
+    );
+  };
+  const stockQuantity = (row: Row, quantity: string) =>
+    `${new Decimal(quantity).toFixed()} ${historicalStock(products, row).baseUnit || "(base unit unavailable)"}`;
   const branchName = (id: unknown) =>
     branchList.find((b) => b.id === id)?.name ?? "Branch";
   const table = (
@@ -2362,10 +2375,7 @@ export function StoreApp() {
                   emptyTitle="No transfers yet"
                   columns={[
                     { label: "ID", value: (r) => r.id },
-                    {
-                      label: "Product",
-                      value: (r) => productName(r.product_id),
-                    },
+                    ...stockHistoryColumns(products),
                     { label: "From", value: (r) => branchName(r.branch_id) },
                     {
                       label: "To",
@@ -2380,7 +2390,7 @@ export function StoreApp() {
                   {(records) =>
                     table(
                       [
-                        "Product",
+                        "Product / lot",
                         "From → to",
                         "Base quantity",
                         "Status",
@@ -2388,12 +2398,12 @@ export function StoreApp() {
                       ],
                       records.map((t) => (
                         <tr key={str(t, "id")}>
-                          <td>{productName(t.product_id)}</td>
+                          <td>{stockLabel(t)}</td>
                           <td>
                             {branchName(t.branch_id)} →{" "}
                             {branchName(t.destination_branch_id)}
                           </td>
-                          <td>{str(t, "quantity")}</td>
+                          <td>{stockQuantity(t, str(t, "quantity"))}</td>
                           <td>
                             <span className="status-tag">
                               {str(t, "state").replaceAll("_", " ")}
@@ -2516,12 +2526,16 @@ export function StoreApp() {
                   emptyTitle="No counts recorded"
                   columns={[
                     { label: "ID", value: (r) => r.id },
-                    {
-                      label: "Product",
-                      value: (r) => productName(r.product_id),
-                    },
+                    ...stockHistoryColumns(products),
                     { label: "Expected", value: (r) => r.expected },
                     { label: "Counted", value: (r) => r.counted },
+                    {
+                      label: "Difference",
+                      value: (r) =>
+                        new Decimal(str(r, "counted"))
+                          .minus(str(r, "expected"))
+                          .toFixed(),
+                    },
                     { label: "State", value: (r) => r.state },
                     { label: "Reason", value: (r) => r.reason },
                     { label: "Recorded at", value: (r) => r.created_at },
@@ -2530,7 +2544,7 @@ export function StoreApp() {
                   {(records) =>
                     table(
                       [
-                        "Product",
+                        "Product / lot",
                         "Expected",
                         "Counted",
                         "Difference",
@@ -2539,13 +2553,19 @@ export function StoreApp() {
                       ],
                       records.map((c) => (
                         <tr key={str(c, "id")}>
-                          <td>{productName(c.product_id)}</td>
-                          <td>{str(c, "expected")}</td>
-                          <td>{str(c, "counted")}</td>
                           <td>
-                            {new Decimal(str(c, "counted"))
-                              .minus(str(c, "expected"))
-                              .toString()}
+                            {stockLabel(c)}
+                            <small>Reason: {str(c, "reason")}</small>
+                          </td>
+                          <td>{stockQuantity(c, str(c, "expected"))}</td>
+                          <td>{stockQuantity(c, str(c, "counted"))}</td>
+                          <td>
+                            {stockQuantity(
+                              c,
+                              new Decimal(str(c, "counted"))
+                                .minus(str(c, "expected"))
+                                .toFixed(),
+                            )}
                           </td>
                           <td>{str(c, "state")}</td>
                           <td>

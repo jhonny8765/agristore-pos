@@ -221,6 +221,104 @@ test("confirmed deliveries and opening imports stay saved when the following sto
   await expect(createdRow).toContainText("Packet · ₱60.00");
 });
 
+test("transfers and count approvals identify separate lots, base quantities and exported batch IDs", async ({ page }) => {
+  const a = await business();
+  const { id: productId } = await command<{ id: string }>(a.owner, "create_product", {
+    organizationId: a.organizationId, branchId: a.branchId,
+    name: "TEST lot-tracked feeds", sku: "TEST-TWO-LOTS", category: "Feeds",
+    baseUnit: "kg", minimumStock: "0", tracksExpiry: true,
+    units: [{ name: "Sack", factor: "50", price: 150000, cost: 120000 },
+      { name: "Kilo", factor: "1", price: 3500, cost: 2400 }],
+  });
+  const unit = await a.owner.from("product_units").select("id")
+    .eq("product_id", productId).eq("name", "Kilo").single();
+  expect(unit.error).toBeNull();
+  const lots = [
+    { lot: "TEST-LOT-A", expiresOn: "2028-06-30", quantity: "60", transfer: "0.5", counted: "0.4" },
+    { lot: "TEST-LOT-B", expiresOn: "2029-09-30", quantity: "90", transfer: "0.25", counted: "0.2" },
+  ];
+  await command(a.owner, "receive_stock", {
+    organizationId: a.organizationId, branchId: a.branchId, receiptId: randomUUID(),
+    source: "purchase", reference: "TEST two-lot history fixture",
+    items: lots.map((lot) => ({ ...lot, productId, unitId: unit.data!.id })),
+  });
+  const batches = await a.owner.from("product_batches").select("id,lot")
+    .eq("product_id", productId);
+  expect(batches.error).toBeNull();
+  const destination = a.branches[1].id as string;
+  await page.goto("/");
+  await login(page, a);
+  await page.getByRole("button", { name: "Transfers", exact: true }).click();
+  for (const lot of lots) {
+    const batchId = batches.data!.find((batch) => batch.lot === lot.lot)!.id;
+    await page.getByLabel("Product / batch").selectOption(`${productId}:${batchId}`);
+    await page.getByRole("combobox", { name: "Destination branch", exact: true }).selectOption(destination);
+    await page.getByLabel("Quantity in base units (kg / liter / piece)", { exact: true }).fill(lot.transfer);
+    await page.getByRole("button", { name: "Dispatch stock", exact: true }).click();
+    const row = page.locator('.history-table[data-kind="transfers"] tbody tr').filter({ hasText: `Lot ${lot.lot}` });
+    await expect(row).toContainText(`Expiry: ${lot.expiresOn}`);
+    await expect(row.getByRole("cell", { name: `${lot.transfer} kg`, exact: true })).toBeVisible();
+  }
+  async function exportedCsv() {
+    const downloadPromise = page.waitForEvent("download");
+    await page.getByRole("button", { name: "Export loaded rows (CSV)", exact: true }).click();
+    const download = await downloadPromise;
+    return readFile((await download.path())!, "utf8");
+  }
+  const transferCsv = await exportedCsv();
+  for (const lot of lots) {
+    const batchId = batches.data!.find((batch) => batch.lot === lot.lot)!.id;
+    expect(transferCsv).toContain(`"${batchId}","Lot ${lot.lot}","${lot.expiresOn}","kg"`);
+  }
+  await page.getByRole("combobox", { name: "Current branch", exact: true }).selectOption(destination);
+  await expect(page.getByText("Branch stock loaded.", { exact: true })).toBeVisible();
+  const transferA = page.locator('.history-table[data-kind="transfers"] tbody tr').filter({ hasText: "Lot TEST-LOT-A" });
+  const transferB = page.locator('.history-table[data-kind="transfers"] tbody tr').filter({ hasText: "Lot TEST-LOT-B" });
+  await transferA.getByRole("button", { name: "Confirm receipt", exact: true }).click();
+  await expect(transferA.getByRole("cell", { name: "received", exact: true })).toBeVisible();
+  await expect(transferB).toContainText("in transit");
+  await transferB.getByRole("button", { name: "Confirm receipt", exact: true }).click();
+  await expect(transferB.getByRole("cell", { name: "received", exact: true })).toBeVisible();
+  await page.getByRole("button", { name: "Stock counts", exact: true }).click();
+  for (const lot of lots) {
+    const batchId = batches.data!.find((batch) => batch.lot === lot.lot)!.id;
+    await page.getByLabel("Product / batch").selectOption(`${productId}:${batchId}`);
+    await page.getByLabel("Physical quantity in base units", { exact: true }).fill(lot.counted);
+    await page.getByLabel("Count notes / reason", { exact: true }).fill(`TEST simulated discrepancy for ${lot.lot}`);
+    await page.getByRole("button", { name: "Submit count for approval", exact: true }).click();
+    const row = page.locator('.history-table[data-kind="counts"] tbody tr').filter({ hasText: `Lot ${lot.lot}` });
+    await expect(row).toContainText(`Expiry: ${lot.expiresOn}`);
+    await expect(row).toContainText(`Reason: TEST simulated discrepancy for ${lot.lot}`);
+    await expect(row.getByRole("cell", { name: `${lot.transfer} kg`, exact: true })).toBeVisible();
+    await expect(row.getByRole("cell", { name: `${lot.counted} kg`, exact: true })).toBeVisible();
+  }
+  const countCsv = await exportedCsv();
+  expect(countCsv).toContain('"Expected","Counted","Difference"');
+  for (const lot of lots) expect(countCsv).toContain(`"Lot ${lot.lot}","${lot.expiresOn}","kg"`);
+  const countA = page.locator('.history-table[data-kind="counts"] tbody tr').filter({ hasText: "Lot TEST-LOT-A" });
+  const countB = page.locator('.history-table[data-kind="counts"] tbody tr').filter({ hasText: "Lot TEST-LOT-B" });
+  await expect(countA.getByRole("cell", { name: "-0.1 kg", exact: true })).toBeVisible();
+  await expect(countB.getByRole("cell", { name: "-0.05 kg", exact: true })).toBeVisible();
+  for (const [width, height] of [[1440, 1000], [1280, 900], [428, 572], [390, 844]]) {
+    await page.setViewportSize({ width, height });
+    expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
+    const scan = await new AxeBuilder({ page }).include('.history-register').withTags(["wcag2a", "wcag2aa", "wcag21a", "wcag21aa", "wcag22aa"]).analyze();
+    expect(scan.violations).toEqual([]);
+    await page.screenshot({ path: `test-results/stock-history-${width}.png` });
+  }
+  await countA.getByRole("button", { name: "Approve adjustment", exact: true }).click();
+  await expect(countA.getByRole("cell", { name: "approved", exact: true })).toBeVisible();
+  await expect(countB.getByRole("cell", { name: "pending", exact: true })).toBeVisible();
+  const confirmed = await a.owner.from("branch_inventory").select("batch_id,quantity")
+    .eq("branch_id", destination).eq("product_id", productId);
+  expect(confirmed.error).toBeNull();
+  for (const [index, lot] of lots.entries()) {
+    const batchId = batches.data!.find((batch) => batch.lot === lot.lot)!.id;
+    expect(Number(confirmed.data!.find((row) => row.batch_id === batchId)!.quantity))
+      .toBe(Number(index === 0 ? lot.counted : lot.transfer));
+  }
+});
+
 test("a failed account verification never becomes an empty new-business result", async ({
   page,
 }) => {

@@ -51,13 +51,15 @@ jobs:
         run: bash scripts/install-test-browser.sh
         timeout-minutes: 6
       - run: npm run test:integration
-      - name: Save synthetic product-setup review captures
+      - name: Save synthetic interface review captures
         uses: actions/upload-artifact@v4
         if: always()
         continue-on-error: true
         with:
           name: product-setup-review
-          path: test-results/product-setup-*.png
+          path: |
+            test-results/product-setup-*.png
+            test-results/stock-history-*.png
           retention-days: 3
       - uses: actions/upload-artifact@v4
         if: failure()
