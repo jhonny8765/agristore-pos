@@ -4,6 +4,8 @@ Scope: the five-branch staging test business, cashier checkout, inventory operat
 
 ## Work order
 
+The [October 25 stock-loss and sustainability review](stock-loss-and-sustainability-review.md) now takes priority for live-use planning. The owner reports an approximately ₱170,000 counted-versus-recorded shortage in one month, with cause/valuation/branch unresolved, and over 300 sales per branch on busy days. Do not infer theft. The review reproduced an exported 10,001-record recovery file being rejected by import; identified lifetime local-history reads, a bounded exception preview, full-only transfer receipt and automatic restocking of all refunded items. Those findings are **open**, not fixed by the earlier checkout tests. Follow its ordered implementation/verification plan before prolonged high-volume pilot use.
+
 1. Review the implementation and exercise real staging workflows using labelled test data. Record reproducible failures and expected results.
 2. Fix access/data correctness and recovery problems first. Add regression coverage at the layer where each failure occurs.
 3. Improve feedback, update handling, history navigation and avoid unnecessary data downloads. Inspect desktop, mobile and the user's browser width together.
