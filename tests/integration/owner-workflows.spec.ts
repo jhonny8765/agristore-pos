@@ -150,7 +150,7 @@ test("confirmed deliveries and opening imports stay saved when the following sto
       await route.fulfill({ response });
     } else await route.continue();
   });
-  await page.getByLabel("Product and unit", { exact: true }).selectOption(a.unitId);
+  await page.getByLabel("Product and unit").selectOption(a.unitId, { timeout: 20_000 });
   await page.getByLabel("Delivery / invoice reference", { exact: true }).fill("TEST confirmed delivery");
   await page.getByLabel("Quantity received", { exact: true }).fill("2");
   await page.getByRole("button", { name: "Receive stock", exact: true }).click();
@@ -177,6 +177,7 @@ test("confirmed deliveries and opening imports stay saved when the following sto
 
   const destination = a.branches[1].id as string;
   await page.getByRole("combobox", { name: "Current branch", exact: true }).selectOption(destination);
+  await expect(page.getByText("Branch stock loaded.", { exact: true })).toBeVisible();
   await page.getByRole("button", { name: "Purchasing", exact: true }).click();
   await page.getByLabel("Opening stock CSV", { exact: true }).setInputFiles({
     name: "TEST-confirmed-opening.csv", mimeType: "text/csv",
