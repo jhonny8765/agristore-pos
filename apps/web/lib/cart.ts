@@ -7,7 +7,9 @@ export interface LineDraft {
   budget: string;
   budgetError: string;
   original: SaleItem | null;
+  focus?: "quantity" | "budget" | null;
 }
+export type SaleEntry = "unit" | "weight" | "budget";
 interface Cart {
   items: SaleItem[];
   lineIds: string[];
@@ -16,7 +18,7 @@ interface Cart {
   quantityErrors: Record<string, string>;
   quantityError: (lineId: string, error?: string) => void;
   attemptId: string | null;
-  add: (item: SaleItem) => void;
+  add: (item: SaleItem, entry?: SaleEntry) => void;
   replace: (index: number, item: SaleItem) => void;
   remove: (index: number) => void;
   clear: () => void;
@@ -40,22 +42,38 @@ export const useCart = create<Cart>((set, get) => ({
       return { quantityErrors };
     }),
   attemptId: null,
-  add: (item) =>
+  add: (item, entry = "unit") =>
     set((s) => {
       const lineId = crypto.randomUUID();
       return {
         items: [...s.items, item],
         lineIds: [...s.lineIds, lineId],
         attemptId: null,
+        quantityErrors:
+          entry === "unit"
+            ? s.quantityErrors
+            : {
+                ...s.quantityErrors,
+                [lineId]:
+                  entry === "weight"
+                    ? "Enter the customer's weight in kg or grams."
+                    : "Enter a peso budget and confirm the actual scale weight.",
+              },
         drafts: {
           ...s.drafts,
           [lineId]: {
-            draft: item.quantity,
+            draft: entry === "unit" ? item.quantity : "",
             display: "kg",
-            budgetMode: false,
+            budgetMode: entry === "budget",
             budget: "",
             budgetError: "",
             original: null,
+            focus:
+              entry === "weight"
+                ? "quantity"
+                : entry === "budget"
+                  ? "budget"
+                  : null,
           },
         },
       };

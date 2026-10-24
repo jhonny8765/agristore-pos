@@ -1,6 +1,6 @@
 "use client";
 
-import { useId, useRef } from "react";
+import { useEffect, useId, useRef } from "react";
 import { Minus, Plus, X } from "lucide-react";
 import Decimal from "decimal.js";
 import {
@@ -35,7 +35,7 @@ export function SaleLineEditor({
   disabled: boolean;
 }) {
   const cart = useCart();
-  const { draft, display, budgetMode, budget, budgetError, original } =
+  const { draft, display, budgetMode, budget, budgetError, original, focus } =
     cart.drafts[lineId];
   const setDraft = (draft: string) => cart.edit(lineId, { draft });
   const setDisplay = (display: "kg" | "g") => cart.edit(lineId, { display });
@@ -45,6 +45,13 @@ export function SaleLineEditor({
   const setBudgetError = (budgetError: string) =>
     cart.edit(lineId, { budgetError });
   const field = useRef<HTMLInputElement>(null);
+  const budgetField = useRef<HTMLInputElement>(null);
+  const edit = cart.edit;
+  useEffect(() => {
+    if (!focus || disabled) return;
+    (focus === "budget" ? budgetField : field).current?.focus();
+    edit(lineId, { focus: null });
+  }, [focus, disabled, edit, lineId]);
   const errorId = useId();
   const kilo = kiloUnit(product);
   const loose = !!kilo && item.unitId === kilo.id;
@@ -224,14 +231,14 @@ export function SaleLineEditor({
             )}
           </div>
         </div>
-        <strong>{money(item.lineTotal)}</strong>
+        <strong>{draft.trim() ? money(item.lineTotal) : "Enter weight"}</strong>
       </div>
       {error && (
         <p className="quantity-error" id={errorId} role="alert">
           {error}
         </p>
       )}
-      {loose && (
+      {loose && draft.trim() && (
         <p className="line-measure">
           {item.quantity} kg = {new Decimal(item.quantity).mul(1000).toFixed()}{" "}
           g{budgetMode ? " · weight not confirmed" : ""}
@@ -260,29 +267,53 @@ export function SaleLineEditor({
         </div>
       )}
       {kilo && !budgetMode && (
-        <button
-          className="text-button peso-entry-toggle"
-          disabled={disabled}
-          onClick={() => {
-            cart.edit(lineId, { original: item });
-            setBudgetMode(true);
-            setDisplay("kg");
-            write("1", kilo.id, item.batchId, false, true);
-            setDraft("");
-            cart.quantityError(
-              lineId,
-              "Enter the weighed quantity or cancel peso entry before checkout.",
-            );
-          }}
+        <div
+          className="line-selling-methods"
+          role="group"
+          aria-label={`Selling method for ${item.name}`}
         >
-          {budget ? "Change peso amount" : "By peso amount"}
-        </button>
+          <button
+            type="button"
+            className="text-button"
+            disabled={disabled}
+            aria-pressed={loose}
+            onClick={() => {
+              if (loose) {
+                field.current?.focus();
+                return;
+              }
+              setDisplay("kg");
+              write("", kilo.id, item.batchId, false, false);
+              cart.edit(lineId, { focus: "quantity" });
+            }}
+          >
+            By weight
+          </button>
+          <button
+            className="text-button peso-entry-toggle"
+            disabled={disabled}
+            onClick={() => {
+              cart.edit(lineId, { original: item, focus: "budget" });
+              setBudgetMode(true);
+              setDisplay("kg");
+              write("1", kilo.id, item.batchId, false, true);
+              setDraft("");
+              cart.quantityError(
+                lineId,
+                "Enter the weighed quantity or cancel peso entry before checkout.",
+              );
+            }}
+          >
+            {budget ? "Change peso amount" : "By peso amount"}
+          </button>
+        </div>
       )}
       {budgetMode && (
         <div className="peso-entry">
           <label htmlFor={errorId + "-budget"}>Customer budget (₱)</label>
           <div className="peso-entry-controls">
             <input
+              ref={budgetField}
               id={errorId + "-budget"}
               aria-label={`Customer budget for ${item.name}`}
               inputMode="decimal"
@@ -372,7 +403,11 @@ export function SaleLineEditor({
               aria-label="Cancel peso entry"
               disabled={disabled}
               onClick={() => {
-                const previous = original!;
+                if (!original) {
+                  cart.remove(index);
+                  return;
+                }
+                const previous = original;
                 cart.replace(index, previous);
                 setDraft(previous.quantity);
                 setDisplay("kg");

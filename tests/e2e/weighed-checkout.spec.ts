@@ -1,6 +1,59 @@
 import { test, expect, type Page } from "@playwright/test";
 import AxeBuilder from "@axe-core/playwright";
 
+test("catalog weight and peso choices start at the right field without charging an unfinished kilo", async ({
+  page,
+}) => {
+  await page.goto("/");
+  await page.getByRole("button", { name: "Try practice checkout" }).click();
+  await page
+    .getByRole("button", { name: "Sell Grower feeds by weight", exact: true })
+    .click();
+  const quantity = page.getByLabel("Quantity for Grower feeds");
+  await expect(quantity).toHaveValue("");
+  await expect(quantity).toBeFocused();
+  await expect(page.locator(".amount-due")).toContainText("₱0.00");
+  await expect(complete(page)).toBeDisabled();
+  await quantity.pressSequentially("0.5");
+  await expect(page.locator(".amount-due")).toContainText("₱16.80");
+  await page
+    .getByRole("button", {
+      name: "Sell Grower feeds by peso amount",
+      exact: true,
+    })
+    .click();
+  await expect(
+    page.getByLabel("Customer budget for Grower feeds"),
+  ).toBeFocused();
+  await expect(complete(page)).toBeDisabled();
+  await page
+    .getByRole("button", { name: "Cancel peso entry", exact: true })
+    .click();
+  await expect(page.locator(".receipt-item")).toHaveCount(1);
+  await expect(page.locator(".amount-due")).toContainText("₱16.80");
+  await page
+    .getByRole("button", { name: "Add Grower feeds", exact: true })
+    .click();
+  await expect(page.locator(".amount-due")).toContainText("₱1,596.80");
+  await page
+    .getByRole("button", { name: "Sell Hybrid corn seeds by weight" })
+    .count()
+    .then((count) => expect(count).toBe(0));
+  for (const width of [1440, 390, 418, 320]) {
+    await page.setViewportSize({ width, height: 900 });
+    expect(
+      await page.evaluate(
+        () => document.documentElement.scrollWidth <= innerWidth,
+      ),
+    ).toBe(true);
+    const scan = await new AxeBuilder({ page })
+      .include(".product-grid")
+      .withTags(["wcag2a", "wcag2aa", "wcag21aa", "wcag22aa"])
+      .analyze();
+    expect(scan.violations).toEqual([]);
+  }
+});
+
 async function practice(page: Page) {
   await page.goto("/");
   await page.getByRole("button", { name: "Try practice checkout" }).click();

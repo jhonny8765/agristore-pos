@@ -6,6 +6,7 @@ import { historyPage } from "../../apps/web/lib/history-api";
 import type { HistoryCursor, HistoryKind } from "../../apps/web/lib/history";
 import { readFile } from "node:fs/promises";
 import AxeBuilder from "@axe-core/playwright";
+import type { Product } from "@agristore/domain";
 
 const api = process.env.NEXT_PUBLIC_SUPABASE_URL;
 const key = process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY;
@@ -127,6 +128,123 @@ async function closeShift(page: Page) {
     }),
   ).toBeVisible();
 }
+
+test("owner product setup creates only enabled selling units with independent retail prices", async ({
+  page,
+}) => {
+  test.setTimeout(120_000);
+  const a = await business();
+  await page.goto("/");
+  await login(page, a);
+  await page.getByRole("button", { name: "Inventory", exact: true }).click();
+  const form = page.getByRole("form", { name: "Add a product", exact: true });
+  await form
+    .getByLabel("Product name", { exact: true })
+    .fill("TEST 25 kg feeds");
+  await form.getByLabel("SKU / barcode", { exact: true }).fill("TEST-SETUP-25");
+  await form.getByLabel("How customers buy this product").selectOption("sack");
+  await expect(form.getByLabel("Also sell loose kilos")).not.toBeChecked();
+  await expect(
+    form.getByLabel("Price per kilo (₱)", { exact: true }),
+  ).toHaveCount(0);
+  await form.getByLabel("Number of kg in one Sack").fill("25");
+  await form.getByLabel("Price per Sack (₱)", { exact: true }).fill("900");
+  await form.getByLabel("Cost per Sack (₱)", { exact: true }).fill("700");
+  await form.getByLabel("Also sell loose kilos").check();
+  await form.getByLabel("Price per kilo (₱)", { exact: true }).fill("45");
+  await form.getByLabel("Cost per kilo (₱)", { exact: true }).fill("28");
+  await expect(form.locator(".setup-summary")).toContainText("1 Sack = 25 kg");
+  for (const width of [1440, 390, 418, 320]) {
+    await page.setViewportSize({ width, height: 900 });
+    expect(
+      await page.evaluate(
+        () => document.documentElement.scrollWidth <= innerWidth,
+      ),
+    ).toBe(true);
+    const scan = await new AxeBuilder({ page })
+      .include(".product-setup")
+      .withTags(["wcag2a", "wcag2aa", "wcag21aa", "wcag22aa"])
+      .analyze();
+    expect(scan.violations).toEqual([]);
+  }
+  await form.getByRole("button", { name: "Add product", exact: true }).click();
+  await expect(form.getByRole("status")).toContainText(
+    "TEST 25 kg feeds added",
+  );
+  await expect(form.getByLabel("Product name", { exact: true })).toHaveValue(
+    "",
+  );
+  await form
+    .getByLabel("Product name", { exact: true })
+    .fill("TEST sealed nutrients");
+  await form.getByLabel("SKU / barcode", { exact: true }).fill("TEST-SEALED");
+  await form
+    .getByLabel("How customers buy this product")
+    .selectOption("sealed");
+  await expect(form.getByLabel("Also sell loose kilos")).toHaveCount(0);
+  await form.getByLabel("Price per Packet (₱)", { exact: true }).fill("60");
+  await form.getByLabel("Cost per Packet (₱)", { exact: true }).fill("40");
+  await form.getByRole("button", { name: "Add product", exact: true }).click();
+  await expect(form.getByRole("status")).toContainText(
+    "TEST sealed nutrients added",
+  );
+  const snapshot = await command<{ products: Product[] }>(a.owner, "snapshot", {
+    organizationId: a.organizationId,
+    branchId: a.branchId,
+    transactionIds: [],
+  });
+  const feed = snapshot.products.find(
+    (product) => product.sku === "TEST-SETUP-25",
+  )!;
+  expect(feed.baseUnit).toBe("kg");
+  expect(
+    feed.units.map(({ name, factor, price, cost }) => ({
+      name,
+      factor,
+      price,
+      cost,
+    })),
+  ).toEqual(
+    expect.arrayContaining([
+      { name: "Sack", factor: "25.000000", price: 90000, cost: 70000 },
+      { name: "Kilo", factor: "1.000000", price: 4500, cost: 2800 },
+    ]),
+  );
+  expect(feed.units).toHaveLength(2);
+  const packet = snapshot.products.find(
+    (product) => product.sku === "TEST-SEALED",
+  )!;
+  expect(packet.baseUnit).toBe("piece");
+  expect(packet.units).toHaveLength(1);
+  expect(Number(packet.units[0].factor)).toBe(1);
+  // A server-side duplicate refusal leaves the completed form recoverable.
+  await form
+    .getByLabel("Product name", { exact: true })
+    .fill("TEST duplicate SKU");
+  await form.getByLabel("SKU / barcode", { exact: true }).fill("TEST-SEALED");
+  await form.getByLabel("Price per Packet (₱)", { exact: true }).fill("60");
+  await form.getByLabel("Cost per Packet (₱)", { exact: true }).fill("40");
+  await form.getByRole("button", { name: "Add product", exact: true }).click();
+  await expect(form.getByRole("alert")).toContainText(
+    "This SKU already exists",
+  );
+  await expect(form.getByLabel("Product name", { exact: true })).toHaveValue(
+    "TEST duplicate SKU",
+  );
+  await page.getByRole("button", { name: "Checkout POS", exact: true }).click();
+  await expect(
+    page.getByRole("button", {
+      name: "Sell TEST 25 kg feeds by weight",
+      exact: true,
+    }),
+  ).toBeVisible();
+  await expect(
+    page.getByRole("button", {
+      name: "Sell TEST sealed nutrients by weight",
+      exact: true,
+    }),
+  ).toHaveCount(0);
+});
 
 test("offline mixed sacks, quarters, halves and peso-weight sales synchronize exact stock and retail prices", async ({
   page,

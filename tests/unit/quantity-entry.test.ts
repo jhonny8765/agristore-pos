@@ -112,6 +112,25 @@ describe("cashier quantity entry", () => {
 
 describe("stable checkout line drafts", () => {
   beforeEach(() => useCart.getState().clear());
+  it("starts direct weight and budget entries empty and blocks their provisional quantities", () => {
+    const item = makeItem(product, uuid(12), "1", null);
+    useCart.getState().add(item, "weight");
+    useCart.getState().add(item, "budget");
+    const state = useCart.getState();
+    expect(state.lineIds).toHaveLength(2);
+    expect(state.drafts[state.lineIds[0]]).toMatchObject({
+      draft: "",
+      focus: "quantity",
+      budgetMode: false,
+    });
+    expect(state.drafts[state.lineIds[1]]).toMatchObject({
+      draft: "",
+      focus: "budget",
+      budgetMode: true,
+      original: null,
+    });
+    expect(Object.keys(state.quantityErrors)).toHaveLength(2);
+  });
   it("retains the other duplicate product's draft and blocking error after removing a row", () => {
     const item = makeItem(product, uuid(12), "1", null);
     useCart.getState().add(item);

@@ -49,6 +49,9 @@ import {
 import Decimal from "decimal.js";
 import Image from "next/image";
 import { StoreBrand } from "./store-brand";
+import { ProductSetupForm } from "./product-setup-form";
+import { kiloUnit } from "../lib/quantity-entry";
+import type { SaleEntry } from "../lib/cart";
 import { SaleLineEditor } from "./sale-line-editor";
 import { productStock } from "../lib/stock-display";
 import {
@@ -697,8 +700,13 @@ export function StoreApp() {
       setSavingSale(false);
     }
   }
-  function addProduct(p: Product, unitId?: string, batchId?: string | null) {
-    if (updateLock.current) return;
+  function addProduct(
+    p: Product,
+    unitId?: string,
+    batchId?: string | null,
+    entry: SaleEntry = "unit",
+  ) {
+    if (updateLock.current || committing.current || !lease || isStock) return;
     try {
       const batch = p.batches.find(
         (b) =>
@@ -713,6 +721,7 @@ export function StoreApp() {
           "1",
           batchId === undefined ? (batch?.id ?? null) : batchId,
         ),
+        entry,
       );
       setCheckoutDone(undefined);
     } catch (e) {
@@ -842,11 +851,13 @@ export function StoreApp() {
           <div>
             <h1>
               Your partner in
-              <br />every harvest.
+              <br />
+              every harvest.
             </h1>
             <p>
               Better Yield Agri Trading and Services
-              <br />Crop nutrition · Crop care
+              <br />
+              Crop nutrition · Crop care
             </p>
             <figure className="auth-photo">
               <Image
@@ -861,12 +872,15 @@ export function StoreApp() {
             </figure>
             <div className="auth-proof">
               <ShieldCheck size={21} />
-              <span>
-                Cash checkout · Stock records · Your branches
-              </span>
+              <span>Cash checkout · Stock records · Your branches</span>
             </div>
           </div>
-          <a className="auth-foot" href="https://www.facebook.com/profile.php?id=100054562864276" target="_blank" rel="noreferrer">
+          <a
+            className="auth-foot"
+            href="https://www.facebook.com/profile.php?id=100054562864276"
+            target="_blank"
+            rel="noreferrer"
+          >
             Better Yield on Facebook <ArrowRight size={14} />
           </a>
         </section>
@@ -990,7 +1004,11 @@ export function StoreApp() {
       (category === "All products" || p.category === category) &&
       `${p.name} ${p.sku}`.toLowerCase().includes(query.toLowerCase()),
   );
-  const grandTotal = total(cart.items);
+  const grandTotal = total(
+    cart.items.filter((_, index) =>
+      cart.drafts[cart.lineIds[index]]?.draft.trim(),
+    ),
+  );
   let change = 0;
   try {
     change = Math.max(0, cents(cash) - grandTotal);
@@ -1320,6 +1338,7 @@ export function StoreApp() {
                   <div className="product-grid">
                     {visible.map((p) => {
                       const available = productStock(p, stock);
+                      const kilo = kiloUnit(p);
                       return (
                         <article
                           className={
@@ -1360,10 +1379,18 @@ export function StoreApp() {
                               <button
                                 className="add-product"
                                 onClick={() => addProduct(p)}
-                                disabled={!lease || isStock || installingUpdate}
+                                disabled={
+                                  !lease || isStock || busy || installingUpdate
+                                }
                                 aria-label={`Add ${p.name}`}
                               >
                                 <Plus size={17} />
+                                <span>
+                                  {p.baseUnit === "kg" &&
+                                  new Decimal(p.units[0]?.factor ?? "1").eq(1)
+                                    ? "Add 1 kg"
+                                    : `Add ${p.units[0]?.name ?? "item"}`}
+                                </span>
                               </button>
                             </div>
                             <span
@@ -1375,6 +1402,46 @@ export function StoreApp() {
                             >
                               {available.quantity} {available.unit} on hand
                             </span>
+                            {kilo && (
+                              <div
+                                className="product-selling"
+                                role="group"
+                                aria-label={`Loose selling options for ${p.name}`}
+                              >
+                                <span>{money(kilo.price)} / kg · loose</span>
+                                <button
+                                  type="button"
+                                  disabled={
+                                    !lease ||
+                                    isStock ||
+                                    busy ||
+                                    installingUpdate
+                                  }
+                                  aria-label={`Sell ${p.name} by weight`}
+                                  onClick={() =>
+                                    addProduct(p, kilo.id, undefined, "weight")
+                                  }
+                                >
+                                  By weight
+                                </button>
+                                <button
+                                  type="button"
+                                  disabled={
+                                    !lease ||
+                                    isStock ||
+                                    busy ||
+                                    installingUpdate ||
+                                    kilo.price <= 0
+                                  }
+                                  aria-label={`Sell ${p.name} by peso amount`}
+                                  onClick={() =>
+                                    addProduct(p, kilo.id, undefined, "budget")
+                                  }
+                                >
+                                  By peso amount
+                                </button>
+                              </div>
+                            )}
                           </div>
                         </article>
                       );
@@ -1855,55 +1922,20 @@ export function StoreApp() {
                   <section className="panel">
                     <h2>Add a product</h2>
                     <p className="muted">
-                      Prices are per selling unit. Costs are snapshots for
-                      margin reports.
+                      Choose pack, weight or piece selling. Each enabled selling
+                      unit has its own price; loose selling is optional.
                     </p>
-                    <form
-                      className="form-grid"
-                      onSubmit={(e) => {
-                        e.preventDefault();
-                        const f = new FormData(e.currentTarget);
-                        void run(async () => {
+                    <ProductSetupForm
+                      disabled={busy || !online || practice}
+                      onSave={(product) =>
+                        run(async () => {
                           if (practice)
                             throw new Error(
-                              "Catalog changes are available after signing in to your live business.",
+                              "Catalog changes require signing in to your business.",
                             );
-                          const base = inputValue(f, "baseUnit"),
-                            factor = inputValue(f, "factor");
                           await command("create_product", {
                             ...context(),
-                            name: inputValue(f, "name"),
-                            sku: inputValue(f, "sku"),
-                            category: inputValue(f, "category"),
-                            baseUnit: base,
-                            minimumStock: inputValue(f, "minimum"),
-                            tracksExpiry: f.get("expiry") === "on",
-                            units: [
-                              {
-                                name: inputValue(f, "unit"),
-                                factor,
-                                price: cents(inputValue(f, "price")),
-                                cost: cents(inputValue(f, "cost")),
-                              },
-                              ...(factor !== "1"
-                                ? [
-                                    {
-                                      name:
-                                        base === "kg"
-                                          ? "Kilo"
-                                          : base === "liter"
-                                            ? "Liter"
-                                            : "Piece",
-                                      factor: "1",
-                                      price: cents(inputValue(f, "basePrice")),
-                                      cost: Math.round(
-                                        cents(inputValue(f, "cost")) /
-                                          Number(factor),
-                                      ),
-                                    },
-                                  ]
-                                : []),
-                            ],
+                            ...product,
                           });
                           if (lease) await sync();
                           else
@@ -1914,99 +1946,12 @@ export function StoreApp() {
                                 transactionIds: [],
                               }),
                             );
-                          notify("Product added.");
-                        });
-                      }}
-                    >
-                      <Field label="Product name">
-                        <input name="name" required />
-                      </Field>
-                      <Field label="SKU / barcode">
-                        <input name="sku" required />
-                      </Field>
-                      <Field label="Category">
-                        <select name="category">
-                          {[
-                            "Feeds",
-                            "Fertilizers",
-                            "Seeds",
-                            "Tools",
-                            "Soil care",
-                            "Animal care",
-                            "Other",
-                          ].map((c) => (
-                            <option key={c}>{c}</option>
-                          ))}
-                        </select>
-                      </Field>
-                      <Field label="Base stock unit">
-                        <select name="baseUnit">
-                          <option value="kg">Kilogram</option>
-                          <option value="liter">Liter</option>
-                          <option value="piece">Piece</option>
-                        </select>
-                      </Field>
-                      <Field label="Selling unit name">
-                        <input
-                          name="unit"
-                          defaultValue="Sack (50 kg)"
-                          required
-                        />
-                      </Field>
-                      <Field label="Base units per selling unit">
-                        <input
-                          name="factor"
-                          type="number"
-                          min="0.000001"
-                          step="0.000001"
-                          defaultValue="50"
-                          required
-                        />
-                      </Field>
-                      <Field label="Selling price (₱)">
-                        <input
-                          name="price"
-                          type="number"
-                          min="0"
-                          step="0.01"
-                          required
-                        />
-                      </Field>
-                      <Field label="Cost per selling unit (₱)">
-                        <input
-                          name="cost"
-                          type="number"
-                          min="0"
-                          step="0.01"
-                          required
-                        />
-                      </Field>
-                      <Field label="Loose kilo / liter / piece price (₱)">
-                        <input
-                          name="basePrice"
-                          type="number"
-                          min="0"
-                          step="0.01"
-                          defaultValue="0"
-                        />
-                      </Field>
-                      <Field label="Low stock threshold (base units)">
-                        <input
-                          name="minimum"
-                          type="number"
-                          min="0"
-                          step="0.000001"
-                          defaultValue="0"
-                        />
-                      </Field>
-                      <label className="checkbox">
-                        <input name="expiry" type="checkbox" />
-                        Track lots and expiration
-                      </label>
-                      <Button disabled={busy || !online || practice}>
-                        Add product
-                      </Button>
-                    </form>
+                          notify(
+                            "Product added with its configured selling units and prices.",
+                          );
+                        })
+                      }
+                    />
                   </section>
                   <section className="panel">
                     <h2>Change a selling price</h2>
@@ -2240,8 +2185,9 @@ export function StoreApp() {
                           const file = e.target.files?.[0];
                           if (!file) return;
                           void run(async () => {
-                            const { parseOpeningCSV } =
-                              await import("../lib/import");
+                            const { parseOpeningCSV } = await import(
+                              "../lib/import"
+                            );
                             const records = parseOpeningCSV(
                               await file.text(),
                               products,
