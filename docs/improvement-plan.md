@@ -127,3 +127,19 @@ During the staging update, an expired account check briefly displayed business s
 
 
 Final verification: [GitHub Actions 40061999165](https://github.com/jhonny8765/agristore-pos/actions/runs/40061999165), source `a71950d`, passed 107 unit tests, 16 practice-browser scenarios, eight real database-connected browser scenarios, 98 pgTAP assertions and the fresh-stack restore drill, plus type checks, zero-warning lint and optimized builds. Final visual verdict: ship for explicit selling methods and product setup at desktop, 390px and 418px after retaining displayed quantity units/currency in accessible names. Catalog controls no longer overlap; new retail units cannot silently inherit a zero price. The stable staging alias serves the final preview. See [acceptance.md](acceptance.md) for capture provenance, artifact-quota limitations and the outstanding physical pilot gates.
+
+
+## Inventory recovery follow-up — October 24
+
+This pass inspected purchasing, transfers, count approval, receipts and sync recovery. New regression tests reproduced three request races: two database connections allocating different UUIDs for the same pending delivery, a late successful old retry deleting a newer pending request, and a late failed retry overwriting it. Request allocation and settlement now run in short IndexedDB transactions; network calls remain outside those transactions. Historical completed sales and local database versions are unchanged.
+
+A confirmed delivery or opening import previously downloaded stock before clearing its form. A failed download therefore looked like a failed write, inviting another submission. Confirmed forms now clear immediately, and the shared action runner distinguishes completion from failed follow-up reads. Product creation also retains its success/reset behavior when the subsequent catalog refresh fails. Transfers, counts and suppliers clear their forms after confirmed submission. Actual server rejection still retains the original entered values.
+
+Opening-stock previews previously accepted duplicate headers, mismatched row lengths, trailing text after quoted cells, impossible calendar dates and fractional sealed pieces. Six new negative cases reproduced that behavior. Preflight now rejects them; a positive case preserves BOM/CRLF, reordered headers, escaped quotes and a leap-day expiry. No new dependency or database migration was needed.
+
+The broader review also identified a separate future improvement: transfer/count history should expose batch identifiers and base-unit labels beside the product, rather than relying on the original entry selector. This was not changed during the request-recovery repair. Large register/movement previews, physical hardware and production backup requirements remain separately tracked above.
+
+
+Final follow-up verification: [GitHub Actions 40100348104](https://github.com/jhonny8765/agristore-pos/actions/runs/40100348104), test source `5043d33` / identical application source `1cd3140`, passed 117 unit checks, 16 practice-browser and nine real database-connected scenarios, 98 pgTAP assertions and the restore drill, plus type/lint/build checks. The final visual disposition is **ship** for the scoped feedback and incumbent purchasing layout after replacing degraded captures with fresh-tab evidence. No CSS, visual tokens, dependency or database schema changes were required.
+
+The existing signed-in staging tab updated through Settings and reopened safely. Manual receiving raised synthetic feeds from 500 to 500.25 kg; a clearly labelled simulated count and owner approval restored 500 kg. The duplicate-header CSV was rejected before confirmation. Independent reads verified the retained three original sales, no open shifts and baseline Magpet stock. See [test-account.md](test-account.md) for the retained test receipt and approved count. No test records or local site data were deleted.

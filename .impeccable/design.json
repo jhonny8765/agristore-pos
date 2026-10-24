@@ -1,6 +1,6 @@
 {
   "schemaVersion": 2,
-  "generatedAt": "2026-10-24T11:23:27.986812Z",
+  "generatedAt": "2026-10-24T14:11:25.417Z",
   "title": "Design System: Better Yield POS (AgriStore)",
   "extensions": {
     "colorMeta": {
@@ -374,7 +374,8 @@
       "Do retain stronger control boundaries, surface-appropriate focus outlines, and explicit current or pressed states.",
       "Do keep catalog metadata legible when adding is disabled, with only the Add control changing appearance.",
       "Do keep applied dates, loaded counts, end-of-history feedback, and CSV scope explicit beside the records they describe.",
-      "Do keep app update status beside its action, protect pending work before reopening, and preserve local records and browser site data in recovery guidance."
+      "Do keep app update status beside its action, protect pending work before reopening, and preserve local records and browser site data in recovery guidance.",
+      "Do retain confirmed completion feedback alongside a distinct Refresh warning, clear confirmed forms, and preserve entered values on validation or submission failure."
     ],
     "donts": [
       "Don't infer catalog stock, prices or configured branches from public brand photography or marketing information.",
@@ -383,7 +384,8 @@
       "Don't introduce heavy resting shadows on record panels.",
       "Don't reduce essential product and payment copy to the smallest incidental text sizes present in older supporting UI.",
       "Don't imply that a loaded-row CSV includes matching records that have not been loaded.",
-      "Don't describe the open app window as current solely because no new download is available, or force other windows to reload."
+      "Don't describe the open app window as current solely because no new download is available, or force other windows to reload.",
+      "Don't invite resubmission of a confirmed action after a refresh failure, or show opening-stock confirmation before CSV validation succeeds."
     ]
   }
 }

@@ -25,3 +25,10 @@ Receipt `B01-851E7BCBDBF7` contains three TEST Grower Feeds lines at the explici
 The linked full refund restored feeds to **500 kg**, and the new test shift closed at **₱0 expected / ₱0 counted**. All three original receipts remain retained and synchronized. A server check confirmed zero open shifts after this test.
 
 The long-lived browser initially held a retired registration. The new owner-only Release retired setup action released that matching local identity without clearing its two older saved receipts. A separate older active staging registration had an empty shift with a one-centavo test opening float and no sales/payments. It was retired through the existing owner approval/reason flow, preserving its historical expected cash and a null counted-cash value for review. The replacement test browser was then registered normally. No cashier hardware has been selected by these browser setup tests.
+
+
+## October 24 inventory-recovery rehearsal
+
+The signed-in staging owner recorded **0.25 kg** of TEST Grower Feeds using reference **TEST-RECOVERY-AUDIT-20261024-001**, receipt **1079646b-9a2f-4f8e-8d39-5be4ecba1ced**. Stock increased from 500 kg to 500.25 kg and the confirmed delivery form cleared. A simulated count **56fad55e-7ee7-49ff-a024-0d314902b304** recorded expected 500.25 kg / counted 500 kg; the owner approval created the separate **−0.25 kg** adjustment and restored **500 kg**. Its retained reason explicitly says “TEST SIMULATION ONLY” and identifies it as a software rehearsal rather than a real physical count. Both original records remain in the audit trail.
+
+No cashier shift was opened and no new cash sale was created. Independent reads confirmed the original three retained sales, zero open shifts, 500 kg feeds / 400 kg fertilizer / 50 seed pieces in Magpet. The invalid duplicate-header CSV was rejected before import confirmation and did not create an opening import. The existing browser's guarded update preserved the account and local receipt history.

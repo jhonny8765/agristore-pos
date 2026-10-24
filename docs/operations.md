@@ -16,6 +16,12 @@ Reconnect and confirm every local sale has synchronized. Investigate review-requ
 
 Retry the original record in Sync center. Do not re-enter the customer’s purchase. Transaction IDs and payloads are retained. Deliveries and transfers with an unknown network result also retain their original request IDs under Online operations awaiting confirmation. A definitive database rejection rolls back the operation so corrected input may be submitted.
 
+## Confirmed inventory writes and refresh failures
+
+A confirmation and a stock download are separate outcomes. When a delivery, opening import or product was saved but refreshing failed, keep its confirmation, do not submit it again, reconnect and use **Refresh**. Confirmed delivery, supplier, transfer and count forms clear; failed submissions retain the entered values. A pending inventory request is allocated atomically across windows, and late responses cannot erase or replace a newer pending request.
+
+Opening-stock CSV files must contain unique `sku,unit,quantity,lot,expiresOn` headers and the same number of cells in every row. Keep blank lot/expiry cells when optional; do not omit their columns. Quoted commas and escaped double quotes are supported. Invalid calendar expiry dates, malformed quoting and fractional base pieces are rejected before confirmation. The server still validates all submitted records and permissions.
+
 ## App updates
 
 Finish the cart and confirm pending records before using Settings → Check for app update. Read the result beside the button: a new download, installation, a blocked restart and no new download are different states. If an installed update leaves the window open, close and reopen AgriStore in the same dedicated profile; keep its site data. Never clear browser storage or re-enter a sale to resolve an update problem. See [app updates and saved records](app-updates.md) for behavior and verified limits.
