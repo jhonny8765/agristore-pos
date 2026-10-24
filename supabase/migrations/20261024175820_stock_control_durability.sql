@@ -88,6 +88,11 @@ insert into public.stock_exceptions(organization_id,branch_id,kind,source_id,det
 
 -- Keep the proven transaction implementation private; only the new dispatcher
 -- can invoke it. Auth, session and branch checks also precede every new action.
+do $patch$ declare definition text:=pg_get_functiondef('app_private.command(text,jsonb)'::regprocedure);
+begin
+ if strpos(definition,$old$flags text[]:='{}';$old$)=0 then raise exception 'Stock-control migration anchor missing'; end if;
+ execute replace(definition,$old$flags text[]:='{}';$old$,$new$flags text[]:=array[]::text[];$new$);
+end $patch$;
 alter function app_private.command(text,jsonb) rename to command_legacy;
 revoke all on function app_private.command_legacy(text,jsonb) from public,anon,authenticated;
 create function app_private.command(action text,data jsonb) returns jsonb language plpgsql security definer set search_path='' as $$
@@ -96,7 +101,7 @@ declare
  member public.staff_memberships; tr public.stock_transfers; sale public.sales; sh public.cashier_shifts;
  issue public.stock_issues; held public.stock_holds; prior public.stock_control_events; cnt public.stock_counts;
  ident uuid; q numeric; h numeric; remaining numeric; factor numeric; product uuid; batch uuid; item jsonb; ret jsonb;
- result jsonb; version text; i integer; disposition text; kind text; reason text:=btrim(data->>'reason');
+ result jsonb; version text; disposition text; kind text; reason text:=btrim(data->>'reason');
 begin
  if uid is null or coalesce((auth.jwt()->>'is_anonymous')::boolean,false) or not exists(
   select 1 from auth.sessions s where s.id=(auth.jwt()->>'session_id')::uuid and s.user_id=uid and (s.not_after is null or s.not_after>now())
@@ -211,7 +216,7 @@ begin
    raise exception 'Stock issue ID conflict';
   end if;
   product:=(data->>'productId')::uuid; batch:=(data->>'batchId')::uuid;
-  if q is null or q<=0 or scale(trim_scale(q))>6 or not exists(select 1 from public.products where id=product and organization_id=org) or (batch is not null and not exists(select 1 from public.product_batches where id=batch and organization_id=org and product_id=product)) then raise exception 'Enter a valid product, lot and quantity'; end if;
+  if q is null or q::text='NaN' or q<=0 or scale(trim_scale(q))>6 or not exists(select 1 from public.products where id=product and organization_id=org) or (batch is not null and not exists(select 1 from public.product_batches where id=batch and organization_id=org and product_id=product)) then raise exception 'Enter a valid product, lot and quantity'; end if;
   if (select base_unit from public.products where id=product)='piece' and q<>trunc(q) then raise exception 'Piece stock must be a whole number'; end if;
   insert into public.stock_issues(id,organization_id,branch_id,product_id,batch_id,quantity,category,disposition,reason,requested_by) values(ident,org,branch,product,batch,q,data->>'category',data->>'disposition',reason,uid);
   insert into public.stock_control_events values(ident,org,branch,action,ident,uid,data,now());
@@ -220,6 +225,7 @@ begin
   select * into issue from public.stock_issues where id=(data->>'issueId')::uuid and organization_id=org and branch_id=branch for update;
   if issue.id is null then raise exception 'Stock issue not found'; end if;
   if issue.state='approved' then return jsonb_build_object('id',issue.id,'duplicate',true); end if;
+  if length(coalesce(reason,''))<3 then raise exception 'Record approval notes before changing stock'; end if;
   select quantity into remaining from public.branch_inventory where organization_id=org and branch_id=branch and product_id=issue.product_id and batch_id is not distinct from issue.batch_id for update;
   if coalesce(remaining,0)<issue.quantity then raise exception 'Available stock changed. Recount before approving this issue'; end if;
   kind:=case when issue.disposition='hold' then 'hold_out' else 'loss' end;
@@ -262,7 +268,7 @@ begin
   for item in select value from jsonb_array_elements(data->'items') loop
    if nullif(item->>'documentQuantity','') is not null then
     q:=(item->>'documentQuantity')::numeric;
-    if q<0 or scale(trim_scale(q))>6 then raise exception 'Enter a valid quantity from the supplier document'; end if;
+    if q::text='NaN' or q<0 or scale(trim_scale(q))>6 then raise exception 'Enter a valid quantity from the supplier document'; end if;
     if q<>(item->>'quantity')::numeric and length(btrim(coalesce(item->>'deliveryNotes','')))<3 then raise exception 'Explain the difference between accepted goods and the supplier document'; end if;
    end if;
   end loop;
