@@ -2414,7 +2414,10 @@ export function StoreApp() {
                               t.destination_branch_id === branchId && (
                                 <Button
                                   size="sm"
-                                  disabled={!online || busy || practice}
+                                  disabled={
+                                    !online || busy || practice ||
+                                    !["owner", "manager", "stock_staff"].includes(member.role)
+                                  }
                                   onClick={() =>
                                     void run(async () => {
                                       await command("receive_transfer", {

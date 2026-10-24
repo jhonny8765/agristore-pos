@@ -8,6 +8,7 @@ import type {
   SyncAck,
 } from "@agristore/domain";
 import type { Transport } from "@agristore/offline";
+import { recordColumns } from "./record-columns";
 
 export const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL ??
@@ -123,8 +124,8 @@ export function cloudTransport(lease: Lease): Transport {
       command<Snapshot>("snapshot", { ...context, transactionIds }),
   };
 }
-export async function rows(table: string, org: string, branch?: string) {
-  let query = supabase.from(table).select("*").eq("organization_id", org);
+export async function rows(table: string, org: string, branch?: string, client = supabase) {
+  let query = client.from(table).select(recordColumns(table)).eq("organization_id", org);
   if (branch) query = query.eq("branch_id", branch);
   const dateColumn = ["sales"].includes(table)
     ? "occurred_at"
@@ -140,7 +141,7 @@ export async function rows(table: string, org: string, branch?: string) {
     .order("id", { ascending: false })
     .limit(1000);
   if (error) throw new Error(error.message);
-  return data ?? [];
+  return (data ?? []) as unknown as Record<string, unknown>[];
 }
 
 export interface SalesCursor {

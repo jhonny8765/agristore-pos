@@ -1,7 +1,7 @@
 import { randomUUID } from "node:crypto";
 import { createClient, type SupabaseClient } from "@supabase/supabase-js";
 import { expect, test, type Page } from "@playwright/test";
-import { salesPage } from "../../apps/web/lib/api";
+import { rows, salesPage } from "../../apps/web/lib/api";
 import { historyPage } from "../../apps/web/lib/history-api";
 import type { HistoryCursor, HistoryKind } from "../../apps/web/lib/history";
 import { readFile } from "node:fs/promises";
@@ -104,7 +104,7 @@ async function business(
 }
 async function login(
   page: Page,
-  account: Awaited<ReturnType<typeof business>>,
+  account: Pick<Awaited<ReturnType<typeof business>>, "email" | "password">,
   productName = "Audit feeds",
 ) {
   await page.getByLabel("Email address", { exact: true }).fill(account.email);
@@ -319,6 +319,124 @@ test("transfers and count approvals identify separate lots, base quantities and 
     expect(Number(confirmed.data!.find((row) => row.batch_id === batchId)!.quantity))
       .toBe(Number(index === 0 ? lot.counted : lot.transfer));
   }
+});
+
+test("exact report quantities survive the real database, JSON, discrepancy display and CSV", async ({ page }) => {
+  const a = await business();
+  const source = a.branches[1].id as string;
+  const destination = a.branches[2].id as string;
+  const transferId = randomUUID(), countId = randomUUID();
+  await command(a.owner, "receive_stock", {
+    organizationId: a.organizationId, branchId: source, receiptId: randomUUID(),
+    source: "purchase", reference: "TEST decimal boundary only",
+    items: [{ productId: a.productId, unitId: a.unitId, quantity: "9999999999.000003", lot: "", expiresOn: null }],
+  });
+  await command(a.owner, "dispatch_transfer", {
+    organizationId: a.organizationId, branchId: source, destinationBranchId: destination,
+    productId: a.productId, batchId: null, quantity: "9999999999.000001", transferId,
+  });
+  const transfers = await historyPage({ kind: "transfers", organizationId: a.organizationId, branchId: source, range: { from: "", to: "" } }, a.owner);
+  expect(transfers.rows.find((row) => row.id === transferId)!.quantity).toBe("9999999999.000001");
+  await command(a.owner, "receive_transfer", { organizationId: a.organizationId, branchId: destination, transferId });
+  await command(a.owner, "submit_count", {
+    organizationId: a.organizationId, branchId: destination, countId,
+    productId: a.productId, batchId: null, counted: "9999999999.000000",
+    reason: "TEST numerical boundary; not a physical count",
+  });
+  const counts = await historyPage({ kind: "counts", organizationId: a.organizationId, branchId: destination, range: { from: "", to: "" } }, a.owner);
+  expect(counts.rows.find((row) => row.id === countId)).toMatchObject({ expected: "9999999999.000001", counted: "9999999999.000000" });
+  const movements = await rows("inventory_movements", a.organizationId, source, a.owner);
+  expect(movements.find((row) => row.source_id === transferId)).toMatchObject({ quantity: "-9999999999.000001" });
+  expect(movements.every((row) => typeof row.id === "string")).toBe(true);
+  await page.goto("/");
+  await login(page, a);
+  await page.getByRole("combobox", { name: "Current branch", exact: true }).selectOption(destination);
+  await expect(page.getByText("Branch stock loaded.", { exact: true })).toBeVisible();
+  await page.getByRole("button", { name: "Stock counts", exact: true }).click();
+  await expect(page.getByRole("cell", { name: "9999999999.000001 kg", exact: true })).toBeVisible();
+  await expect(page.getByRole("cell", { name: "-0.000001 kg", exact: true })).toBeVisible();
+  const downloadPromise = page.waitForEvent("download");
+  await page.getByRole("button", { name: "Export loaded rows (CSV)", exact: true }).click();
+  const download = await downloadPromise;
+  const csv = await readFile((await download.path())!, "utf8");
+  expect(csv).toContain('"9999999999.000001","9999999999.000000","-0.000001"');
+});
+
+test("staff cannot bypass stock controls, escalate access or read unrelated branch history", async ({ page }) => {
+  const a = await business();
+  const otherBranch = a.branches[1].id as string;
+  const thirdBranch = a.branches[2].id as string;
+  await command(a.owner, "receive_stock", {
+    organizationId: a.organizationId, branchId: otherBranch, receiptId: randomUUID(),
+    source: "purchase", reference: "TEST branch isolation fixture",
+    items: [{ productId: a.productId, unitId: a.unitId, quantity: "2", lot: "", expiresOn: null }],
+  });
+  await command(a.owner, "submit_count", {
+    organizationId: a.organizationId, branchId: otherBranch, countId: randomUUID(),
+    productId: a.productId, batchId: null, counted: "2", reason: "TEST other-branch record",
+  });
+  const hiddenTransfer = randomUUID(), incomingTransfer = randomUUID();
+  for (const [transferId, destinationBranchId] of [[hiddenTransfer, thirdBranch], [incomingTransfer, a.branchId]])
+    await command(a.owner, "dispatch_transfer", {
+      organizationId: a.organizationId, branchId: otherBranch, transferId,
+      destinationBranchId, productId: a.productId, batchId: null, quantity: "0.25",
+    });
+  const staff: { owner: SupabaseClient; email: string; password: string }[] = [];
+  for (const role of ["cashier", "manager", "stock_staff"] as const) {
+    const user = createClient(api!, key!, { auth: { persistSession: false, autoRefreshToken: false } });
+    const email = `${role}-${randomUUID()}@example.com`, password = `Agri-${randomUUID()}!`;
+    const signup = await user.auth.signUp({ email, password });
+    expect(signup.error).toBeNull();
+    expect(signup.data.session).not.toBeNull();
+    const userId = signup.data.user!.id;
+    await command(a.owner, "staff_access", { organizationId: a.organizationId, branchId: a.branchId, email, name: `TEST ${role}`, role });
+    staff.push({ owner: user, email, password });
+    const common = {
+      organizationId: a.organizationId, branchId: a.branchId,
+      productId: a.productId, unitId: a.unitId, batchId: null, transferId: incomingTransfer,
+      destinationBranchId: otherBranch, receiptId: randomUUID(), countId: randomUUID(),
+      quantity: "1", counted: "1", price: 1, cost: 1, reason: "TEST forbidden operation",
+    };
+    const prohibited = role === "cashier"
+      ? ["receive_stock", "dispatch_transfer", "receive_transfer", "submit_count", "approve_count", "set_price", "staff_access"]
+      : role === "manager" ? ["approve_count", "set_price", "staff_access"]
+        : ["dispatch_transfer", "approve_count", "set_price", "staff_access", "refund_sale", "open_shift"];
+    for (const action of prohibited) {
+      const result = await user.rpc("agri_command", { action, data: common });
+      expect(result.error?.code, `${role}: ${action}`).toBe("42501");
+    }
+    const crossBranch = await user.rpc("agri_command", { action: "snapshot", data: { organizationId: a.organizationId, branchId: otherBranch } });
+    expect(crossBranch.error?.code).toBe("42501");
+    const directEdit = await user.from("branch_inventory").update({ quantity: 0 }).eq("organization_id", a.organizationId);
+    expect(directEdit.error?.code).toBe("42501");
+    const escalation = await user.from("staff_memberships").update({ role: "owner", branch_id: null }).eq("user_id", userId);
+    expect(escalation.error?.code).toBe("42501");
+    for (const kind of ["purchases", "counts"] as const) {
+      const history = await historyPage({ kind, organizationId: a.organizationId, branchId: otherBranch, range: { from: "", to: "" } }, user);
+      expect(history.rows).toEqual([]);
+    }
+    const transfers = await historyPage({ kind: "transfers", organizationId: a.organizationId, branchId: a.branchId, range: { from: "", to: "" } }, user);
+    expect(transfers.rows.map((row) => row.id)).toEqual([incomingTransfer]);
+    const forbiddenRow = await user.from("stock_transfers").select("id").eq("id", hiddenTransfer);
+    expect(forbiddenRow.error).toBeNull();
+    expect(forbiddenRow.data).toEqual([]);
+  }
+  await page.goto("/");
+  const cashier = staff[0];
+  await login(page, cashier);
+  await expect(page.getByRole("combobox", { name: "Current branch", exact: true }).locator("option")).toHaveCount(1);
+  await page.getByRole("button", { name: "Stock counts", exact: true }).click();
+  await expect(page.getByRole("button", { name: "Submit count for approval", exact: true })).toBeDisabled();
+  await page.getByRole("button", { name: "Transfers", exact: true }).click();
+  await expect(page.getByRole("button", { name: "Dispatch stock", exact: true })).toBeDisabled();
+  const incoming = page.locator('.history-table[data-kind="transfers"] tbody tr');
+  await expect(incoming).toHaveCount(1);
+  await expect(incoming).toContainText("0.25 kg");
+  await expect(incoming.getByRole("button", { name: "Confirm receipt", exact: true })).toBeDisabled();
+  // The server check above remains the authority even if UI controls are bypassed.
+  const unchanged = await a.owner.from("stock_transfers").select("state").eq("id", incomingTransfer).single();
+  expect(unchanged.error).toBeNull();
+  expect(unchanged.data!.state).toBe("in_transit");
 });
 
 test("a failed account verification never becomes an empty new-business result", async ({

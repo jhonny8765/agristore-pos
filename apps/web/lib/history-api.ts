@@ -1,4 +1,5 @@
 import { supabase } from "./api";
+import { recordColumns } from "./record-columns";
 import {
   historyBounds,
   historySources,
@@ -30,12 +31,7 @@ export async function historyPage(
   const bounds = historyBounds(range);
   let query = client
     .from(source.table)
-    // Cast bigint event IDs at the server so JavaScript never rounds a cursor.
-    .select(
-      kind === "audit"
-        ? "id::text,branch_id,actor_id,action,source_id,details,created_at"
-        : "*",
-    )
+    .select(recordColumns(source.table))
     .eq("organization_id", organizationId)
     .order(source.date, { ascending: false })
     .order("id", { ascending: false });
