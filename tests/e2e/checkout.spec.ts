@@ -30,6 +30,46 @@ test("cash checkout stores a sale, distinct identical purchases, and change", as
   await page.getByRole("button", { name: "Sales & receipts" }).click();
   await expect(page.locator("tbody tr")).toHaveCount(2);
 });
+test("an aborted browser storage transaction shows no success, retains the basket and retries the same checkout ID",async({page})=>{
+  await practice(page);
+  await page.getByRole("button",{name:"Add Grower feeds"}).click();
+  await page.getByLabel("Cash received",{exact:true}).fill("2000");
+  // Inject a real IDB transaction abort after its add request succeeds, before
+  // commit, in this disposable practice profile only. This is fault simulation,
+  // not a claim that a physical Windows disk was filled or disconnected.
+  await page.evaluate(()=>{
+    const original=IDBObjectStore.prototype.add;
+    const attempts:string[]=[];
+    Object.assign(window,{storageFaultAttempts:attempts});
+    IDBObjectStore.prototype.add=function(value,key){
+      const request=original.call(this,value,key);
+      if(this.name==="sales" && this.transaction.db.name==="agristore-practice-v1") {
+        attempts.push((value as {id:string}).id);
+        if(attempts.length===1) request.addEventListener("success",()=>this.transaction.abort(),{once:true});
+      }
+      return request;
+    };
+  });
+  await page.getByRole("button",{name:"Complete cash sale"}).click();
+  await expect(page.locator(".notice[role=alert]")).toContainText(/abort/i);
+  await expect(page.getByRole("heading",{name:"Sale saved."})).toHaveCount(0);
+  await expect(page.getByLabel("Cash received",{exact:true})).toHaveValue("2000");
+  await expect(page.getByLabel(/^Quantity \(.+\) for Grower feeds$/)).toHaveValue("1");
+  const readSales=()=>page.evaluate(()=>new Promise<{id:string}[]>((resolve,reject)=>{
+    const request=indexedDB.open("agristore-practice-v1");
+    request.onsuccess=()=>{const db=request.result;const tx=db.transaction("sales","readonly");const rows=tx.objectStore("sales").getAll();rows.onsuccess=()=>resolve(rows.result);tx.oncomplete=()=>db.close();tx.onerror=()=>reject(tx.error);};
+    request.onerror=()=>reject(request.error);
+  }));
+  expect(await readSales()).toHaveLength(0);
+  await page.getByRole("button",{name:"Complete cash sale"}).click();
+  await expect(page.getByRole("heading",{name:"Sale saved."})).toBeVisible();
+  const attempts=await page.evaluate(()=>(window as unknown as {storageFaultAttempts:string[]}).storageFaultAttempts);
+  expect(attempts).toHaveLength(2);expect(attempts[0]).toBe(attempts[1]);
+  expect((await readSales()).map(row=>row.id)).toEqual([attempts[0]]);
+  await page.reload();
+  await page.getByRole("button",{name:"Sync center",exact:true}).click();
+  await expect(page.locator("tbody tr")).toHaveCount(1);
+});
 test("checkout survives offline reload and does not send practice sales", async ({
   page,
   context,
