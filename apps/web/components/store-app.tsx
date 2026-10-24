@@ -93,7 +93,7 @@ import {
   supabase,
 } from "../lib/api";
 import { practiceBranch, startPractice } from "../lib/practice";
-import { useCart } from "../lib/cart";
+import { draftLineTotal, useCart } from "../lib/cart";
 import {
   onlineOperation,
   pendingOperations,
@@ -1074,8 +1074,8 @@ export function StoreApp() {
       `${p.name} ${p.sku}`.toLowerCase().includes(query.toLowerCase()),
   );
   const grandTotal = total(
-    cart.items.filter((_, index) =>
-      cart.drafts[cart.lineIds[index]]?.draft.trim(),
+    cart.items.filter((item, index) =>
+      draftLineTotal(item, cart.drafts[cart.lineIds[index]]) !== null,
     ),
   );
   let change = 0;

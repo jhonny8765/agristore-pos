@@ -1,5 +1,7 @@
 import { create } from "zustand";
+import Decimal from "decimal.js";
 import type { SaleItem } from "@agristore/domain";
+import { quantityFromDisplay } from "./quantity-entry";
 export interface LineDraft {
   draft: string;
   display: "kg" | "g";
@@ -10,6 +12,22 @@ export interface LineDraft {
   focus?: "quantity" | "budget" | null;
 }
 export type SaleEntry = "unit" | "weight" | "budget";
+
+/** A cached valid item must not price a different or unfinished typed quantity.
+ * Valid peso estimates still have an amount while awaiting weight confirmation. */
+export function draftLineTotal(
+  item: SaleItem,
+  draft?: Pick<LineDraft, "draft" | "display">,
+) {
+  if (!draft) return null;
+  try {
+    const quantity = quantityFromDisplay(draft.draft, draft.display === "g");
+    return new Decimal(quantity).eq(item.quantity) ? item.lineTotal : null;
+  } catch {
+    return null;
+  }
+}
+
 interface Cart {
   items: SaleItem[];
   lineIds: string[];

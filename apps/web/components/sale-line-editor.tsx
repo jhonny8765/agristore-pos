@@ -9,7 +9,7 @@ import {
   type Product,
   type SaleItem,
 } from "@agristore/domain";
-import { useCart } from "../lib/cart";
+import { draftLineTotal, useCart } from "../lib/cart";
 import {
   enteredQuantity,
   estimateBudget,
@@ -58,6 +58,7 @@ export function SaleLineEditor({
   const grams = loose && display === "g";
   const quantityLabel = `Quantity (${loose ? (grams ? "g" : "kg") : item.unitName})`;
   const error = cart.quantityErrors[lineId];
+  const displayedAmount = draftLineTotal(item, { draft, display });
   const increment = loose ? (grams ? "250" : "0.25") : "1";
 
   function report(error: unknown) {
@@ -106,7 +107,7 @@ export function SaleLineEditor({
     canDecrease = new Decimal(enteredQuantity(draft)).gt(increment);
   } catch {}
   try {
-    overBudget = item.lineTotal > pesoBudget(budget);
+    overBudget = displayedAmount !== null && displayedAmount > pesoBudget(budget);
   } catch {}
 
   return (
@@ -232,14 +233,18 @@ export function SaleLineEditor({
             )}
           </div>
         </div>
-        <strong>{draft.trim() ? money(item.lineTotal) : "Enter weight"}</strong>
+        <strong>
+          {displayedAmount === null
+            ? loose ? "Enter weight" : "Enter quantity"
+            : money(displayedAmount)}
+        </strong>
       </div>
       {error && (
         <p className="quantity-error" id={errorId} role="alert">
           {error}
         </p>
       )}
-      {loose && draft.trim() && (
+      {loose && displayedAmount !== null && (
         <p className="line-measure">
           {item.quantity} kg = {new Decimal(item.quantity).mul(1000).toFixed()}{" "}
           g{budgetMode ? " · weight not confirmed" : ""}

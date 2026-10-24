@@ -6,7 +6,7 @@ import {
   kiloUnit,
   quantityFromDisplay,
 } from "../../apps/web/lib/quantity-entry";
-import { useCart } from "../../apps/web/lib/cart";
+import { draftLineTotal, useCart } from "../../apps/web/lib/cart";
 import { product, uuid } from "./fixtures";
 import { productStock } from "../../apps/web/lib/stock-display";
 
@@ -112,6 +112,25 @@ describe("cashier quantity entry", () => {
 
 describe("stable checkout line drafts", () => {
   beforeEach(() => useCart.getState().clear());
+  it.each(["", "0.", "0", "1/", "1/0", "-1", "1e2"])("does not price an unfinished or invalid draft %s using its cached item", (draft) => {
+    const item = makeItem(product, uuid(12), "1", null);
+    expect(draftLineTotal(item, { draft, display: "kg" })).toBeNull();
+  });
+  it("prices matching fractions and grams, including valid unconfirmed estimates", () => {
+    const item = makeItem(product, uuid(12), "0.5", null);
+    expect(draftLineTotal(item, { draft: "1/2", display: "kg" })).toBe(1600);
+    expect(draftLineTotal(item, { draft: "500", display: "g" })).toBe(1600);
+  });
+  it("hides stale amounts when the entered quantity differs from the valid item", () => {
+    const item = makeItem(product, uuid(12), "1", null);
+    expect(draftLineTotal(item, { draft: "0.5", display: "kg" })).toBeNull();
+    expect(draftLineTotal(item)).toBeNull();
+  });
+  it("keeps a valid zero-price line visible as zero", () => {
+    const free = { ...product, units: product.units.map((u) => ({ ...u, price: 0 })) };
+    const item = makeItem(free, uuid(12), "0.5", null);
+    expect(draftLineTotal(item, { draft: "0.5", display: "kg" })).toBe(0);
+  });
   it("starts direct weight and budget entries empty and blocks their provisional quantities", () => {
     const item = makeItem(product, uuid(12), "1", null);
     useCart.getState().add(item, "weight");
