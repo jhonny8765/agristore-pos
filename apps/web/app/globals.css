@@ -1060,6 +1060,9 @@ form > .button {
   border: 0;
   min-width: 0;
 }
+.product-setup input[type="checkbox"] {
+  accent-color: var(--forest);
+}
 .setup-wide {
   grid-column: 1 / -1;
 }

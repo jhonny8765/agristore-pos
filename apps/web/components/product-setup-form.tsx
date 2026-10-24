@@ -141,11 +141,11 @@ export function ProductSetupForm({
             onChange={(e) => choose(e.target.value)}
           >
             <option value="">Choose a selling setup</option>
-            <option value="sack">Sacks / bags — optional loose kilos</option>
+              <option value="sack">Sacks / bags</option>
             <option value="weight">Loose kilos only</option>
-            <option value="sealed">Sealed item / packet / piece</option>
+              <option value="sealed">Sealed items / pieces</option>
             <option value="liquid">Measured liters</option>
-            <option value="custom">Other pack or container size</option>
+              <option value="custom">Other pack size</option>
           </select>
         </Field>
         {mode && (
