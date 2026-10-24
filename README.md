@@ -55,6 +55,8 @@ Receipt history loads 50 records at a time with **Load older receipts**. Refunds
 
 See the [overall review and improvement plan](docs/improvement-plan.md) for repaired bugs, measured scope and the remaining priorities.
 
+Start the hardware/store handover with [what the owner needs to do next](docs/owner-next-steps.md). It includes a 200-purchase example with independently calculated cash and kilo totals. See [remaining release work](docs/remaining-work.md) for unpassed pilot gates and missing workflows, and [stock-control verification](docs/stock-control-verification.md) for current durability evidence.
+
 See [loose weights and peso requests](docs/weighed-sales.md) for quarter/half kilos, grams, actual scale confirmation, distinct kilo/sack prices, sealed-piece configuration and counter rehearsal.
 
 See [product selling setup](docs/product-setup.md) for pack sizes, opt-in loose selling, independent retail prices, sealed packets and measured liquids.

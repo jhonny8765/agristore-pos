@@ -49,13 +49,49 @@ The first annual fixture used one long ledger-loading transaction and was cancel
 
 Post-migration security advice still reports the existing disabled leaked-password protection setting. Performance advice reports 43 unindexed foreign-key information findings and nine unused-index information findings on the small staging data set; these are not a zero-advisory claim. The prior membership-policy per-row-auth warning is no longer reported. No indexes were dropped based on low-traffic staging usage.
 
+## Recovery and failure-injection follow-up
+
+[40141010635 passed](https://github.com/jhonny8765/agristore-pos/actions/runs/40141010635), source `0fa05df`: **148 unit tests, 19 practice-browser scenarios, 13 database-connected browser scenarios, 150 database assertions**, warning-free database lint, type checks, application lint, optimized builds and the expanded restore drill. The earlier [40140523679](https://github.com/jhonny8765/agristore-pos/actions/runs/40140523679), source `2932af5`, also passed. The application, schema and dependencies are unchanged from deployed source `86ea026`; these changes extend tests and handover documentation. No new deployment or hosted migration was required.
+
+Two new unit cases inject storage failures after writes have begun. An interrupted recovery part leaves no partially imported sales or false completion marker; the original export remains intact, and retry imports each record once. A failed snapshot transaction rolls back catalog, stock, version and acknowledgments together, preserves the pending sale and its local deduction, and subsequently recovers without a double deduction. These use IndexedDB emulation, not physical disk faults.
+
+The new real Chromium case aborts the native IndexedDB transaction after the sale's add request succeeds but before commit. The UI shows an error with no saved-sale success, preserves the basket/cash, retains zero sales from the aborted transaction, then retries under the **same permanent checkout ID**. Exactly one saved sale remains after retry and reload. The case passed in 1.9 seconds in that run; it is simulated transaction failure in an isolated browser profile, not a Windows power-loss or disk-full test.
+
+The expanded disposable backup fixture records an original sale/payment, full linked refund with held goods, approved damage hold and a transfer with saleable/held receipt and **0.75 kg still in transit**. It compares row counts and content hashes across 21 application tables immediately after dump/restore, verifies stock and acknowledgments through the authenticated transaction API, retries the original requests without additional effects, and performs a new held-stock release after restoration. The original branch returns 10.25 kg before the new release and 10.5 kg after it; destination saleable stock remains 2 kg. Immutable sale updates still fail and ledger/projection differences are zero. This proves recovery of that complete synthetic workflow, not a scheduled cloud backup or annual-size restoration.
+
+A read-only hosted check during this follow-up confirmed the existing four sales/four reversals, zero open shifts, zero pending issues/held quantity/open investigations and zero ledger/projection differences. This test pass wrote no hosted business transactions and made no account/session changes.
+
+See [the owner test-day guide](owner-next-steps.md) for a 200-purchase rehearsal with explicit cash/kilo expectations, and [remaining release work](remaining-work.md) for the unfinished features and release gates.
+
+## Measured annual storage and retry capacity
+
+[40141010629 passed](https://github.com/jhonny8765/agristore-pos/actions/runs/40141010629), source `0fa05df`, in the disposable Linux database. It retains the 547,500-sale annual scenario above, with two product lines per historical sale and all validation/projection triggers enabled. After five concurrent new purchases, 1,000 additional uploads and ten further same-stock purchases, it contains **548,515 sales, 548,515 payments and 1,096,015 sale movements**.
+
+| Additional check | Measured result |
+|---|---|
+| Replay all 1,000 uploaded payloads with the same IDs/content after deliberately discarding initial acknowledgments | Every response Duplicate; no added sales, payments or movements; 0.69 seconds |
+| Twenty simultaneous attempts at the same branch/stock/shift, two attempts for each of ten separate purchases | Exactly one Created and one Duplicate acknowledgment per purchase; 2.22 seconds |
+| Changed cash contents under an existing burst transaction ID | Review response; original retained |
+| Two authenticated branch receipt pages at annual history size | 100 distinct displayed IDs, correct branch, 0.15 seconds for the two SQL page queries |
+| Final ledger vs stock projection | Zero differences |
+| Snapshot with 1,000 acknowledgment IDs plus dashboard | 1.06 seconds; serialized snapshot JSON 40,085 bytes |
+| First 51-row receipt-page query result | Serialized JSON 59,561 bytes; the app displays 50 and uses the extra row for pagination |
+| Original 1,000 sequential API-function uploads | 93.5 seconds |
+| Fixture loading | 277.9 seconds, historical bulk seeding rather than browser checkouts |
+
+Public application table/index growth measured **1,709,842,432 bytes (1,630.6 MiB / about 1.59 GiB)**, or approximately 3,117 bytes per retained sale in this particular two-line fixture. The complete Postgres database measured **1,723,160,243 bytes (1,643.3 MiB)**. Largest retained relations were sales at 856,252,416 bytes, inventory movements at 294,158,336 bytes, sale items at 224,616,448 bytes, audit events at 187,441,152 bytes and payments at 132,112,384 bytes, including their indexes. The small stock projection occupied 14,647,296 bytes after repeated transactional updates; physical allocation can exceed its live-row content.
+
+Measurements use Postgres database/relation-size functions. They **exclude WAL/system disk, backups, browser storage, HTTP traffic and browser rendering**. Timing covers SQL and the actual authenticated transaction function, not end-to-end queue clearance, client retry intervals or a particular hosted plan. The fixture has a small catalog and does not establish large-catalog/lot capacity, actual item-per-sale averages, annual-size restore time or years of elapsed hardware durability. Do not multiply this size into a guaranteed multi-year cost forecast. Supabase distinguishes database size from additional disk consumption in its [size guidance](https://supabase.com/docs/guides/platform/database-size).
+
+The first expanded run [40140420392](https://github.com/jhonny8765/agristore-pos/actions/runs/40140420392) stopped because its new result parser counted the echoed test-login claims as an extra acknowledgment (1,001 instead of 1,000). Commit `0fa05df` validates that prelude separately and still requires all 1,000 sale responses. The corrected run passed; the earlier harness failure is not evidence of an extra POS sale.
+
 ## Required before a real pilot
 
 The test in-app browser explicitly reports that persistent storage is **not granted**. This is not the selected Edge cashier installation. Validate storage on the intended PC; a storage failure blocks pilot release and triggers the planned Tauri/SQLite fallback.
 
 Choose the real cashier PC and pass the actual timed outage, Windows restart, eight-hour storage stress, printer/scale and staff-rehearsal gates. Establish a verified opening count and cost basis. Test a real cloud backup restoration and document recovery objectives, backup ownership, maintenance and daily branch reconciliation.
 
-Production Auth/password-protection settings, paid hosting/database capacity and backup subscriptions still require an account-specific operational decision. No billing settings were changed. Annual database disk footprint and the actual account's storage/backup cost have not been established; capacity timing alone is not a hosting-size or cost forecast. The development PC had very low Windows free space, so heavy builds/database trials ran in disposable CI rather than on this drive.
+Production Auth/password-protection settings, paid hosting/database capacity and backup subscriptions still require an account-specific operational decision. No billing settings were changed. The synthetic database table/index footprint is now measured above; the actual account's storage/backup cost, total disk headroom and production sizing have not been established. The development PC had very low Windows free space, so heavy builds/database trials ran in disposable CI rather than on this drive.
 
 Purchase-order matching, completely rejected supplier deliveries, purchase cost valuation of unresolved loss, due-date/assignee escalation, proactive expiry worklists, authenticated second-person approval, partial financial refunds and broader operational reporting remain separate work. Existing batch metadata/expiry blocking does not imply these workflows are complete.
 
