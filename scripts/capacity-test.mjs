@@ -87,7 +87,10 @@ const uploadSeconds = (performance.now() - uploadStart) / 1000;
 // the exact immutable payloads, including occurredAt, rather than new sales.
 const replayStart = performance.now();
 const replay = sql(login + backlog.map(payload => command("record_sale", payload)).join("\n"));
-const replayAcks = replay.trim().split("\n").filter(line => line.startsWith('{')).map(line => JSON.parse(line));
+const replayJSON = replay.trim().split("\n").filter(line => line.startsWith('{')).map(line => JSON.parse(line));
+// set_config echoes the test's JWT claims before the sale acknowledgments.
+assert.deepEqual(replayJSON[0],{sub:owner,session_id:owner,role:"authenticated"});
+const replayAcks = replayJSON.slice(1);
 assert.equal(replayAcks.length, 1000);
 assert.ok(replayAcks.every(ack => ack.status === "duplicate"));
 const replaySeconds = (performance.now() - replayStart) / 1000;
