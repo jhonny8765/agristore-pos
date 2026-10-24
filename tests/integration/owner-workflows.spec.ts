@@ -216,7 +216,9 @@ test("confirmed deliveries and opening imports stay saved when the following sto
   expect(created.data).toHaveLength(1);
   blockSnapshots = false;
   await page.getByRole("button", { name: "Refresh", exact: true }).click();
-  await expect(page.getByRole("row").filter({ hasText: "TEST confirmed packet" })).toContainText("0 packet");
+  const createdRow = page.getByRole("row").filter({ hasText: "TEST confirmed packet" });
+  await expect(createdRow).toContainText("0 piece");
+  await expect(createdRow).toContainText("Packet · ₱60.00");
 });
 
 test("a failed account verification never becomes an empty new-business result", async ({
