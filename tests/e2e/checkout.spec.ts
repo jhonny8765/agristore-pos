@@ -198,3 +198,49 @@ test("200 browser checkouts persist through a simulated hour offline", async ({
   await page.getByRole("button", { name: "Sync center" }).click();
   await expect(page.locator("tbody tr")).toHaveCount(200);
 });
+
+
+test("a cashier with 100000 retained receipts can reload, sell and export only unresolved records",async({page})=>{
+  test.setTimeout(180_000);
+  await practice(page); await buy(page);
+  // Only this isolated test profile is seeded. This is capacity evidence, not
+  // a claim that 100000 real server transactions or a year of hardware use ran.
+  await page.evaluate(async()=>{
+    const db=await new Promise<IDBDatabase>((resolve,reject)=>{
+      const request=indexedDB.open("agristore-practice-v1"); request.onsuccess=()=>resolve(request.result); request.onerror=()=>reject(request.error);
+    });
+    try {
+      const original=await new Promise<{id:string;payload:{transactionId:string;occurredAt:string};status:string}>((resolve,reject)=>{
+        const tx=db.transaction('sales','readonly');const request=tx.objectStore('sales').openCursor();request.onsuccess=()=>resolve(request.result!.value);request.onerror=()=>reject(request.error);
+      });
+      const before=Date.now()-100_000_000;
+      for(let offset=0;offset<100000;offset+=1000) await new Promise<void>((resolve,reject)=>{
+        const tx=db.transaction('sales','readwrite'); const store=tx.objectStore('sales');
+        for(let n=offset;n<offset+1000;n++) {
+          const id=n===0 ? original.id : `60000000-0000-4000-8000-${String(n).padStart(12,'0')}`;
+          store.put({...original,id,status:'synced',payload:{...original.payload,transactionId:id,occurredAt:new Date(before+n*1000).toISOString()}});
+        }
+        tx.oncomplete=()=>resolve();tx.onerror=()=>reject(tx.error);tx.onabort=()=>reject(tx.error);
+      });
+    } finally {db.close();}
+  });
+  await page.reload();
+  await expect(page.getByRole('button',{name:'Add Grower feeds'})).toBeEnabled();
+  await buy(page);
+  await page.getByRole('button',{name:'Sync center',exact:true}).click();
+  await expect(page.locator('tbody tr')).toHaveCount(50);
+  const downloadPromise=page.waitForEvent('download');
+  await page.getByRole('button',{name:'Export recovery file',exact:true}).click();
+  const download=await downloadPromise;
+  const {readFile}=await import('node:fs/promises');
+  const archive=JSON.parse(await readFile((await download.path())!,'utf8'));
+  expect(archive.archive.totalRecords).toBe(1);
+  expect(archive.sales).toHaveLength(1); expect(archive.sales[0].status).toBe('pending');
+  await page.reload();
+  await page.getByRole('button',{name:'Sync center',exact:true}).click();
+  await expect(page.locator('tbody tr')).toHaveCount(50);
+  const count=await page.evaluate(()=>new Promise<number>((resolve,reject)=>{
+    const request=indexedDB.open('agristore-practice-v1');request.onsuccess=()=>{const db=request.result;const tx=db.transaction('sales','readonly');const count=tx.objectStore('sales').count();count.onsuccess=()=>resolve(count.result);tx.oncomplete=()=>db.close();tx.onerror=()=>reject(tx.error);};request.onerror=()=>reject(request.error);
+  }));
+  expect(count).toBe(100001);
+});

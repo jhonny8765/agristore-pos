@@ -37,6 +37,21 @@ export function StockControls({db, organizationId, branchId, actorId, products, 
     const product = historicalStock(products,row);
     return `${product.name} · ${product.lot} (${product.baseUnit || "base units"})`;
   };
+  const evidence = (row: Row) => {
+    const details=(row.details ?? {}) as Row;
+    const item=(details.item ?? {}) as Row;
+    const product=products.find(p=>p.id===(details.productId ?? item.productId));
+    const lines: string[]=[];
+    if(product) lines.push(product.name);
+    if(details.expected!==undefined) lines.push(`Expected: ${details.expected} · Counted: ${details.counted} ${product?.baseUnit ?? "base units"}`);
+    if(details.dispatched!==undefined) lines.push(`Dispatched: ${details.dispatched} base units`);
+    if(details.quantity!==undefined) lines.push(`Quantity: ${details.quantity} base units`);
+    if(details.reference) lines.push(`Supplier document: ${details.reference}`);
+    if(item.documentQuantity!==undefined) lines.push(`Document quantity: ${item.documentQuantity} · Accepted: ${item.quantity} selling units`);
+    if(Array.isArray(details.flags)) lines.push(`Review: ${details.flags.map(f=>String(f).replaceAll("_"," ")).join(", ")}`);
+    for(const value of [details.reason,details.notes,item.deliveryNotes]) if(value) lines.push(String(value));
+    return lines.join("\n") || "Review the source record and physical goods before recording an outcome.";
+  };
   async function save(action: string, body: Row, idField?: string) {
     if (idField) await onlineOperation(db,actorId,action,{...context,...body},idField);
     else await command(action,{...context,...body});
@@ -50,10 +65,10 @@ export function StockControls({db, organizationId, branchId, actorId, products, 
       {feedback && <p role="status" className="notice success">{feedback}</p>}
       {error && <p role="alert" className="notice error">{error}</p>}
       {!online && <p className="notice">Reconnect to see current investigations and held goods.</p>}
-      {!data ? <p role="status">Loading stock controls…</p> : <>
+      {!data ? <p role="status">{error ? "Stock controls could not be loaded. Reconnect and use Refresh stock controls." : !online ? "Current stock controls are unavailable offline." : "Loading stock controls…"}</p> : <>
         <p role="status">{data.openExceptions} open investigations. Showing the oldest {data.exceptions.length}; older unresolved cases are never removed by new activity.</p>
         <div className="table-wrap history-table" role="region" aria-label="Open stock investigations" tabIndex={0}><table><thead><tr><th>Issue / evidence</th><th>Owner action</th></tr></thead><tbody>
-          {data.exceptions.map(e => <tr key={String(e.id)}><td><strong>{String(e.kind).replaceAll("_"," ")}</strong><small>{String(e.created_at)} · {String(e.source_id)}</small><details><summary>Recorded details</summary><pre className="stock-evidence">{JSON.stringify(e.details,null,2)}</pre></details></td><td>{owner ? <ApprovalForm action="Resolve investigation" label="Evidence and outcome" description="Record what was checked, the cause if established, and the corrective action. This does not change stock." confirmLabel="Record resolution" disabled={disabled || !online} onConfirm={reason => execute(() => save("resolve_stock_exception",{exceptionId:e.id,reason}))} /> : "Owner review required"}</td></tr>)}
+          {data.exceptions.map(e => <tr key={String(e.id)}><td><strong>{String(e.kind).replaceAll("_"," ")}</strong><small>{new Date(String(e.created_at)).toLocaleString("en-PH",{timeZone:"Asia/Manila"})} · Source: {String(e.source_id)}</small><details><summary>Recorded details</summary><p className="stock-evidence">{evidence(e)}</p></details></td><td>{owner ? <ApprovalForm action="Resolve investigation" label="Evidence and outcome" description="Record what was checked, the cause if established, and the corrective action. This does not change stock." confirmLabel="Record resolution" disabled={disabled || !online} onConfirm={reason => execute(() => save("resolve_stock_exception",{exceptionId:e.id,reason}))} /> : "Owner review required"}</td></tr>)}
         </tbody></table></div>
       </>}
     </section>

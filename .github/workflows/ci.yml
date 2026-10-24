@@ -44,7 +44,7 @@ jobs:
           cache: npm
       - run: npm ci
       - run: npx supabase start -x realtime,storage-api,imgproxy,mailpit,postgres-meta,studio,edge-runtime,logflare,vector,supavisor
-      - run: npx supabase db lint --local --level warning
+      - run: npx supabase db lint --local --level warning --fail-on warning
       - run: npm run test:db
       - run: npm run test:restore
       - name: Install test browser
@@ -60,6 +60,7 @@ jobs:
           path: |
             test-results/product-setup-*.png
             test-results/stock-history-*.png
+            test-results/stock-controls-*.png
           retention-days: 3
       - uses: actions/upload-artifact@v4
         if: failure()

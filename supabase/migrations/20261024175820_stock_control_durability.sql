@@ -122,7 +122,7 @@ begin
   return jsonb_build_object(
    'openExceptions',(select count(*) from public.stock_exceptions e where e.organization_id=org and e.branch_id=branch and e.state='open'),
    'exceptions',coalesce((select jsonb_agg(to_jsonb(e)) from (select * from public.stock_exceptions e where e.organization_id=org and e.branch_id=branch and e.state='open' order by created_at,id limit 50) e),'[]'::jsonb),
-   'holds',coalesce((select jsonb_agg(to_jsonb(h)||jsonb_build_object('quantity',h.quantity::text,'remaining',h.remaining::text)) from (select * from public.stock_holds h where h.organization_id=org and h.branch_id=branch and h.remaining>0 order by created_at,id limit 50) h),'[]'::jsonb),
+   'holds',coalesce((select jsonb_agg(to_jsonb(hold_row)||jsonb_build_object('quantity',hold_row.quantity::text,'remaining',hold_row.remaining::text)) from (select * from public.stock_holds r where r.organization_id=org and r.branch_id=branch and r.remaining>0 order by created_at,id limit 50) hold_row),'[]'::jsonb),
    'issues',coalesce((select jsonb_agg(to_jsonb(s)||jsonb_build_object('quantity',s.quantity::text)) from (select * from public.stock_issues s where s.organization_id=org and s.branch_id=branch and s.state='pending' order by created_at,id limit 50) s),'[]'::jsonb));
  elsif action='resolve_stock_exception' then
   if member.role<>'owner' then raise exception 'Only the owner can resolve a stock investigation' using errcode='42501'; end if;

@@ -1506,3 +1506,62 @@ test("receipt history crosses 1000 rows without losing equal-microsecond timesta
   );
   expect(wrongBranch.rows).toEqual([]);
 });
+
+
+test("partial transfers, held goods and stock issues reconcile through the owner screens", async ({page})=>{
+  const a=await business(); const destination=a.branches[1].id as string;
+  const transferId=randomUUID();
+  await command(a.owner,"dispatch_transfer",{organizationId:a.organizationId,branchId:a.branchId,transferId,productId:a.productId,batchId:null,quantity:"10",destinationBranchId:destination});
+  await page.goto("/"); await login(page,a);
+  await page.getByRole("combobox",{name:"Current branch",exact:true}).selectOption(destination);
+  await expect(page.getByText("Branch stock loaded.",{exact:true})).toBeVisible();
+  await page.getByRole("button",{name:"Transfers",exact:true}).click();
+  const row=page.locator('.history-table[data-kind="transfers"] tbody tr');
+  await row.getByRole("button",{name:"Confirm receipt",exact:true}).click();
+  await row.getByLabel("Saleable quantity actually received (base units)").fill("8");
+  await row.getByLabel("Damaged / held quantity received (base units)").fill("1");
+  await row.getByLabel("Receiving notes",{exact:true}).fill("TEST counted eight sound, one damaged, one missing");
+  await row.getByRole("button",{name:"Record actual receipt",exact:true}).click();
+  await expect(row).toContainText("Outstanding: 1");
+  await page.getByRole("button",{name:"Inventory",exact:true}).click();
+  await expect(page.getByRole("region",{name:"Held stock",exact:true})).toContainText("1");
+  await page.getByRole("button",{name:"Resolve investigation",exact:true}).click();
+  const resolve=page.getByRole("form",{name:"Resolve investigation",exact:true});
+  await resolve.getByLabel("Evidence and outcome",{exact:true}).fill("TEST investigation still awaiting physical goods");
+  await resolve.getByRole("button",{name:"Record resolution",exact:true}).click();
+  await expect(page.getByRole("alert")).toContainText("Receive or record the missing transfer quantity");
+  await page.getByRole("button",{name:"Transfers",exact:true}).click();
+  await row.getByRole("button",{name:"Record missing transfer goods",exact:true}).click();
+  await row.getByLabel("Missing transfer quantity (base units)").fill("1");
+  await row.getByLabel("Investigation evidence / loss reason",{exact:true}).fill("TEST owner checked dispatch and delivery, missing one kilogram");
+  await row.getByRole("button",{name:"Record transfer loss",exact:true}).click();
+  await expect(row).toContainText("closed short");
+  await page.getByRole("button",{name:"Inventory",exact:true}).click();
+  const held=page.getByRole("region",{name:"Held stock",exact:true});
+  await held.getByRole("button",{name:"Record held-goods outcome",exact:true}).click();
+  await held.getByLabel("Quantity from held stock (base units)").fill("0.25");
+  await held.getByLabel("Held-goods outcome",{exact:true}).selectOption("release");
+  await held.getByLabel("Inspection / disposition reason",{exact:true}).fill("TEST inspected quarter kilogram is saleable");
+  await held.getByRole("button",{name:"Record outcome",exact:true}).click();
+  await expect(held.getByRole("cell",{name:"0.75",exact:true})).toBeVisible();
+  const issue=page.getByRole("form",{name:"Record stock issue",exact:true});
+  await issue.getByLabel("Issue quantity (base units)").fill("0.5");
+  await issue.getByLabel("Issue evidence / reason").fill("TEST damaged stock weighed separately");
+  await issue.getByRole("button",{name:"Submit stock issue",exact:true}).click();
+  const pending=page.getByRole("region",{name:"Stock issues awaiting approval",exact:true});
+  await pending.getByRole("button",{name:"Approve stock issue",exact:true}).click();
+  await pending.getByLabel("Approval notes",{exact:true}).fill("TEST owner verified damaged quantity");
+  await pending.getByRole("button",{name:"Approve issue",exact:true}).click();
+  await expect(pending).not.toBeVisible();
+  const inventory=await a.owner.from("branch_inventory").select("quantity").eq("branch_id",destination).eq("product_id",a.productId).single();
+  expect(inventory.error).toBeNull(); expect(Number(inventory.data!.quantity)).toBe(7.75);
+  const holds=await a.owner.from("stock_holds").select("remaining").eq("branch_id",destination);
+  expect(holds.error).toBeNull(); expect(holds.data!.reduce((sum,h)=>sum+Number(h.remaining),0)).toBe(1.25);
+  for(const width of [1440,390]) {
+    await page.setViewportSize({width,height:900});
+    expect(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth)).toBe(true);
+    const scan=await new AxeBuilder({page}).include('main').withTags(["wcag2a","wcag2aa","wcag21aa","wcag22aa"]).analyze();
+    expect(scan.violations).toEqual([]);
+    await page.screenshot({path:`test-results/stock-controls-${width}.png`,fullPage:true});
+  }
+});
