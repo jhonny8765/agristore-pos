@@ -1451,6 +1451,22 @@ form > .button {
 .approval-fields { border: 0; padding: 0; margin: 0; min-width: 0; }
 .stock-evidence { white-space: pre-wrap; overflow-wrap: anywhere; font: inherit; max-width: 55ch; }
 .storage-health { margin-block: 16px; }
+
+/* Operational stock context must stay with its approval at narrow widths. */
+.stock-control-table table { table-layout: fixed; white-space: normal; }
+.stock-control-table :is(th, td) { overflow-wrap: anywhere; vertical-align: top; }
+.stock-control-table :is(th, td):last-child { width: 44%; }
+.stock-control-table :is(th, td).numeric { width: 12%; }
+.stock-control-table .approval-form { width: 100%; }
+.stock-control-table .button { white-space: normal; }
+@media (max-width: 720px) {
+  .stock-control-table thead { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); }
+  .stock-control-table :is(tbody, tr, td) { display: block; width: 100%; }
+  .stock-control-table tr { border-bottom: 1px solid var(--line); padding-block: 10px; }
+  .stock-control-table :is(td, td:last-child, td.numeric) { width: 100%; border: 0; padding: 8px 4px; text-align: left; }
+  .stock-control-table td.numeric::before { content: attr(data-label); font-weight: 650; }
+}
+
 table {
   width: 100%;
   border-collapse: collapse;

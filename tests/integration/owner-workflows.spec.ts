@@ -179,6 +179,7 @@ test("confirmed deliveries and opening imports stay saved when the following sto
   await page.getByRole("combobox", { name: "Current branch", exact: true }).selectOption(destination);
   await expect(page.getByText("Branch stock loaded.", { exact: true })).toBeVisible();
   await page.getByRole("button", { name: "Purchasing", exact: true }).click();
+  await expect(page.getByLabel("Opening stock CSV",{exact:true})).toBeEnabled();
   await page.getByLabel("Opening stock CSV", { exact: true }).setInputFiles({
     name: "TEST-confirmed-opening.csv", mimeType: "text/csv",
     buffer: Buffer.from("sku,unit,quantity,lot,expiresOn\nAUDIT-FEED,Kilo,3,,\n"),
@@ -1103,6 +1104,7 @@ test("owner approvals work without browser dialogs, stock refreshes without a sh
     .getByRole("combobox", { name: "Current branch", exact: true })
     .selectOption(a.branches[1].id);
   await page.getByRole("button", { name: "Purchasing", exact: true }).click();
+  await expect(page.getByLabel("Opening stock CSV",{exact:true})).toBeEnabled();
   await page.getByLabel("Opening stock CSV", { exact: true }).setInputFiles({
     name: "test-opening.csv",
     mimeType: "text/csv",
@@ -1557,9 +1559,18 @@ test("partial transfers, held goods and stock issues reconcile through the owner
   expect(inventory.error).toBeNull(); expect(Number(inventory.data!.quantity)).toBe(7.75);
   const holds=await a.owner.from("stock_holds").select("remaining").eq("branch_id",destination);
   expect(holds.error).toBeNull(); expect(holds.data!.reduce((sum,h)=>sum+Number(h.remaining),0)).toBe(1.25);
+  const activeHold=held.getByRole("row").filter({hasText:"TEST counted eight sound, one damaged, one missing"});
+  await activeHold.getByRole("button",{name:"Record held-goods outcome",exact:true}).click();
   for(const width of [1440,390]) {
     await page.setViewportSize({width,height:900});
     expect(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth)).toBe(true);
+    const contained=await activeHold.evaluate(row=>{
+      const region=row.closest('[role="region"]')!.getBoundingClientRect();
+      return [...row.querySelectorAll('td,.approval-form,input,select')].every(el=>{
+        const rect=el.getBoundingClientRect();return rect.left>=region.left-1 && rect.right<=region.right+1;
+      });
+    });
+    expect(contained).toBe(true);
     const scan=await new AxeBuilder({page}).include('main').withTags(["wcag2a","wcag2aa","wcag21aa","wcag22aa"]).analyze();
     expect(scan.violations).toEqual([]);
     await page.screenshot({path:`test-results/stock-controls-${width}.png`,fullPage:true});
