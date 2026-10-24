@@ -2381,7 +2381,7 @@ export function StoreApp() {
                       label: "To",
                       value: (r) => branchName(r.destination_branch_id),
                     },
-                    { label: "Base quantity", value: (r) => r.quantity },
+                    { label: "Base quantity", numeric: true, value: (r) => r.quantity },
                     { label: "State", value: (r) => r.state },
                     { label: "Dispatched at", value: (r) => r.dispatched_at },
                     { label: "Received at", value: (r) => r.received_at },
@@ -2527,10 +2527,11 @@ export function StoreApp() {
                   columns={[
                     { label: "ID", value: (r) => r.id },
                     ...stockHistoryColumns(products),
-                    { label: "Expected", value: (r) => r.expected },
-                    { label: "Counted", value: (r) => r.counted },
+                    { label: "Expected", numeric: true, value: (r) => r.expected },
+                    { label: "Counted", numeric: true, value: (r) => r.counted },
                     {
                       label: "Difference",
+                      numeric: true,
                       value: (r) =>
                         new Decimal(str(r, "counted"))
                           .minus(str(r, "expected"))

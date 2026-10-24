@@ -11,6 +11,7 @@ export interface HistoryRange {
 export interface HistoryColumn {
   label: string;
   value: (row: HistoryRow) => unknown;
+  numeric?: boolean;
 }
 export const historySources = {
   purchases: { table: "purchase_receipts", date: "created_at" },
@@ -56,10 +57,12 @@ export function validateHistoryCursor(
   )
     throw new Error("Invalid history position. Refresh the register.");
 }
-function csvCell(value: unknown) {
+function csvCell(value: unknown, numeric = false) {
   let text = value == null ? "" : String(value);
   // Spreadsheet programs can execute formula-like text, including after whitespace.
-  if (typeof value === "string" && /^[\s]*[=+\-@]/.test(text))
+  // Only explicitly numeric columns may retain an exact signed decimal string.
+  const decimal = numeric && /^-?\d+(?:\.\d+)?$/.test(text);
+  if (typeof value === "string" && !decimal && /^[\s]*[=+\-@]/.test(text))
     text = `'${text}`;
   return `"${text.replaceAll('"', '""')}"`;
 }
@@ -68,7 +71,7 @@ export function historyCsv(columns: HistoryColumn[], rows: HistoryRow[]) {
     "\uFEFF" +
     [
       columns.map((c) => csvCell(c.label)).join(","),
-      ...rows.map((row) => columns.map((c) => csvCell(c.value(row))).join(",")),
+      ...rows.map((row) => columns.map((c) => csvCell(c.value(row), c.numeric)).join(",")),
     ].join("\r\n")
   );
 }

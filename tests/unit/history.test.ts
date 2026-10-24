@@ -80,4 +80,19 @@ describe("history safety", () => {
     expect(result).toContain('"\' \t=HYPERLINK(1)","-2"');
     expect(result).toContain('"\'+SUM(1)","3"');
   });
+  it("exports exact signed decimals only in numeric columns while still blocking formula expressions", () => {
+    const csv = historyCsv([
+      { label: "Difference", numeric: true, value: (r) => r.quantity },
+      { label: "Reason", value: (r) => r.quantity },
+    ], [
+      { quantity: "-99999999999999.000001" },
+      { quantity: "-0.25" },
+      { quantity: "-1+SUM(1)" },
+      { quantity: " =HYPERLINK(1)" },
+    ]);
+    expect(csv).toContain('"-99999999999999.000001","\'-99999999999999.000001"');
+    expect(csv).toContain('"-0.25","\'-0.25"');
+    expect(csv).toContain('"\'-1+SUM(1)","\'-1+SUM(1)"');
+    expect(csv).toContain('"\' =HYPERLINK(1)","\' =HYPERLINK(1)"');
+  });
 });

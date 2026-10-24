@@ -294,6 +294,8 @@ test("transfers and count approvals identify separate lots, base quantities and 
   }
   const countCsv = await exportedCsv();
   expect(countCsv).toContain('"Expected","Counted","Difference"');
+  expect(countCsv).toContain('"-0.1"');
+  expect(countCsv).toContain('"-0.05"');
   for (const lot of lots) expect(countCsv).toContain(`"Lot ${lot.lot}","${lot.expiresOn}","kg"`);
   const countA = page.locator('.history-table[data-kind="counts"] tbody tr').filter({ hasText: "Lot TEST-LOT-A" });
   const countB = page.locator('.history-table[data-kind="counts"] tbody tr').filter({ hasText: "Lot TEST-LOT-B" });
