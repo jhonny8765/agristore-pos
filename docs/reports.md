@@ -15,7 +15,11 @@ Registers start with 50 rows, newest first. **Load older records** extends the l
 
 On narrow screens, scroll inside the table to reach its remaining columns. Keyboard users can Tab to the named history-records region and use the arrow keys to scroll it. Audit details can be expanded with the keyboard as well.
 
+Transfer and count rows identify the product and lot, display its expiry when known, and label every quantity with the base measure (`kg`, `liter` or `piece`). Count rows also show the reason beside the recorded discrepancy. Long lot identifiers and reasons wrap in their product cell; numeric and action columns remain reachable through the table's horizontal scroll region. An unavailable batch retains its ID rather than being labelled as stock without a lot.
+
 **Export loaded rows (CSV)** downloads exactly the displayed records, including branch scope and complete record identifiers. Load the older pages you need before exporting; the button does not export the entire database. The filename includes the register, branch identifier and applied range. Timestamps in the CSV retain their database timezone offset; the date filter always uses Manila time. Text resembling spreadsheet formulas is escaped when exported. Keep exports with the business records they contain.
+
+Transfer/count exports include product ID, batch ID, lot, expiry date and base unit in separate columns. Quantity columns remain numeric; count exports include the exact counted-minus-expected difference. Product/lot descriptions come from the current downloaded catalog, while original IDs and numeric records remain the audit references.
 
 Receipt history under Sales & receipts has its own **Load older receipts** action. Overview totals include all confirmed records; its flag, cash reconciliation and stock movement previews remain bounded to the most recent 1,000 records. The separate audit register supports older pages. Sales, stock movements and corrections remain immutable: an export or filter does not change stock.
 

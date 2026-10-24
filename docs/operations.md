@@ -12,6 +12,12 @@ Offline checkout is available only to the already authorized cashier and shift, 
 
 Reconnect and confirm every local sale has synchronized. Investigate review-required records in Sync center. Count drawer cash, reconcile the shift under Settings, and close it. Count physical stock only after the branch’s shifts are closed and all local transactions have synchronized. Owner approval records a separate adjustment; it never edits the original journal.
 
+## Checking lots in transfer and count history
+
+Match the product, lot and expiry date in the register before confirming a transfer receipt or approving a count. Quantities use the product's base measure: `0.5 kg` means half a kilo, even when the product is also sold by the sack. Count rows show the recorded reason and the expected, counted and difference quantities. Approval applies to that row only; stock changes after counting require a fresh count.
+
+Transfer and count CSV exports include product ID, batch ID, lot, expiry date and a separate base-unit column beside the numeric quantities. `No lot recorded` means the original record had no batch. `Batch … (details unavailable)` means an ID exists but its catalog details are unavailable; investigate that ID before acting. The app does not guess an unknown unit or another product's batch. Exports still contain only the loaded rows in the selected branch/date range.
+
 ## Interrupted upload
 
 Retry the original record in Sync center. Do not re-enter the customer’s purchase. Transaction IDs and payloads are retained. Deliveries and transfers with an unknown network result also retain their original request IDs under Online operations awaiting confirmation. A definitive database rejection rolls back the operation so corrected input may be submitted.

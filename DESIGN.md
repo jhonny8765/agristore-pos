@@ -266,6 +266,12 @@ Use labeled From date and Through date fields with explicit Apply dates and Clea
 
 The export action reads “Export loaded rows (CSV)” and nearby copy explains that it includes only rows loaded in the current register. Include branch scope in the export and retain the instruction to load older records before exporting more. Empty results offer another range or Clear dates; offline feedback explains that refreshing and loading older records require reconnection.
 
+**The Traceable Stock Record Rule.** In transfer and count history, keep the lot and known expiry beside the product, name the base unit with every quantity, and keep the count reason beside its discrepancy and approval action. Resolve this context from the current product catalog; when batch details are unavailable, retain the recorded batch ID rather than borrowing another product's lot or implying that no batch was recorded.
+
+Product, lot, expiry, and count reason wrap inside the first column while the named, keyboard-focusable table region retains horizontal scrolling. Lot, expiry, and reason inherit the register's readable type size (12px) and use Muted Ledger beneath the stronger product name. Keep numerical columns aligned independently of this wrapping context.
+
+Transfer and count CSV exports retain product and batch IDs alongside the resolved product name, lot, known expiry, and base unit. Export quantities and signed count differences as numeric values in explicitly numeric columns; retain formula protection for free text, including product names, lot labels, and reasons.
+
 Audit details expand through a native View details summary with the shared keyboard focus outline. Wrap the expanded detail content within its column instead of widening the page.
 
 ### Operational Feedback
@@ -304,6 +310,7 @@ Keep the top-bar branch picker at a minimum height (40px) across viewport sizes.
 - **Do** preserve the responsive receipt access and fixed mobile basket summary on checkout.
 - **Do** keep approval reasons, errors, and keyboard focus within the affected record, with forms contained inside horizontally scrolling tables.
 - **Do** give history table scrolling regions accessible names, keyboard access, and the shared visible focus outline.
+- **Do** keep transfer and count context readable beside its record, with explicit base units and traceable identifiers in CSV exports.
 - **Do** retain stronger control boundaries, surface-appropriate focus outlines, and explicit current or pressed states.
 - **Do** keep catalog metadata legible when adding is disabled, with only the Add control changing appearance.
 - **Do** keep applied dates, loaded counts, end-of-history feedback, and CSV scope explicit beside the records they describe.
@@ -317,6 +324,7 @@ Keep the top-bar branch picker at a minimum height (40px) across viewport sizes.
 - **Don't** turn operational surfaces into decorative illustrations or marketing panels.
 - **Don't** introduce heavy resting shadows on record panels.
 - **Don't** reduce essential product and payment copy to the smallest incidental text sizes present in older supporting UI.
+- **Don't** shrink transfer and count lot, expiry, or reason text to incidental metadata sizes, or let long context widen the first column without wrapping.
 - **Don't** imply that a loaded-row CSV includes matching records that have not been loaded.
 - **Don't** describe the open app window as current solely because no new download is available, or force other windows to reload.
 - **Don't** invite resubmission of a confirmed action after a refresh failure, or show opening-stock confirmation before CSV validation succeeds.
