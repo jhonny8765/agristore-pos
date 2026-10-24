@@ -73,7 +73,7 @@ async function openPractice(page: Page, origin: string) {
     .getByRole("button", { name: "Try practice checkout", exact: true })
     .click();
   await expect(
-    page.getByRole("button", { name: "Add Grower feeds", exact: true }),
+    page.getByRole("button", { name: "Add Grower feeds" }),
   ).toBeEnabled();
   await page.evaluate(() => navigator.serviceWorker.ready.then(() => true));
 }
@@ -118,9 +118,7 @@ test("a requested update reopens an uncontrolled window while another window kee
     ).toBe(true);
     const other = await context.newPage();
     await other.goto(app.origin);
-    await other
-      .getByRole("button", { name: "Add Grower feeds", exact: true })
-      .click();
+    await other.getByRole("button", { name: "Add Grower feeds" }).click();
     await expect(other.locator(".receipt-heading")).toContainText("1 item");
     app.publish();
     await page.getByRole("button", { name: "Settings", exact: true }).click();
@@ -182,14 +180,12 @@ test("a waiting update preserves the exact pending sale across offline browser-p
     // worker must control the window so the new revision actually waits.
     await page.reload();
     await expect(
-      page.getByRole("button", { name: "Add Grower feeds", exact: true }),
+      page.getByRole("button", { name: "Add Grower feeds" }),
     ).toBeEnabled();
     expect(
       await page.evaluate(() => navigator.serviceWorker.controller !== null),
     ).toBe(true);
-    await page
-      .getByRole("button", { name: "Add Grower feeds", exact: true })
-      .click();
+    await page.getByRole("button", { name: "Add Grower feeds" }).click();
     await page.getByLabel("Cash received", { exact: true }).fill("2000");
     await page
       .getByRole("button", { name: "Complete cash sale", exact: true })
@@ -226,7 +222,7 @@ test("a waiting update preserves the exact pending sale across offline browser-p
     await page.goto(app.origin);
     await expect(buildMarker(page)).toHaveAttribute("content", "two");
     await expect(
-      page.getByRole("button", { name: "Add Grower feeds", exact: true }),
+      page.getByRole("button", { name: "Add Grower feeds" }),
     ).toBeEnabled();
     expect(await completedRecords(page)).toEqual(before);
     await page.getByRole("button", { name: /^Sync center/ }).click();

@@ -1385,6 +1385,11 @@ export function StoreApp() {
                     {visible.map((p) => {
                       const available = productStock(p, stock);
                       const kilo = kiloUnit(p);
+                      const addLabel =
+                        p.baseUnit === "kg" &&
+                        new Decimal(p.units[0]?.factor ?? "1").eq(1)
+                          ? "Add 1 kg"
+                          : `Add ${p.units[0]?.name ?? "item"}`;
                       return (
                         <article
                           className={
@@ -1428,15 +1433,10 @@ export function StoreApp() {
                                 disabled={
                                   !lease || isStock || busy || installingUpdate
                                 }
-                                aria-label={`Add ${p.name}`}
+                                aria-label={`Add ${p.name} — ${addLabel}`}
                               >
                                 <Plus size={17} />
-                                <span>
-                                  {p.baseUnit === "kg" &&
-                                  new Decimal(p.units[0]?.factor ?? "1").eq(1)
-                                    ? "Add 1 kg"
-                                    : `Add ${p.units[0]?.name ?? "item"}`}
-                                </span>
+                                <span>{addLabel}</span>
                               </button>
                             </div>
                             <span

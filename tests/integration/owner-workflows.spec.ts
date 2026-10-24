@@ -111,7 +111,7 @@ async function login(
   await page.getByLabel("Password", { exact: true }).fill(account.password);
   await page.getByRole("button", { name: "Sign in", exact: true }).click();
   await expect(
-    page.getByRole("button", { name: `Add ${productName}`, exact: true }),
+    page.getByRole("button", { name: `Add ${productName}` }),
   ).toBeVisible();
 }
 async function closeShift(page: Page) {
@@ -155,7 +155,7 @@ test("a failed account verification never becomes an empty new-business result",
   await page.unroute("**/auth/v1/user");
   await page.reload();
   await expect(
-    page.getByRole("button", { name: "Add Audit feeds", exact: true }),
+    page.getByRole("button", { name: "Add Audit feeds" }),
   ).toBeVisible();
   await expect(page.locator(".notice[role=alert]")).toHaveCount(0);
 });
@@ -194,7 +194,7 @@ test("owner product setup creates only enabled selling units with independent re
     ).toBe(true);
     const scan = await new AxeBuilder({ page })
       .include(".product-setup")
-      .withTags(["wcag2a", "wcag2aa", "wcag21aa", "wcag22aa"])
+      .withTags(["wcag2a", "wcag2aa", "wcag21a", "wcag21aa", "wcag22aa"])
       .analyze();
     expect(scan.violations).toEqual([]);
     await form.screenshot({ path: `test-results/product-setup-${width}.png` });
@@ -291,7 +291,7 @@ test("offline mixed sacks, quarters, halves and peso-weight sales synchronize ex
   await page.goto("/");
   await login(page, a, name);
   await page.getByRole("button", { name: "Open shift", exact: true }).click();
-  const add = page.getByRole("button", { name: `Add ${name}`, exact: true });
+  const add = page.getByRole("button", { name: `Add ${name}` });
   await expect(add).toBeEnabled();
   await context.setOffline(true);
   await add.click();
@@ -495,7 +495,6 @@ test("owner accessibility covers keyboard navigation, narrow reflow and forced c
   await page.getByRole("button", { name: "Open shift", exact: true }).click();
   const addProduct = page.getByRole("button", {
     name: "Add Audit feeds",
-    exact: true,
   });
   const productTile = page.locator(".product").filter({ has: addProduct });
   await expect(addProduct).toBeEnabled();
@@ -618,11 +617,9 @@ test("owner approvals work without browser dialogs, stock refreshes without a sh
   page.on("pageerror", (error) => errors.push(error.message));
   await page.getByRole("button", { name: "Open shift", exact: true }).click();
   await expect(
-    page.getByRole("button", { name: "Add Audit feeds", exact: true }),
+    page.getByRole("button", { name: "Add Audit feeds" }),
   ).toBeEnabled();
-  await page
-    .getByRole("button", { name: "Add Audit feeds", exact: true })
-    .click();
+  await page.getByRole("button", { name: "Add Audit feeds" }).click();
   await page.getByLabel("Cash received", { exact: true }).fill("2");
   await page
     .getByRole("button", { name: "Complete cash sale", exact: true })
@@ -687,7 +684,7 @@ test("owner approvals work without browser dialogs, stock refreshes without a sh
   await page.getByRole("button", { name: /^Checkout/ }).click();
   await page.getByRole("button", { name: "Open shift", exact: true }).click();
   await expect(
-    page.getByRole("button", { name: "Add Audit feeds", exact: true }),
+    page.getByRole("button", { name: "Add Audit feeds" }),
   ).toBeEnabled();
   const nextPC = await a.owner
     .from("devices")
@@ -700,9 +697,7 @@ test("owner approvals work without browser dialogs, stock refreshes without a sh
   // A remote retirement (or an older app) can leave this browser holding a
   // retired identity. Recovery must preserve its saved receipts and its cart.
   await page.getByRole("button", { name: /^Checkout/ }).click();
-  await page
-    .getByRole("button", { name: "Add Audit feeds", exact: true })
-    .click();
+  await page.getByRole("button", { name: "Add Audit feeds" }).click();
   await command(a.owner, "retire_device", {
     organizationId: a.organizationId,
     branchId: a.branchId,
@@ -753,7 +748,7 @@ test("owner approvals work without browser dialogs, stock refreshes without a sh
   await page.getByRole("button", { name: /^Checkout/ }).click();
   await page.getByRole("button", { name: "Open shift", exact: true }).click();
   await expect(
-    page.getByRole("button", { name: "Add Audit feeds", exact: true }),
+    page.getByRole("button", { name: "Add Audit feeds" }),
   ).toBeEnabled();
   const replacement = await a.owner
     .from("devices")
@@ -845,7 +840,7 @@ test("owner approvals work without browser dialogs, stock refreshes without a sh
   ).toBeVisible();
   await login(page, b, "Other business product");
   await expect(
-    page.getByRole("button", { name: "Add Audit feeds", exact: true }),
+    page.getByRole("button", { name: "Add Audit feeds" }),
   ).toHaveCount(0);
   await page.getByRole("button", { name: "Transfers", exact: true }).click();
   await expect(
@@ -1089,7 +1084,7 @@ test("receipt history crosses 1000 rows without losing equal-microsecond timesta
   await login(page, a);
   await page.getByRole("button", { name: "Open shift", exact: true }).click();
   await expect(
-    page.getByRole("button", { name: "Add Audit feeds", exact: true }),
+    page.getByRole("button", { name: "Add Audit feeds" }),
   ).toBeEnabled();
   const shift = await a.owner
     .from("cashier_shifts")

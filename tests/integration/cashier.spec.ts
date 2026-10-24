@@ -41,13 +41,11 @@ async function openShift(page: Page, opening: string) {
   await page.getByLabel("Opening cash (₱)", { exact: true }).fill(opening);
   await page.getByRole("button", { name: "Open shift", exact: true }).click();
   await expect(
-    page.getByRole("button", { name: "Add Integration feeds", exact: true }),
+    page.getByRole("button", { name: "Add Integration feeds" }),
   ).toBeEnabled();
 }
 async function buy(page: Page) {
-  await page
-    .getByRole("button", { name: "Add Integration feeds", exact: true })
-    .click();
+  await page.getByRole("button", { name: "Add Integration feeds" }).click();
   await page.getByLabel("Cash received", { exact: true }).fill("2000");
   await page
     .getByRole("button", { name: "Complete cash sale", exact: true })
@@ -254,7 +252,6 @@ test("registered cashier recovers real offline sales after a lost acknowledgment
     page.getByRole("article").filter({
       has: page.getByRole("button", {
         name: "Add Integration feeds",
-        exact: true,
       }),
     }),
   ).toContainText("0 kg on hand");
@@ -263,7 +260,6 @@ test("registered cashier recovers real offline sales after a lost acknowledgment
     page.getByRole("article").filter({
       has: page.getByRole("button", {
         name: "Add Integration feeds",
-        exact: true,
       }),
     }),
   ).toContainText("500 kg on hand");
@@ -299,7 +295,7 @@ test("registered cashier recovers real offline sales after a lost acknowledgment
   );
   await page.reload();
   await expect(
-    page.getByRole("button", { name: "Add Integration feeds", exact: true }),
+    page.getByRole("button", { name: "Add Integration feeds" }),
   ).toBeEnabled();
 
   const forbidden = await cashier.rpc("agri_command", {
@@ -437,7 +433,6 @@ test("registered cashier recovers real offline sales after a lost acknowledgment
     page.getByRole("article").filter({
       has: page.getByRole("button", {
         name: "Add Integration feeds",
-        exact: true,
       }),
     }),
   ).toContainText("400 kg on hand");

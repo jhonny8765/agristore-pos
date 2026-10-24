@@ -31,9 +31,7 @@ test("catalog weight and peso choices start at the right field without charging 
     .click();
   await expect(page.locator(".receipt-item")).toHaveCount(1);
   await expect(page.locator(".amount-due")).toContainText("₱16.80");
-  await page
-    .getByRole("button", { name: "Add Grower feeds", exact: true })
-    .click();
+  await page.getByRole("button", { name: "Add Grower feeds" }).click();
   await expect(page.locator(".amount-due")).toContainText("₱1,596.80");
   await page
     .getByRole("button", { name: "Sell Hybrid corn seeds by weight" })
@@ -48,7 +46,7 @@ test("catalog weight and peso choices start at the right field without charging 
     ).toBe(true);
     const scan = await new AxeBuilder({ page })
       .include(".product-grid")
-      .withTags(["wcag2a", "wcag2aa", "wcag21aa", "wcag22aa"])
+      .withTags(["wcag2a", "wcag2aa", "wcag21a", "wcag21aa", "wcag22aa"])
       .analyze();
     expect(scan.violations).toEqual([]);
   }
@@ -200,7 +198,7 @@ test("piece products cannot be sold as half a sealed packet; weighed controls re
     ).toBe(true);
     const result = await new AxeBuilder({ page })
       .include("#current-sale")
-      .withTags(["wcag2a", "wcag2aa", "wcag21aa", "wcag22aa"])
+      .withTags(["wcag2a", "wcag2aa", "wcag21a", "wcag21aa", "wcag22aa"])
       .analyze();
     expect(result.violations).toEqual([]);
   }
