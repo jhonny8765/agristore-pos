@@ -17,6 +17,8 @@ const login = `set role authenticated; select set_config('request.jwt.claims','$
 const ctx = b => ({ organizationId: org, branchId: id(b) });
 const command = (action, data) => `select public.agri_command('${action}','${JSON.stringify(data)}'::jsonb);`;
 const lastJSON = output => JSON.parse(output.trim().split("\n").at(-1));
+const footprint = () => lastJSON(sql(`select jsonb_build_object('databaseBytes',pg_database_size(current_database()),'relations',coalesce(jsonb_agg(r order by (r->>'totalBytes')::bigint desc),'[]')) from (select jsonb_build_object('table',relname,'dataBytes',pg_table_size(relid),'indexBytes',pg_indexes_size(relid),'totalBytes',pg_total_relation_size(relid)) r from pg_catalog.pg_statio_user_tables where schemaname='public') sizes;`));
+const baselineSize = footprint();
 const started = performance.now();
 // Historical capacity fixtures exercise real foreign keys, indexes, immutable
 // history and movement projections. They do not replay historical checkouts or
@@ -81,8 +83,46 @@ const backlog = Array.from({ length: 1000 }, (_, i) => sale(10000+i,i%5));
 const uploadStart = performance.now();
 sql(login + backlog.map(payload => command("record_sale", payload)).join("\n"));
 const uploadSeconds = (performance.now() - uploadStart) / 1000;
-assert.equal(Number(sql(`select count(*) from public.sales where organization_id='${org}';`).trim()), 548505);
-assert.equal(Number(sql(`select count(*) from public.inventory_movements where organization_id='${org}' and kind='sale';`).trim()), 1096005);
-const summary = `Capacity passed: 547,500 historical sales, 1,095,000 historical item/movement rows, five concurrent new sales with duplicate retries and 1,000 queued uploads. Seed ${seedSeconds.toFixed(1)}s; snapshot + dashboard ${querySeconds.toFixed(2)}s; queued uploads ${uploadSeconds.toFixed(1)}s. Synthetic Linux CI evidence; Windows hardware and real-time outage gates remain unpassed.`;
+// Pretend the first upload acknowledgments never reached the cashier. Replay
+// the exact immutable payloads, including occurredAt, rather than new sales.
+const replayStart = performance.now();
+const replay = sql(login + backlog.map(payload => command("record_sale", payload)).join("\n"));
+const replayAcks = replay.trim().split("\n").filter(line => line.startsWith('{')).map(line => JSON.parse(line));
+assert.equal(replayAcks.length, 1000);
+assert.ok(replayAcks.every(ack => ack.status === "duplicate"));
+const replaySeconds = (performance.now() - replayStart) / 1000;
+// Twenty simultaneous attempts compete for the same branch/stock/shift. Each
+// of ten different purchases is submitted twice, as racing retrying clients.
+const burst = Array.from({ length: 10 }, (_, i) => sale(12000+i,0));
+const burstStart = performance.now();
+const burstAcks = await Promise.all(burst.flatMap(payload => [payload,payload]).map(async payload => {
+  const result = await exec("docker", [...args, "-c", login + command("record_sale", payload)], { maxBuffer: 1024*1024 });
+  return lastJSON(result.stdout);
+}));
+for (const payload of burst) assert.deepEqual(burstAcks.filter(a=>a.transactionId===payload.transactionId).map(a=>a.status).sort(),["created","duplicate"]);
+const burstSeconds = (performance.now() - burstStart) / 1000;
+assert.ok(burstSeconds < 15, `Same-stock burst exceeded the app request window: ${burstSeconds}s`);
+assert.equal(lastJSON(sql(login + command("record_sale", {...burst[0],cashReceived:2000}))).status,"review");
+assert.equal(Number(sql(`select count(*) from public.sales where organization_id='${org}';`).trim()), 548515);
+assert.equal(Number(sql(`select count(*) from public.inventory_movements where organization_id='${org}' and kind='sale';`).trim()), 1096015);
+assert.equal(Number(sql(`select count(*) from public.payments where organization_id='${org}';`).trim()), 548515);
+assert.equal(Number(sql(`select count(*) from public.branch_inventory i where i.organization_id='${org}' and i.quantity<>(select sum(m.quantity) from public.inventory_movements m where m.organization_id=i.organization_id and m.branch_id=i.branch_id and m.product_id=i.product_id and m.batch_id is not distinct from i.batch_id);`).trim()),0);
+// Exercise the app's first/next receipt page shape under authenticated RLS at
+// annual volume. This is SQL timing; it excludes HTTP and browser rendering.
+const pageStart = performance.now();
+const history = cursor => lastJSON(sql(login + `select coalesce(jsonb_agg(to_jsonb(s)||jsonb_build_object('sale_reversals',coalesce((select jsonb_agg(jsonb_build_object('id',r.id)) from public.sale_reversals r where r.sale_id=s.id),'[]'::jsonb))),'[]'::jsonb) from (select * from public.sales where organization_id='${org}' and branch_id='${id(101)}' ${cursor ? `and (occurred_at,id)<('${cursor.occurred_at}'::timestamptz,'${cursor.id}'::uuid)` : ""} order by occurred_at desc,id desc limit 51) s;`));
+const first = history(); const next = history(first[49]);
+assert.equal(first.length,51); assert.equal(next.length,51);
+assert.equal(new Set([...first.slice(0,50),...next.slice(0,50)].map(s=>s.id)).size,100);
+assert.ok([...first,...next].every(s=>s.branch_id===id(101)));
+const pageSeconds = (performance.now() - pageStart) / 1000;
+assert.ok(pageSeconds<15,`Receipt pages exceeded the app request window: ${pageSeconds}s`);
+const finalSize = footprint();
+const relationBytes = size => size.relations.reduce((sum,r)=>sum+r.totalBytes,0);
+const publicGrowth = relationBytes(finalSize)-relationBytes(baselineSize);
+assert.ok(publicGrowth>0);
+const measurements = {baselineSize,finalSize,publicGrowth,publicBytesPerSale:publicGrowth/548515,snapshotJSONBytes:Buffer.byteLength(JSON.stringify(snapshot)),receiptPageJSONBytes:Buffer.byteLength(JSON.stringify(first)),seedSeconds,querySeconds,uploadSeconds,replaySeconds,burstSeconds,pageSeconds};
+console.log("CAPACITY_MEASUREMENTS "+JSON.stringify(measurements));
+const summary = `Capacity passed: 547,500 historical sales, 1,095,000 historical item/movement rows, five concurrent new sales, 1,000 queued uploads replayed without duplicates, and 20 racing same-stock attempts for ten separate purchases. Final 548,515 sales / payments and 1,096,015 sale movements; zero projection differences. Seed ${seedSeconds.toFixed(1)}s; snapshot + dashboard ${querySeconds.toFixed(2)}s; uploads ${uploadSeconds.toFixed(1)}s; replay ${replaySeconds.toFixed(1)}s; burst ${burstSeconds.toFixed(2)}s; two receipt pages ${pageSeconds.toFixed(2)}s. Public-table/index growth ${(publicGrowth/1024/1024).toFixed(1)} MiB (${(publicGrowth/548515).toFixed(0)} bytes/sale); database ${(finalSize.databaseBytes/1024/1024).toFixed(1)} MiB. Database sizes exclude WAL, backups, network, and browser storage. Synthetic Linux CI evidence; Windows hardware and real-time outage gates remain unpassed.`;
 console.log(summary);
-if (process.env.GITHUB_STEP_SUMMARY) appendFileSync(process.env.GITHUB_STEP_SUMMARY, summary + "\n");
+if (process.env.GITHUB_STEP_SUMMARY) appendFileSync(process.env.GITHUB_STEP_SUMMARY, summary + "\n\n```json\n"+JSON.stringify(measurements,null,2)+"\n```\n");

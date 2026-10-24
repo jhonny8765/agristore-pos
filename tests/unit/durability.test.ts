@@ -2,7 +2,7 @@ import "fake-indexeddb/auto";
 import Dexie from "dexie";
 import { afterEach, expect, it, vi } from "vitest";
 import { stableJSON } from "@agristore/domain";
-import { PosDatabase, exportRecovery, exportRecoveryPart, importRecovery, readLocalSales, localStock, type LocalSale } from "@agristore/offline";
+import { PosDatabase, applySnapshot, exportRecovery, exportRecoveryPart, importRecovery, readLocalSales, localStock, setting, type LocalSale } from "@agristore/offline";
 import { preferredBatch, outstandingTransfer } from "../../apps/web/lib/stock-controls";
 import { product, sale, setupDB, uuid } from "./fixtures";
 
@@ -65,6 +65,45 @@ it("rejects edited parts before writes and keeps archive progress recoverable",a
   expect(await target.sales.count()).toBe(0);
   await importRecovery(target,file);
   expect(await target.settings.get(`restored:${file.archive.id}:1`)).toBeDefined();
+});
+
+it("rolls back an interrupted recovery part and records completion only after every sale is durable",async()=>{
+  const source=await db(),target=await db();
+  const rows=Array.from({length:30},(_,n)=>record(n,"pending"));
+  await source.sales.bulkPut(rows);
+  const file=await exportRecovery(source,scope);
+  const add=target.sales.add.bind(target.sales);
+  let writes=0;
+  const failure=vi.spyOn(target.sales,"add").mockImplementation((...args)=>{
+    if(++writes===17) return Dexie.Promise.reject(new DOMException("TEST disk full mid-part","QuotaExceededError"));
+    return add(...args);
+  });
+  await expect(importRecovery(target,file)).rejects.toThrow("disk full");
+  expect(await target.sales.count()).toBe(0);
+  expect(await setting(target,`restored:${file.archive.id}:1`)).toBeUndefined();
+  expect(await source.sales.count()).toBe(30);
+  failure.mockRestore();
+  await importRecovery(target,file);await importRecovery(target,file);
+  expect(await target.sales.count()).toBe(30);
+  expect((await target.sales.get(rows[16].id))?.payload).toEqual(rows[16].payload);
+  expect(await setting(target,`restored:${file.archive.id}:1`)).toBeDefined();
+});
+
+it("atomically rolls back catalog, stock and acknowledgments when storage fails during snapshot replacement",async()=>{
+  const d=await db();const waiting=record(1,"sending");await d.sales.add(waiting);
+  const oldAsOf=await setting(d,"snapshotAsOf");
+  const snapshot={products:[{...product,name:"TEST new catalog"}],stocks:[{key:`${product.id}:none`,productId:product.id,batchId:null,quantity:"499"}],confirmedIds:[waiting.id],asOf:"2026-10-25T06:00:00Z",catalogVersion:"2"};
+  const failure=vi.spyOn(d.stocks,"bulkPut").mockRejectedValueOnce(new DOMException("TEST storage failure after catalog write","QuotaExceededError"));
+  await expect(applySnapshot(d,snapshot)).rejects.toThrow("storage failure");
+  expect(await d.products.get(product.id)).toEqual(product);
+  expect((await d.stocks.get(`${product.id}:none`))?.quantity).toBe("500");
+  expect(await d.sales.get(waiting.id)).toEqual(waiting);
+  expect(await setting(d,"catalogVersion")).toBeUndefined();
+  expect(await setting(d,"snapshotAsOf")).toBe(oldAsOf);
+  expect((await localStock(d)).get(`${product.id}:none`)).toBe("499");
+  failure.mockRestore();await applySnapshot(d,snapshot);
+  expect((await d.sales.get(waiting.id))?.status).toBe("synced");
+  expect((await localStock(d)).get(`${product.id}:none`)).toBe("499");
 });
 
 it("restores a legacy 10001-record export and uses only server-verified acknowledgments to prevent double deductions",async()=>{
