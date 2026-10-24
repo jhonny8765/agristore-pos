@@ -20,6 +20,7 @@ Any missing completed sale or false success fails the browser-storage gate. Stop
 - Create a separate production Supabase project and configure commercial hosting, backup retention and access. Keep privileged credentials outside the client.
 - Verify each employee's branch and role with separate accounts. Attempt prohibited cashier stock adjustments and cross-branch reads.
 - Verify opening-stock imports against signed physical counts, including sacks/kilos, lots and expiry dates. Import each branch's opening stock once.
+- Rehearse loose sales with the actual scale: ¼ kg, ½ kg, grams and a peso request. Confirm separate retail kilo/sack prices, actual-weight confirmation, exact remaining kg before/after sync, whole-piece packaging, cash change and the printed sale record. See [weighed sales](weighed-sales.md).
 - Dispatch and receive a test transfer; reconcile source stock, stock in transit and destination stock. Verify an owner-approved physical-count adjustment preserves its original expected and counted figures.
 - Pilot one branch and sign daily cash and stock reconciliation. Record synchronization delays and resolve every pending/review record. Expand only after the owner signs off on the results.
 

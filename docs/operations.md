@@ -22,6 +22,8 @@ Finish the cart and confirm pending records before using Settings → Check for 
 
 ## Failed PC or lost browser profile
 
+If an existing browser reports that its PC is disabled after the registration was retired elsewhere or by an older release, keep its site data. With no unfinished basket or pending records, the owner can use **Settings → Registered cashier PCs → Release retired setup** on the matching retired row. The app rechecks that registration online, releases only this browser's matching retired identity/authorization and preserves saved sales. Open a shift afterward to register a replacement. A different browser's retired row is rejected. Active registrations cannot be released by this action; pending records must first be resolved through Sync center or the owner recovery process below.
+
 1. Keep the original profile and disk if recoverable. Clearing site data can destroy unsynchronized records; cloud backups cannot contain sales that never reached the cloud.
 2. Export the local recovery file when possible. It contains business records and must be kept private.
 3. The owner retires the failed PC under Registered cashier PCs. This closes its open shift without inventing a counted cash value and preserves device history.

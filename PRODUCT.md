@@ -20,6 +20,8 @@ One Windows cashier PC per branch. PHP currency, Asia/Manila business time. Onli
 ## Capabilities and Constraints
 Cash-only checkout; product-specific sack/kilo conversions; batches and expiration; purchasing; transfers; owner-approved count discrepancies; cash reconciliation; owner-managed branch expansion. No customer credit, payment processing, AI, marketing, full accounting, or official tax invoices in the pilot. Illustrative fixtures belong in the separate practice database unless the user explicitly authorizes labelled synthetic data in their staging test business.
 
+Customers request loose products by weight and by peso budget. The cashier enters fractional kg or grams using configured retail kilo prices; peso estimates require confirmation of actual scale weight. Whole-piece products remain indivisible. The owner's Better Yield public profile supplies crop nutrition/crop care context; it does not establish actual prices, stock, or branch changes.
+
 ## Brand Commitments
 Name: AgriStore POS. Practical, clear, non-technical language. No supplied logo or visual reference.
 

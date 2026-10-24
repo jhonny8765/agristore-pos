@@ -152,7 +152,7 @@ Use Muted Ledger for placeholders and unselected category text. Working Green su
 - **Label:** the frontmatter label role represents form labels. Checkout metadata commonly uses (11px); category filters use (12px) on desktop and (11px) on mobile.
 - **Figures:** totals use Manrope at (26px) and summary metrics at (28px) on wide screens. These are local financial emphasis roles rather than a large display scale.
 
-**The Precise Figures Rule.** Keep tabular numerals throughout the interface and right-align numerical table columns so quantities and money can be scanned vertically.
+**The Precise Figures Rule.** Keep tabular numerals throughout the interface and right-align numerical table columns so quantities and money can be scanned vertically. Show bulk on-hand stock in exact base kg or liters across all batches; show piece-pack equivalents only when whole, otherwise retain base pieces, so small stock changes remain visible.
 
 Align quantity column headers with their right-aligned values, including receiving line counts, transferred quantities, and physical-count figures.
 
@@ -211,7 +211,7 @@ When adding is unavailable before a shift opens or in the stock view, change onl
 
 ### Inputs / Fields
 
-White fields have the stronger Control Rule border, the field radius, and the padding defined in frontmatter. Labels sit above their fields with a gap (6px). Search is a bordered container with an inline icon and a borderless text input. Quantity steppers share the stronger boundary. Cash received is right-aligned and enlarged to (17px). Disabled fields use a subdued pale surface. Checkboxes use a (24px) square control.
+White fields have the stronger Control Rule border, the field radius, and the padding defined in frontmatter. Labels sit above their fields with a gap (6px). Search is a bordered container with an inline icon and a borderless text input. Quantity steppers share the stronger boundary and keep editable text wide enough for decimal and fraction entry. Each quantity has a visible label naming its selling unit; the kilo/gram choice remains beside the field. Preserve incomplete input while the cashier types, associate blocking feedback with the affected field, and keep the receipt in view. Cash received is right-aligned and enlarged to (17px). Disabled fields use a subdued pale surface. Checkboxes use a (24px) square control.
 
 ### Navigation
 
@@ -221,9 +221,13 @@ Expose the current destination with the current-page state and change navigation
 
 ### Current Sale
 
-The receipt groups heading, items, and payment into ruled sections. Quantities use a compact three-part stepper. Amount due is larger, forest-colored, and aligned opposite its label. The completion button spans the payment area. A completed sale replaces the editable receipt with explicit saved-state feedback; printed output isolates the receipt in an (80mm) column.
+The receipt groups heading, items, and payment into ruled sections. Each line exposes its configured price and selling unit above an editable three-part quantity stepper. Loose kilo products additionally offer kilo/gram entry, a readable equivalent weight, and wrapping quarter-, half-, three-quarter-, and whole-kilo shortcuts. Retain the selected retail kilo price when using these controls. Whole-piece goods keep their ordinary unit controls. Decreasing a quantity stops before zero; removal is a separately named action.
 
-Receipt removal controls and unit selectors have a minimum target height (32px); removal controls also have a minimum width (32px).
+By peso amount expands an inline form within the affected receipt line, separated by a fine rule. Place the labeled customer budget beside Estimate weight, then explain that the whole-gram estimate must be weighed and the actual scale weight entered. Keep Confirm weighed amount and Cancel together beneath that guidance. Focus returns to the quantity field after an estimate. Preserve drafts and confirmation feedback when the operator changes application views. If the recorded weight exceeds the budget, state the resulting price and the next action locally.
+
+Unfinished or invalid quantities and unconfirmed peso estimates show Correction Red field feedback and a receipt-level message, and disable cash completion. Amount due remains larger, forest-colored, and aligned opposite its label. The completion button spans the payment area. A completed sale replaces the editable receipt with explicit saved-state feedback; printed output isolates the receipt in an (80mm) column.
+
+Receipt removal controls and unit selectors have a minimum target height (32px); removal controls also have a minimum width (32px). Quantity and peso controls wrap inside the receipt width, and the receipt item area expands with its content on narrow screens.
 
 ### Inline Approvals
 
@@ -251,6 +255,8 @@ Use local status text to describe the actual stage of an operation. Place access
 
 Disable starting or completing checkout while installation is in progress. Recheck that the cart and pending sales and operations are clear before reopening the requesting window. If work appears while an update becomes ready, direct the operator to finish checkout and confirm every pending record before manually reopening. Recovery guidance preserves saved local records and browser site data, gives a specific next step for the actual failure or delay, and never forces other windows to reload.
 
+Expose owner-only PC setup recovery as an explicit outline action beside the retired registration in the existing Registered cashier PCs table. Require connectivity and a cleared basket and resolved pending records; explain that saved sales are retained and guide the owner to register a replacement. Keep recovery inside the shared table overflow and focus behavior, without clearing browser site data.
+
 ### Settings / Branches
 
 The owner’s branch panel extends the existing ruled record surface. Rename fields retain branch-code labels and outline Save buttons; Add branch sits beneath that grid with a labeled name field and the shared forest primary action. Branch codes are assigned automatically. Names allow up to (120 characters). The rename grid collapses to one column on narrower layouts, and the addition form follows the shared responsive form layout.
@@ -267,6 +273,7 @@ Keep the top-bar branch picker at a minimum height (40px) across viewport sizes.
 
 - **Do** use the shared forest, paper, ink, muted, and rule tokens for new operational surfaces.
 - **Do** keep currency and quantities aligned and retain tabular numerals.
+- **Do** label selling units explicitly, preserve quantity drafts, and keep peso estimates blocked until actual weighed amounts are confirmed.
 - **Do** provide a visible focus outline and explicit text for connection, stock, and save states.
 - **Do** preserve the responsive receipt access and fixed mobile basket summary on checkout.
 - **Do** keep approval reasons, errors, and keyboard focus within the affected record, with forms contained inside horizontally scrolling tables.

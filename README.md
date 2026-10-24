@@ -55,6 +55,8 @@ Receipt history loads 50 records at a time with **Load older receipts**. Refunds
 
 See the [overall review and improvement plan](docs/improvement-plan.md) for repaired bugs, measured scope and the remaining priorities.
 
+See [loose weights and peso requests](docs/weighed-sales.md) for quarter/half kilos, grams, actual scale confirmation, distinct kilo/sack prices, sealed-piece configuration and counter rehearsal.
+
 See the [owner accessibility review](docs/accessibility.md) for keyboard navigation, contrast, narrow-screen and forced-color coverage, plus the remaining checks on the actual cashier PC.
 
 See [app updates and saved records](docs/app-updates.md) for guarded installation, reopening, multiple windows and offline recovery across downloaded versions.
