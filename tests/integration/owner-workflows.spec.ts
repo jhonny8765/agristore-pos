@@ -391,6 +391,11 @@ test("staff cannot bypass stock controls, escalate access or read unrelated bran
     const userId = signup.data.user!.id;
     await command(a.owner, "staff_access", { organizationId: a.organizationId, branchId: a.branchId, email, name: `TEST ${role}`, role });
     staff.push({ owner: user, email, password });
+    // A successful own-branch command proves these denials are role checks,
+    // rather than every request failing because the test session is invalid.
+    const authorized = await user.rpc("agri_command", { action: "snapshot", data: { organizationId: a.organizationId, branchId: a.branchId, transactionIds: [] } });
+    expect(authorized.error).toBeNull();
+    expect(authorized.data.products.some((product: { id: string }) => product.id === a.productId)).toBe(true);
     const common = {
       organizationId: a.organizationId, branchId: a.branchId,
       productId: a.productId, unitId: a.unitId, batchId: null, transferId: incomingTransfer,
@@ -437,6 +442,10 @@ test("staff cannot bypass stock controls, escalate access or read unrelated bran
   const unchanged = await a.owner.from("stock_transfers").select("state").eq("id", incomingTransfer).single();
   expect(unchanged.error).toBeNull();
   expect(unchanged.data!.state).toBe("in_transit");
+  await command(staff[2].owner, "receive_transfer", { organizationId: a.organizationId, branchId: a.branchId, transferId: incomingTransfer });
+  const received = await a.owner.from("stock_transfers").select("state").eq("id", incomingTransfer).single();
+  expect(received.error).toBeNull();
+  expect(received.data!.state).toBe("received");
 });
 
 test("a failed account verification never becomes an empty new-business result", async ({
