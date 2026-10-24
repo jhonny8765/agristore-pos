@@ -10,6 +10,7 @@ export function StoreBrand() {
         alt=""
         width={1242}
         height={1241}
+        loading="eager"
         unoptimized
       />
       <span>

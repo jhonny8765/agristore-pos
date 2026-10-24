@@ -854,6 +854,7 @@ export function StoreApp() {
                 alt="Better Yield’s agricultural product display and branded booth"
                 width={880}
                 height={960}
+                loading="eager"
                 unoptimized
               />
               <figcaption>From the Better Yield team</figcaption>
