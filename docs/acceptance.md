@@ -2,11 +2,15 @@
 
 Tests are executable evidence, not a blanket claim of production readiness.
 
+Latest hands-on result: [cashier browser rehearsal](cashier-rehearsal.md), October 25. The stale-price correction passed [GitHub Actions 40115606676](https://github.com/jhonny8765/agristore-pos/actions/runs/40115606676), source `e84f3fa`: 136 unit checks, 29 browser scenarios, 98 database assertions and restore, plus type/lint/build. Earlier evidence below remains historical.
+
+Stable staging serves `agristore-p2jt6wgqr-team-payaman2.vercel.app`, deployment `dpl_FBEmpkh2T6hKY1aLc8JehzUTVj7L`. The original signed-in tab applied the guarded update and reopened at Checkout. Its three original receipts remain Synced, queue clear, five branches retained, no open shift, empty basket and unchanged Magpet balances of 500 kg feeds / 400 kg fertilizer / 50 seed packets. No site data was cleared or hosted sale/stock record created by this rehearsal. The scoped visual disposition is **ship** for invalid-draft feedback, preserved valid totals and responsive containment; it is not whole-system certification.
+
 | Check | Evidence / status |
 |---|---|
-| Exact cash, conversions, authorization, immutable checkout IDs, queue recovery, import/export, ambiguous receiving requests, account-cache clearing, scoped recovery, update lifecycle and report safety | 126 Vitest checks passed locally and in CI; latest run linked below |
+| Exact cash, conversions, authorization, immutable checkout IDs, queue recovery, import/export, ambiguous receiving requests, account-cache clearing, scoped recovery, update lifecycle and report safety | 136 Vitest checks passed locally and in CI; latest run linked below |
 | Atomic server sales, RLS, role restrictions, price versions, transfers, owner counts, refunds, failed-PC recovery, revoked sessions and expandable branches | 98 pgTAP assertions passed against the disposable CI database, including 21 branch creation/retry/isolation checks |
-| Browser cash checkout, separate identical sales, offline reload, expired local authorization, fractional kilos, persistent browser-process restart, updates blocked by pending records | 16 Playwright checks passed in CI, including two new real-worker upgrade scenarios; the responsive check also verifies the basket shortcut and reset control |
+| Browser cash checkout, separate identical sales, offline reload, expired local authorization, fractional kilos, invalid-draft prices, persistent browser-process restart, updates blocked by pending records | 17 practice Playwright checks passed in CI, including real-worker upgrade scenarios; responsive checks also verify the basket shortcut and reset control |
 | Real Auth → registered PC → cashier switch → offline sale → PostgreSQL → UI | Passed against the disposable Supabase stack. Two identical purchases produced two sales, two payments and two stock deductions. A committed sale with a lost response retried its original UUID. Revoked access retained a third local sale without uploading it. |
 | Interrupted browser upload lock | Passed with a real persisted lock initially showing 44.1 seconds remaining; automatic processing resumed after expiry |
 | Deployed staging PWA | Protected staging passed real-browser cash checkout, correct change, offline service-worker reopening and retained practice queue; zero page errors and no hosted API requests from practice mode |

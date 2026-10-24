@@ -13,6 +13,7 @@ Scope: the five-branch staging test business, cashier checkout, inventory operat
 
 | Priority | Finding | Intended result | Status |
 |---|---|---|---|
+| P2 | Unfinished quantity drafts retain the previous valid price and weight conversion | Hide stale line amounts and conversion, retain other valid prices, block incomplete checkout | Fixed after hands-on cashier rehearsal; 136 unit and 29 browser checks passed |
 | P1 | Prior account catalog and cloud records survive an account change | Clear account caches on login/logout, discard late responses, preserve immutable local records | Implemented; cache preservation unit tests and full account-switch scenario passed |
 | P1 | Refund, recovery and PC-retirement actions use unsupported browser prompts | Inline consequence/reason forms with explicit confirm/cancel, retained input and visible failure | Implemented; actual staging sale refunded and stock restored |
 | P1 | Receipt history silently stops at the most recent 1,000 organization records | Branch-filtered keyset pagination with stable UUID ordering and exact timestamp precision | Implemented; real database test passed for 1,005 equal-microsecond sales |
@@ -27,6 +28,12 @@ Scope: the five-branch staging test business, cashier checkout, inventory operat
 | P2 | Narrow receipt tables clip the approval field's focus outline | Size forms to the actual scroll container and reserve outline clearance | Implemented; final visual verdict **ship** for the scored containment fix at desktop, 390px and 418px |
 
 No P0 issue was reproduced in the reviewed scope. This does not certify untested hardware or every possible workflow.
+
+## Hands-on cashier rehearsal — October 25
+
+The agent operated this PC's browser as a practice cashier: added/increased/decreased/removed products, typed half/quarter kilos and grams, rejected insufficient cash, confirmed an actual weight above a peso budget, completed separate identical purchases and reloaded saved receipts. Four original practice sales and their exact stock deductions survived reload. The normal typing exposed the stale-price bug above; a corrected mixed sale then saved ₱161.80 with ₱38.20 change and survived another reload. These are local practice records on isolated preview origins; no hosted business stock or sales were changed. See [the rehearsal results](cashier-rehearsal.md).
+
+Source `e84f3fa` passed [GitHub Actions 40115606676](https://github.com/jhonny8765/agristore-pos/actions/runs/40115606676): 136 unit tests, 17 practice-browser and 12 database-connected browser scenarios, 98 pgTAP assertions and the restore drill, plus type/lint/build. The independent visual disposition is **ship** for the scoped draft-price correction at desktop, the user's width and mobile. This does not replace the selected Windows cashier PC's physical reliability gate.
 
 ## Workflow checks
 

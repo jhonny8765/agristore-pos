@@ -8,7 +8,7 @@ The owner confirmed that customers ask for both weight and a peso amount. This c
 2. Type a weight such as `0.5`, `.5` or `1/4`. Alternatively change the weight-entry selector to **g** and enter the scale reading, such as `250`.
 3. Check the quantity, unit, batch where applicable, amount due and cash received before completing the sale.
 
-The cashier can type an unfinished `0.` without the field snapping back to the previous quantity. Checkout stays blocked until the entry becomes valid. A new blank weight entry contributes no provisional kilo to Amount due. Decrease never removes a fractional line; use its explicit Remove button. Switching selling units resets the quantity to one of the newly selected unit, so a fraction of a kilo cannot silently become a fraction of a sack.
+The cashier can type an unfinished `0.` without the field snapping back to the previous quantity. Checkout stays blocked until the entry becomes valid. Invalid or unfinished drafts show **Enter weight** or **Enter quantity**, hide the previous conversion and contribute no provisional amount; valid lines in the same basket keep their prices. A valid peso estimate remains priced but needs weighed confirmation. Decrease never removes a fractional line; use its explicit Remove button. Switching selling units resets the quantity to one of the newly selected unit, so a fraction of a kilo cannot silently become a fraction of a sack.
 
 Bulk stock on product tiles is shown in exact base kg or liters and includes every lot. Selling ¼ kg from 500 kg shows **499.75 kg**, instead of rounding 9.995 sacks back to “10 sacks.” The sale price beside the product still states its configured selling unit. Whole piece packs keep their pack name where the stock divides into complete packs; otherwise the remaining base pieces are shown. None of these figures claim that the warehouse contains a particular number of unopened bags.
 
@@ -37,6 +37,8 @@ Do not derive loose retail price by dividing the sack price. Do not use a loose-
 Use [the owner product-setup guide](product-setup.md) for the new sack, loose-kilo, sealed-item and measured-liter choices. Separate retail selling is explicitly enabled with its own positive price; it is not automatically added at ₱0.
 
 ## Counter rehearsal and remaining decisions
+
+The [October 25 hands-on cashier rehearsal](cashier-rehearsal.md) records add/increase/decrease/remove, fractional mixed baskets, insufficient cash, a revised peso request, separate identical purchases, reload recovery and the stale-price bug found through normal typing.
 
 Use the staging account's labelled stock to rehearse a full sack plus ¼ kg and ½ kg, a ₱50 request, a customer changing the requested amount, insufficient cash, removing one of two identical products, and a refund after synchronization. Compare scale reading, printed sale record, drawer cash and base-unit stock.
 

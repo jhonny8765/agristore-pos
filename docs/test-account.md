@@ -40,3 +40,9 @@ This pass used the existing approved count above for deployed visual and CSV che
 ## October 25 permission and precision follow-up
 
 No hosted employee, role, stock, count, transfer, product, shift or sale was added or changed for the new tests. Role assignments and deliberately large synthetic balances ran only in the disposable CI database. The current staging owner applied the guarded update, read/exported the existing approved count and retained all three original local receipts as Synced. The count's exported expected/counted values retain six decimal places, with numeric −0.25 difference. Five branches, three products, three sales, no open shifts and baseline 500/400/50 Magpet stock were verified. The existing owner tab remains at Checkout with an empty basket.
+
+## October 25 hands-on cashier rehearsal
+
+The [cashier browser rehearsal](cashier-rehearsal.md) created four local-only practice sales on the prior preview origin and one after fixing the invalid-draft price display on the new preview origin. Each origin's saved practice receipts survived reload; none upload to this hosted test business. Those practice tabs remain available with their receipt lists, and no saved records were deleted.
+
+Stable staging now serves application `e84f3fa` from `agristore-p2jt6wgqr-team-payaman2.vercel.app`, deployment `dpl_FBEmpkh2T6hKY1aLc8JehzUTVj7L`. The original owner tab updated through Settings, reopened at Checkout and retained all five branches, the three original Synced receipts and a clear queue. It displays 500 kg feeds / 400 kg fertilizer / 50 seed packets, no open shift and an empty basket. No hosted business mutation or site-data clearing was needed. Temporary viewport overrides were reset.
