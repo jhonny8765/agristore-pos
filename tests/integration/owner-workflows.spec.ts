@@ -196,6 +196,26 @@ test("confirmed deliveries and opening imports stay saved when the following sto
   await page.getByRole("button", { name: "Refresh", exact: true }).click();
   await page.getByRole("button", { name: "Inventory", exact: true }).click();
   await expect(page.getByRole("row").filter({ hasText: "Audit feeds" })).toContainText("3 kg");
+
+  // The shared completion path must also let the product form reset after a
+  // confirmed create, even though downloading the resulting catalog fails.
+  const setup = page.getByRole("form", { name: "Add a product", exact: true });
+  await setup.getByLabel("Product name", { exact: true }).fill("TEST confirmed packet");
+  await setup.getByLabel("SKU / barcode", { exact: true }).fill("TEST-CONFIRMED-PACKET");
+  await setup.getByLabel("How customers buy this product").selectOption("sealed");
+  await setup.getByLabel("Price per Packet (₱)", { exact: true }).fill("60");
+  await setup.getByLabel("Cost per Packet (₱)", { exact: true }).fill("40");
+  blockSnapshots = true;
+  await setup.getByRole("button", { name: "Add product", exact: true }).click();
+  await expect(setup.getByRole("status")).toContainText("TEST confirmed packet added");
+  await expect(setup.getByLabel("Product name", { exact: true })).toHaveValue("");
+  const created = await a.owner.from("products").select("id")
+    .eq("organization_id", a.organizationId).eq("sku", "TEST-CONFIRMED-PACKET");
+  expect(created.error).toBeNull();
+  expect(created.data).toHaveLength(1);
+  blockSnapshots = false;
+  await page.getByRole("button", { name: "Refresh", exact: true }).click();
+  await expect(page.getByRole("row").filter({ hasText: "TEST confirmed packet" })).toContainText("0 packet");
 });
 
 test("a failed account verification never becomes an empty new-business result", async ({
