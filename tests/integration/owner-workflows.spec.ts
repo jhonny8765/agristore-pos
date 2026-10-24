@@ -129,6 +129,37 @@ async function closeShift(page: Page) {
   ).toBeVisible();
 }
 
+test("a failed account verification never becomes an empty new-business result", async ({
+  page,
+}) => {
+  const a = await business();
+  await page.goto("/");
+  await login(page, a);
+  await page.route("**/auth/v1/user", (route) =>
+    route.fulfill({
+      status: 401,
+      contentType: "application/json",
+      body: JSON.stringify({
+        code: "bad_jwt",
+        msg: "TEST interrupted account verification",
+      }),
+    }),
+  );
+  await page.reload();
+  await expect(page.locator(".notice[role=alert]")).toContainText(
+    "Could not verify your store access",
+  );
+  await expect(
+    page.getByRole("button", { name: "Create business", exact: true }),
+  ).toHaveCount(0);
+  await page.unroute("**/auth/v1/user");
+  await page.reload();
+  await expect(
+    page.getByRole("button", { name: "Add Audit feeds", exact: true }),
+  ).toBeVisible();
+  await expect(page.locator(".notice[role=alert]")).toHaveCount(0);
+});
+
 test("owner product setup creates only enabled selling units with independent retail prices", async ({
   page,
 }) => {
@@ -166,6 +197,7 @@ test("owner product setup creates only enabled selling units with independent re
       .withTags(["wcag2a", "wcag2aa", "wcag21aa", "wcag22aa"])
       .analyze();
     expect(scan.violations).toEqual([]);
+    await form.screenshot({ path: `test-results/product-setup-${width}.png` });
   }
   await form.getByRole("button", { name: "Add product", exact: true }).click();
   await expect(form.getByRole("status")).toContainText(
@@ -467,9 +499,9 @@ test("owner accessibility covers keyboard navigation, narrow reflow and forced c
   });
   const productTile = page.locator(".product").filter({ has: addProduct });
   await expect(addProduct).toBeEnabled();
-  // The tile remains a full-size pointer target; its named button is also
-  // reachable by keyboard without treating every piece of metadata as a label.
-  await productTile.click({ position: { x: 16, y: 16 } });
+  // Explicit selling controls must stay separate; metadata does not trigger
+  // the default pack action. The named Add control remains keyboard operable.
+  await addProduct.press("Enter");
   await expect(
     page.getByRole("button", { name: "Remove Audit feeds", exact: true }),
   ).toBeVisible();

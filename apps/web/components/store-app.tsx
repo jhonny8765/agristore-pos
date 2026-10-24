@@ -221,6 +221,9 @@ export function StoreApp() {
     [products, setProducts] = useState<Product[]>([]),
     [stock, setStock] = useState<Map<string, string>>(new Map()),
     [sales, setSales] = useState<LocalSale[]>([]);
+  const [membershipCheck, setMembershipCheck] = useState<
+    "pending" | "confirmed" | "failed"
+  >("pending");
   const [cloud, setCloud] = useState<Record<string, Row[]>>({}),
     [lastSync, setLastSync] = useState<string>(),
     [snapshotAt, setSnapshotAt] = useState<string>();
@@ -396,6 +399,7 @@ export function StoreApp() {
     let alive = true;
     (async () => {
       setReady(false);
+      setMembershipCheck("pending");
       if (!practice && localStorage.getItem("agristore-mode") === "practice") {
         setPractice(true);
         return;
@@ -408,6 +412,7 @@ export function StoreApp() {
       setLease(saved);
       setBranchId(saved?.branchId ?? "");
       if (practice) {
+        setMembershipCheck("confirmed");
         setMember({
           organizationId: saved!.organizationId,
           organizationName: "Practice business",
@@ -419,7 +424,8 @@ export function StoreApp() {
         setBranchList([practiceBranch]);
         setSignedIn(true);
       } else {
-        setMember(await setting<Membership>(db, "membership"));
+        const cachedMember = await setting<Membership>(db, "membership");
+        setMember(cachedMember);
         setBranchList((await setting<Branch[]>(db, "branches")) ?? []);
         const {
           data: { session },
@@ -433,6 +439,15 @@ export function StoreApp() {
             found.find((m) => m.organizationId === saved?.organizationId) ??
             found[0];
           setMember(m);
+          setMembershipCheck(
+            m || (!cachedMember && !saved) ? "confirmed" : "failed",
+          );
+          if (!m && (cachedMember || saved))
+            fail(
+              new Error(
+                "No active store access was returned. Ask your owner to check your account. Saved sales remain on this PC.",
+              ),
+            );
           if (m) {
             const b = await fetchBranches(m.organizationId);
             setBranchList(b);
@@ -460,6 +475,7 @@ export function StoreApp() {
         await navigator.storage.persist();
       if (alive) setReady(true);
     })().catch((e) => {
+      setMembershipCheck("failed");
       fail(e);
       setReady(true);
     });
@@ -576,6 +592,7 @@ export function StoreApp() {
         return;
       }
       const found = await memberships();
+      setMembershipCheck("confirmed");
       if (found[0]) {
         const b = await fetchBranches(found[0].organizationId);
         const target = found[0].branchId ?? b[0]?.id;
@@ -960,6 +977,35 @@ export function StoreApp() {
             </div>
           </div>
         </section>
+      </main>
+    );
+  if (!member && membershipCheck !== "confirmed")
+    return (
+      <main className="setup-page">
+        <div className="setup-panel">
+          <ShieldCheck size={34} />
+          <h1>Check your store access.</h1>
+          <p>
+            Your account access could not be confirmed. Reconnect and retry, or
+            sign out and sign in again. Your saved sales remain on this PC.
+          </p>
+          {Notice}
+          <div className="peso-entry-actions">
+            <Button
+              disabled={!online || busy}
+              onClick={() => window.location.reload()}
+            >
+              Retry account check
+            </Button>
+            <Button
+              variant="ghost"
+              disabled={busy || !online}
+              onClick={() => void logout()}
+            >
+              Sign out
+            </Button>
+          </div>
+        </div>
       </main>
     );
   if (!member)

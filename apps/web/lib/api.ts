@@ -50,7 +50,10 @@ export async function memberships(): Promise<Membership[]> {
     data: { user },
     error,
   } = await supabase.auth.getUser();
-  if (error || !user) return [];
+  if (error || !user)
+    throw new Error(
+      "Could not verify your store access. Reconnect and try again, or sign out and sign in again. Saved sales remain on this PC.",
+    );
   const { data, error: queryError } = await supabase
     .from("staff_memberships")
     .select("*,organizations(name)")
