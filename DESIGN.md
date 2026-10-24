@@ -1,5 +1,5 @@
 ---
-name: AgriStore POS
+name: Better Yield POS (AgriStore)
 description: A cooperative stock book for practical cash checkout and traceable inventory.
 colors:
   forest: "#173e32"
@@ -88,7 +88,7 @@ components:
     padding: "25px"
 ---
 
-# Design System: AgriStore POS
+# Design System: Better Yield POS (AgriStore)
 
 ## Overview
 
@@ -98,11 +98,14 @@ The cooperative stock book pairs forest ink with warm paper, quiet rules, and pr
 
 Compact sans-serif typography and restrained tonal surfaces keep operational information close together. Flat category illustrations identify agricultural goods; borders and alignment organize the work rather than decorative effects.
 
+Better Yield POS is the customer-facing identity for Better Yield Agri Trading and Services; AgriStore remains the internal product identity. The original business logo and product-display photograph from the supplied Facebook page extend this established world on sign-in and navigation. The public tagline, “Your partner in every harvest.”, and crop nutrition / crop care context identify the business; configured branches, stock and prices remain operational records. Asset provenance is recorded in [docs/brand-assets.md](docs/brand-assets.md).
+
 **Key Characteristics:**
 
 - Forest navigation and primary actions against warm paper.
 - Ruled records, aligned figures, and explicit operational states.
 - Compact controls with rounded corners and clear focus outlines.
+- Original Better Yield business artwork on sign-in and navigation, with photography limited to desktop sign-in.
 
 ## Colors
 
@@ -164,6 +167,8 @@ Checkout pairs a flexible searchable catalog with a persistent receipt column (3
 
 At (730px) and below, checkout stacks into one column, retains a two-column product grid, and places the receipt below the catalog. A fixed forest basket summary near the bottom edge exposes the current total and a Review sale anchor. Checkout reserves bottom space (88px) for it. The icon rail remains present. General form grids and paired panels collapse to one column.
 
+Sign-in uses two equal columns above (730px): a forest identity panel and a centered form bounded to (365px). At (730px) and below, the identity panel and its photograph are hidden; the form shows the compact Better Yield identity and remains the primary task. This brand treatment retains the existing operational checkout composition.
+
 Spacing is compact and contextual, using the repeated frontmatter steps rather than a uniform large-card rhythm. Tables remain horizontally scrollable; numeric columns align right. Panel supporting prose is bounded to (72ch).
 
 Inline forms inside tables size to the available table viewport, wrap their copy and actions, and retain clearance for the shared focus outline. Expanding a row action keeps horizontal overflow inside the record panel.
@@ -188,6 +193,12 @@ The application is flat at rest: thin borders, pale fills, and forest navigation
 Corners are softly rounded, with the frontmatter field and control radii for interactions, product radius for catalog items, and panel radius for records and receipts. Small tags have the tighter tag radius. Outlines are generally (1px); the receipt total uses a dashed separator as a paper-record cue. Circular avatars and completion marks are specific identity and feedback shapes.
 
 ## Components
+
+### Business Identity
+
+Use the original local raster logo from `apps/web/public/brand/better-yield-logo.jpg` beside the Better Yield name and POINT OF SALE descriptor. The image preserves its full artwork with contain sizing, a white backing, and a (4px) corner radius. Its displayed size is (72px square) in desktop sign-in, (64px square) in mobile sign-in, and (42px square) in navigation. At the icon-rail breakpoint, the adjacent wordmark text hides while the logo and accessible home name remain.
+
+The local business photograph at `apps/web/public/brand/better-yield-display.jpg` appears only in the desktop sign-in identity panel. It spans the panel's available content width with height `clamp(180px, 24vh, 260px)`, cover cropping centered at (60%) vertically, and (8px) corners. Keep its descriptive alternative text and “From the Better Yield team” caption. The official Facebook link belongs beneath this sign-in identity content. These sourced images establish business identity; catalog tiles retain their existing category artwork.
 
 ### Buttons
 
@@ -271,6 +282,7 @@ Keep the top-bar branch picker at a minimum height (40px) across viewport sizes.
 
 ### Do:
 
+- **Do** retain the original Better Yield logo artwork and use the sourced business photograph only on desktop sign-in.
 - **Do** use the shared forest, paper, ink, muted, and rule tokens for new operational surfaces.
 - **Do** keep currency and quantities aligned and retain tabular numerals.
 - **Do** label selling units explicitly, preserve quantity drafts, and keep peso estimates blocked until actual weighed amounts are confirmed.
@@ -285,6 +297,7 @@ Keep the top-bar branch picker at a minimum height (40px) across viewport sizes.
 
 ### Don't:
 
+- **Don't** infer catalog stock, prices or configured branches from public brand photography or marketing information.
 - **Don't** substitute emoji or text glyphs for the existing line SVG icon vocabulary.
 - **Don't** turn operational surfaces into decorative illustrations or marketing panels.
 - **Don't** introduce heavy resting shadows on record panels.
