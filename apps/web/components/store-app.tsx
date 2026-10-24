@@ -1993,19 +1993,10 @@ export function StoreApp() {
                             ...context(),
                             ...product,
                           });
-                          if (lease) await sync();
-                          else
-                            await applySnapshot(
-                              db,
-                              await command<Snapshot>("snapshot", {
-                                ...context(),
-                                transactionIds: [],
-                              }),
-                            );
                           notify(
                             "Product added with its configured selling units and prices.",
                           );
-                        })
+                        }, true, true)
                       }
                     />
                   </section>
