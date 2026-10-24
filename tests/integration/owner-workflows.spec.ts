@@ -173,7 +173,7 @@ test("confirmed deliveries and opening imports stay saved when the following sto
   await page.getByRole("button", { name: "Refresh", exact: true }).click();
   await expect(page.locator(".notice[role=alert]")).toHaveCount(0);
   await page.getByRole("button", { name: "Inventory", exact: true }).click();
-  await expect(page.getByRole("row").filter({ hasText: "Audit feeds" })).toContainText("10002 kg");
+  await expect(page.getByRole("region",{name:/Product, Category$/}).getByRole("row").filter({ hasText: "Audit feeds" })).toContainText("10002 kg");
 
   const destination = a.branches[1].id as string;
   await page.getByRole("combobox", { name: "Current branch", exact: true }).selectOption(destination);
@@ -196,7 +196,7 @@ test("confirmed deliveries and opening imports stay saved when the following sto
   blockSnapshots = false;
   await page.getByRole("button", { name: "Refresh", exact: true }).click();
   await page.getByRole("button", { name: "Inventory", exact: true }).click();
-  await expect(page.getByRole("row").filter({ hasText: "Audit feeds" })).toContainText("3 kg");
+  await expect(page.getByRole("region",{name:/Product, Category$/}).getByRole("row").filter({ hasText: "Audit feeds" })).toContainText("3 kg");
 
   // The shared completion path must also let the product form reset after a
   // confirmed create, even though downloading the resulting catalog fails.
@@ -1122,7 +1122,7 @@ test("owner approvals work without browser dialogs, stock refreshes without a sh
   await expect(opening).not.toBeVisible();
   await page.getByRole("button", { name: "Inventory", exact: true }).click();
   await expect(
-    page.getByRole("row").filter({ hasText: "Audit feeds" }),
+    page.getByRole("region",{name:/Product, Category$/}).getByRole("row").filter({ hasText: "Audit feeds" }),
   ).toContainText("20 kg");
   await page.getByRole("button", { name: "Stock counts", exact: true }).click();
   await page
@@ -1148,7 +1148,7 @@ test("owner approvals work without browser dialogs, stock refreshes without a sh
   ).toBeVisible();
   await page.getByRole("button", { name: "Inventory", exact: true }).click();
   await expect(
-    page.getByRole("row").filter({ hasText: "Audit feeds" }),
+    page.getByRole("region",{name:/Product, Category$/}).getByRole("row").filter({ hasText: "Audit feeds" }),
   ).toContainText("19 kg");
   await page.getByRole("button", { name: "Transfers", exact: true }).click();
   await page
@@ -1174,7 +1174,7 @@ test("owner approvals work without browser dialogs, stock refreshes without a sh
   await expect(page.getByText("received", { exact: true })).toBeVisible();
   await page.getByRole("button", { name: "Inventory", exact: true }).click();
   await expect(
-    page.getByRole("row").filter({ hasText: "Audit feeds" }),
+    page.getByRole("region",{name:/Product, Category$/}).getByRole("row").filter({ hasText: "Audit feeds" }),
   ).toContainText("10001 kg");
 
   const b = await business("Other business product");
