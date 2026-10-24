@@ -4,6 +4,8 @@ Tests are executable evidence, not a blanket claim of production readiness.
 
 Latest hands-on result: [cashier browser rehearsal](cashier-rehearsal.md), October 25. The stale-price correction passed [GitHub Actions 40115606676](https://github.com/jhonny8765/agristore-pos/actions/runs/40115606676), source `e84f3fa`: 136 unit checks, 29 browser scenarios, 98 database assertions and restore, plus type/lint/build. Earlier evidence below remains historical.
 
+Subsequent signed-in staging rehearsal completed and synchronized receipt **B01-D1B4A824B132** for ₱89.50 with ₱10.50 change, independently verified its exact stock/payment effects, reloaded it, recorded a full linked reversal and closed its shift at ₱0 expected / ₱0 counted. The latest hosted baseline is **four retained sales, zero open shifts and unchanged 500/400/50 Magpet stock**, superseding the earlier three-sale count below. The existing retired browser setup was recovered through the owner control without clearing saved receipts. See [the detailed follow-up](cashier-rehearsal.md#signed-in-staging-account-follow-up).
+
 Stable staging serves `agristore-p2jt6wgqr-team-payaman2.vercel.app`, deployment `dpl_FBEmpkh2T6hKY1aLc8JehzUTVj7L`. The original signed-in tab applied the guarded update and reopened at Checkout. Its three original receipts remain Synced, queue clear, five branches retained, no open shift, empty basket and unchanged Magpet balances of 500 kg feeds / 400 kg fertilizer / 50 seed packets. No site data was cleared or hosted sale/stock record created by this rehearsal. The scoped visual disposition is **ship** for invalid-draft feedback, preserved valid totals and responsive containment; it is not whole-system certification.
 
 | Check | Evidence / status |
