@@ -9,7 +9,7 @@ const status = JSON.parse(execFileSync("npx", ["supabase", "status", "-o", "json
 if (status.API_URL !== "http://127.0.0.1:55321")
   throw new Error("Capacity fixtures must use the configured loopback stack.");
 const args = ["exec", "-i", "supabase_db_agristore-pos", "psql", "-U", "postgres", "-d", "postgres", "-At", "-v", "ON_ERROR_STOP=1"];
-const sql = input => execFileSync("docker", args, { input, encoding: "utf8", maxBuffer: 16 * 1024 * 1024 });
+const sql = (input, stream = false) => execFileSync("docker", args, { input, encoding: "utf8", maxBuffer: 16 * 1024 * 1024, ...(stream ? {stdio:["pipe","inherit","inherit"]} : {}) });
 const id = n => `71000000-0000-4000-8000-${String(n).padStart(12, "0")}`;
 const branches = [101, 102, 103, 104, 105];
 const owner = id(11), org = id(1), feed = id(301), seed = id(303), kilo = id(403), packet = id(404);
@@ -50,10 +50,14 @@ insert into public.sales(id,organization_id,branch_id,device_id,cashier_id,shift
 insert into public.sale_items(organization_id,sale_id,product_id,unit_id,quantity,factor,price,cost,line_total,price_version)
  select '${org}',c.id,p.product,p.unit,p.quantity,1,p.price,p.cost,p.total,1 from capacity_sales c cross join (values('${feed}'::uuid,'${kilo}'::uuid,0.25,3200,2400,800),('${seed}'::uuid,'${packet}'::uuid,1,2000,1000,2000)) p(product,unit,quantity,price,cost,total);
 insert into public.payments(organization_id,branch_id,sale_id,shift_id,amount,created_at) select '${org}',branch,id,shift,2800,occurred from capacity_sales;
-insert into public.inventory_movements(organization_id,branch_id,product_id,quantity,kind,source_id,created_by,created_at) select '${org}',branch,p.product,-p.quantity,'sale',c.id,'${owner}',occurred from capacity_sales c cross join (values('${feed}'::uuid,0.25),('${seed}'::uuid,1)) p(product,quantity);
+commit;
+${Array.from({length:110},(_,i)=>`begin;
+insert into public.inventory_movements(organization_id,branch_id,product_id,quantity,kind,source_id,created_by,created_at) select '${org}',branch,p.product,-p.quantity,'sale',c.id,'${owner}',occurred from capacity_sales c cross join (values('${feed}'::uuid,0.25),('${seed}'::uuid,1)) p(product,quantity) where c.n>${i*5000} and c.n<=${(i+1)*5000};
+commit;`).join("\n")}
+begin;
 insert into public.audit_events(organization_id,branch_id,actor_id,action,source_id,details,created_at) select '${org}',branch,'${owner}','record_sale',id,'{"flags":[]}',occurred from capacity_sales;
 commit;
-analyze public.sales; analyze public.sale_items; analyze public.payments; analyze public.inventory_movements; analyze public.audit_events;`);
+analyze public.sales; analyze public.sale_items; analyze public.payments; analyze public.inventory_movements; analyze public.audit_events;`,true);
 const seedSeconds = (performance.now() - started) / 1000;
 assert.equal(Number(sql(`select count(*) from public.sales where organization_id='${org}';`).trim()), 547500);
 const consistency = sql(`select count(*) from public.branch_inventory i where i.organization_id='${org}' and i.quantity<>(select sum(m.quantity) from public.inventory_movements m where m.organization_id=i.organization_id and m.branch_id=i.branch_id and m.product_id=i.product_id and m.batch_id is not distinct from i.batch_id);`);
