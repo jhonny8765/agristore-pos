@@ -47,6 +47,8 @@ import {
   X,
 } from "lucide-react";
 import Decimal from "decimal.js";
+import Image from "next/image";
+import { StoreBrand } from "./store-brand";
 import { SaleLineEditor } from "./sale-line-editor";
 import { productStock } from "../lib/stock-display";
 import {
@@ -827,7 +829,7 @@ export function StoreApp() {
     return (
       <div className="loading">
         <Sprout size={34} />
-        <p>Opening AgriStore…</p>
+        <p>Opening Better Yield…</p>
       </div>
     );
   if (!signedIn)
@@ -835,35 +837,42 @@ export function StoreApp() {
       <main className="auth-page">
         <section className="auth-story">
           <div className="wordmark">
-            <Sprout size={30} /> AgriStore<span>POS</span>
+            <StoreBrand />
           </div>
           <div>
             <h1>
-              A clear record.
-              <br />A better day
-              <br />
-              at the store.
+              Your partner in
+              <br />every harvest.
             </h1>
             <p>
-              Every sale, every sack, every branch.
-              <br />
-              Keep your store moving, even when the internet doesn’t.
+              Better Yield Agri Trading and Services
+              <br />Crop nutrition · Crop care
             </p>
+            <figure className="auth-photo">
+              <Image
+                src="/brand/better-yield-display.jpg"
+                alt="Better Yield’s agricultural product display and branded booth"
+                width={880}
+                height={960}
+                unoptimized
+              />
+              <figcaption>From the Better Yield team</figcaption>
+            </figure>
             <div className="auth-proof">
               <ShieldCheck size={21} />
               <span>
-                Cash checkout · Growing with your stores · Offline ready
+                Cash checkout · Stock records · Your branches
               </span>
             </div>
           </div>
-          <span className="auth-foot">
-            Built for the everyday work of an agri store.
-          </span>
+          <a className="auth-foot" href="https://www.facebook.com/profile.php?id=100054562864276" target="_blank" rel="noreferrer">
+            Better Yield on Facebook <ArrowRight size={14} />
+          </a>
         </section>
         <section className="auth-form">
           <div className="auth-form-inner">
             <span className="small-brand">
-              <Sprout size={22} /> AgriStore POS
+              <StoreBrand />
             </span>
             <h2>
               {authMode === "login"
@@ -1021,12 +1030,9 @@ export function StoreApp() {
         <a
           href="#main"
           className="wordmark"
-          aria-label="AgriStore Point of Sale home"
+          aria-label="Better Yield Point of Sale home"
         >
-          <Sprout size={28} />
-          <span>
-            AgriStore <small>POINT OF SALE</small>
-          </span>
+          <StoreBrand />
         </a>
         <nav aria-label="Main navigation">
           {navigation
@@ -3111,7 +3117,7 @@ export function StoreApp() {
                 <section className="panel">
                   <h2>Application & recovery</h2>
                   <p className="muted">
-                    Install AgriStore from Edge’s app menu after opening your
+                    Install Better Yield from Edge’s app menu after opening your
                     shift online. Keep this dedicated browser profile and its
                     site data.
                   </p>
@@ -3182,7 +3188,7 @@ export function StoreApp() {
                         }
                         if (!waiting) {
                           setUpdateFeedback(
-                            "No new download is available. If an earlier update is not visible, close and reopen AgriStore. Keep this browser's site data.",
+                            "No new download is available. If an earlier update is not visible, close and reopen Better Yield. Keep this browser's site data.",
                           );
                           notify("No new app download is available.");
                           return;
@@ -3204,14 +3210,14 @@ export function StoreApp() {
                         let restarting = false;
                         try {
                           setUpdateFeedback(
-                            "Update downloaded. Installing it before reopening AgriStore…",
+                            "Update downloaded. Installing it before reopening Better Yield…",
                           );
                           const result = await activateReadyUpdate(
                             waiting,
                             canRestart,
                             () => {
                               setUpdateFeedback(
-                                "Update installed. Reopening AgriStore… If this window stays open, close it and reopen AgriStore. Keep this browser's site data.",
+                                "Update installed. Reopening Better Yield… If this window stays open, close it and reopen Better Yield. Keep this browser's site data.",
                               );
                               const destination = new URL(window.location.href);
                               destination.searchParams.set(
@@ -3225,7 +3231,7 @@ export function StoreApp() {
                           restarting = result === "restarting";
                           if (!restarting)
                             setUpdateFeedback(
-                              "Update ready. Finish checkout and confirm every pending record before reopening AgriStore.",
+                              "Update ready. Finish checkout and confirm every pending record before reopening Better Yield.",
                             );
                         } catch (error) {
                           setUpdateFeedback(
@@ -3596,7 +3602,7 @@ export function StoreApp() {
         <footer className="workspace-footer">
           <span>
             <Sprout size={14} />
-            AgriStore POS
+            Better Yield POS
           </span>
           <span>
             {practice

@@ -155,7 +155,7 @@ test("a requested update reopens an uncontrolled window while another window kee
       .click();
     await expect(
       page.getByText(
-        "Update ready. Finish checkout and confirm every pending record before reopening AgriStore.",
+        "Update ready. Finish checkout and confirm every pending record before reopening Better Yield.",
         { exact: true },
       ),
     ).toBeVisible();

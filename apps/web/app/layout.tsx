@@ -3,10 +3,10 @@ import "@fontsource-variable/dm-sans";
 import "@fontsource-variable/manrope";
 import "./globals.css";
 export const metadata: Metadata = {
-  title: "AgriStore POS",
+  title: "Better Yield POS",
   description: "Cash checkout and inventory for your agricultural stores.",
   manifest: "/manifest.webmanifest",
-  appleWebApp: { capable: true, title: "AgriStore POS" },
+  appleWebApp: { capable: true, title: "Better Yield POS" },
 };
 export const viewport: Viewport = {
   width: "device-width",

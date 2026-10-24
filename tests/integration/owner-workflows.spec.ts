@@ -310,7 +310,7 @@ test("owner accessibility covers keyboard navigation, narrow reflow and forced c
   await page.keyboard.press("Tab");
   await expect(
     page.getByRole("link", {
-      name: "AgriStore Point of Sale home",
+      name: "Better Yield Point of Sale home",
       exact: true,
     }),
   ).toBeFocused();
@@ -329,7 +329,7 @@ test("owner accessibility covers keyboard navigation, narrow reflow and forced c
     return (Math.max(left, right) + 0.05) / (Math.min(left, right) + 0.05);
   }
   const ring = await page
-    .getByRole("link", { name: "AgriStore Point of Sale home", exact: true })
+    .getByRole("link", { name: "Better Yield Point of Sale home", exact: true })
     .evaluate((el) => ({
       ring: getComputedStyle(el).outlineColor,
       background: getComputedStyle(el.closest(".sidebar")!).backgroundColor,

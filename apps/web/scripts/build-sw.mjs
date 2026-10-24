@@ -22,6 +22,8 @@ export async function buildOffline(distDir, projectDir) {
           "icon-192.png",
           "icon-512.png",
           "manifest.webmanifest",
+          "brand/better-yield-logo.jpg",
+          "brand/better-yield-display.jpg",
         ].map(async (name) => ({
           url: "/" + name,
           revision: createHash("sha256")

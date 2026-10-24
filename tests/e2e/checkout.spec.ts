@@ -54,6 +54,10 @@ test("checkout survives offline reload and does not send practice sales", async 
   await expect(
     page.getByRole("button", { name: "Add Grower feeds" }),
   ).toBeVisible();
+  await expect(page.locator(".sidebar .store-logo")).toHaveJSProperty(
+    "naturalWidth",
+    1242,
+  );
   await page.getByRole("button", { name: "Sync center" }).click();
   await expect(page.locator("tbody tr")).toHaveCount(1);
   expect(requests).toHaveLength(0);
