@@ -177,6 +177,8 @@ History registers retain the branch bar, connection state, navigation, and main 
 
 All record table viewports share named, keyboard-focusable scrolling regions. Narrow page headings wrap their actions beneath the heading instead of widening the workspace.
 
+Stock-control records use fixed table columns with wrapping product, lot, reason, and evidence context. The action column occupies (44%) and a quantity column, where present, occupies (12%); its approval form fills the available column and its actions wrap. At (720px) and below, each stock-control row becomes a vertically stacked record with left-aligned, explicitly labeled quantities and its approval directly beneath the context. Preserve the native table, column-header scopes, and named keyboard-focusable table region: the header remains available to assistive technology while visually clipped. This stacking is specific to stock controls; the inventory table and other history registers retain their existing scrolling layouts.
+
 ## Elevation & Depth
 
 The application is flat at rest: thin borders, pale fills, and forest navigation establish hierarchy. Product hover receives a faint lift; the fixed mobile basket uses a stronger ambient shadow to remain distinguishable over scrolled content. Other record panels have no resting shadow.
@@ -250,9 +252,25 @@ Receipt removal controls and unit selectors have a minimum target height (32px);
 
 ### Inline Approvals
 
-Refund, recovery approval, and PC retirement expand into a reason form beside the affected record. Explain the consequence before the labeled reason field, then provide an explicit confirmation action and Cancel. Reuse the existing fields, buttons, and error notice. Opening brings the form into view and focuses its reason field; closing returns focus to the triggering action.
+Refund, recovery approval, PC retirement, and stock-control outcomes expand into a reason form beside the affected record. Explain the consequence before the labeled reason field, then provide an explicit confirmation action and Cancel. Reuse the existing fields, buttons, and error notice. Opening brings the form into view and focuses its reason field; closing returns focus to the triggering action.
 
 Keep the entered reason visible when validation or submission fails, associate the inline error with the field, and disable duplicate confirmation while pending. Clear the reason after confirmed success. Preserve these contextual forms instead of moving operational approvals into browser-native prompts.
+
+### Stock Controls
+
+Extend Inventory with the existing white, ruled panels for investigations, held goods, and damage or other stock issues. Keep the navigation, branch bar, and inventory table in their existing positions. Supporting copy explains the physical action and its consequence before the records or form; use the shared compact section hierarchy rather than an additional display treatment.
+
+Investigations pair the issue, recorded date, and source identifier with a native Recorded details disclosure and an inline owner resolution. Expanded evidence preserves line breaks and wraps within (55ch), including long identifiers. Show the open investigation count and the number of oldest records displayed. Resolution records evidence and outcome; its copy does not imply that a count adjustment establishes the cause of missing stock or that resolution changes stock.
+
+Held-goods records keep the product, recorded lot or fallback identifier, base unit, and reason beside the exact remaining quantity. State that held goods are excluded from saleable stock and must remain physically separate. The inline outcome form groups a base-unit quantity and disposition choice before the inspection reason, then Record outcome and Cancel. Release guidance requires inspection and excludes expired goods; disposal and supplier return do not deduct saleable stock again.
+
+Pending stock issues pair the recorded quantity with its product and lot context and owner approval. The submission form uses the shared responsive field grid for product / lot, exact base quantity, issue category, physical disposition, and evidence. Distinguish submission awaiting approval from the approval that changes saleable stock. Keep online, loading, refresh failure, and owner-review states explicit; a message that no held goods are loaded is not a verified absence of held goods. Use the existing success status and error alert treatment without inferring a successful write from an empty list.
+
+### Storage Status
+
+Browser storage feedback is a plain local status paragraph beside the outline Check storage protection action, with vertical breathing room (16px). Keep it within the existing operational panel and disable the action while checking. Show the actual persistence result and estimated browser quota usage, or explain that the estimate or check is unavailable.
+
+Persistence permission and quota estimates do not establish backup coverage, Windows free disk space, or readiness for real sales. When estimated space is low, guidance directs synchronization and export of pending records and restoration of space without clearing this site's data. Unavailable or failed checks direct the operator to the PC checks; they do not receive a success treatment.
 
 ### Receipt History
 
@@ -310,6 +328,9 @@ Keep the top-bar branch picker at a minimum height (40px) across viewport sizes.
 - **Do** provide a visible focus outline and explicit text for connection, stock, and save states.
 - **Do** preserve the responsive receipt access and fixed mobile basket summary on checkout.
 - **Do** keep approval reasons, errors, and keyboard focus within the affected record, with forms contained inside horizontally scrolling tables.
+- **Do** keep stock-control context and inline approval together when records stack at (720px), retaining native table headers and explicit quantity labels.
+- **Do** distinguish investigations, physically held goods, pending stock issues, and confirmed outcomes in local copy, with exact base quantities.
+- **Do** describe browser storage protection and quota estimates as their actual reported states, preserving the instruction to retain site data.
 - **Do** give history table scrolling regions accessible names, keyboard access, and the shared visible focus outline.
 - **Do** keep transfer and count context readable beside its record, with explicit base units and traceable identifiers in CSV exports.
 - **Do** retain stronger control boundaries, surface-appropriate focus outlines, and explicit current or pressed states.
@@ -329,3 +350,5 @@ Keep the top-bar branch picker at a minimum height (40px) across viewport sizes.
 - **Don't** imply that a loaded-row CSV includes matching records that have not been loaded.
 - **Don't** describe the open app window as current solely because no new download is available, or force other windows to reload.
 - **Don't** invite resubmission of a confirmed action after a refresh failure, or show opening-stock confirmation before CSV validation succeeds.
+- **Don't** treat unloaded held goods as a verified empty stock state or a recorded investigation outcome as proof of a shortage's cause.
+- **Don't** describe storage permission or estimated browser quota as proof of backup coverage, Windows disk capacity, or operational readiness.

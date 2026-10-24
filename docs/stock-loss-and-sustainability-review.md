@@ -1,6 +1,6 @@
 # Better Yield: stock-loss prevention and long-term operation
 
-Research and source review: **October 25, 2026**. Application reviewed: `e84f3fa`; latest preceding documentation: `234d924`. This report proposes controls and implementation work. It does not claim those additions are already implemented.
+Research and source review: **October 25, 2026**. Application reviewed: `e84f3fa`; latest preceding documentation: `234d924`. The findings below preserve that pre-implementation audit. Subsequent fixes, tests, staging status and remaining release gates are tracked in [stock-control verification](stock-control-verification.md); staff procedures are in [stock-control operations](stock-control-operations.md).
 
 ## Assessment
 
