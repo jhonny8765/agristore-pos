@@ -317,7 +317,7 @@ export function StoreApp() {
     setLastSync(await setting<string>(db, "lastSync"));
     setSnapshotAt(await setting<string>(db, "snapshotAsOf"));
   }, [db, lease, member, branchId]);
-  const refreshCloud = useCallback(async () => {
+  const refreshCloud = useCallback(async (forceStock = false) => {
     if (practice || !member || !branchId || !navigator.onLine) return;
     const generation = contextGeneration.current;
     const request = ++cloudRequest.current;
@@ -334,7 +334,7 @@ export function StoreApp() {
             organizationId: member.organizationId,
             branchId,
           }),
-      !lease
+      !lease || forceStock
         ? command<Snapshot>("snapshot", {
             organizationId: member.organizationId,
             branchId,
@@ -537,7 +537,7 @@ export function StoreApp() {
       alive = false;
     };
   }, [fail]);
-  const run = async (fn: () => Promise<void>, refresh = true) => {
+  const run = async (fn: () => Promise<void>, refresh = true, forceStock = false) => {
     if (operationBusy.current)
       return new Error(
         "Wait for the current operation to finish, then try again.",
@@ -546,12 +546,22 @@ export function StoreApp() {
     setBusy(true);
     setError("");
     const generation = contextGeneration.current;
+    let completed = false;
     try {
       await fn();
+      completed = true;
       if (generation === contextGeneration.current && refresh) {
-        await refreshCloud();
+        await refreshCloud(forceStock);
       }
     } catch (e) {
+      if (completed) {
+        // The write is confirmed. A failed read must not turn it into a failed
+        // submission or invite a second stock movement/product/supplier.
+        setError(
+          "Your action completed, but the latest records could not be refreshed. Do not submit it again. Reconnect and select Refresh.",
+        );
+        return;
+      }
       fail(e);
       return e instanceof Error
         ? e
@@ -2100,16 +2110,9 @@ export function StoreApp() {
                           },
                           "receiptId",
                         );
-                        await applySnapshot(
-                          db,
-                          await command<Snapshot>("snapshot", {
-                            ...context(),
-                            transactionIds: sales.map((s) => s.id),
-                          }),
-                        );
                         form.reset();
-                        notify("Delivery received and stock updated.");
-                      });
+                        notify("Delivery recorded.");
+                      }, true, true);
                     }}
                   >
                     <Field label="Supplier">
@@ -2183,13 +2186,15 @@ export function StoreApp() {
                     <form
                       onSubmit={(e) => {
                         e.preventDefault();
-                        const f = new FormData(e.currentTarget);
+                        const form = e.currentTarget;
+                        const f = new FormData(form);
                         void run(async () => {
                           await command("create_supplier", {
                             ...context(),
                             name: inputValue(f, "name"),
                             contact: inputValue(f, "contact"),
                           });
+                          form.reset();
                           notify("Supplier added.");
                         });
                       }}
@@ -2266,18 +2271,11 @@ export function StoreApp() {
                                 },
                                 "receiptId",
                               );
-                              await applySnapshot(
-                                db,
-                                await command<Snapshot>("snapshot", {
-                                  ...context(),
-                                  transactionIds: sales.map((s) => s.id),
-                                }),
-                              );
+                              setOpeningImport(undefined);
                               notify(
                                 "Opening stock imported. Verify the Inventory totals before selling.",
                               );
-                              setOpeningImport(undefined);
-                            });
+                            }, true, true);
                           }}
                         >
                           <p>
@@ -2443,7 +2441,8 @@ export function StoreApp() {
                 <form
                   onSubmit={(e) => {
                     e.preventDefault();
-                    const f = new FormData(e.currentTarget);
+                    const form = e.currentTarget;
+                    const f = new FormData(form);
                     const [productId, batchId] = inputValue(f, "stock").split(
                       ":",
                     );
@@ -2461,6 +2460,7 @@ export function StoreApp() {
                         },
                         "transferId",
                       );
+                      form.reset();
                       if (lease) await sync();
                       notify(
                         "Stock dispatched. It remains in transit until received.",
@@ -2595,7 +2595,8 @@ export function StoreApp() {
                 <form
                   onSubmit={(e) => {
                     e.preventDefault();
-                    const f = new FormData(e.currentTarget);
+                    const form = e.currentTarget;
+                    const f = new FormData(form);
                     const [productId, batchId] = inputValue(f, "stock").split(
                       ":",
                     );
@@ -2613,6 +2614,7 @@ export function StoreApp() {
                         },
                         "countId",
                       );
+                      form.reset();
                       notify(
                         "Count saved for owner review. No stock has been adjusted.",
                       );

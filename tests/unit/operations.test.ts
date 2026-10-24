@@ -8,7 +8,7 @@ import {
   retryOperation,
 } from "../../apps/web/lib/operations";
 import { setupDB, uuid } from "./fixtures";
-import type { PosDatabase } from "@agristore/offline";
+import { PosDatabase } from "@agristore/offline";
 const databases: PosDatabase[] = [];
 const body = {
   organizationId: uuid(1),
@@ -23,12 +23,71 @@ async function db() {
 }
 afterEach(async () => {
   vi.resetAllMocks();
-  for (const d of databases.splice(0)) {
-    d.close();
+  const opened = databases.splice(0);
+  opened.forEach((d) => d.close());
+  for (const d of new Map(opened.map((d) => [d.name, d])).values())
     await d.delete();
-  }
 });
+function deferred<T>() {
+  let resolve!: (value: T) => void;
+  let reject!: (error: Error) => void;
+  const promise = new Promise<T>((yes, no) => {
+    resolve = yes;
+    reject = no;
+  });
+  return { promise, resolve, reject };
+}
 describe("online inventory operation recovery", () => {
+  it("two windows reuse one durable ID for the same unconfirmed delivery", async () => {
+    const first = await db();
+    const second = new PosDatabase(first.name);
+    databases.push(second);
+    await second.open();
+    const started = deferred<void>();
+    const response = deferred<Record<string, unknown>>();
+    let requests = 0;
+    vi.mocked(command).mockImplementation(async () => {
+      if (++requests === 2) started.resolve();
+      return response.promise;
+    });
+    const uploads = Promise.all([
+      onlineOperation(first, uuid(4), "receive_stock", body, "receiptId"),
+      onlineOperation(second, uuid(4), "receive_stock", body, "receiptId"),
+    ]);
+    await started.promise;
+    const ids = vi.mocked(command).mock.calls.map(([, data]) => data.receiptId);
+    response.resolve({ ok: true });
+    await uploads;
+    expect(new Set(ids).size).toBe(1);
+    expect(await pendingOperations(first)).toHaveLength(0);
+  });
+  it.each(["success", "failure"])(
+    "a late %s for an old request cannot erase or replace a newer pending request",
+    async (outcome) => {
+      const d = await db();
+      vi.mocked(command).mockRejectedValueOnce(new Error("Response lost"));
+      await onlineOperation(d, uuid(4), "receive_stock", body, "receiptId").catch(() => {});
+      const old = (await pendingOperations(d))[0];
+      const started = deferred<void>();
+      const response = deferred<Record<string, unknown>>();
+      vi.mocked(command).mockImplementationOnce(async () => {
+        started.resolve();
+        return response.promise;
+      });
+      const slow = retryOperation(d, uuid(4), old).catch(() => {});
+      await started.promise;
+      vi.mocked(command).mockResolvedValueOnce({ ok: true });
+      await retryOperation(d, uuid(4), old);
+      vi.mocked(command).mockRejectedValueOnce(new Error("New delivery response lost"));
+      await onlineOperation(d, uuid(4), "receive_stock", { ...body, reference: "DELIVERY-2" }, "receiptId").catch(() => {});
+      const newer = (await pendingOperations(d))[0];
+      if (outcome === "success") response.resolve({ ok: true });
+      else response.reject(new Error("Late old timeout"));
+      await slow;
+      expect(await pendingOperations(d)).toEqual([newer]);
+      expect(newer.data.receiptId).not.toBe(old.data.receiptId);
+    },
+  );
   it("retries an ambiguous response using its original receipt ID", async () => {
     const d = await db();
     vi.mocked(command).mockRejectedValueOnce(new Error("Response lost"));

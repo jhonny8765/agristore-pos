@@ -79,4 +79,21 @@ describe("exact quantities and cash", () => {
     expect(() => parseOpeningCSV('"bad', [])).toThrow();
     expect(() => parseOpeningCSV("sku,quantity\nA,1", [])).toThrow();
   });
+  it.each([
+    ["sku,unit,quantity,lot,expiresOn,quantity\nFEED-01,Sack,2,,,3", "duplicate"],
+    ["sku,unit,quantity,lot,expiresOn\nFEED-01,Sack,2,,,extra", "columns"],
+    ["sku,unit,quantity,lot,expiresOn\nFEED-01,Sack,2", "columns"],
+    ['sku,unit,quantity,lot,expiresOn\nFEED-01,Sack,2,"Lot"junk,', "quote"],
+    ["sku,unit,quantity,lot,expiresOn\nFEED-01,Sack,2,TEST,2026-02-30", "expiry"],
+  ])("rejects ambiguous or invalid opening file: %s", (csv, error) => {
+    expect(() => parseOpeningCSV(csv, [product])).toThrow(error);
+  });
+  it("rejects a fractional sealed piece before opening-stock confirmation", () => {
+    const sealed = { ...product, baseUnit: "piece", units: [{ ...product.units[1], factor: "1" }] };
+    expect(() => parseOpeningCSV("sku,unit,quantity,lot,expiresOn\nFEED-01,Kilo,0.5,,", [sealed])).toThrow("whole");
+  });
+  it("keeps valid BOM, CRLF, reordered columns, escaped quotes and leap-day expiry", () => {
+    const rows = parseOpeningCSV('\uFEFFquantity,unit,sku,expiresOn,lot\r\n0.5,Kilo,FEED-01,2028-02-29,"Lot ""Mlang"", A"\r\n', [product]);
+    expect(rows[0]).toMatchObject({ quantity: "0.5", lot: 'Lot "Mlang", A', expiresOn: "2028-02-29" });
+  });
 });

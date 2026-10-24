@@ -129,6 +129,75 @@ async function closeShift(page: Page) {
   ).toBeVisible();
 }
 
+test("confirmed deliveries and opening imports stay saved when the following stock refresh fails", async ({ page }) => {
+  const a = await business();
+  await page.goto("/");
+  await login(page, a);
+  await page.getByRole("button", { name: "Purchasing", exact: true }).click();
+  await expect(page.getByLabel("Delivery / invoice reference", { exact: true })).toBeVisible();
+  let blockSnapshots = false;
+  const sent: string[] = [];
+  await page.route("**/rest/v1/rpc/agri_command", async (route) => {
+    const request = route.request().postDataJSON();
+    if (request.action === "snapshot" && blockSnapshots) {
+      await route.fulfill({ status: 503, contentType: "application/json",
+        body: JSON.stringify({ code: "PGRST001", message: "TEST stock refresh unavailable" }) });
+    } else if (request.action === "receive_stock") {
+      sent.push(request.data.receiptId);
+      const response = await route.fetch();
+      expect(response.ok()).toBe(true);
+      blockSnapshots = true;
+      await route.fulfill({ response });
+    } else await route.continue();
+  });
+  await page.getByLabel("Product and unit", { exact: true }).selectOption(a.unitId);
+  await page.getByLabel("Delivery / invoice reference", { exact: true }).fill("TEST confirmed delivery");
+  await page.getByLabel("Quantity received", { exact: true }).fill("2");
+  await page.getByRole("button", { name: "Receive stock", exact: true }).click();
+  await expect(page.getByRole("alert")).toContainText("Your action completed");
+  await expect(page.getByRole("status")).toContainText("Delivery recorded.");
+  await expect(page.getByLabel("Delivery / invoice reference", { exact: true })).toHaveValue("");
+  await expect(page.getByLabel("Quantity received", { exact: true })).toHaveValue("");
+  // A second click now meets native required-field validation, not another write.
+  await page.getByRole("button", { name: "Receive stock", exact: true }).click();
+  expect(sent).toHaveLength(1);
+  const receipts = await a.owner.from("purchase_receipts").select("id")
+    .eq("organization_id", a.organizationId).eq("reference", "TEST confirmed delivery");
+  expect(receipts.error).toBeNull();
+  expect(receipts.data).toHaveLength(1);
+  const stock = await a.owner.from("branch_inventory").select("quantity")
+    .eq("branch_id", a.branchId).eq("product_id", a.productId).single();
+  expect(stock.error).toBeNull();
+  expect(Number(stock.data!.quantity)).toBe(10002);
+  blockSnapshots = false;
+  await page.getByRole("button", { name: "Refresh", exact: true }).click();
+  await expect(page.getByRole("alert")).toHaveCount(0);
+  await page.getByRole("button", { name: "Inventory", exact: true }).click();
+  await expect(page.getByRole("row").filter({ hasText: "Audit feeds" })).toContainText("10002 kg");
+
+  const destination = a.branches[1].id as string;
+  await page.getByRole("combobox", { name: "Current branch", exact: true }).selectOption(destination);
+  await page.getByRole("button", { name: "Purchasing", exact: true }).click();
+  await page.getByLabel("Opening stock CSV", { exact: true }).setInputFiles({
+    name: "TEST-confirmed-opening.csv", mimeType: "text/csv",
+    buffer: Buffer.from("sku,unit,quantity,lot,expiresOn\nAUDIT-FEED,Kilo,3,,\n"),
+  });
+  const opening = page.getByRole("form", { name: "Confirm opening stock", exact: true });
+  await opening.getByRole("checkbox").check();
+  await opening.getByRole("button", { name: "Confirm opening stock import", exact: true }).click();
+  await expect(page.getByRole("alert")).toContainText("Your action completed");
+  await expect(opening).toHaveCount(0);
+  const imported = await a.owner.from("purchase_receipts").select("id")
+    .eq("organization_id", a.organizationId).eq("branch_id", destination).eq("source", "opening");
+  expect(imported.error).toBeNull();
+  expect(imported.data).toHaveLength(1);
+  expect(sent).toHaveLength(2);
+  blockSnapshots = false;
+  await page.getByRole("button", { name: "Refresh", exact: true }).click();
+  await page.getByRole("button", { name: "Inventory", exact: true }).click();
+  await expect(page.getByRole("row").filter({ hasText: "Audit feeds" })).toContainText("3 kg");
+});
+
 test("a failed account verification never becomes an empty new-business result", async ({
   page,
 }) => {
@@ -803,6 +872,8 @@ test("owner approvals work without browser dialogs, stock refreshes without a sh
   await page
     .getByRole("button", { name: "Submit count for approval", exact: true })
     .click();
+  await expect(page.getByLabel("Physical quantity in base units", { exact: true })).toHaveValue("");
+  await expect(page.getByLabel("Count notes / reason", { exact: true })).toHaveValue("");
   await page
     .getByRole("button", { name: "Approve adjustment", exact: true })
     .click();
@@ -823,6 +894,7 @@ test("owner approvals work without browser dialogs, stock refreshes without a sh
   await page
     .getByRole("button", { name: "Dispatch stock", exact: true })
     .click();
+  await expect(page.getByLabel("Quantity in base units (kg / liter / piece)", { exact: true })).toHaveValue("");
   await expect(page.getByText("in transit", { exact: true })).toBeVisible();
   await page
     .getByRole("combobox", { name: "Current branch", exact: true })

@@ -18,25 +18,40 @@ export async function onlineOperation(
 ) {
   const key = `operation:${action}:${data.organizationId}:${data.branchId}`;
   const fingerprint = stableJSON(data);
-  let pending = await setting<PendingOperation>(db, key);
-  if (
-    pending &&
-    (pending.fingerprint !== fingerprint || pending.actorId !== actorId)
-  )
-    throw new Error(
-      "An earlier operation needs confirmation. Retry its original request in the Sync center first.",
-    );
-  if (!pending) {
-    pending = {
-      key,
-      action,
-      data: { ...data, [idField]: crypto.randomUUID() },
-      fingerprint,
-      actorId,
+  // IndexedDB serializes this read/write transaction across browser windows.
+  // Network activity must stay outside it so the durable request commits first.
+  const pending = await db.transaction("rw", db.settings, async () => {
+    const previous = await setting<PendingOperation>(db, key);
+    if (previous) {
+      if (previous.fingerprint !== fingerprint || previous.actorId !== actorId)
+        throw new Error(
+          "An earlier operation needs confirmation. Retry its original request in the Sync center first.",
+        );
+      return previous;
+    }
+    const created: PendingOperation = {
+      key, action, data: { ...data, [idField]: crypto.randomUUID() },
+      fingerprint, actorId,
     };
-    await setSetting(db, key, pending);
-  }
+    await setSetting(db, key, created);
+    return created;
+  });
   return retryOperation(db, actorId, pending);
+}
+async function settleOperation(
+  db: PosDatabase,
+  pending: PendingOperation,
+  error?: string,
+) {
+  await db.transaction("rw", db.settings, async () => {
+    const current = await setting<PendingOperation>(db, pending.key);
+    // A different window may have confirmed this request and started another.
+    // A late response must never replace, erase or resurrect either request.
+    if (!current || current.actorId !== pending.actorId ||
+      current.action !== pending.action || stableJSON(current.data) !== stableJSON(pending.data)) return;
+    if (error === undefined) await db.settings.delete(pending.key);
+    else await setSetting(db, pending.key, { ...current, error });
+  });
 }
 export async function retryOperation(
   db: PosDatabase,
@@ -49,18 +64,16 @@ export async function retryOperation(
     );
   try {
     const result = await command(pending.action, pending.data);
-    await db.settings.delete(pending.key);
+    await settleOperation(db, pending);
     return result;
   } catch (e) {
     const code = (e as { code?: string })?.code;
     // A database rejection is an authoritative rollback. An interrupted response is ambiguous and retained.
     if (code && /^(P0001|22|23)/.test(code))
-      await db.settings.delete(pending.key);
+      await settleOperation(db, pending);
     else
-      await setSetting(db, pending.key, {
-        ...pending,
-        error: e instanceof Error ? e.message : "Response interrupted",
-      });
+      await settleOperation(db, pending,
+        e instanceof Error ? e.message : "Response interrupted");
     throw e;
   }
 }
