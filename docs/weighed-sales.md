@@ -4,22 +4,22 @@ The owner confirmed that customers ask for both weight and a peso amount. This c
 
 ## Sell a requested weight
 
-1. Add the product to the receipt. Choose **Kilo**, or use **¼ kg**, **½ kg**, **¾ kg** or **1 kg**. These shortcuts select the configured kilo selling unit and its retail price.
+1. Select **By weight** directly on the product card. The POS selects its configured retail kilo price and focuses an empty quantity field. Alternatively add the usual unit, then choose **Kilo** or a **¼ kg**, **½ kg**, **¾ kg** or **1 kg** shortcut.
 2. Type a weight such as `0.5`, `.5` or `1/4`. Alternatively change the weight-entry selector to **g** and enter the scale reading, such as `250`.
 3. Check the quantity, unit, batch where applicable, amount due and cash received before completing the sale.
 
-The cashier can type an unfinished `0.` without the field snapping back to the previous quantity. Checkout stays blocked until the entry becomes valid. Decrease never removes a fractional line; use its explicit Remove button. Switching selling units resets the quantity to one of the newly selected unit, so a fraction of a kilo cannot silently become a fraction of a sack.
+The cashier can type an unfinished `0.` without the field snapping back to the previous quantity. Checkout stays blocked until the entry becomes valid. A new blank weight entry contributes no provisional kilo to Amount due. Decrease never removes a fractional line; use its explicit Remove button. Switching selling units resets the quantity to one of the newly selected unit, so a fraction of a kilo cannot silently become a fraction of a sack.
 
 Bulk stock on product tiles is shown in exact base kg or liters and includes every lot. Selling ¼ kg from 500 kg shows **499.75 kg**, instead of rounding 9.995 sacks back to “10 sacks.” The sale price beside the product still states its configured selling unit. Whole piece packs keep their pack name where the stock divides into complete packs; otherwise the remaining base pieces are shown. None of these figures claim that the warehouse contains a particular number of unopened bags.
 
 ## Sell a requested peso amount
 
-1. Select **By peso amount** on a product with a configured kilo unit.
+1. Select **By peso amount** directly on a product card with a configured kilo unit, or on an existing receipt line. Focus moves to the budget field.
 2. Enter the customer's budget and select **Estimate weight**. This is a conservative whole-gram suggestion using the retail kilo price.
 3. Weigh the goods. Enter the **actual scale reading**, in kg or g, in the quantity field above. The estimate does not replace measurement or claim a particular scale accuracy.
 4. Check the final price. If it exceeds the requested budget, reduce the weight or agree the final amount with the customer. Select **Confirm weighed amount**, receive cash and complete the sale.
 
-At the staging price of ₱35/kg, ₱50 suggests 1.428 kg and ₱49.98. An actual reading of 1.430 kg costs ₱50.05. The POS shows that difference; it does not change the retail price or invent a discount to force an exact budget. Peso entry can be canceled to restore the original receipt line. An unconfirmed estimate blocks checkout even after leaving Checkout and returning.
+At the staging price of ₱35/kg, ₱50 suggests 1.428 kg and ₱49.98. An actual reading of 1.430 kg costs ₱50.05. The POS shows that difference; it does not change the retail price or invent a discount to force an exact budget. Canceling a newly added peso entry removes that new line; canceling a change to an existing line restores its previous quantity and unit. An unconfirmed estimate blocks checkout even after leaving Checkout and returning.
 
 The quantity, unit, conversion factor, batch, recorded unit price and centavo-rounded amount enter the same existing immutable sale contract. Completed fractional sales receive the same offline persistence, permanent transaction ID, sync/retry and linked-refund handling as whole-unit sales. The budget is a temporary cashier aid, not a second price or saved customer record. Uncompleted basket drafts survive navigation within the running app; they are temporary and are not promised to survive closing or reloading it. Completed sales are saved before success appears.
 
@@ -33,6 +33,8 @@ The quantity, unit, conversion factor, batch, recorded unit price and centavo-ro
 | Batch-tracked or expiring products | Configure the actual lot and expiry. Select the appropriate batch at sale/receiving. Existing expired-batch checks apply to fractional sales too. |
 
 Do not derive loose retail price by dividing the sack price. Do not use a loose-goods workflow as an instruction to open, divide or relabel sealed products: the owner must confirm which goods are actually sold loose and how they are packaged.
+
+Use [the owner product-setup guide](product-setup.md) for the new sack, loose-kilo, sealed-item and measured-liter choices. Separate retail selling is explicitly enabled with its own positive price; it is not automatically added at ₱0.
 
 ## Counter rehearsal and remaining decisions
 

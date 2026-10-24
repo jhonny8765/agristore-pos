@@ -216,13 +216,21 @@ Category filters use compact rounded rectangular buttons, with transparent defau
 
 ### Cards / Containers
 
-White record panels use the panel radius, a Fine Rule outline, and panel spacing. On mobile the panel padding reduces to (18px). Product records are semantic articles with the product radius and a flat tinted category strip with a line SVG icon; their name, unit, price, and available stock remain in the content area. A separately named Add button extends its pointer target over the entire tile through a pseudo-element; keyboard focus outlines the parent article. Product hover changes the outline and adds the subtle elevation above.
+White record panels use the panel radius, a Fine Rule outline, and panel spacing. On mobile the panel padding reduces to (18px). Product records are semantic articles with the product radius and a flat tinted category strip with a line SVG icon; their name, unit, price, and available stock remain in the content area. The primary product action explicitly names its selling unit, such as Add Sack or Add 1 kg. This full-width action has a minimum height (36px); keyboard focus also outlines the parent article. Product hover changes the outline and adds the subtle elevation above.
+
+Configured loose-kilo products add a ruled group beneath the stock line with the independent retail price per kg, By weight, and By peso amount. These separate bordered actions wrap within the tile and retain a minimum height (36px). Keep each action's accessible name specific to its product and selling method; the article itself remains a record rather than a single overlapping click target.
 
 When adding is unavailable before a shift opens or in the stock view, change only the Add control's surface and text. Keep product metadata fully legible; do not dim the whole article.
 
 ### Inputs / Fields
 
-White fields have the stronger Control Rule border, the field radius, and the padding defined in frontmatter. Labels sit above their fields with a gap (6px). Search is a bordered container with an inline icon and a borderless text input. Quantity steppers share the stronger boundary and keep editable text wide enough for decimal and fraction entry. Each quantity has a visible label naming its selling unit; the kilo/gram choice remains beside the field. Preserve incomplete input while the cashier types, associate blocking feedback with the affected field, and keep the receipt in view. Cash received is right-aligned and enlarged to (17px). Disabled fields use a subdued pale surface. Checkboxes use a (24px) square control.
+White fields have the stronger Control Rule border, the field radius, and the padding defined in frontmatter. Labels sit above their fields with a gap (6px). Search is a bordered container with an inline icon and a borderless text input. Quantity steppers share the stronger boundary and keep editable text wide enough for decimal and fraction entry. Each quantity has a visible label naming its selling unit; the kilo/gram choice remains beside the field. Quantity and customer-budget accessible names retain the displayed unit or peso currency and identify the product. Preserve incomplete input while the cashier types, associate blocking feedback with the affected field, and keep the receipt in view. Cash received is right-aligned and enlarged to (17px). Disabled fields use a subdued pale surface. Checkboxes use a (24px) square control.
+
+### Product Setup
+
+Use the shared two-column form, collapsing to one column on mobile. Begin with product identity and How customers buy this product, offering Sacks / bags, Loose kilos only, Sealed items / pieces, Measured liters, and Other pack size. Reveal the relevant selling-unit name, pack conversion, and explicitly labeled price and cost fields after the setup is selected. Currency belongs in the field labels.
+
+Additional loose kilos, measured liters, or individual pieces are an explicit checkbox choice for packed goods. Place their separate retail price and cost fields beneath the opt-in, beside guidance that retail price is set independently rather than divided from the pack price. Summarize stock conversion and permitted quantity entry in a full-width block bounded by Fine Rules, using the muted helper type (12px) with line-height (1.6). Sealed individual items retain whole-piece guidance. Keep save errors beside the action as alert text and confirmed success beneath the form as status text; preserve entered values on failure.
 
 ### Navigation
 
@@ -232,11 +240,11 @@ Expose the current destination with the current-page state and change navigation
 
 ### Current Sale
 
-The receipt groups heading, items, and payment into ruled sections. Each line exposes its configured price and selling unit above an editable three-part quantity stepper. Loose kilo products additionally offer kilo/gram entry, a readable equivalent weight, and wrapping quarter-, half-, three-quarter-, and whole-kilo shortcuts. Retain the selected retail kilo price when using these controls. Whole-piece goods keep their ordinary unit controls. Decreasing a quantity stops before zero; removal is a separately named action.
+The receipt groups heading, items, and payment into ruled sections. Each line exposes its configured price and selling unit above an editable three-part quantity stepper. Loose kilo products additionally offer kilo/gram entry, a readable equivalent weight, and wrapping quarter-, half-, three-quarter-, and whole-kilo shortcuts. By weight and By peso amount remain explicit inline selling-method actions. Retain the selected retail kilo price when using these controls. Whole-piece goods keep their ordinary unit controls. Decreasing a quantity stops before zero; removal is a separately named action.
 
 By peso amount expands an inline form within the affected receipt line, separated by a fine rule. Place the labeled customer budget beside Estimate weight, then explain that the whole-gram estimate must be weighed and the actual scale weight entered. Keep Confirm weighed amount and Cancel together beneath that guidance. Focus returns to the quantity field after an estimate. Preserve drafts and confirmation feedback when the operator changes application views. If the recorded weight exceeds the budget, state the resulting price and the next action locally.
 
-Unfinished or invalid quantities and unconfirmed peso estimates show Correction Red field feedback and a receipt-level message, and disable cash completion. Amount due remains larger, forest-colored, and aligned opposite its label. The completion button spans the payment area. A completed sale replaces the editable receipt with explicit saved-state feedback; printed output isolates the receipt in an (80mm) column.
+Unfinished or invalid quantities and unconfirmed peso estimates show Correction Red field feedback and a receipt-level message, and disable cash completion. A newly opened weight or budget entry starts with a blank quantity; its unfinished line contributes no provisional kilo to Amount due. Amount due remains larger, forest-colored, and aligned opposite its label. The completion button spans the payment area. A completed sale replaces the editable receipt with explicit saved-state feedback; printed output isolates the receipt in an (80mm) column.
 
 Receipt removal controls and unit selectors have a minimum target height (32px); removal controls also have a minimum width (32px). Quantity and peso controls wrap inside the receipt width, and the receipt item area expands with its content on narrow screens.
 
@@ -286,6 +294,8 @@ Keep the top-bar branch picker at a minimum height (40px) across viewport sizes.
 - **Do** use the shared forest, paper, ink, muted, and rule tokens for new operational surfaces.
 - **Do** keep currency and quantities aligned and retain tabular numerals.
 - **Do** label selling units explicitly, preserve quantity drafts, and keep peso estimates blocked until actual weighed amounts are confirmed.
+- **Do** expose configured loose selling methods in catalog records and retain displayed units and currency in field accessible names.
+- **Do** keep additional retail units opt-in, price them independently, and show stock conversion beside product setup.
 - **Do** provide a visible focus outline and explicit text for connection, stock, and save states.
 - **Do** preserve the responsive receipt access and fixed mobile basket summary on checkout.
 - **Do** keep approval reasons, errors, and keyboard focus within the affected record, with forms contained inside horizontally scrolling tables.
