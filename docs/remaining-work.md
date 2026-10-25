@@ -1,6 +1,6 @@
 # Remaining release work
 
-October 25, 2026. This list distinguishes missing workflows from failures reproduced by a test. Completed controls and executable evidence are in [stock-control verification](stock-control-verification.md). The [owner guide](owner-next-steps.md) covers actions requiring the actual PC or business records.
+Updated October 26, 2026. This list distinguishes missing workflows from failures reproduced by a test. Completed controls and executable evidence are in [stock-control verification](stock-control-verification.md). The [owner guide](owner-next-steps.md) covers actions requiring the actual PC or business records. The latest staging follow-up fixes save-time lot expiry, stale stock responses and cross-window sign-out; all 158 unit, 34 browser and 150 database checks plus the isolated restore passed. This does not close the hardware, business-data or production-restore gates below.
 
 ## Before real sales
 

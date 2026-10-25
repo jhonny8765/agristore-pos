@@ -17,6 +17,8 @@ For each unexplained difference, preserve the original sheets and delivery, sale
 - **Damage, spillage, expiry or internal use:** submit the actual quantity, category, physical disposition and evidence. The owner checks and approves it. A pending request alone does not change stock. Do not submit an issue and a count adjustment for the same physical shortage.
 - **Held goods:** identify and segregate them physically. The owner records release, disposal or supplier return. Releasing increases saleable stock once; disposing held goods does not deduct saleable stock again. Expired lots cannot be released for sale.
 
+Checkout checks the current lot again when saving, including across Manila midnight. An expiry or missing-lot error means that attempt was not saved: remove the item, check the physical lot and use the owner's stock-issue process where appropriate. Do not give out expired goods or change the PC clock to complete a sale. A previously completed sale keeps its original identity when uploading later; never re-enter it just because its lot has since expired.
+
 Keep disputed supplier goods separate and documented until their final accepted quantity/disposition is established. The app does not replace supplier agreements or an inspection record.
 
 ## Close each branch
@@ -37,6 +39,8 @@ Settings shows browser persistence and estimated browser usage. Persistence redu
 Export recovery files while unresolved records exist, keep every numbered part on a separate protected device, and repeat the export after later sales. Recovery exports prioritize unresolved transactions; confirmed history remains retained on the PC and server. Restore all parts, in any order, while online and signed in to the correct branch. Repeating a part is safe. Server acknowledgments are verified before restored records stop affecting local availability.
 
 Keep the app open and connected until uploads finish. Updates must wait for the current checkout/cart and unresolved records to be protected. Never uninstall, clear browser storage or reset the PC as a synchronization fix.
+
+Use one dedicated cashier window. A sign-out in any window sharing that browser profile also signs out the other windows and clears their temporary baskets; completed saved sales remain recoverable. Sign in to the correct store before uploading them. Late responses from an older stock download or signed-out session cannot replace the current cache. If a download reports that a newer request replaced it, refresh the current branch and check the existing queue rather than re-entering completed purchases.
 
 ## Release and maintenance responsibilities
 

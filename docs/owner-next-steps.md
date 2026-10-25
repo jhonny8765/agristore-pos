@@ -2,6 +2,8 @@
 
 Use this with the [pilot sign-off](pilot-checklist.md). The app is still in staging. Automated results are recorded in [stock-control verification](stock-control-verification.md); real PC and store checks remain open.
 
+The October 26 staging update passed the complete automated test suite. On an already open app, finish the basket, synchronize pending records and use **Settings → Application & recovery** to download/apply the available update. Follow its reopen message and keep the same browser profile and site data. Do not create another business or reset storage to get the new version.
+
 ## 1. Choose the cashier PC
 
 Choose one Windows PC for the first branch. Record its Windows and Edge versions, available disk space, printer model and weighing-scale model. Use a normal, dedicated Edge profile, not InPrivate. Keep the same profile and staging address throughout the test:
@@ -11,6 +13,8 @@ https://agristore-pos-staging-team-payaman2.vercel.app/
 Sign in with the existing test account; do not create a duplicate business. Use **Test Branch 4** for this rehearsal. Have the owner register this PC online, download the catalog and install the app through Edge's app-install control. Keep the account password private. Before real use, staff must have their own accounts with the correct branch and role.
 
 Open **Settings → Application & recovery → Check storage protection**. Save the exact result. “Persistent storage granted” is required for the browser pilot, alongside successful outage/restart tests. If protection is not granted, or completed sales disappear, stop the pilot and report the result. Do not clear the site's data or uninstall the app as a fix. The Windows SQLite fallback is still the planned alternative if the browser-storage gate fails.
+
+Use one dedicated cashier window. Signing out in another window signs this window out too and clears its unfinished basket. Completed saved sales remain on the PC for recovery; sign back in to the correct store before synchronizing. Do not use an unsaved basket as a receipt or repeat a completed purchase after signing in.
 
 ## 2. Run a test day on that PC
 
@@ -34,6 +38,8 @@ Record the actual disconnect time. Stay disconnected for at least **60 real minu
 With exactly the 200 examples and no other movements, expected totals are **55 kg sold and ₱1,925 sales**. A 250 kg starting test balance becomes **195 kg**, before and after synchronization. These expectations do not apply if the starting balance, price or transactions differ.
 
 Reconnect and sign in again if requested. Leave the app open until every sale is acknowledged and the queue is clear. Compare IDs, totals and stock before closing the shift online with the simulated net cash. Keep an export of the evidence. A recovery export contains unresolved records; download **every numbered part** while records are pending and copy them to a separate protected device when available. If downloads are blocked offline, preserve the PC/profile and retry once connected. Do not re-enter pending purchases as new sales.
+
+If checkout reports an expired lot, that attempt has not been saved. Remove the expired item from the basket, physically separate the goods and ask the owner to record the appropriate hold/disposition. This includes a basket left open across midnight in Philippine time. If the app reports that a newer stock download or store change replaced a request, refresh the current branch; do not create another sale to repair the download.
 
 Report the PC details, storage-protection result, start/end/restart times, sale count, sales/cash/stock totals and any error text. Screenshots may omit names and account details. Do not send a password. A missing completed sale, duplicate server deduction or false save-success fails the test: preserve the profile and recovery files, and stop real use.
 
