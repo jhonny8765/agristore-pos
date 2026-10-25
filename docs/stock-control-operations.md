@@ -2,7 +2,7 @@
 
 This guide describes the new staging stock-control workflows. Follow the release evidence in `docs/stock-control-verification.md` before using them with real inventory. Test records cannot explain the reported ₱170,000 discrepancy.
 
-The replacement [blind-count procedure](blind-counts.md) is implemented and locally testable, but not assigned to staging yet. Its two sealed counters and separate approving owner replace the old typed-witness procedure only after the release gate passes. Until then, the current witness-name field is an attestation rather than independent authenticated approval.
+The [blind-count procedure](blind-counts.md) is now released to staging: two different counter accounts seal observations, then an owner who entered neither approves. The old typed-witness procedure cannot authorize new adjustments. Historical approved counts remain retained.
 
 ## Establish a trustworthy starting point
 
@@ -28,7 +28,7 @@ Keep disputed supplier goods separate and documented until their final accepted 
 1. Synchronize all cashier sales and finish unresolved online operations. Investigate records requiring owner review; do not clear browser data to remove a warning.
 2. Count drawer cash, compare it with the shift expectation, record differences and close every branch shift online.
 3. Resolve pending physical stock movements before counting. Count saleable goods independently; exclude held goods and stock still in transit. Weigh loose goods using a checked scale.
-4. Recount material differences with a second person and record their name and evidence. If the owner made the first count, the app requires a matching recount and witness name before approval. This is an owner-attested witness, not a separate authenticated approval or proof that two people attended.
+4. Complete the blind first count and independent recount under two different stock-authorized accounts. Both entries seal before comparisons are revealed. A third person with owner access approves; an owner who entered either count cannot approve it. Disagreement requires investigation and a fresh count. All differences require the independent step in this release; typed witness names cannot replace sign-in.
 5. Approve only a current count. Any intervening inventory movement requires a fresh count. Approval creates an adjustment and retains the discrepancy investigation; it does not establish the cause.
 6. Review Inventory's open investigations, held goods and pending issues. Review transfers still in transit, overdue synchronization and unusual refunds/adjustments. Keep a separate assigned-person/due-date log until assignment and escalation are implemented in the app.
 
