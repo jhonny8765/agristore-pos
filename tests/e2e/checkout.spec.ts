@@ -131,7 +131,7 @@ test("a lot that expires while the basket is open cannot become a completed offl
     };tx.oncomplete=()=>{d.close();resolve();};tx.onerror=()=>reject(tx.error);};open.onerror=()=>reject(open.error);
   }));
   await page.reload();
-  await page.getByRole('button',{name:'Add Grower feeds',exact:true}).click();
+  await page.getByRole('button',{name:'Add Grower feeds'}).click();
   await page.getByLabel('Cash received',{exact:true}).fill('2000');
   await context.setOffline(true);
   await page.clock.setSystemTime(new Date('2026-10-25T16:00:01Z'));

@@ -132,7 +132,7 @@ async function closeShift(page: Page) {
 test("sign-out in a second window clears the first window and rejects its late private stock response",async({page,context})=>{
  const a=await business();await page.goto('/');await login(page,a);
  const other=await context.newPage();await other.goto('/');
- await expect(other.getByRole('button',{name:'Add Audit feeds',exact:true})).toBeVisible();
+ await expect(other.getByRole('button',{name:'Add Audit feeds'})).toBeVisible();
  let release!:()=>void,started!:()=>void;
  const held=new Promise<void>(yes=>{release=yes;});const captured=new Promise<void>(yes=>{started=yes;});
  let intercepted=false;
@@ -147,7 +147,7 @@ test("sign-out in a second window clears the first window and rejects its late p
   await expect(other.getByLabel('Email address',{exact:true})).toBeVisible();
   await expect(page.getByLabel('Email address',{exact:true})).toBeVisible();
   release();
-  await expect(page.getByRole('button',{name:'Add Audit feeds',exact:true})).toHaveCount(0);
+  await expect(page.getByRole('button',{name:'Add Audit feeds'})).toHaveCount(0);
   await expect.poll(()=>page.evaluate(()=>new Promise<number>((resolve,reject)=>{
    const open=indexedDB.open('agristore-live-v1');open.onsuccess=()=>{const d=open.result;const tx=d.transaction('products','readonly');const count=tx.objectStore('products').count();count.onsuccess=()=>resolve(count.result);tx.oncomplete=()=>d.close();tx.onerror=()=>reject(tx.error);};open.onerror=()=>reject(open.error);
   }))).toBe(0);
