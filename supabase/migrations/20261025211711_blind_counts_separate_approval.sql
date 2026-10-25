@@ -38,6 +38,14 @@ declare
  prod public.products; ident uuid; observation uuid; qty numeric; revision bigint; result jsonb; count_stage text;
  reason text:=btrim(data->>'reason'); note text:=btrim(data->>'notes'); cursor_at timestamptz; cursor_id uuid;
 begin
+ if action='dashboard' then
+  result:=app_private.command_before_blind_counts(action,data);
+  return result||jsonb_build_object('pendingCounts',
+   (select count(*) from app_private.blind_counts c where c.organization_id=org and c.state not in ('approved','cancelled')
+    and (c.branch_id=branch or exists(select 1 from public.staff_memberships m where m.organization_id=org and m.user_id=uid and m.active and m.role='owner')))
+   +(select count(*) from public.stock_counts c where c.organization_id=org and c.state='pending' and c.count_method='legacy'
+    and (c.branch_id=branch or exists(select 1 from public.staff_memberships m where m.organization_id=org and m.user_id=uid and m.active and m.role='owner'))));
+ end if;
  if action not in ('start_blind_count','record_blind_count','count_workspace','cancel_blind_count','submit_count','approve_count') then
   return app_private.command_before_blind_counts(action,data);
  end if;
