@@ -10,6 +10,7 @@ if (
 
 export default defineConfig({
   testDir: "tests/integration",
+  outputDir: "test-results/integration",
   workers: 1,
   fullyParallel: false,
   timeout: 180_000,

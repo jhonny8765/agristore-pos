@@ -29,3 +29,5 @@ Customer-facing identity: Better Yield POS, for Better Yield Agri Trading and Se
 
 ## Product Principles
 Completed sales survive interruption. History is append-only. Each checkout is distinct. Failed sync stays visible. Permissions are enforced in the database.
+
+The locally implemented blind-count follow-up requires two different branch-authorized counter accounts and an owner who entered neither observation. Expected stock and unpaired quantities/notes remain private; comparisons are shown only after both entries seal. Any disagreement or intervening branch stock movement requires a fresh count. There is no self-approval or typed-witness override. This follow-up remains unreleased until its complete Supabase integration gate passes; see docs/blind-counts.md.

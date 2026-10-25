@@ -907,6 +907,8 @@ test("owner accessibility covers keyboard navigation, narrow reflow and forced c
       page.getByRole("button", { name: navigationName, exact: true }),
     ).toHaveAttribute("aria-current", "page");
     await expect(page.locator("#main h1")).toBeFocused();
+    if (screen === "Stock counts")
+      await page.getByRole("button", {name:"Review sealed counts",exact:true}).click();
     if (
       ["Overview", "Purchasing", "Transfers", "Stock counts"].includes(screen)
     )
@@ -1154,7 +1156,7 @@ test("owner approvals work without browser dialogs, stock refreshes without a sh
   ).toContainText("20 kg");
   await page.getByRole("button", { name: "Stock counts", exact: true }).click();
   await page.getByRole("button", { name: "Review sealed counts", exact: true }).click();
-  await sealedCount(a,{organizationId:a.organizationId,branchId:a.branchId,productId:a.productId,batchId:null,countId:randomUUID(),counted:"19",reason:"TEST verify approved discrepancy"});
+  await sealedCount(a,{organizationId:a.organizationId,branchId:a.branches[1].id,productId:a.productId,batchId:null,countId:randomUUID(),counted:"19",reason:"TEST verify approved discrepancy"});
   await page.getByRole("button",{name:"Refresh counts",exact:true}).click();
   await page.getByRole("button",{name:"Approve adjustment",exact:true}).click();
   await page.getByLabel("Approval evidence",{exact:true}).fill("TEST checked independently");

@@ -179,6 +179,8 @@ All record table viewports share named, keyboard-focusable scrolling regions. Na
 
 Stock-control records use fixed table columns with wrapping product, lot, reason, and evidence context. The action column occupies (44%) and a quantity column, where present, occupies (12%); its approval form fills the available column and its actions wrap. At (720px) and below, each stock-control row becomes a vertically stacked record with left-aligned, explicitly labeled quantities and its approval directly beneath the context. Preserve the native table, column-header scopes, and named keyboard-focusable table region: the header remains available to assistive technology while visually clipped. This stacking is specific to stock controls; the inventory table and other history registers retain their existing scrolling layouts.
 
+Blind-count records use a single ruled article flow with wrapping context and identifiers. Entry and approval forms are bounded to (44rem). Sealed comparisons use two equal columns with gaps (12px vertically, 24px horizontally), collapsing to one column at (730px). The entry / review actions wrap with a gap (12px); long recorded lot identifiers remain inside the panel on narrow screens.
+
 ## Elevation & Depth
 
 The application is flat at rest: thin borders, pale fills, and forest navigation establish hierarchy. Product hover receives a faint lift; the fixed mobile basket uses a stronger ambient shadow to remain distinguishable over scrolled content. Other record panels have no resting shadow.
@@ -252,7 +254,7 @@ Receipt removal controls and unit selectors have a minimum target height (32px);
 
 ### Inline Approvals
 
-Refund, recovery approval, PC retirement, and stock-control outcomes expand into a reason form beside the affected record. Explain the consequence before the labeled reason field, then provide an explicit confirmation action and Cancel. Reuse the existing fields, buttons, and error notice. Opening brings the form into view and focuses its reason field; closing returns focus to the triggering action.
+Refund, recovery approval, PC retirement, stock-control outcomes, and blind-count approval or closure expand into a reason form beside the affected record. Explain the consequence before the labeled reason field, then provide an explicit confirmation action and Cancel. Reuse the existing fields, buttons, and error notice. Opening brings the form into view and focuses its reason field; closing returns focus to the triggering action.
 
 Keep the entered reason visible when validation or submission fails, associate the inline error with the field, and disable duplicate confirmation while pending. Clear the reason after confirmed success. Preserve these contextual forms instead of moving operational approvals into browser-native prompts.
 
@@ -265,6 +267,16 @@ Investigations pair the issue, recorded date, and source identifier with a nativ
 Held-goods records keep the product, recorded lot or fallback identifier, base unit, and reason beside the exact remaining quantity. State that held goods are excluded from saleable stock and must remain physically separate. The inline outcome form groups a base-unit quantity and disposition choice before the inspection reason, then Record outcome and Cancel. Release guidance requires inspection and excludes expired goods; disposal and supplier return do not deduct saleable stock again.
 
 Pending stock issues pair the recorded quantity with its product and lot context and owner approval. The submission form uses the shared responsive field grid for product / lot, exact base quantity, issue category, physical disposition, and evidence. Distinguish submission awaiting approval from the approval that changes saleable stock. Keep online, loading, refresh failure, and owner-review states explicit; a message that no held goods are loaded is not a verified absence of held goods. Use the existing success status and error alert treatment without inferring a successful write from an empty list.
+
+### Blind Stock Counts
+
+Extend the cooperative stock book with the existing white panel, compact headings, shared controls, and Fine Rules between count records. Keep Enter blind counts and Review sealed counts as separate views, using forest for the selected action, outline for the other, and an explicit pressed state. The entry view hides expected stock, prior quantities, and the count history register. Start with product / batch and counting scope / reason, then present the eligible signed-in counter's labeled physical quantity and notes beside its Seal action. Explain that every branch shift must be closed and synchronized and that only saleable goods are counted.
+
+Keep product, lot, expiry, base unit, scope / reason, recorded date, and state together in each wrapping article. Resolve catalog context only from the matching product and batch. If a recorded lot is unavailable, retain its identifier and show Expiry unavailable; reserve No lot for a record with no batch. Use explicit text for first entry, independent recount, ready review, disputed, stale, approved, and closed states. A sealed first entry directs its counter to another signed-in person for the recount.
+
+Reveal expected stock, first count, independent recount, and difference from expected only in the review view after both entries are sealed. Use muted comparison labels above stronger tabular figures with the base unit repeated; keep both sets of notes and counter identities beneath them. An owner who entered neither count may open the shared inline Approval evidence form when both entries agree and the record is current. Explain the linked adjustment and retained investigation before Confirm adjustment. An owner who counted sees the separate-owner instruction; a typed witness name does not replace sign-in. Disputed and stale records explain why a fresh count is needed, and Close without adjustment retains evidence through the shared reason form.
+
+Keep Refresh counts, open count, loading, connection failures, saved-step feedback, and Load older counts local to the panel. Practice and cashier views show their explicit access guidance. Place the existing count history register beneath the review view; its action text points to the matching blind record, requests a fresh count for pending legacy records, or identifies retained history rather than offering direct approval.
 
 ### Storage Status
 

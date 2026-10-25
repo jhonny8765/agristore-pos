@@ -25,6 +25,18 @@ alter table public.stock_counts add column count_method text not null default 'l
 alter table app_private.blind_counts enable row level security;
 alter table app_private.count_observations enable row level security;
 revoke all on app_private.blind_counts,app_private.count_observations from public,anon,authenticated;
+create function app_private.protect_blind_count() returns trigger language plpgsql set search_path='' as $$
+begin
+ if tg_op='DELETE' then raise exception 'Count evidence is immutable; start a fresh count'; end if;
+ if (to_jsonb(new)-array['state','cancelled_by','cancelled_reason']) is distinct from (to_jsonb(old)-array['state','cancelled_by','cancelled_reason'])
+  or (old.state in ('approved','cancelled') and new is distinct from old) then
+  raise exception 'Count evidence is immutable; start a fresh count';
+ end if;
+ return new;
+end $$;
+revoke all on function app_private.protect_blind_count() from public,anon,authenticated;
+create trigger blind_count_evidence_immutable before update or delete on app_private.blind_counts
+ for each row execute function app_private.protect_blind_count();
 create trigger count_observations_immutable before update or delete on app_private.count_observations
  for each row execute function app_private.immutable();
 
@@ -36,7 +48,7 @@ declare
  member public.staff_memberships; run app_private.blind_counts; first_entry app_private.count_observations;
  second_entry app_private.count_observations; prior app_private.count_observations; cnt public.stock_counts;
  prod public.products; ident uuid; observation uuid; qty numeric; revision bigint; result jsonb; count_stage text;
- reason text:=btrim(data->>'reason'); note text:=btrim(data->>'notes'); cursor_at timestamptz; cursor_id uuid;
+ count_reason text:=btrim(data->>'reason'); note text:=btrim(data->>'notes'); cursor_at timestamptz; cursor_id uuid;
 begin
  if action='dashboard' then
   result:=app_private.command_before_blind_counts(action,data);
@@ -92,11 +104,11 @@ begin
  if action='start_blind_count' then
   if run.id is not null then
    if run.organization_id=org and run.branch_id=branch and run.started_by=uid and run.product_id=(data->>'productId')::uuid
-    and run.batch_id is not distinct from (data->>'batchId')::uuid and run.reason=reason then
+    and run.batch_id is not distinct from (data->>'batchId')::uuid and run.reason=count_reason then
     return jsonb_build_object('id',ident,'duplicate',true); end if;
    raise exception 'Count ID conflict';
   end if;
-  if length(coalesce(reason,'')) not between 3 and 1000 then raise exception 'Describe the counting scope in 3 to 1000 characters'; end if;
+  if length(coalesce(count_reason,'')) not between 3 and 1000 then raise exception 'Describe the counting scope in 3 to 1000 characters'; end if;
   select * into prod from public.products where organization_id=org and id=(data->>'productId')::uuid;
   if prod.id is null or ((data->>'batchId') is not null and not exists(select 1 from public.product_batches b where b.organization_id=org and b.product_id=prod.id and b.id=(data->>'batchId')::uuid))
    or (prod.tracks_expiry and data->>'batchId' is null) then raise exception 'Select a product and its current lot'; end if;
@@ -115,12 +127,12 @@ begin
  if action='cancel_blind_count' then
   if member.role<>'owner' and run.started_by<>uid then raise exception 'Only the owner or original counter can close this count' using errcode='42501'; end if;
   if run.state='approved' then raise exception 'An approved count cannot be cancelled'; end if;
-  if length(coalesce(reason,'')) not between 3 and 1000 then raise exception 'Record why this count is being closed'; end if;
+  if length(coalesce(count_reason,'')) not between 3 and 1000 then raise exception 'Record why this count is being closed'; end if;
   if run.state='cancelled' then
-   if run.cancelled_by<>uid or run.cancelled_reason<>reason then raise exception 'Count closure conflict'; end if;
+   if run.cancelled_by<>uid or run.cancelled_reason<>count_reason then raise exception 'Count closure conflict'; end if;
    return jsonb_build_object('id',ident,'duplicate',true);
   end if;
-  update app_private.blind_counts set state='cancelled',cancelled_by=uid,cancelled_reason=reason where id=ident;
+  update app_private.blind_counts set state='cancelled',cancelled_by=uid,cancelled_reason=count_reason where id=ident;
   update public.stock_counts set state='cancelled' where id=ident and state='pending';
  elsif action='record_blind_count' then
   count_stage:=data->>'stage'; observation:=(data->>'observationId')::uuid;
@@ -144,14 +156,14 @@ begin
  elsif action='approve_count' then
   if run.state='approved' then
    select * into cnt from public.stock_counts where id=ident;
-   if cnt.approved_by=uid and exists(select 1 from public.adjustment_approvals a where a.count_id=ident and a.reason=reason) then return jsonb_build_object('id',ident,'duplicate',true); end if;
+   if cnt.approved_by=uid and exists(select 1 from public.adjustment_approvals a where a.count_id=ident and a.reason=count_reason) then return jsonb_build_object('id',ident,'duplicate',true); end if;
    raise exception 'Adjustment already approved. Refresh its original record.';
   end if;
   if run.state<>'ready' then raise exception 'Two matching sealed counts are required before approval'; end if;
   select * into first_entry from app_private.count_observations where count_id=ident and count_observations.stage='first';
   select * into second_entry from app_private.count_observations where count_id=ident and count_observations.stage='recount';
   if uid in (first_entry.observed_by,second_entry.observed_by) then raise exception 'An owner who entered neither count must approve this adjustment' using errcode='42501'; end if;
-  if length(coalesce(reason,'')) not between 3 and 1000 then raise exception 'Record the owner approval evidence'; end if;
+  if length(coalesce(count_reason,'')) not between 3 and 1000 then raise exception 'Record the owner approval evidence'; end if;
  end if;
 
  -- Same branch lock as sales/receiving/transfers: no stock mutation can slip between revision check and adjustment.
@@ -168,7 +180,7 @@ begin
  end if;
  if action='start_blind_count' then
   insert into app_private.blind_counts(id,organization_id,branch_id,product_id,batch_id,expected,ledger_revision,started_by,reason)
-   values(ident,org,branch,prod.id,(data->>'batchId')::uuid,coalesce((select quantity from public.branch_inventory where organization_id=org and branch_id=branch and product_id=prod.id and batch_id is not distinct from (data->>'batchId')::uuid),0),revision,uid,reason);
+   values(ident,org,branch,prod.id,(data->>'batchId')::uuid,coalesce((select quantity from public.branch_inventory where organization_id=org and branch_id=branch and product_id=prod.id and batch_id is not distinct from (data->>'batchId')::uuid),0),revision,uid,count_reason);
  elsif action='record_blind_count' then
   insert into app_private.count_observations(id,count_id,stage,quantity,notes,observed_by,observed_name) values(observation,ident,count_stage,qty,note,uid,member.name);
   if count_stage='first' then update app_private.blind_counts set state='recount' where id=ident;
@@ -176,12 +188,12 @@ begin
    select * into first_entry from app_private.count_observations where count_id=ident and count_observations.stage='first';
    update app_private.blind_counts set state=case when first_entry.quantity=qty then 'ready' else 'disputed' end where id=ident;
    if first_entry.quantity=qty then
-    insert into public.stock_counts(id,organization_id,branch_id,product_id,batch_id,expected,counted,ledger_revision,reason,counted_by,count_method)
-     values(ident,org,branch,run.product_id,run.batch_id,run.expected,qty,revision,first_entry.notes,first_entry.observed_by,'blind_v1');
+    insert into public.stock_counts(id,organization_id,branch_id,product_id,batch_id,expected,counted,ledger_revision,reason,counted_by,count_method,created_at)
+     values(ident,org,branch,run.product_id,run.batch_id,run.expected,qty,revision,first_entry.notes,first_entry.observed_by,'blind_v1',first_entry.created_at);
    end if;
   end if;
  elsif action='approve_count' then
-  insert into public.adjustment_approvals(organization_id,branch_id,count_id,approved_by,reason) values(org,branch,ident,uid,reason);
+  insert into public.adjustment_approvals(organization_id,branch_id,count_id,approved_by,reason) values(org,branch,ident,uid,count_reason);
   if first_entry.quantity<>run.expected then
    insert into public.inventory_movements(organization_id,branch_id,product_id,batch_id,quantity,kind,source_id,created_by)
     values(org,branch,run.product_id,run.batch_id,first_entry.quantity-run.expected,'adjustment',ident,uid);
@@ -191,7 +203,7 @@ begin
  end if;
  -- Audit records identify sealed evidence without leaking its quantity/notes to the next counter.
  insert into public.audit_events(organization_id,branch_id,actor_id,action,source_id,details)
-  values(org,branch,uid,action,ident,jsonb_build_object('observationId',observation,'stage',count_stage,'reason',case when action in ('approve_count','cancel_blind_count') then reason end));
+  values(org,branch,uid,action,ident,jsonb_build_object('observationId',observation,'stage',count_stage,'reason',case when action in ('approve_count','cancel_blind_count') then count_reason end));
  return jsonb_build_object('id',ident);
 end $$;
 revoke all on function app_private.command(text,jsonb) from public,anon;

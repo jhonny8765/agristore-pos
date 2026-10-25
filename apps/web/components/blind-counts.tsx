@@ -7,7 +7,7 @@ import type {Product} from '@agristore/domain';
 import type {PosDatabase} from '@agristore/offline';
 import {command} from '../lib/api';
 import {onlineOperation} from '../lib/operations';
-import {canApproveCount,countPage,countState,type BlindCount} from '../lib/blind-counts';
+import {canApproveCount,countPage,countState,countLabel,type BlindCount} from '../lib/blind-counts';
 import {ApprovalForm} from './approval-form';
 import {Button} from './ui/button';
 
@@ -40,10 +40,6 @@ export function BlindCounts({db,organizationId,branchId,actorId,products,owner,o
   setFeedback(action==='approve_count' ? 'Adjustment approved once. Original count evidence is retained.' : 'Count step saved. Completed entries cannot be edited.');
   await load();
  }
- const label=(row:BlindCount)=>{
-  const p=products.find(p=>p.id===row.productId),b=p?.batches.find(b=>b.id===row.batchId);
-  return `${p?.name ?? 'Recorded product'} · ${b ? `Lot ${b.lot} · Expiry: ${b.expiresOn ?? 'not recorded'}` : 'No lot'} (${p?.baseUnit ?? 'base units'})`;
- };
  return <><section className="panel blind-counts" aria-label="Blind stock counts">
   <div className="section-heading"><h2>Blind stock counts</h2><Button variant="outline" disabled={disabled || !online || loading} onClick={()=>void execute(async()=>{await load();})}>Refresh counts</Button></div>
   <p>Close and synchronize every branch shift first. Two different people enter sealed counts, then an owner who entered neither approves. Count saleable goods only; keep held goods and stock in transit separate.</p>
@@ -69,8 +65,8 @@ export function BlindCounts({db,organizationId,branchId,actorId,products,owner,o
     const first=row.state==='first_count' && row.startedBy===actorId;
     const recount=row.state==='recount' && row.startedBy!==actorId;
     const unit=products.find(p=>p.id===row.productId)?.baseUnit ?? 'base units';
-    return <article className="count-record" key={row.id} aria-label={label(row)}>
-     <h3>{label(row)}</h3><p className="count-context">{row.reason}</p>
+    return <article className="count-record" key={row.id} aria-label={countLabel(row,products)}>
+     <h3>{countLabel(row,products)}</h3><p className="count-context">{row.reason}</p>
      <small>Count {row.id.slice(0,8)} · {new Date(row.createdAt).toLocaleString('en-PH',{timeZone:'Asia/Manila'})}</small>
      <p><strong>{countState[row.state]}</strong></p>
      {row.stale && <p className="notice error">Stock moved after this count started. Close this record and start a fresh count; it cannot adjust stock.</p>}

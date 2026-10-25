@@ -2,6 +2,8 @@
 
 This guide describes the new staging stock-control workflows. Follow the release evidence in `docs/stock-control-verification.md` before using them with real inventory. Test records cannot explain the reported ₱170,000 discrepancy.
 
+The replacement [blind-count procedure](blind-counts.md) is implemented and locally testable, but not assigned to staging yet. Its two sealed counters and separate approving owner replace the old typed-witness procedure only after the release gate passes. Until then, the current witness-name field is an attestation rather than independent authenticated approval.
+
 ## Establish a trustworthy starting point
 
 Use named staff accounts. Keep the owner account private. Choose the real cashier PC, check the weighing scale and tare containers, and complete a witnessed opening count before importing stock. Count sealed sacks and loose contents separately, using net kilograms. Keep held goods physically separate and identify their product and lot.

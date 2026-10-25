@@ -1,5 +1,6 @@
 import { execFileSync } from "node:child_process";
 import assert from "node:assert/strict";
+import {retainedTables as tables,fingerprintSQL} from './recovery-fingerprints.mjs';
 if (process.env.CI !== "true" || process.platform !== "linux")
   throw new Error(
     "This drill runs only on the disposable CI Supabase database.",
@@ -68,8 +69,7 @@ command('record_blind_count',firstCount,'postgres',16);command('record_blind_cou
 command('start_blind_count',{...countBody,countId:id(21)},'postgres',16);
 command('record_blind_count',{...firstCount,countId:id(21),observationId:id(22)},'postgres',16);
 // Compare retained content, not just row counts or one projected balance.
-const tables = ["organizations","branches","staff_memberships","devices","products","product_units","unit_prices","sales","sale_items","payments","sale_reversals","inventory_movements","branch_inventory","cashier_shifts","shift_authorizations","stock_transfers","stock_holds","stock_issues","stock_exceptions","stock_control_events","audit_events","stock_counts","adjustment_approvals","app_private.blind_counts","app_private.count_observations"];
-const fingerprints = target => lastJSON(sql(`select jsonb_object_agg(name,signature) from (${tables.map(table=>`select '${table}' name,jsonb_build_object('rows',count(*),'hash',md5(coalesce(string_agg(to_jsonb(t)::text,E'\\n' order by to_jsonb(t)::text),''))) signature from ${table.includes(".") ? table : `public.${table}`} t where ${table==="app_private.count_observations" ? `count_id in(select id from app_private.blind_counts where organization_id='${id(2)}') and '${id(2)}'::uuid` : table==="organizations" ? "id" : "organization_id"}='${id(2)}'`).join(" union all ")}) signatures;`,target));
+const fingerprints = target => lastJSON(sql(fingerprintSQL(id(2)),target));
 const original = fingerprints("postgres");
 const before = command("snapshot",{...ctx(),transactionIds:[id(9)]});
 assert.equal(before.stocks[0].quantity,"10.250000");

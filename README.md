@@ -40,6 +40,8 @@ The browser tests use a production build at `http://127.0.0.1:3100`. Development
 
 The database CI job also runs `npm run test:integration` against its disposable local Supabase stack. This builds the PWA with the stack's public API key and exercises real Auth, registered-PC user switching, offline checkout, a committed upload with a lost response, stock reconciliation, and employee revocation. The runner requires Linux CI and the exact loopback API; hosted projects are prohibited. It never passes administrative credentials to the application, and authenticated traces are disabled.
 
+Without Docker or GitHub-hosted compute, `npm run test:db:preflight`, `npm run test:counts:local` (after an application build) and `npm run test:counts:restore` provide supplementary local PostgreSQL/count-component checks. They use simulated Auth and an ephemeral loopback fixture; they do not replace the complete Supabase/PostgREST/Auth/dump-restore gate. The [blind-count follow-up](docs/blind-counts.md) is implemented locally but remains unreleased while GitHub runner allocation is blocked by the account's payment/spending restriction. No paid settings were changed. Once access is restored, manually run Verify AgriStore on the latest main source.
+
 ## What is implemented
 
 - Cash checkout, exact centavo calculations, sack/kilo conversions, batch selection, expiry checks, cash change, and printable sale records.

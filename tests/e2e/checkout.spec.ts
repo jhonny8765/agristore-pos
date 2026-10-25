@@ -67,7 +67,7 @@ test("an aborted browser storage transaction shows no success, retains the baske
   expect(attempts).toHaveLength(2);expect(attempts[0]).toBe(attempts[1]);
   expect((await readSales()).map(row=>row.id)).toEqual([attempts[0]]);
   await page.reload();
-  await page.getByRole("button",{name:"Sync center",exact:true}).click();
+  await page.getByRole("button",{name:/^Sync center(?:\s+\d+)?$/}).click();
   await expect(page.locator("tbody tr")).toHaveCount(1);
 });
 test("checkout survives offline reload and does not send practice sales", async ({

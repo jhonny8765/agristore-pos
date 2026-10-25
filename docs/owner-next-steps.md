@@ -2,6 +2,8 @@
 
 Use this with the [pilot sign-off](pilot-checklist.md). The app is still in staging. Automated results are recorded in [stock-control verification](stock-control-verification.md); real PC and store checks remain open.
 
+The newer [blind-count and separate-person approval workflow](blind-counts.md) is implemented locally but is **not deployed yet**. It requires two independent counters and a third person, an owner, to approve. Its full Supabase integration/release gate is awaiting restored test-run access; the current staging app's typed witness field does not meet that standard. No paid settings were changed.
+
 The October 26 staging update passed the complete automated test suite. On an already open app, finish the basket, synchronize pending records and use **Settings → Application & recovery** to download/apply the available update. Follow its reopen message and keep the same browser profile and site data. Do not create another business or reset storage to get the new version.
 
 ## 1. Choose the cashier PC
@@ -57,6 +59,6 @@ Name the person who reviews daily differences, the technical maintainer and the 
 
 Review storage headroom, failed uploads and pending investigations regularly. The five-branch annual sample measured about **1.59 GiB of added application data and indexes** at 547,500 historical sales plus follow-up tests, using two lines per historical sale. Database data/index size is only part of hosted disk use; transaction logs and backups also need capacity. See [Supabase's size definitions](https://supabase.com/docs/guides/platform/database-size). Do not delete sales/audit history to make room. This measured synthetic result is a sizing input, not a quote or proof that the current account's plan is sufficient. Actual catalog/lot size and item counts can change it.
 
-Pilot one branch with daily signed cash/stock reconciliation, then expand only after the owner accepts the recorded results. Official tax-invoice issuance, partial cash refunds, purchase-order matching, fully rejected supplier deliveries, blind counts, separately authenticated second approval, automatic investigation escalation and broader reports remain outside the completed workflows. Use documented manual controls for those gaps until implemented.
+Pilot one branch with daily signed cash/stock reconciliation, then expand only after the owner accepts the recorded results. Official tax-invoice issuance, partial cash refunds, purchase-order matching, fully rejected supplier deliveries, automatic investigation escalation and broader reports remain outside the completed workflows. Blind counts and separate-person approval now have a local implementation but still need the full integration/release gate described above. Use documented manual controls for unreleased or unimplemented workflows.
 
 Browser persistence protects against some automatic eviction, not deliberate clearing or drive failure. Microsoft documents IndexedDB and service-worker caching as separate PWA storage mechanisms; installation alone is not a backup. [Microsoft Edge storage guidance](https://learn.microsoft.com/en-us/microsoft-edge/progressive-web-apps/how-to/offline).
