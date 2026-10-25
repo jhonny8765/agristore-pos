@@ -129,6 +129,8 @@ export interface Snapshot {
   asOf: string;
   catalogVersion?: string;
   catalogUnchanged?: boolean;
+  /** Local request fence, attached by the browser, never submitted to the server. */
+  localRequestId?: string;
 }
 export interface SyncAck {
   transactionId: string;

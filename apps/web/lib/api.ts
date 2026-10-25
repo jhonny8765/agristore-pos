@@ -7,7 +7,7 @@ import type {
   Snapshot,
   SyncAck,
 } from "@agristore/domain";
-import { setting, type PosDatabase, type Transport } from "@agristore/offline";
+import { setting, setSetting, type PosDatabase, type Transport } from "@agristore/offline";
 import { recordColumns } from "./record-columns";
 
 export const supabase = createClient(
@@ -81,7 +81,11 @@ export async function branches(org: string): Promise<Branch[]> {
   return data ?? [];
 }
 export async function requestSnapshot(db: PosDatabase | undefined, input: Record<string, unknown>): Promise<Snapshot> {
-  let catalogVersion = db ? await setting<string>(db, "catalogVersion") : undefined;
+  const localRequestId = db ? crypto.randomUUID() : undefined;
+  let catalogVersion = db ? await db.transaction("rw",db.settings,async()=>{
+    await setSetting(db,"snapshotRequestId",localRequestId);
+    return setting<string>(db,"catalogVersion");
+  }) : undefined;
   const ids = Array.isArray(input.transactionIds) ? input.transactionIds : [];
   const confirmed = new Set<string>();
   let fullCatalog: Snapshot["products"] | undefined;
@@ -94,7 +98,7 @@ export async function requestSnapshot(db: PosDatabase | undefined, input: Record
     if (!latest.catalogUnchanged) fullCatalog = latest.products;
     catalogVersion = latest.catalogVersion;
   }
-  return {...latest!, confirmedIds:[...confirmed], products:fullCatalog ?? [], catalogUnchanged:fullCatalog === undefined};
+  return {...latest!, confirmedIds:[...confirmed], products:fullCatalog ?? [], catalogUnchanged:fullCatalog === undefined, ...(localRequestId ? {localRequestId} : {})};
 }
 export function cloudTransport(lease: Lease, db?: PosDatabase): Transport {
   const context = {

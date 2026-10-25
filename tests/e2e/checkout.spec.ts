@@ -118,6 +118,31 @@ test("expired authorization blocks a new sale and retains the old record", async
   await page.getByRole("button", { name: "Sync center" }).click();
   await expect(page.locator("tbody tr")).toHaveCount(1);
 });
+test("a lot that expires while the basket is open cannot become a completed offline sale",async({page,context})=>{
+  await page.clock.install({time:new Date('2026-10-25T15:59:00Z')});
+  await practice(page);
+  await page.evaluate(()=>new Promise<void>((resolve,reject)=>{
+    const open=indexedDB.open('agristore-practice-v1');
+    open.onsuccess=()=>{const d=open.result;const tx=d.transaction(['products','stocks'],'readwrite');const products=tx.objectStore('products');const request=products.get('10000000-0000-4000-8000-000000000100');request.onsuccess=()=>{
+      const p=request.result;const batchId='10000000-0000-4000-8000-000000000800';
+      products.put({...p,tracksExpiry:true,batches:[{id:batchId,lot:'TEST expires at Manila midnight',expiresOn:'2026-10-25'}]});
+      tx.objectStore('stocks').put({key:p.id+':none',productId:p.id,batchId:null,quantity:'0'});
+      tx.objectStore('stocks').put({key:p.id+':'+batchId,productId:p.id,batchId,quantity:'50'});
+    };tx.oncomplete=()=>{d.close();resolve();};tx.onerror=()=>reject(tx.error);};open.onerror=()=>reject(open.error);
+  }));
+  await page.reload();
+  await page.getByRole('button',{name:'Add Grower feeds',exact:true}).click();
+  await page.getByLabel('Cash received',{exact:true}).fill('2000');
+  await context.setOffline(true);
+  await page.clock.setSystemTime(new Date('2026-10-25T16:00:01Z'));
+  await page.getByRole('button',{name:'Complete cash sale',exact:true}).click();
+  await expect(page.locator('.notice[role=alert]')).toContainText('lot has expired');
+  await expect(page.getByRole('heading',{name:'Sale saved.',exact:true})).toHaveCount(0);
+  await expect(page.locator('.receipt-item')).toHaveCount(1);
+  await expect(page.getByLabel('Cash received',{exact:true})).toHaveValue('2000');
+  await page.getByRole('button',{name:'Sync center',exact:true}).click();
+  await expect(page.locator('tbody tr')).toHaveCount(0);
+});
 test("pending checkout keeps manual app updates blocked across reload", async ({
   page,
 }) => {

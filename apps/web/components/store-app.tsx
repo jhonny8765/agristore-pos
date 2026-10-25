@@ -294,23 +294,25 @@ export function StoreApp() {
     return { organizationId: member.organizationId, branchId };
   }, [member, branchId]);
   const refreshLocal = useCallback(async () => {
-    setProducts(await db.products.toArray());
-    setStock(await localStock(db));
+    const generation = contextGeneration.current;
     const org = lease?.organizationId ?? member?.organizationId,
       b = lease?.branchId ?? branchId,
       user = lease?.cashierId ?? member?.userId,
       role = lease?.role ?? member?.role;
-    if (org && b) {
-      const local = await readLocalSales(db, { organizationId: org, branchId: b, cashierId: role === "owner" ? undefined : user }, localHistoryLimit);
-      setSales(local.sales);
-      setAllPendingCount(local.allPendingCount);
-      setHasOlderLocal(local.hasOlder);
-    } else {
-      setSales([]);
-      setAllPendingCount(await db.sales.where("status").anyOf(unresolvedStates).count());
-      setHasOlderLocal(false);
-    }
-    const allOperations = await pendingOperations(db);
+    const [nextProducts,nextStock,local,allOperations,lastSync,snapshotAsOf] = await db.transaction(
+      "r",[db.products,db.stocks,db.sales,db.settings],()=>Promise.all([
+        db.products.toArray(),localStock(db),org && b
+          ? readLocalSales(db,{organizationId:org,branchId:b,cashierId:role === "owner" ? undefined : user},localHistoryLimit)
+          : db.sales.where("status").anyOf(unresolvedStates).count().then(allPendingCount=>({sales:[],allPendingCount,hasOlder:false})),
+        pendingOperations(db),setting<string>(db,"lastSync"),setting<string>(db,"snapshotAsOf"),
+      ]),
+    );
+    if (generation !== contextGeneration.current) return;
+    setProducts(nextProducts);
+    setStock(nextStock);
+    setSales(local.sales);
+    setAllPendingCount(local.allPendingCount);
+    setHasOlderLocal(local.hasOlder);
     setAllOperationCount(allOperations.length);
     setOperations(
       allOperations.filter(
@@ -320,8 +322,8 @@ export function StoreApp() {
           (role === "owner" || op.actorId === user),
       ),
     );
-    setLastSync(await setting<string>(db, "lastSync"));
-    setSnapshotAt(await setting<string>(db, "snapshotAsOf"));
+    setLastSync(lastSync);
+    setSnapshotAt(snapshotAsOf);
   }, [db, lease, member, branchId, localHistoryLimit]);
   const refreshCloud = useCallback(async (forceStock = false) => {
     if (practice || !member || !branchId || !navigator.onLine) return;
@@ -401,8 +403,9 @@ export function StoreApp() {
     }
   }, [db, lease, practice, refreshLocal, fail]);
   useEffect(() => {
-    contextGeneration.current++;
+    const generation = ++contextGeneration.current;
     let alive = true;
+    const current = () => alive && generation === contextGeneration.current;
     (async () => {
       setReady(false);
       setMembershipCheck("pending");
@@ -414,7 +417,7 @@ export function StoreApp() {
       const saved = practice
         ? await startPractice(db)
         : await setting<Lease>(db, "lease");
-      if (!alive) return;
+      if (!current()) return;
       setLease(saved);
       setBranchId(saved?.branchId ?? "");
       if (practice) {
@@ -431,16 +434,17 @@ export function StoreApp() {
         setSignedIn(true);
       } else {
         const cachedMember = await setting<Membership>(db, "membership");
+        if (!current()) return;
         setMember(cachedMember);
         setBranchList((await setting<Branch[]>(db, "branches")) ?? []);
         const {
           data: { session },
         } = await supabase.auth.getSession();
-        if (!alive) return;
+        if (!current()) return;
         setSignedIn(!!session || !!saved);
         if (navigator.onLine && session) {
           const found = await memberships();
-          if (!alive) return;
+          if (!current()) return;
           const m =
             found.find((m) => m.organizationId === saved?.organizationId) ??
             found[0];
@@ -456,10 +460,15 @@ export function StoreApp() {
             );
           if (m) {
             const b = await fetchBranches(m.organizationId);
+            if (!current()) return;
             setBranchList(b);
             setBranchId(saved?.branchId ?? m.branchId ?? b[0]?.id ?? "");
-            await setSetting(db, "membership", m);
-            await setSetting(db, "branches", b);
+            await db.transaction("rw",db.settings,async()=>{
+              if (!current()) return;
+              await setSetting(db,"membership",m);
+              await setSetting(db,"branches",b);
+            });
+            if (!current()) return;
             const target = saved?.branchId ?? m.branchId ?? b[0]?.id;
             if (target)
               await applySnapshot(
@@ -473,14 +482,16 @@ export function StoreApp() {
                   ).map((s) => s.id),
                 }),
               );
+            if (!current()) return;
             if (m.role === "stock_staff") setView("inventory");
           }
         }
       }
       if (navigator.storage?.persist && !practice)
         await navigator.storage.persist();
-      if (alive) setReady(true);
+      if (current()) setReady(true);
     })().catch((e) => {
+      if (!current()) return;
       setMembershipCheck("failed");
       fail(e);
       setReady(true);
@@ -493,6 +504,36 @@ export function StoreApp() {
   useEffect(() => {
     if (ready) void refreshLocal().catch(fail);
   }, [ready, refreshLocal, fail]);
+  useEffect(() => {
+    if (practice) return;
+    const {data:{subscription}} = supabase.auth.onAuthStateChange((event) => {
+      if (event !== "SIGNED_OUT") return;
+      // Auth broadcasts across windows. Clear this window immediately as well
+      // as fencing any outstanding downloads; immutable sales remain intact.
+      contextGeneration.current++;
+      cloudRequest.current++;
+      useCart.getState().clear();
+      setSignedIn(false);
+      setReady(true);
+      setMember(undefined);
+      setLease(undefined);
+      setCloud({});
+      setProducts([]);
+      setStock(new Map());
+      setBranchList([]);
+      setBranchId("");
+      setSales([]);
+      setOperations([]);
+      setSalesCursor(undefined);
+      setCheckoutDone(undefined);
+      setSnapshotAt(undefined);
+      setLastSync(undefined);
+      setOpeningImport(undefined);
+      setRecoveryArchive(undefined);
+      void clearAccountCache(db).catch(fail);
+    });
+    return () => subscription.unsubscribe();
+  }, [db, practice, fail]);
   useEffect(() => {
     if (previousView.current === view) return;
     previousView.current = view;

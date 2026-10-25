@@ -119,6 +119,14 @@ export async function saveCheckout(
         const canonical = canonicalQuantity(item.quantity, item.factor);
         if (p.baseUnit === "piece" && !new Decimal(canonical).isInteger())
           throw new Error("Piece stock must be a whole number");
+        // A valid cart can remain open across Manila midnight or a catalog
+        // refresh. Revalidate the lot inside the durable checkout transaction.
+        const batch = p.batches.find((b) => b.id === item.batchId);
+        if ((p.tracksExpiry || item.batchId !== null) && !batch)
+          throw new Error("Select a current lot for this product before checkout");
+        const today = new Date(now).toLocaleDateString("en-CA", {timeZone:"Asia/Manila"});
+        if (batch?.expiresOn && batch.expiresOn < today)
+          throw new Error("This lot has expired. Remove it from the basket and check the stock before selling.");
       }
       const record: LocalSale = {
         id: sale.transactionId,
@@ -135,11 +143,23 @@ export async function saveCheckout(
     },
   );
 }
-export async function applySnapshot(db: PosDatabase, snapshot: Snapshot) {
+function sameLease(a: Lease | undefined, b: Lease) {
+  return !!a && a.organizationId === b.organizationId && a.branchId === b.branchId &&
+    a.cashierId === b.cashierId && a.deviceId === b.deviceId && a.shiftId === b.shiftId &&
+    a.issuedAt === b.issuedAt && a.expiresAt === b.expiresAt;
+}
+async function requireSyncContext(db: PosDatabase, lease: Lease, owner: string) {
+  if (!sameLease(await setting<Lease>(db,"lease"),lease) || (await db.locks.get("sync"))?.owner !== owner)
+    throw new Error("The cashier context changed in another window. Reopen the current store before synchronizing. Saved sales remain on this PC.");
+}
+export async function applySnapshot(db: PosDatabase, snapshot: Snapshot, syncGuard?: {lease: Lease; owner: string; syncedAt: string}) {
   await db.transaction(
     "rw",
-    [db.products, db.stocks, db.sales, db.settings],
+    [db.products, db.stocks, db.sales, db.settings, db.locks],
     async () => {
+      if (syncGuard) await requireSyncContext(db,syncGuard.lease,syncGuard.owner);
+      if (snapshot.localRequestId && await setting(db,"snapshotRequestId") !== snapshot.localRequestId)
+        throw new Error("A newer stock download or store change replaced this request. Refresh the current branch. Saved sales remain on this PC.");
       if (!snapshot.catalogUnchanged) {
         await db.products.clear();
         await db.products.bulkPut(snapshot.products);
@@ -158,6 +178,7 @@ export async function applySnapshot(db: PosDatabase, snapshot: Snapshot) {
       }
       await setSetting(db, "confirmedIds", snapshot.confirmedIds);
       await setSetting(db, "snapshotAsOf", snapshot.asOf);
+      if (syncGuard) await setSetting(db,"lastSync",syncGuard.syncedAt);
     },
   );
 }
@@ -178,6 +199,7 @@ export async function clearAccountCache(db: PosDatabase) {
         "confirmedIds",
         "lastSync",
         "catalogVersion",
+        "snapshotRequestId",
       ]);
     },
   );
@@ -259,7 +281,9 @@ export async function syncOnce(
         s.status !== "synced" &&
         s.status !== "review_required",
     );
-    if (!(await transport.authorize())) {
+    const authorized = await transport.authorize();
+    await requireSyncContext(db,lease,owner);
+    if (!authorized) {
       for (const s of eligible)
         await db.sales.update(s.id, {
           status: "authentication_required",
@@ -275,10 +299,12 @@ export async function syncOnce(
           (s.status !== "sending" || s.updatedAt + 45_000 < now),
       )
       .slice(0, 25)) {
+      await requireSyncContext(db,lease,owner);
       await db.locks.update("sync", { expiresAt: Date.now() + 45_000 });
       await db.sales.update(s.id, { status: "sending", updatedAt: now });
       try {
         const ack = await transport.push(s.payload);
+        await requireSyncContext(db,lease,owner);
         sent++;
         if (ack.transactionId !== s.id)
           throw new Error(
@@ -298,6 +324,9 @@ export async function syncOnce(
           });
         // Never mark synced until the authoritative snapshot incorporates this sale.
       } catch (error) {
+        // A previous runner must not turn a sale synchronized by its successor
+        // back into a retry, or write after another window has signed out.
+        await requireSyncContext(db,lease,owner);
         const attempts = s.attempts + 1;
         await db.sales.update(s.id, {
           status: attempts >= 10 ? "review_required" : "retryable",
@@ -315,8 +344,9 @@ export async function syncOnce(
           s.payload.organizationId === lease.organizationId,
       )
       .map((s) => s.id);
-    await applySnapshot(db, await transport.snapshot(ids));
-    await setSetting(db, "lastSync", new Date(now).toISOString());
+    await requireSyncContext(db,lease,owner);
+    const snapshot = await transport.snapshot(ids);
+    await applySnapshot(db, snapshot, {lease,owner,syncedAt:new Date(now).toISOString()});
     return { sent };
   } finally {
     await db.transaction("rw", db.locks, async () => {

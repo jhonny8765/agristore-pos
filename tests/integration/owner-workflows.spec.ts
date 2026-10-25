@@ -129,6 +129,32 @@ async function closeShift(page: Page) {
   ).toBeVisible();
 }
 
+test("sign-out in a second window clears the first window and rejects its late private stock response",async({page,context})=>{
+ const a=await business();await page.goto('/');await login(page,a);
+ const other=await context.newPage();await other.goto('/');
+ await expect(other.getByRole('button',{name:'Add Audit feeds',exact:true})).toBeVisible();
+ let release!:()=>void,started!:()=>void;
+ const held=new Promise<void>(yes=>{release=yes;});const captured=new Promise<void>(yes=>{started=yes;});
+ let intercepted=false;
+ await page.route('**/rest/v1/rpc/agri_command',async(route)=>{
+  if(route.request().postDataJSON().action==='snapshot'&&!intercepted){
+   intercepted=true;const response=await route.fetch();expect(response.ok()).toBe(true);started();await held;await route.fulfill({response});
+  }else await route.continue();
+ });
+ try{
+  await page.getByRole('button',{name:'Inventory',exact:true}).click();await captured;
+  await other.getByTitle('Sign out',{exact:true}).click();
+  await expect(other.getByLabel('Email address',{exact:true})).toBeVisible();
+  await expect(page.getByLabel('Email address',{exact:true})).toBeVisible();
+  release();
+  await expect(page.getByRole('button',{name:'Add Audit feeds',exact:true})).toHaveCount(0);
+  await expect.poll(()=>page.evaluate(()=>new Promise<number>((resolve,reject)=>{
+   const open=indexedDB.open('agristore-live-v1');open.onsuccess=()=>{const d=open.result;const tx=d.transaction('products','readonly');const count=tx.objectStore('products').count();count.onsuccess=()=>resolve(count.result);tx.oncomplete=()=>d.close();tx.onerror=()=>reject(tx.error);};open.onerror=()=>reject(open.error);
+  }))).toBe(0);
+  await page.reload();await expect(page.getByLabel('Email address',{exact:true})).toBeVisible();
+ }finally{release();await other.close();}
+});
+
 test("confirmed deliveries and opening imports stay saved when the following stock refresh fails", async ({ page }) => {
   const a = await business();
   await page.goto("/");
