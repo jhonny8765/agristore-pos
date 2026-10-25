@@ -61,6 +61,7 @@ jobs:
             test-results/product-setup-*.png
             test-results/stock-history-*.png
             test-results/stock-controls-*.png
+            test-results/blind-counts-*.png
           retention-days: 3
       - uses: actions/upload-artifact@v4
         if: failure()

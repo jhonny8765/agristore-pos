@@ -12,6 +12,20 @@ select set_config('request.jwt.claims',jsonb_build_object('sub',pg_temp.i(11),'r
 create function pg_temp.ctx(code text default 'B01') returns jsonb language sql stable as $$select jsonb_build_object('organizationId',b.organization_id,'branchId',b.id) from public.branches b where b.code=code$$;
 create function pg_temp.receipt(n integer,q text,kind text default 'purchase',code text default 'B01') returns jsonb language sql stable as $$select pg_temp.ctx(code)||jsonb_build_object('receiptId',pg_temp.i(n),'source',kind,'reference','TEST-'||n,'items',jsonb_build_array(jsonb_build_object('productId',p.id,'unitId',u.id,'quantity',q,'lot','','expiresOn',null))) from public.products p join public.product_units u on u.product_id=p.id where p.sku='T-FEED' and u.name='Bag'$$;
 create function pg_temp.sale(n integer,q text default '0.5') returns jsonb language sql stable as $$select pg_temp.ctx()||jsonb_build_object('version',1,'transactionId',pg_temp.i(n),'cashierId',auth.uid(),'deviceId',pg_temp.i(501),'shiftId',(select id from public.cashier_shifts where cashier_id=auth.uid() and closed_at is null),'occurredAt',to_char(now() at time zone 'UTC','YYYY-MM-DD"T"HH24:MI:SS.MS"Z"'),'total',round(q::numeric*100000)::bigint,'cashReceived',round(q::numeric*100000)::bigint+10000,'items',jsonb_build_array(jsonb_build_object('productId',p.id,'unitId',u.id,'batchId',null,'name',p.name,'unitName',u.name,'quantity',q,'factor','50','unitPrice',100000,'unitCost',80000,'priceVersion',1,'lineTotal',round(q::numeric*100000)::bigint))) from public.products p join public.product_units u on u.product_id=p.id where p.sku='T-FEED' and u.name='Bag'$$;
+create function pg_temp.blind_count(n integer,q text,why text) returns jsonb language plpgsql security definer as $$
+declare claims text:=current_setting('request.jwt.claims'); body jsonb:=pg_temp.ctx()||jsonb_build_object('countId',pg_temp.i(n),'productId',(select id from public.products where sku='T-FEED'),'reason',why);
+begin
+ insert into auth.users(id,email) values(pg_temp.i(12),'workflow-first@example.invalid'),(pg_temp.i(13),'workflow-second@example.invalid') on conflict do nothing;
+ insert into auth.sessions(id,user_id) values(pg_temp.i(12),pg_temp.i(12)),(pg_temp.i(13),pg_temp.i(13)) on conflict do nothing;
+ insert into public.staff_memberships(organization_id,user_id,branch_id,role,name) select (body->>'organizationId')::uuid,pg_temp.i(x),(body->>'branchId')::uuid,'stock_staff','TEST count staff' from generate_series(12,13)x on conflict do nothing;
+ perform set_config('request.jwt.claims',jsonb_build_object('sub',pg_temp.i(12),'session_id',pg_temp.i(12),'role','authenticated')::text,true);
+ perform public.agri_command('start_blind_count',body);
+ perform public.agri_command('record_blind_count',body||jsonb_build_object('stage','first','quantity',q,'notes',why,'observationId',gen_random_uuid()));
+ perform set_config('request.jwt.claims',jsonb_build_object('sub',pg_temp.i(13),'session_id',pg_temp.i(13),'role','authenticated')::text,true);
+ perform public.agri_command('record_blind_count',body||jsonb_build_object('stage','recount','quantity',q,'notes',why,'observationId',gen_random_uuid()));
+ perform set_config('request.jwt.claims',claims,true);
+ return jsonb_build_object('id',pg_temp.i(n));
+end $$;
 set local role authenticated;
 insert into tap_results select lives_ok($$select public.agri_command('bootstrap','{"name":"TEST workflow business","ownerName":"Owner"}')$$,'Owner bootstraps an empty business');
 insert into tap_results select is((select count(*)::integer from public.branches),3,'Bootstrap creates exactly three branches');
@@ -24,11 +38,11 @@ insert into tap_results select lives_ok($$select public.agri_command('receive_st
 insert into tap_results select is((select quantity::text from public.branch_inventory where branch_id=(pg_temp.ctx()->>'branchId')::uuid),'112.500000','Fractional delivery adds exactly 12.5 kg');
 insert into tap_results select lives_ok($$select public.agri_command('receive_stock',pg_temp.receipt(603,'5','opening','B02'))$$,'Owner imports verified opening stock at another branch');
 insert into tap_results select throws_ok($$select public.agri_command('receive_stock',pg_temp.receipt(604,'5','opening','B02'))$$,'23505',null,'A second opening import cannot double the branch stock');
-insert into tap_results select lives_ok($$select public.agri_command('submit_count',pg_temp.ctx()||jsonb_build_object('countId',pg_temp.i(901),'productId',(select id from public.products where sku='T-FEED'),'batchId',null,'counted','110','reason','Test count'))$$,'Physical count snapshots the current ledger revision');
+insert into tap_results select lives_ok($$select pg_temp.blind_count(901,'110','Test count')$$,'Physical count snapshots the current ledger revision');
 insert into tap_results select lives_ok($$select public.agri_command('receive_stock',pg_temp.receipt(605,'1'))$$,'Subsequent receiving changes the ledger');
-insert into tap_results select throws_ok($$select public.agri_command('approve_count',pg_temp.ctx()||jsonb_build_object('countId',pg_temp.i(901)))$$,'P0001','Stock changed after counting. Submit a fresh count.','Stale count approval cannot overwrite intervening stock movements');
-insert into tap_results select lives_ok($$select public.agri_command('submit_count',pg_temp.ctx()||jsonb_build_object('countId',pg_temp.i(902),'productId',(select id from public.products where sku='T-FEED'),'batchId',null,'counted','160','reason','Fresh count'))$$,'Fresh count is accepted');
-insert into tap_results select lives_ok($$select public.agri_command('approve_count',pg_temp.ctx()||jsonb_build_object('countId',pg_temp.i(902),'witness','TEST independent counter','recounted','160'))$$,'Owner approves the fresh discrepancy');
+insert into tap_results select throws_ok($$select public.agri_command('approve_count',pg_temp.ctx()||jsonb_build_object('countId',pg_temp.i(901),'reason','TEST stale count review'))$$,'P0001','Stock changed after counting. Submit a fresh count.','Stale count approval cannot overwrite intervening stock movements');
+insert into tap_results select lives_ok($$select pg_temp.blind_count(902,'160','Fresh count')$$,'Fresh count is accepted');
+insert into tap_results select lives_ok($$select public.agri_command('approve_count',pg_temp.ctx()||jsonb_build_object('countId',pg_temp.i(902),'reason','TEST matching signed-in counters checked'))$$,'Owner approves the fresh discrepancy');
 insert into tap_results select lives_ok($$select public.agri_command('register_device',pg_temp.ctx()||jsonb_build_object('deviceId',pg_temp.i(501),'name','Test PC'))$$,'Owner registers the dedicated branch PC');
 insert into tap_results select lives_ok($$select public.agri_command('open_shift',pg_temp.ctx()||jsonb_build_object('deviceId',pg_temp.i(501),'openingCash',100000))$$,'Owner opens a cashier shift');
 insert into tap_results select is(public.agri_command('authorize_shift',pg_temp.ctx()||jsonb_build_object('deviceId',pg_temp.i(501)))->>'authorized','true','Sync verifies current device and shift authorization');

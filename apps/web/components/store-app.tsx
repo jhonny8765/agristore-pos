@@ -109,6 +109,7 @@ import { ApprovalForm } from "./approval-form";
 import { HistoryRegister } from "./history-register";
 import { StorageHealth } from "./storage-health";
 import { StockControls } from "./stock-controls";
+import { BlindCounts } from "./blind-counts";
 import { preferredBatch, outstandingTransfer } from "../lib/stock-controls";
 import type { HistoryKind } from "../lib/history";
 
@@ -2543,15 +2544,8 @@ export function StoreApp() {
           )}
 
           {view === "counts" && (
-            <>
-              <div className="information">
-                <ClipboardCheck size={20} />
-                <span>
-                  Close the branch’s cashier shift and synchronize its sales
-                  before counting. Stock changes after a count require a fresh
-                  count before approval.
-                </span>
-              </div>
+            practice ? <section className="panel"><h2>Blind stock counts</h2><p>Use the connected staging business with separate staff accounts to rehearse blind counts and owner approval. Practice mode never changes server stock.</p></section> : member.role === "cashier" ? <section className="panel"><h2>Stock counts</h2><p>Stock counts require a stock-staff, manager or owner account. Cashiers cannot submit or approve adjustments.</p></section> :
+            <BlindCounts key={`${member.organizationId}:${branchId}:${member.userId}`} db={db} organizationId={member.organizationId} branchId={branchId} actorId={member.userId} products={products} owner={isOwner} online={online} disabled={busy || !!pending.length} revision={historyRevision} execute={fn => run(fn,true,true)}>
               {!practice && (
                 <HistoryRegister
                   {...historyProps}
@@ -2605,37 +2599,7 @@ export function StoreApp() {
                           </td>
                           <td>{str(c, "state")}</td>
                           <td>
-                            {isOwner && c.state === "pending" && (
-                              <ApprovalForm
-                                action="Approve adjustment"
-                                label="Approval evidence"
-                                description="Retain this physical count and create a separate adjustment. If you entered the first count, record another person's independent recount. The investigation stays open until its cause is reviewed."
-                                confirmLabel="Confirm adjustment"
-                                disabled={
-                                  !online ||
-                                  busy ||
-                                  practice ||
-                                  !!pending.length
-                                }
-                                onConfirm={(reason,f) =>
-                                  run(async () => {
-                                    await command("approve_count", {
-                                      ...context(),
-                                      countId: c.id,
-                                      reason, witness: inputValue(f,"witness"), recounted: inputValue(f,"recounted") || null,
-                                    });
-                                    notify(
-                                      "Count approved. The discrepancy is recorded as an adjustment.",
-                                    );
-                                  },true,true)
-                                }
-                              >
-                                {c.counted_by === member.userId && <>
-                                  <Field label="Independent recount quantity (base units)"><input name="recounted" type="number" min="0" step="0.000001" required /></Field>
-                                  <Field label="Recount witness name"><input name="witness" minLength={3} maxLength={120} required /></Field>
-                                </>}
-                              </ApprovalForm>
-                            )}
+                            <span>{c.count_method === 'blind_v1' ? 'Review the matching blind count above.' : c.state === 'pending' ? 'Legacy count: start a fresh blind count before any adjustment.' : 'Historical record retained.'}</span>
                           </td>
                         </tr>
                       )),
@@ -2644,70 +2608,7 @@ export function StoreApp() {
                   }
                 </HistoryRegister>
               )}
-              <section className="panel narrow-panel">
-                <h2>Submit a physical count</h2>
-                <p className="muted">Count saleable goods independently before checking expected stock. Count held goods separately in Inventory; exclude goods still in transit. A second person must recount when the owner approves their own first count.</p>
-                <form
-                  onSubmit={(e) => {
-                    e.preventDefault();
-                    const form = e.currentTarget;
-                    const f = new FormData(form);
-                    const [productId, batchId] = inputValue(f, "stock").split(
-                      ":",
-                    );
-                    void run(async () => {
-                      await onlineOperation(
-                        db,
-                        member.userId,
-                        "submit_count",
-                        {
-                          ...context(),
-                          productId,
-                          batchId: batchId === "none" ? null : batchId,
-                          counted: inputValue(f, "quantity"),
-                          reason: inputValue(f, "reason"),
-                        },
-                        "countId",
-                      );
-                      form.reset();
-                      notify(
-                        "Count saved for owner review. No stock has been adjusted.",
-                      );
-                    });
-                  }}
-                >
-                  <StockSelect products={products} />
-                  <Field label="Physical quantity in base units">
-                    <input
-                      name="quantity"
-                      type="number"
-                      min="0"
-                      step="0.000001"
-                      required
-                    />
-                  </Field>
-                  <Field label="Count notes / reason">
-                    <textarea
-                      name="reason"
-                      required
-                      minLength={3}
-                      placeholder="What did you count, and what needs investigation?"
-                    />
-                  </Field>
-                  <Button
-                    disabled={
-                      !online ||
-                      busy ||
-                      practice ||
-                      member.role === "cashier" ||
-                      !!pending.length
-                    }
-                  >
-                    Submit count for approval
-                  </Button>
-                </form>
-              </section>
-            </>
+            </BlindCounts>
           )}
 
           {view === "sales" && (

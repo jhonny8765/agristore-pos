@@ -14,7 +14,7 @@ export async function onlineOperation(
   actorId: string,
   action: string,
   data: Record<string, unknown>,
-  idField: string,
+  idField?: string,
 ) {
   const key = `operation:${action}:${data.organizationId}:${data.branchId}`;
   const fingerprint = stableJSON(data);
@@ -30,7 +30,7 @@ export async function onlineOperation(
       return previous;
     }
     const created: PendingOperation = {
-      key, action, data: { ...data, [idField]: crypto.randomUUID() },
+      key, action, data: idField ? { ...data, [idField]: crypto.randomUUID() } : { ...data },
       fingerprint, actorId,
     };
     await setSetting(db, key, created);

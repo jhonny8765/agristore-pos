@@ -30,9 +30,9 @@ insert into public.inventory_movements(organization_id,branch_id,product_id,quan
 const id = n => `55000000-0000-4000-8000-${String(n).padStart(12,"0")}`;
 const sql = (input, target="postgres") => run(["psql","-U","postgres","-d",target,"-v","ON_ERROR_STOP=1","-At"], input);
 const lastJSON = output => JSON.parse(output.trim().split("\n").at(-1));
-const login = `set role authenticated; select set_config('request.jwt.claims','${JSON.stringify({sub:id(1),session_id:id(1),role:"authenticated"})}',false);`;
+const login = (actor=1) => `set role authenticated; select set_config('request.jwt.claims','${JSON.stringify({sub:id(actor),session_id:id(actor),role:"authenticated"})}',false);`;
 const ctx = (branch=3) => ({organizationId:id(2),branchId:id(branch)});
-const command = (action,data,target="postgres") => lastJSON(sql(login+`select public.agri_command('${action}','${JSON.stringify(data)}'::jsonb);`,target));
+const command = (action,data,target="postgres",actor=1) => lastJSON(sql(login(actor)+`select public.agri_command('${action}','${JSON.stringify(data)}'::jsonb);`,target));
 run(
   ["psql", "-U", "postgres", "-d", "postgres", "-v", "ON_ERROR_STOP=1"],
   seed,
@@ -56,9 +56,20 @@ const refundHold = sql(`select id from public.stock_holds where organization_id=
 const release = {...ctx(),holdId:refundHold,dispositionId:id(14),quantity:"0.25",disposition:"release",reason:"TEST inspected quarter kilo is saleable"};
 command("disposition_hold",release);
 command("close_shift",{...ctx(),deviceId:id(8),shiftId:shift.shiftId,countedCash:0});
+// Preserve a ready pair and a first-only blind observation through the actual dump/restore.
+sql(`insert into auth.users(id,email) values('${id(16)}','restore-first@example.invalid'),('${id(17)}','restore-second@example.invalid');
+insert into auth.sessions(id,user_id) values('${id(16)}','${id(16)}'),('${id(17)}','${id(17)}');
+insert into public.staff_memberships(organization_id,user_id,branch_id,role,name) values('${id(2)}','${id(16)}','${id(3)}','stock_staff','TEST restored first counter'),('${id(2)}','${id(17)}','${id(3)}','stock_staff','TEST restored independent counter');`);
+const countBody={...ctx(),countId:id(18),productId:id(4),batchId:null,reason:'TEST restore sealed counts'};
+command('start_blind_count',countBody,'postgres',16);
+const firstCount={...ctx(),countId:id(18),stage:'first',quantity:'10.25',notes:'TEST restored first observation',observationId:id(19)};
+const recount={...ctx(),countId:id(18),stage:'recount',quantity:'10.25',notes:'TEST restored independent observation',observationId:id(20)};
+command('record_blind_count',firstCount,'postgres',16);command('record_blind_count',recount,'postgres',17);
+command('start_blind_count',{...countBody,countId:id(21)},'postgres',16);
+command('record_blind_count',{...firstCount,countId:id(21),observationId:id(22)},'postgres',16);
 // Compare retained content, not just row counts or one projected balance.
-const tables = ["organizations","branches","staff_memberships","devices","products","product_units","unit_prices","sales","sale_items","payments","sale_reversals","inventory_movements","branch_inventory","cashier_shifts","shift_authorizations","stock_transfers","stock_holds","stock_issues","stock_exceptions","stock_control_events","audit_events"];
-const fingerprints = target => lastJSON(sql(`select jsonb_object_agg(name,signature) from (${tables.map(table=>`select '${table}' name,jsonb_build_object('rows',count(*),'hash',md5(coalesce(string_agg(to_jsonb(t)::text,E'\\n' order by to_jsonb(t)::text),''))) signature from public.${table} t where ${table==="organizations" ? "id" : "organization_id"}='${id(2)}'`).join(" union all ")}) signatures;`,target));
+const tables = ["organizations","branches","staff_memberships","devices","products","product_units","unit_prices","sales","sale_items","payments","sale_reversals","inventory_movements","branch_inventory","cashier_shifts","shift_authorizations","stock_transfers","stock_holds","stock_issues","stock_exceptions","stock_control_events","audit_events","stock_counts","adjustment_approvals","app_private.blind_counts","app_private.count_observations"];
+const fingerprints = target => lastJSON(sql(`select jsonb_object_agg(name,signature) from (${tables.map(table=>`select '${table}' name,jsonb_build_object('rows',count(*),'hash',md5(coalesce(string_agg(to_jsonb(t)::text,E'\\n' order by to_jsonb(t)::text),''))) signature from ${table.includes(".") ? table : `public.${table}`} t where ${table==="app_private.count_observations" ? `count_id in(select id from app_private.blind_counts where organization_id='${id(2)}') and '${id(2)}'::uuid` : table==="organizations" ? "id" : "organization_id"}='${id(2)}'`).join(" union all ")}) signatures;`,target));
 const original = fingerprints("postgres");
 const before = command("snapshot",{...ctx(),transactionIds:[id(9)]});
 assert.equal(before.stocks[0].quantity,"10.250000");
@@ -100,13 +111,21 @@ try {
   const destination = command("snapshot",{...ctx(6),transactionIds:[]},database);
   assert.equal(destination.stocks[0].quantity,"2.000000");
   assert.equal(sql(`select (quantity-received_quantity-held_quantity-lost_quantity)::text from public.stock_transfers where id='${id(12)}';`,database).trim(),"0.750000");
+  command('record_blind_count',firstCount,database,16);command('record_blind_count',recount,database,17);
+  const restoredCounts=command('count_workspace',ctx(),database);
+  assert.equal(restoredCounts.rows.find(r=>r.id===id(18)).counted,'10.250000');
+  assert.equal(restoredCounts.rows.find(r=>r.id===id(21)).counted,null);
+  command('approve_count',{...ctx(),countId:id(18),reason:'TEST restored approval by separate owner'},database);
+  command('record_blind_count',{...recount,countId:id(21),observationId:id(23)},database,17);
+  command('approve_count',{...ctx(),countId:id(21),reason:'TEST continued first-only count after restoration'},database);
+  assert.throws(()=>sql(`update app_private.count_observations set quantity=1 where id='${id(19)}';`,database),/History is immutable/);
   // Resume a real workflow after recovery; data alone is not enough.
   command("disposition_hold",{...release,dispositionId:id(15),reason:"TEST post-restore inspection"},database);
   assert.equal(command("snapshot",{...ctx(),transactionIds:[]},database).stocks[0].quantity,"10.500000");
   assert.throws(()=>sql(`update public.sales set total=1 where id='${id(9)}';`,database),/History is immutable/);
   assert.equal(Number(sql(`select count(*) from public.branch_inventory i where i.organization_id='${id(2)}' and i.quantity<>(select sum(m.quantity) from public.inventory_movements m where m.organization_id=i.organization_id and m.branch_id=i.branch_id and m.product_id=i.product_id and m.batch_id is not distinct from i.batch_id);`,database).trim()),0);
   console.log(
-    "Restore drill passed: 21 table content fingerprints, original sale/payment and linked refund, held goods, approved damage, partial transfer with 0.75 kg still in transit, zero duplicate retry effects, working post-restore disposition, immutable history, and zero ledger/projection differences. Disposable CI dump only; production cloud backup not certified.",
+    "Restore drill passed: 25 table content fingerprints, blind sealed pairs and first-only observations resumed with independent owner approval, original sale/payment and linked refund, held goods, approved damage, partial transfer with 0.75 kg still in transit, zero duplicate retry effects, working post-restore disposition, immutable history, and zero ledger/projection differences. Disposable CI dump only; production cloud backup not certified.",
   );
 } finally {
   run(["dropdb", "-U", "postgres", database]);

@@ -1,3 +1,4 @@
+import {sealedCount} from "./blind-count-fixtures";
 import { randomUUID } from "node:crypto";
 import { createClient, type SupabaseClient } from "@supabase/supabase-js";
 import { expect, test, type Page } from "@playwright/test";
@@ -313,12 +314,11 @@ test("transfers and count approvals identify separate lots, base quantities and 
   await transferB.getByRole("button", {name:"Record actual receipt",exact:true}).click();
   await expect(transferB.getByRole("cell", { name: "received", exact: true })).toBeVisible();
   await page.getByRole("button", { name: "Stock counts", exact: true }).click();
+  await page.getByRole("button", { name: "Review sealed counts", exact: true }).click();
   for (const lot of lots) {
     const batchId = batches.data!.find((batch) => batch.lot === lot.lot)!.id;
-    await page.getByLabel("Product / batch").selectOption(`${productId}:${batchId}`);
-    await page.getByLabel("Physical quantity in base units", { exact: true }).fill(lot.counted);
-    await page.getByLabel("Count notes / reason", { exact: true }).fill(`TEST simulated discrepancy for ${lot.lot}`);
-    await page.getByRole("button", { name: "Submit count for approval", exact: true }).click();
+    await sealedCount(a,{organizationId:a.organizationId,branchId:destination,productId,batchId,countId:randomUUID(),counted:lot.counted,reason:`TEST simulated discrepancy for ${lot.lot}`});
+    await page.getByRole("button",{name:"Refresh counts",exact:true}).click();
     const row = page.locator('.history-table[data-kind="counts"] tbody tr').filter({ hasText: `Lot ${lot.lot}` });
     await expect(row).toContainText(`Expiry: ${lot.expiresOn}`);
     await expect(row).toContainText(`Reason: TEST simulated discrepancy for ${lot.lot}`);
@@ -341,11 +341,10 @@ test("transfers and count approvals identify separate lots, base quantities and 
     expect(scan.violations).toEqual([]);
     await page.screenshot({ path: `test-results/stock-history-${width}.png` });
   }
-  await countA.getByRole("button", { name: "Approve adjustment", exact: true }).click();
-  await countA.getByLabel("Approval evidence",{exact:true}).fill("TEST checked independently");
-  await countA.getByLabel("Independent recount quantity (base units)").fill("0.4");
-  await countA.getByLabel("Recount witness name").fill("TEST second counter");
-  await countA.getByRole("button",{name:"Confirm adjustment",exact:true}).click();
+  const approvalA=page.locator(".count-record").filter({hasText:"Lot TEST-LOT-A"});
+  await approvalA.getByRole("button", { name: "Approve adjustment", exact: true }).click();
+  await approvalA.getByLabel("Approval evidence",{exact:true}).fill("TEST checked independently");
+  await approvalA.getByRole("button",{name:"Confirm adjustment",exact:true}).click();
   await expect(countA.getByRole("cell", { name: "approved", exact: true })).toBeVisible();
   await expect(countB.getByRole("cell", { name: "pending", exact: true })).toBeVisible();
   const confirmed = await a.owner.from("branch_inventory").select("batch_id,quantity")
@@ -375,7 +374,7 @@ test("exact report quantities survive the real database, JSON, discrepancy displ
   const transfers = await historyPage({ kind: "transfers", organizationId: a.organizationId, branchId: source, range: { from: "", to: "" } }, a.owner);
   expect(transfers.rows.find((row) => row.id === transferId)!.quantity).toBe("9999999999.000001");
   await command(a.owner, "receive_transfer", { organizationId: a.organizationId, branchId: destination, transferId, receiptId:randomUUID(), quantity:"9999999999.000001", heldQuantity:"0", reason:"TEST actual receipt" });
-  await command(a.owner, "submit_count", {
+  await sealedCount(a, {
     organizationId: a.organizationId, branchId: destination, countId,
     productId: a.productId, batchId: null, counted: "9999999999.000000",
     reason: "TEST numerical boundary; not a physical count",
@@ -390,6 +389,7 @@ test("exact report quantities survive the real database, JSON, discrepancy displ
   await page.getByRole("combobox", { name: "Current branch", exact: true }).selectOption(destination);
   await expect(page.getByText("Branch stock loaded.", { exact: true })).toBeVisible();
   await page.getByRole("button", { name: "Stock counts", exact: true }).click();
+  await page.getByRole("button", { name: "Review sealed counts", exact: true }).click();
   await expect(page.getByRole("cell", { name: "9999999999.000001 kg", exact: true })).toBeVisible();
   await expect(page.getByRole("cell", { name: "-0.000001 kg", exact: true })).toBeVisible();
   const downloadPromise = page.waitForEvent("download");
@@ -408,7 +408,7 @@ test("staff cannot bypass stock controls, escalate access or read unrelated bran
     source: "purchase", reference: "TEST branch isolation fixture",
     items: [{ productId: a.productId, unitId: a.unitId, quantity: "2", lot: "", expiresOn: null }],
   });
-  await command(a.owner, "submit_count", {
+  await sealedCount(a, {
     organizationId: a.organizationId, branchId: otherBranch, countId: randomUUID(),
     productId: a.productId, batchId: null, counted: "2", reason: "TEST other-branch record",
   });
@@ -468,7 +468,7 @@ test("staff cannot bypass stock controls, escalate access or read unrelated bran
   await login(page, cashier);
   await expect(page.getByRole("combobox", { name: "Current branch", exact: true }).locator("option")).toHaveCount(1);
   await page.getByRole("button", { name: "Stock counts", exact: true }).click();
-  await expect(page.getByRole("button", { name: "Submit count for approval", exact: true })).toBeDisabled();
+  await expect(page.getByText("Stock counts require a stock-staff, manager or owner account. Cashiers cannot submit or approve adjustments.",{exact:true})).toBeVisible();
   await page.getByRole("button", { name: "Transfers", exact: true }).click();
   await expect(page.getByRole("button", { name: "Dispatch stock", exact: true })).toBeDisabled();
   const incoming = page.locator('.history-table[data-kind="transfers"] tbody tr');
@@ -1153,27 +1153,13 @@ test("owner approvals work without browser dialogs, stock refreshes without a sh
     page.getByRole("region",{name:/Product, Category$/}).getByRole("row").filter({ hasText: "Audit feeds" }),
   ).toContainText("20 kg");
   await page.getByRole("button", { name: "Stock counts", exact: true }).click();
-  await page
-    .getByLabel("Physical quantity in base units", { exact: true })
-    .fill("19");
-  await page
-    .getByLabel("Count notes / reason", { exact: true })
-    .fill("TEST verify approved discrepancy");
-  await page
-    .getByRole("button", { name: "Submit count for approval", exact: true })
-    .click();
-  await expect(page.getByLabel("Physical quantity in base units", { exact: true })).toHaveValue("");
-  await expect(page.getByLabel("Count notes / reason", { exact: true })).toHaveValue("");
-  await page
-    .getByRole("button", { name: "Approve adjustment", exact: true })
-    .click();
+  await page.getByRole("button", { name: "Review sealed counts", exact: true }).click();
+  await sealedCount(a,{organizationId:a.organizationId,branchId:a.branchId,productId:a.productId,batchId:null,countId:randomUUID(),counted:"19",reason:"TEST verify approved discrepancy"});
+  await page.getByRole("button",{name:"Refresh counts",exact:true}).click();
+  await page.getByRole("button",{name:"Approve adjustment",exact:true}).click();
   await page.getByLabel("Approval evidence",{exact:true}).fill("TEST checked independently");
-  await page.getByLabel("Independent recount quantity (base units)").fill("19");
-  await page.getByLabel("Recount witness name").fill("TEST second counter");
   await page.getByRole("button",{name:"Confirm adjustment",exact:true}).click();
-  await expect(
-    page.getByRole("cell", { name: "approved", exact: true }),
-  ).toBeVisible();
+  await expect(page.getByRole("cell", { name: "approved", exact: true })).toBeVisible();
   await page.getByRole("button", { name: "Inventory", exact: true }).click();
   await expect(
     page.getByRole("region",{name:/Product, Category$/}).getByRole("row").filter({ hasText: "Audit feeds" }),
@@ -1263,7 +1249,7 @@ test("branch history pages beyond 1000, filters Manila days, recovers a failed p
       batchId: null,
       quantity: "1",
     });
-    await command(a.owner, "submit_count", {
+    await sealedCount(a, {
       organizationId: a.organizationId,
       branchId: a.branchId,
       countId: randomUUID(),
