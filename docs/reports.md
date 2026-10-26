@@ -2,6 +2,8 @@
 
 For quantities and documented purchase-cost loss values, use **Overview → Stock loss at purchase cost** and follow the [purchase-cost report guide](purchase-cost-loss-reports.md). Its financial subtotals cover the complete selected range; row exports contain only the loaded pages. Unknown costs stay explicitly unvalued. Its separate stock reconciliation covers all stock-book movements through the recorded-date cutoff rather than the bounded movement preview described below.
 
+Purchasing also has [purchase-order and inspected-delivery registers](purchase-orders-and-deliveries.md), with 30 headers per page and a separate loaded-inspection CSV. These are branch registers with explicit older-page controls. Their document/accepted/held/rejected quantities are distinct from the legacy Receiving history's receipt list below; fully rejected inspections also retain a zero-stock receipt in that history.
+
 Select the branch in the top bar before opening a register. Branch switching requires a connection and a closed cashier shift.
 
 | Screen | Register | Included records | Date used |
