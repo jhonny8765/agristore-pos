@@ -2,6 +2,8 @@
 
 Original stock-control release: October 25, 2026. Latest client follow-up assigned to staging: October 26, 2026 (Asia/Manila). This is staging work. It does not certify production or explain the reported real stock loss.
 
+The later [grams-first checkout follow-up](grams-switch-verification.md) is now assigned to staging. Its complete [40265497302](https://github.com/jhonny8765/agristore-pos-open-source/actions/runs/40265497302) passed 175 unit checks, 22 practice and 17 real Auth/database browser scenarios, 222 database assertions and the 25-table restore. Existing ledger/schema and hardware acceptance limits below remain unchanged.
+
 ## Recovery follow-up — October 26
 
 Full [40259205535](https://github.com/jhonny8765/agristore-pos-open-source/actions/runs/40259205535), public source `6c7305c`, passed both jobs: **175 unit tests, 20 practice-browser scenarios, 17 real Supabase/Auth browser scenarios, 222 pgTAP assertions**, warning-failing database lint, type/lint/build and the 25-table real dump/restore. Private application source `b896642` contains the same recovery change. No schema or dependency change was required. The annual-capacity evidence below remains applicable to the unchanged ledger/schema; that heavy fixture was not repeated for a client recovery fix.
