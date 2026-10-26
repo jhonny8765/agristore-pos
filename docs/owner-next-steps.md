@@ -6,6 +6,8 @@ For the shorter step-by-step handoff and what to report back, start with [your n
 
 For purchasing, follow the [purchase-order and delivery guide](purchase-orders-and-deliveries.md). Add the actual supplier first, request the order, have the owner approve it and inspect goods into accepted/held/rejected quantities. Fully rejected deliveries retain their document and claim with no stock increase. Test a mixed receipt, full rejection and replacement with the real receiving employees before using business stock.
 
+For a saved inspection entered incorrectly, follow the [safe delivery-reversal guide](delivery-reversals.md). Account for every branch PC, synchronize and close its shifts, then check the physical goods and proposed stock/order effects. Only an untouched full inspection can reverse automatically; used stock or supplier activity requires owner reconciliation. The new correction links and preserves the original record.
+
 To value a confirmed shortage, follow the [purchase-cost loss-report guide](purchase-cost-loss-reports.md). Under **Overview**, choose the branch/date range, then use the actual supplier or opening-stock document to record the cost of one selected unit. Unknown costs remain unvalued; the owner must supply their evidence. The report preserves corrections and separates held goods, outstanding transfers and authorised use from posted losses.
 
 Use the new [Inventory expiry and assigned-investigation guide](expiry-and-investigations.md) with the real stock employees. Verify product expiry tracking and physical lot labels; assign responsibility and due dates for genuine unresolved cases. The populated workflow was tested in a disposable business. The current labelled staging stock was preserved rather than inventing a live shortage.

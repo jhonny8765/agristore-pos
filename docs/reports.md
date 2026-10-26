@@ -4,6 +4,8 @@ For quantities and documented purchase-cost loss values, use **Overview → Stoc
 
 Purchasing also has [purchase-order and inspected-delivery registers](purchase-orders-and-deliveries.md), with 30 headers per page and a separate loaded-inspection CSV. These are branch registers with explicit older-page controls. Their document/accepted/held/rejected quantities are distinct from the legacy Receiving history's receipt list below; fully rejected inspections also retain a zero-stock receipt in that history.
 
+[Delivery reversals](delivery-reversals.md) add opposite movements linked to the originals. Stock reconciliation groups purchase reversals with purchases and hold cancellations with hold deductions; they are receiving corrections, not loss movements. Original inspection CSV quantities remain historical evidence and include reversal/correction identifiers and record status. Do not add reversed rows into active receiving totals.
+
 Select the branch in the top bar before opening a register. Branch switching requires a connection and a closed cashier shift.
 
 | Screen | Register | Included records | Date used |
