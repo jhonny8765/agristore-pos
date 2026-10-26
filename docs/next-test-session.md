@@ -1,0 +1,41 @@
+# Your next test session
+
+Use the existing staging business and clearly labelled TEST goods. Do not use real customer sales for failure tests. The current automated evidence is in [verification](stock-control-verification.md); the actual PC and store checks below still need people and equipment.
+
+## Start with these three things
+
+1. **Choose the first branch and Windows cashier PC.** Keep one normal Edge profile and the same [staging address](https://agristore-pos-staging-team-payaman2.vercel.app/). Record Windows/Edge versions, printer and scale models. Keep the PC's site data; do not use InPrivate.
+2. **Prepare individual staff accounts.** Two real people count; a third person with the owner role approves. Each employee creates and confirms their own account. The owner assigns the appropriate branch and stock-staff/manager role in Settings → Staff access. Keep the owner out of both count entries if only one owner is available. Do not send passwords in chat.
+3. **Update the app safely.** Finish the basket, resolve pending requests and synchronize saved sales. Open Settings → Application & recovery → Check for app update and follow the reopen message. Do not reset browser storage to obtain an update.
+
+## Rehearse one independent count
+
+Synchronize every cashier window and close every shift in the selected branch. Set a physical cutoff and stop deliveries, transfers and selling while counting. Use one known TEST product and lot; keep a separate signed sheet with the stock figure and unit conversion. Separate held or damaged goods.
+
+The first person starts a blind count and seals their physical quantity and notes. The second person signs in separately and weighs/counts the goods independently, then seals the recount. The owner opens Review sealed counts, checks the evidence and approves only if both agree. The app should record one adjustment, retain both observations and leave any discrepancy investigation outstanding. Follow [the full counting procedure](blind-counts.md).
+
+If counts disagree or stock moved during the count, preserve the evidence, investigate, close that count with a reason and start a fresh count. Do not change a number merely to match the system. The three accounts must represent three actual people.
+
+## Rehearse the cashier PC
+
+Open Settings → Application & recovery → Check storage protection. Record the exact result. Browser installation alone does not establish storage protection or a backup. The browser pilot requires persistence granted and the actual interruption checks passing.
+
+Use the [200-sale test worksheet](owner-next-steps.md#2-run-a-test-day-on-that-pc), labelled test goods and simulated cash. Include `1/4` kg, `0.5` kg, grams and a peso request confirmed against actual scale weight. Record the starting quantities, price and drawer cash before disconnecting. Check physical scale tare and printed output separately.
+
+Keep the network disconnected for 60 real minutes, close/reopen the app and restart Windows during the outage. Continue for eight actual hours within the displayed authorization period. Verify every completed sale ID, quantity, total and change after each restart. Reconnect, renew sign-in if requested, synchronize and compare cash and stock. Record what happened; do not change the PC clock to stand in for elapsed time.
+
+If a completed sale is missing, checkout claims success without saving, or synchronization deducts the same purchase twice, stop the pilot. Preserve the original PC, Edge profile, error text and recovery files. Do not clear site data or enter the purchase again.
+
+## If a count request loses its response
+
+Open Sync center and retry the original request as the employee who began it. Do not create another count or observation to force confirmation. If a replacement test profile is required, export the recovery file, sign in to the same business/branch as the original employee, restore it and retry the retained request. Operation-only files work while shifts remain closed; files containing sales still require an authorized cashier shift. An owner may retain another employee's evidence for review but does not become that employee for retrying it. Keep the original PC and export until confirmation is independently checked.
+
+## Before real sales
+
+Use signed, independently verified opening stock, documented sack/kilo/packet conversions, lots and purchase costs. Arrange backup ownership and restore an actual cloud backup into a separate working test environment. Reconcile cash and stock daily during a one-branch pilot; expand only after the recorded checks pass. The automated disposable restore does not establish that a production backup is scheduled.
+
+Expiry worklists with assigned follow-up, cost-valued discrepancy reports, purchase-order matching, completely rejected deliveries and partial financial refunds remain software gaps. Use the explicit manual controls in [remaining work](remaining-work.md) until those workflows are implemented. These tests do not establish the cause or value of the earlier reported shortage.
+
+## What to report back
+
+Send the chosen branch; Windows/Edge, printer and scale models; storage-protection result; actual disconnect/restart/start/end times; completed and pending sale counts; expected versus recorded cash and stock; and exact error text. Say whether two independent staff accounts and a separate approving owner are ready. Keep passwords, recovery contents and personal account details private.

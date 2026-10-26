@@ -2,7 +2,13 @@
 
 Tests are executable evidence, not a blanket claim of production readiness.
 
-## Current baseline — October 26 blind counts and free public verification
+## Current baseline — October 26 count-request recovery
+
+Full [40259205535](https://github.com/jhonny8765/agristore-pos-open-source/actions/runs/40259205535), public source `6c7305c`, passed **175 unit tests, 37 browser scenarios, 222 database assertions**, warning-failing database lint, type/lint/build and the 25-table Supabase dump/restore. Private source `b896642` includes the same recovery fix. The new authenticated case verified an operation-only export after a committed/lost count response, wrong-employee rejection, restoration in a fresh original-employee browser, reload persistence and an original-ID retry, with one audit event and no opened shifts. Counts/approvals/closures and branch creation now restore with intact identities/fingerprints; sale archives still require an authorized cashier shift.
+
+[Stable staging](https://agristore-pos-staging-team-payaman2.vercel.app/) is assigned/read back to preview `agristore-jursybgt5-team-payaman2.vercel.app`, deployment `dpl_Hs3ckt6847X41giShrso1BabK7WC`, Preview / Ready. No migration, dependency change, paid setting or production promotion was needed. Local private-build practice tests also passed all 20 cases; dependency audit found zero known vulnerabilities. See [verification](stock-control-verification.md) and [your next test session](next-test-session.md) for scope, remaining advisories and the real PC/staff/backup gates.
+
+## Previous baseline — October 26 blind counts and free public verification
 
 The clean [MIT source edition](https://github.com/jhonny8765/agristore-pos-open-source) now supplies free public-runner verification while the original business repository/history stay private. Full [40240548716](https://github.com/jhonny8765/agristore-pos-open-source/actions/runs/40240548716), public application source `be82ba0`, passed 162 unit tests, 20 practice and 16 real database-connected browser scenarios, 222 pgTAP assertions, warning-failing database lint, type/lint/build and the expanded 25-table Supabase dump/restore. Separate [40239599069](https://github.com/jhonny8765/agristore-pos-open-source/actions/runs/40239599069) passed the annual-size capacity fixture. Thirty-one critical migration/domain/offline/count/recovery files were identical between editions; private source `33d20f8` includes the same fixes with the original business branding.
 

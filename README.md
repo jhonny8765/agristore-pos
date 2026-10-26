@@ -40,7 +40,7 @@ The browser tests use a production build at `http://127.0.0.1:3100`. Development
 
 The database CI job also runs `npm run test:integration` against its disposable local Supabase stack. This builds the PWA with the stack's public API key and exercises real Auth, registered-PC user switching, offline checkout, a committed upload with a lost response, stock reconciliation, and employee revocation. The runner requires Linux CI and the exact loopback API; hosted projects are prohibited. It never passes administrative credentials to the application, and authenticated traces are disabled.
 
-Without Docker or GitHub-hosted compute, `npm run test:db:preflight`, `npm run test:counts:local` (after an application build) and `npm run test:counts:restore` provide supplementary local PostgreSQL/count-component checks. They use simulated Auth and an ephemeral loopback fixture; they do not replace the complete Supabase/PostgREST/Auth/dump-restore gate. The [blind-count follow-up](docs/blind-counts.md) passed the full Supabase/Auth/restore gate on the [clean MIT source edition's free public runners](https://github.com/jhonny8765/agristore-pos-open-source/actions/runs/40240548716) and is deployed to staging. The original business history, private deployment defaults and company artwork remain private. No paid settings were changed. See [the publication and verification boundary](docs/public-source-release.md).
+Without Docker or GitHub-hosted compute, `npm run test:db:preflight`, `npm run test:counts:local` (after an application build) and `npm run test:counts:restore` provide supplementary local PostgreSQL/count-component checks. They use simulated Auth and an ephemeral loopback fixture; they do not replace the complete Supabase/PostgREST/Auth/dump-restore gate. The [blind-count follow-up](docs/blind-counts.md) passed the full Supabase/Auth/restore gate on the [clean MIT source edition's free public runners](https://github.com/jhonny8765/agristore-pos-open-source/actions/runs/40259205535) and is deployed to staging. The original business history, private deployment defaults and company artwork remain private. No paid settings were changed. See [the publication and verification boundary](docs/public-source-release.md).
 
 ## What is implemented
 
@@ -57,7 +57,7 @@ Receipt history loads 50 records at a time with **Load older receipts**. Refunds
 
 See the [overall review and improvement plan](docs/improvement-plan.md) for repaired bugs, measured scope and the remaining priorities.
 
-Start the hardware/store handover with [what the owner needs to do next](docs/owner-next-steps.md). It includes a 200-purchase example with independently calculated cash and kilo totals. See [remaining release work](docs/remaining-work.md) for unpassed pilot gates and missing workflows, and [stock-control verification](docs/stock-control-verification.md) for current durability evidence.
+Start the hardware/store handover with [your next test session](docs/next-test-session.md) and [what the owner needs to do next](docs/owner-next-steps.md). It includes a 200-purchase example with independently calculated cash and kilo totals. See [remaining release work](docs/remaining-work.md) for unpassed pilot gates and missing workflows, and [stock-control verification](docs/stock-control-verification.md) for current durability evidence.
 
 See [loose weights and peso requests](docs/weighed-sales.md) for quarter/half kilos, grams, actual scale confirmation, distinct kilo/sack prices, sealed-piece configuration and counter rehearsal.
 

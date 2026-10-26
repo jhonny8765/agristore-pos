@@ -1,6 +1,6 @@
 # Remaining release work
 
-Updated October 26, 2026. This list distinguishes missing workflows from failures reproduced by a test. Completed controls and executable evidence are in [stock-control verification](stock-control-verification.md). The [owner guide](owner-next-steps.md) covers actions requiring the actual PC or business records. The latest staging release includes blind counts and separate-person approval, verified by 162 unit tests, 36 browser scenarios, 222 database assertions and the expanded 25-table restore. Free public-source runners now provide the full integration gate. Hardware, business-data and actual production-restore gates below remain open.
+Updated October 26, 2026. This list distinguishes missing workflows from failures reproduced by a test. Completed controls and executable evidence are in [stock-control verification](stock-control-verification.md). The [owner guide](owner-next-steps.md) covers actions requiring the actual PC or business records. The latest staging release includes blind counts, separate-person approval and closed-shift operation recovery, verified by 175 unit tests, 37 browser scenarios, 222 database assertions and the expanded 25-table restore. Free public-source runners now provide the full integration gate. Hardware, business-data and actual production-restore gates below remain open.
 
 ## Before real sales
 
