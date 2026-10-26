@@ -1158,6 +1158,16 @@ test("owner approvals work without browser dialogs, stock refreshes without a sh
   await page.getByRole("button", { name: "Review sealed counts", exact: true }).click();
   await sealedCount(a,{organizationId:a.organizationId,branchId:a.branches[1].id,productId:a.productId,batchId:null,countId:randomUUID(),counted:"19",reason:"TEST verify approved discrepancy"});
   await page.getByRole("button",{name:"Refresh counts",exact:true}).click();
+  try {
+    await expect(page.getByRole("button",{name:"Approve adjustment",exact:true})).toBeVisible();
+  } catch (failure) {
+    // Only disposable fixture evidence is logged; never sessions, credentials or a browser trace.
+    console.error("TEST missing approval diagnostics", JSON.stringify({
+      workspace: await command(a.owner,"count_workspace",{organizationId:a.organizationId,branchId:a.branches[1].id}),
+      screen: await page.getByRole("region",{name:"Blind stock counts",exact:true}).innerText(),
+    }));
+    throw failure;
+  }
   await page.getByRole("button",{name:"Approve adjustment",exact:true}).click();
   await page.getByLabel("Approval evidence",{exact:true}).fill("TEST checked independently");
   await page.getByRole("button",{name:"Confirm adjustment",exact:true}).click();
