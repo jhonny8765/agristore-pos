@@ -1,5 +1,7 @@
 # Finding and exporting older records
 
+For quantities and documented purchase-cost loss values, use **Overview → Stock loss at purchase cost** and follow the [purchase-cost report guide](purchase-cost-loss-reports.md). Its financial subtotals cover the complete selected range; row exports contain only the loaded pages. Unknown costs stay explicitly unvalued. Its separate stock reconciliation covers all stock-book movements through the recorded-date cutoff rather than the bounded movement preview described below.
+
 Select the branch in the top bar before opening a register. Branch switching requires a connection and a closed cashier shift.
 
 | Screen | Register | Included records | Date used |

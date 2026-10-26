@@ -6,6 +6,8 @@ The [blind-count procedure](blind-counts.md) is now released to staging: two dif
 
 The [expiry and assigned-investigation procedure](expiry-and-investigations.md) is also released. At opening and closing, refresh Inventory, review expired/approaching/missing-date stock, and check overdue or unassigned cases. Owners/managers assign a named active employee and deadline; that employee records progress. A progress note keeps the case open. Only an owner resolution closes it, and physical stock changes still require their separate approved workflow.
 
+The [purchase-cost report procedure](purchase-cost-loss-reports.md) values posted shortages using owner-documented acquisition cost. Review its incomplete-cost warning before treating a subtotal as a complete loss value. Cost evidence never changes physical quantities or establishes a cause.
+
 ## Establish a trustworthy starting point
 
 Use named staff accounts. Keep the owner account private. Choose the real cashier PC, check the weighing scale and tare containers, and complete a witnessed opening count before importing stock. Count sealed sacks and loose contents separately, using net kilograms. Keep held goods physically separate and identify their product and lot.
@@ -32,7 +34,7 @@ Keep disputed supplier goods separate and documented until their final accepted 
 3. Resolve pending physical stock movements before counting. Count saleable goods independently; exclude held goods and stock still in transit. Weigh loose goods using a checked scale.
 4. Complete the blind first count and independent recount under two different stock-authorized accounts. Both entries seal before comparisons are revealed. A third person with owner access approves; an owner who entered either count cannot approve it. Disagreement requires investigation and a fresh count. All differences require the independent step in this release; typed witness names cannot replace sign-in.
 5. Approve only a current count. Any intervening inventory movement requires a fresh count. Approval creates an adjustment and retains the discrepancy investigation; it does not establish the cause.
-6. Review Inventory's open investigations, held goods and pending issues. Review transfers still in transit, overdue synchronization and unusual refunds/adjustments. Keep a separate assigned-person/due-date log until assignment and escalation are implemented in the app.
+6. Review Inventory's open investigations, held goods and pending issues. Review transfers still in transit, overdue synchronization and unusual refunds/adjustments. Assign unresolved cases to a named employee with a due date in Inventory; require retained progress and owner-reviewed outcomes.
 
 Rotate daily counts through valuable, fast-moving and loose products. Review recurring differences by product, lot, branch and supplier weekly. Reconcile the full inventory and unresolved cost-valued loss monthly. Avoid netting unrelated shortages and overages into one reassuring number.
 

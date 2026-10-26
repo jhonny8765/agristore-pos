@@ -4,6 +4,8 @@ Use this with the [pilot sign-off](pilot-checklist.md). The app is still in stag
 
 For the shorter step-by-step handoff and what to report back, start with [your next test session](next-test-session.md).
 
+To value a confirmed shortage, follow the [purchase-cost loss-report guide](purchase-cost-loss-reports.md). Under **Overview**, choose the branch/date range, then use the actual supplier or opening-stock document to record the cost of one selected unit. Unknown costs remain unvalued; the owner must supply their evidence. The report preserves corrections and separates held goods, outstanding transfers and authorised use from posted losses.
+
 Use the new [Inventory expiry and assigned-investigation guide](expiry-and-investigations.md) with the real stock employees. Verify product expiry tracking and physical lot labels; assign responsibility and due dates for genuine unresolved cases. The populated workflow was tested in a disposable business. The current labelled staging stock was preserved rather than inventing a live shortage.
 
 The [blind-count and separate-person approval workflow](blind-counts.md) is now deployed to staging after the complete real Supabase test run passed on the clean public source edition's free runners. Use two independent stock-staff/manager counters and a third person, the owner, to approve. If only one owner exists, that owner should review rather than enter either count. Employees create/confirm their own accounts; assign their branch and role under Settings → Staff access. Do not share the owner password. No paid settings were changed.
