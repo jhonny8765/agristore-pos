@@ -31,3 +31,6 @@ Customer-facing identity: Better Yield POS, for Better Yield Agri Trading and Se
 Completed sales survive interruption. History is append-only. Each checkout is distinct. Failed sync stays visible. Permissions are enforced in the database.
 
 The locally implemented blind-count follow-up requires two different branch-authorized counter accounts and an owner who entered neither observation. Expected stock and unpaired quantities/notes remain private; comparisons are shown only after both entries seal. Any disagreement or intervening branch stock movement requires a fresh count. There is no self-approval or typed-witness override. This follow-up passed its complete Supabase integration gate and is released to staging; actual staff and hardware acceptance remain separate. See docs/blind-counts.md.
+
+## Stock follow-up workflow
+Connected Inventory worklists show recorded expiry and unresolved investigations with explicit snapshot times. Owners and branch managers assign an active authorized employee and due date; assignees can record progress. Assignments and progress leave cases open and stock unchanged. Only the owner resolves an investigation with evidence. Staff/hardware and real opening-data acceptance remain separate.

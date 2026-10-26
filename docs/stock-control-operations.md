@@ -4,6 +4,8 @@ This guide describes the new staging stock-control workflows. Follow the release
 
 The [blind-count procedure](blind-counts.md) is now released to staging: two different counter accounts seal observations, then an owner who entered neither approves. The old typed-witness procedure cannot authorize new adjustments. Historical approved counts remain retained.
 
+The [expiry and assigned-investigation procedure](expiry-and-investigations.md) is also released. At opening and closing, refresh Inventory, review expired/approaching/missing-date stock, and check overdue or unassigned cases. Owners/managers assign a named active employee and deadline; that employee records progress. A progress note keeps the case open. Only an owner resolution closes it, and physical stock changes still require their separate approved workflow.
+
 ## Establish a trustworthy starting point
 
 Use named staff accounts. Keep the owner account private. Choose the real cashier PC, check the weighing scale and tare containers, and complete a witnessed opening count before importing stock. Count sealed sacks and loose contents separately, using net kilograms. Keep held goods physically separate and identify their product and lot.

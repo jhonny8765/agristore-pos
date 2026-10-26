@@ -364,3 +364,6 @@ Keep the top-bar branch picker at a minimum height (40px) across viewport sizes.
 - **Don't** invite resubmission of a confirmed action after a refresh failure, or show opening-stock confirmation before CSV validation succeeds.
 - **Don't** treat unloaded held goods as a verified empty stock state or a recorded investigation outcome as proof of a shortage's cause.
 - **Don't** describe storage permission or estimated browser quota as proof of backup coverage, Windows disk capacity, or operational readiness.
+
+## Stock reminder worklists
+Use the existing Inventory panels, ruled tables and responsive stock-control rows. Keep lot, expiry, exact base quantities and separately held goods together. Show the snapshot time, online refresh action, totals and bounded-page continuation. Missing expiry is an inspection warning. Responsible employee, due/overdue status, assignment instructions and latest progress belong beside the source evidence. Use native labelled controls and inline approval forms; keep manager assignment separate from owner-only resolution. Preserve entered/pending work on failed writes, and keep recorded success distinct from refresh failures. Dropdown accessible names reference their visible labels explicitly; refresh controls wrap at narrow widths.

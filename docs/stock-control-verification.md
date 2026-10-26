@@ -2,6 +2,8 @@
 
 Original stock-control release: October 25, 2026. Latest client follow-up assigned to staging: October 26, 2026 (Asia/Manila). This is staging work. It does not certify production or explain the reported real stock loss.
 
+The latest [expiry and assigned-investigation follow-up](expiry-followup-verification.md) is released to staging. Complete [40299113349](https://github.com/jhonny8765/agristore-pos-open-source/actions/runs/40299113349) passed 182 unit checks, 22 practice and 19 real Auth/database browser scenarios, 273 database assertions and the expanded 25-table restore. It includes the downloaded owner-recovery-file checksum correction; earlier evidence below remains scoped to its recorded source.
+
 The later [grams-first checkout follow-up](grams-switch-verification.md) is now assigned to staging. Its complete [40265497302](https://github.com/jhonny8765/agristore-pos-open-source/actions/runs/40265497302) passed 175 unit checks, 22 practice and 17 real Auth/database browser scenarios, 222 database assertions and the 25-table restore. Existing ledger/schema and hardware acceptance limits below remain unchanged.
 
 ## Recovery follow-up — October 26
