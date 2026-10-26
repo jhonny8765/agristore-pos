@@ -1,5 +1,8 @@
 # Better Yield: stock-loss prevention and long-term operation
 
+Current status, October 27, 2026: later releases added separate physical refund dispositions and [selected-quantity cash refunds](partial-refunds.md), with original-price rounding, owner/drawer authorization and recoverable requests. The dated audit findings below describe the earlier implementation; see [remaining work](remaining-work.md) for current gaps and actual PC/pilot gates.
+
+
 Research and source review: **October 25, 2026**. Application reviewed: `e84f3fa`; latest preceding documentation: `234d924`. The findings below preserve that pre-implementation audit. Subsequent fixes, tests, staging status and remaining release gates are tracked in [stock-control verification](stock-control-verification.md); staff procedures are in [stock-control operations](stock-control-operations.md).
 
 ## Assessment

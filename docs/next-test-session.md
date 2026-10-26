@@ -34,7 +34,7 @@ Open Sync center and retry the original request as the employee who began it. Do
 
 Use signed, independently verified opening stock, documented sack/kilo/packet conversions, lots and purchase costs. Arrange backup ownership and restore an actual cloud backup into a separate working test environment. Reconcile cash and stock daily during a one-branch pilot; expand only after the recorded checks pass. The automated disposable restore does not establish that a production backup is scheduled.
 
-Expiry worklists with assigned follow-up, cost-valued discrepancy reports, purchase-order matching, completely rejected deliveries and partial financial refunds remain software gaps. Use the explicit manual controls in [remaining work](remaining-work.md) until those workflows are implemented. These tests do not establish the cause or value of the earlier reported shortage.
+Expiry/assigned follow-up, purchase-cost loss reports, purchase-order matching, rejected-delivery inspection, untouched delivery reversal and selected-quantity partial refunds are now delivered with their own linked verification reports. Follow the current [remaining work](remaining-work.md) and [partial-refund procedure](partial-refunds.md) for the next rehearsal and unresolved operational gates. These tests do not establish the cause or value of the earlier reported shortage.
 
 ## What to report back
 

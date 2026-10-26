@@ -32,3 +32,5 @@ Transfer/count quantities and stock-journal quantities are requested as exact da
 Receipt history under Sales & receipts has its own **Load older receipts** action. Overview totals include all confirmed records; its flag, cash reconciliation and stock movement previews remain bounded to the most recent 1,000 records. The separate audit register supports older pages. Sales, stock movements and corrections remain immutable: an export or filter does not change stock.
 
 These registers supplement reconciliation. They do not provide official tax invoices or a full accounting ledger.
+
+[Partial refunds](partial-refunds.md) retain their own linked cash payments and immutable original-line allocations. Overview cash-refund totals and server shift reconciliation include both full and partial refunds. Receipt-list indicators are bounded; open refund details for exact remaining money/quantities and paginated saved refunds. Only inspected saleable returns appear as refund stock movements; held goods remain separate and refunds do not automatically create stock losses.
