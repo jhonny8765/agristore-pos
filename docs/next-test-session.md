@@ -1,5 +1,7 @@
 # Your next test session
 
+For the remaining real-duration and Windows-restart checks, use the [prepared endurance record sheet](endurance-test-record.md). It starts from the current 195 kg test balance, provides the exact next-200-sale expectations and leaves actual timing/result fields blank. The new long test is not started; reserve the PC and save other work before beginning.
+
 Use the existing staging business and clearly labelled TEST goods. Do not use real customer sales for failure tests. The current automated evidence is in [verification](stock-control-verification.md); the actual PC and store checks below still need people and equipment.
 
 Read the [installed Brave rehearsal](installed-cashier-rehearsal.md) first. Brave now grants persistent storage; 200 TEST sales, original-ID recovery, exact ₱1,925 cash/195 kg stock and closed-shift offline receipt retention passed. The [candidate-PC audit](candidate-pc-verification.md) preserves the earlier findings. The current test branch now has 195 kg, so repeating the same 55 kg worksheet would leave 140 kg if nothing else moves. Actual sixty-minute/eight-hour, installed-app/browser-process and Windows-restart tests remain open. Do not represent the completed 9-minute-49-second tab outage as those hardware/endurance checks or begin real sales before all launch gates pass.

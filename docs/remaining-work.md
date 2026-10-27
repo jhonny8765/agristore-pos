@@ -20,7 +20,7 @@ The subsequent [meter/ml damage, held-goods and purchase-cost loss gate](measure
 
 | Remaining gate | Who supplies the missing evidence | Pass condition |
 |---|---|---|
-| Cashier PC and browser storage | Owner/cashier with technical help | Selected Windows PC, persistent storage granted, all completed test sales survive actual offline Edge/Windows restarts and eight real hours |
+| Cashier PC and browser storage | Owner/cashier with technical help | Selected Windows PC and tested browser profile, persistent storage granted, all completed test sales survive actual offline app/browser and Windows restarts and eight real hours; use the [prepared record sheet](endurance-test-record.md) |
 | Scale and receipt printer | Store staff | Tare/weight checks, quarter/half-kilo/gram/peso requests and readable physical output match the saved sale |
 | Trustworthy inventory and roles | Owner and independent counter | Signed opening counts by product/lot, documented units and costs, individual branch-limited staff accounts |
 | Hosting and restore readiness | Account owner and maintainer | Sized commercial production environment, defined recovery objectives, encrypted backup and successful actual cloud-backup restoration |
