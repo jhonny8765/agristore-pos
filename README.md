@@ -88,3 +88,5 @@ Staging Auth URL settings are declared separately under `deploy/supabase/config.
 See [operations and recovery](docs/operations.md), [staff roles and branch responsibilities](docs/permissions.md), [acceptance evidence](docs/acceptance.md), and [source references](THIRD_PARTY_NOTICES.md).
 
 See [measured lengths, liquids and pieces](docs/measured-units.md) for rope meters, the liter/ml checkout switch, real pack conversions and sealed items. See [correcting a mistaken refund](docs/refund-corrections.md) for full recovered-cash checks, untouched stock safeguards, preserved originals and linked replacements.
+
+The [refund-correction and measured-unit verification](docs/refund-correction-verification.md) records the latest full gate and staging preservation checks.

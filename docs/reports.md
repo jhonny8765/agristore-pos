@@ -21,7 +21,7 @@ Registers start with 50 rows, newest first. **Load older records** extends the l
 
 On narrow screens, scroll inside the table to reach its remaining columns. Keyboard users can Tab to the named history-records region and use the arrow keys to scroll it. Audit details can be expanded with the keyboard as well.
 
-Transfer and count rows identify the product and lot, display its expiry when known, and label every quantity with the base measure (`kg`, `liter` or `piece`). Count rows also show the reason beside the recorded discrepancy. Long lot identifiers and reasons wrap in their product cell; numeric and action columns remain reachable through the table's horizontal scroll region. An unavailable batch retains its ID rather than being labelled as stock without a lot.
+Transfer and count rows identify the product and lot, display its expiry when known, and label every quantity with the base measure (`kg`, `liter`, `meter` or `piece`). Count rows also show the reason beside the recorded discrepancy. Long lot identifiers and reasons wrap in their product cell; numeric and action columns remain reachable through the table's horizontal scroll region. An unavailable batch retains its ID rather than being labelled as stock without a lot.
 
 **Export loaded rows (CSV)** downloads exactly the displayed records, including branch scope and complete record identifiers. Load the older pages you need before exporting; the button does not export the entire database. The filename includes the register, branch identifier and applied range. Timestamps in the CSV retain their database timezone offset; the date filter always uses Manila time. Text resembling spreadsheet formulas is escaped when exported. Keep exports with the business records they contain.
 
@@ -34,3 +34,5 @@ Receipt history under Sales & receipts has its own **Load older receipts** actio
 These registers supplement reconciliation. They do not provide official tax invoices or a full accounting ledger.
 
 [Partial refunds](partial-refunds.md) retain their own linked cash payments and immutable original-line allocations. Overview cash-refund totals and server shift reconciliation include both full and partial refunds. Receipt-list indicators are bounded; open refund details for exact remaining money/quantities and paginated saved refunds. Only inspected saleable returns appear as refund stock movements; held goods remain separate and refunds do not automatically create stock losses.
+
+[Refund corrections](refund-corrections.md) keep the original refund and add a separate recovered-cash payment to the correcting shift. Overview shows **Net cash refunds**, with paid and recovered amounts separately. Stock reconciliation includes signed refund corrections; cancelled untouched held returns leave the historical hold trail without becoming a stock loss or saleable release. A closed earlier drawer remains as originally reconciled.
