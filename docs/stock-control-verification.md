@@ -1,5 +1,7 @@
 # Stock controls and durability verification
 
+Latest worklist/report evidence: [all unresolved stock pages and consistent loss-report filters](stock-worklist-report-verification.md), with 258 unit tests, 65 browser scenarios (22 practice and 43 real Auth/database), 749 database assertions and a 40-table restore. This is released to staging with the read-only page migration. All 40 hosted business-content fingerprints were preserved, cash was unchanged and ledger/projection differences remained zero.
+
 Latest measured-loss evidence: [meter/ml damage, held goods and purchase-cost losses](measured-loss-verification.md), with 258 unit tests, 63 browser scenarios (22 practice and 41 real Auth/database), 727 database assertions and a 40-table restore. This is assigned to staging; all 40 hosted content fingerprints were preserved and the ledger/projection difference count remained zero.
 
 Latest measured-refund evidence: [meter/ml refunds and delivery corrections](measured-refund-correction-verification.md), with 248 unit tests, 61 browser scenarios, 690 database assertions and a 40-table restore.
