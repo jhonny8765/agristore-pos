@@ -1,12 +1,12 @@
 # One-branch pilot sign-off
 
-Record the PC, Windows version, Edge version, tester, dates, results and retained evidence for each check. Use a staging business and clearly marked practice stock. Do not use customer transactions to test failures.
+Record the PC, Windows version, actual browser name/version, tester, dates, results and retained evidence for each check. The current candidate uses the installed Brave profile selected by the user; a different PC/browser needs its own run. Use a staging business and clearly marked practice stock. Do not use customer transactions to test failures. The [200-sale rehearsal](installed-cashier-rehearsal.md) passed its short-outage checks; actual-duration and hardware checks below remain open.
 
 ## Cashier PC durability
 
-1. Have the owner or manager register the dedicated branch PC using a setup shift and close it. On the same browser profile, sign in as the cashier, install the Edge PWA, download its catalog and open the actual shift. Verify the displayed branch and authorization expiry.
+1. Have the owner or manager register the dedicated branch PC using a setup shift and close it. On the same tested browser profile, sign in as the cashier, use the installed POS app, download its catalog and open the actual shift. Verify the displayed branch and authorization expiry. The completed rehearsal used the owner test identity; real individual cashier acceptance still needs its own check.
 2. Disconnect the network. Complete 200 cash purchases, including two identical purchases. Save their transaction IDs and cash totals. Confirm every completed sale appears in Sync center with its own permanent ID.
-3. Keep the network disconnected for at least 60 actual minutes. Close and reopen Edge. Restart Windows during the outage and reopen the installed app in the same Windows/browser profile. Verify every completed sale, ID and total is still present.
+3. Keep the network disconnected for at least 60 actual minutes. Close and reopen the tested browser/app. Restart Windows during the outage and reopen the installed app in the same Windows/browser profile. Verify every completed sale, ID and total is still present.
 4. Continue the storage test for eight actual hours. Do not change the PC clock. Complete additional sales within the 12-hour authorization period and verify their persistence. Export a recovery file before maintenance.
 5. Reconnect, renew authentication when requested, and synchronize. Verify the server has exactly one sale, payment and set of stock movements per transaction ID. Reconcile drawer cash and physical stock.
 6. In the isolated test profile, deny or exhaust storage and confirm checkout reports failure without displaying success. Test an app update while the basket or pending queue is nonempty; confirm the update is deferred. Verify logout and login preserve pending records.

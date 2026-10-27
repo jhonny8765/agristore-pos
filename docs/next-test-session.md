@@ -2,13 +2,13 @@
 
 Use the existing staging business and clearly labelled TEST goods. Do not use real customer sales for failure tests. The current automated evidence is in [verification](stock-control-verification.md); the actual PC and store checks below still need people and equipment.
 
-Read the [candidate-PC audit](candidate-pc-verification.md) first. The current PC's Brave and in-app profiles have not granted persistent storage. The closed-shift offline receipt-display defect was corrected and released after its full gate passed; all four original receipts survived the repeated interactive check. Do not treat this short simulation as a successful installed-browser/Windows endurance test or begin real sales while the storage gate remains open.
+Read the [installed Brave rehearsal](installed-cashier-rehearsal.md) first. Brave now grants persistent storage; 200 TEST sales, original-ID recovery, exact ₱1,925 cash/195 kg stock and closed-shift offline receipt retention passed. The [candidate-PC audit](candidate-pc-verification.md) preserves the earlier findings. The current test branch now has 195 kg, so repeating the same 55 kg worksheet would leave 140 kg if nothing else moves. Actual sixty-minute/eight-hour, installed-app/browser-process and Windows-restart tests remain open. Do not represent the completed 9-minute-49-second tab outage as those hardware/endurance checks or begin real sales before all launch gates pass.
 
 ## Start with these three things
 
 The [full readiness plan](store-readiness-plan.md) maps everyday work and failures to their controls. After the guarded app update, open **Settings → PC checks & store guide** for current local observations and sixteen expandable procedures. Check queue/authorization/storage warnings before rehearsal; the screen cannot pass hardware, real inventory or backup gates for you. The [same handbook](store-use-guide.md) is available as a separate document.
 
-1. **Choose the first branch and Windows cashier PC.** Keep one normal Edge profile and the same [staging address](https://agristore-pos-staging-team-payaman2.vercel.app/). Record Windows/Edge versions, printer and scale models. Keep the PC's site data; do not use InPrivate.
+1. **Choose the first branch and Windows cashier PC.** For this candidate, keep the tested normal Brave Work profile and the same [staging address](https://agristore-pos-staging-team-payaman2.vercel.app/). Record Windows and the actual browser name/version, printer and scale models. Keep the PC's site data; do not use a private window. A different PC/profile/browser requires its own acceptance run.
 2. **Prepare individual staff accounts.** Two real people count; a third person with the owner role approves. Each employee creates and confirms their own account. The owner assigns the appropriate branch and stock-staff/manager role in Settings → Staff access. Keep the owner out of both count entries if only one owner is available. Do not send passwords in chat.
 3. **Update the app safely.** Finish the basket, resolve pending requests and synchronize saved sales. Open Settings → Application & recovery → Check for app update and follow the reopen message. Do not reset browser storage to obtain an update.
 
@@ -28,7 +28,7 @@ Use the [200-sale test worksheet](owner-next-steps.md#2-run-a-test-day-on-that-p
 
 Keep the network disconnected for 60 real minutes, close/reopen the app and restart Windows during the outage. Continue for eight actual hours within the displayed authorization period. Verify every completed sale ID, quantity, total and change after each restart. Reconnect, renew sign-in if requested, synchronize and compare cash and stock. Record what happened; do not change the PC clock to stand in for elapsed time.
 
-If a completed sale is missing, checkout claims success without saving, or synchronization deducts the same purchase twice, stop the pilot. Preserve the original PC, Edge profile, error text and recovery files. Do not clear site data or enter the purchase again.
+If a completed sale is missing, checkout claims success without saving, or synchronization deducts the same purchase twice, stop the pilot. Preserve the original PC/browser profile, error text and recovery files. Do not clear site data or enter the purchase again.
 
 ## If a count request loses its response
 
@@ -46,4 +46,4 @@ Expiry/assigned follow-up, purchase-cost loss reports, purchase-order matching, 
 
 ## What to report back
 
-Send the chosen branch; Windows/Edge, printer and scale models; storage-protection result; actual disconnect/restart/start/end times; completed and pending sale counts; expected versus recorded cash and stock; and exact error text. Say whether two independent staff accounts and a separate approving owner are ready. Keep passwords, recovery contents and personal account details private.
+Send the chosen branch; Windows/browser name and version, printer and scale models; storage-protection result; actual disconnect/restart/start/end times; completed and pending sale counts; expected versus recorded cash and stock; and exact error text. Say whether two independent staff accounts and a separate approving owner are ready. Keep passwords, recovery contents and personal account details private.

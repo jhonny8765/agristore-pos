@@ -2,7 +2,9 @@
 
 October 28, 2026. This is the currently accessible Windows PC, chosen for testing at the user's request. The user subsequently requested the installed Brave browser instead of installing Edge. This record is a test observation, not permission to begin real sales or certification of a future branch PC.
 
-## Observations on this PC
+**Subsequent result:** the user completed Brave app installation, the same profile granted persistent storage, and the [200-sale installed-profile rehearsal](installed-cashier-rehearsal.md) passed exact cash/stock synchronization, recovery-file replay and closed-shift offline receipt retention. The denied-storage and missing-install-option observations below are the earlier findings. Real-duration, process/Windows restart, physical store and production gates remain open.
+
+## Initial observations before app installation
 
 | Check | Observed result | Acceptance consequence |
 |---|---|---|
@@ -67,7 +69,7 @@ Read-only checks found all **40 hosted business-table row counts and content has
 
 ## Gates still open
 
-1. Persistent storage on the exact installed browser app/profile. Keep this PC out of real cashier service while persistence is not granted. Do not force a grant or clear site data to make a test appear to pass. If the selected browser pilot cannot pass storage durability, implement and verify the planned Windows Tauri/SQLite fallback before launch.
+1. Persistent storage is now granted in the installed Brave profile; see the subsequent rehearsal above. Actual hardware durability remains open. Do not force a grant or clear site data to make a test appear to pass. If the selected browser pilot fails storage durability, implement and verify the planned Windows Tauri/SQLite fallback before launch.
 2. At least 200 labelled TEST purchases, a real 60-minute outage, eight actual hours and normal Windows restart, preserving every original ID and exact cash/stock totals. A tab simulation is supplementary evidence only. A shared-PC restart needs a safe handover with user work saved.
 3. Actual scale/tare, length/liquid measures, printer and receipt output; independent physical inventory and documented purchase costs.
 4. Separate real counters and a third approving owner; individual cashier access. Synthetic CI identities do not replace staff rehearsal.
