@@ -1,6 +1,6 @@
 # Your next test session
 
-The endurance run now has **200 new pending TEST sales**, with local stock **140 kg**. Follow the [active-run handoff](endurance-active-run.md), not a duplicate test. The [record sheet](endurance-test-record.md) preserves the 195 kg starting baseline and blank fields for the unverified physical disconnect/restart and timed checkpoints. Save other work before the normal Windows restart and retain every original record.
+The endurance test is **postponed at your request**, and its reminder is paused. All **400 original TEST sales** are synchronized and independently matched; stock is **140 kg**, and both simulated drawers are closed at **₱1,925 each**. No physical outage, Windows restart or eight-hour result is certified. The [settled run record](endurance-active-run.md) preserves the evidence. A future test needs a fresh shift and baseline; keep every original file.
 
 Use the existing staging business and clearly labelled TEST goods. Do not use real customer sales for failure tests. The current automated evidence is in [verification](stock-control-verification.md); the actual PC and store checks below still need people and equipment.
 
