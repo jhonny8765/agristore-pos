@@ -4,6 +4,8 @@ Use the existing staging business and clearly labelled TEST goods. Do not use re
 
 ## Start with these three things
 
+The [full readiness plan](store-readiness-plan.md) maps everyday work and failures to their controls. After the guarded app update, open **Settings → PC checks & store guide** for current local observations and sixteen expandable procedures. Check queue/authorization/storage warnings before rehearsal; the screen cannot pass hardware, real inventory or backup gates for you. The [same handbook](store-use-guide.md) is available as a separate document.
+
 1. **Choose the first branch and Windows cashier PC.** Keep one normal Edge profile and the same [staging address](https://agristore-pos-staging-team-payaman2.vercel.app/). Record Windows/Edge versions, printer and scale models. Keep the PC's site data; do not use InPrivate.
 2. **Prepare individual staff accounts.** Two real people count; a third person with the owner role approves. Each employee creates and confirms their own account. The owner assigns the appropriate branch and stock-staff/manager role in Settings → Staff access. Keep the owner out of both count entries if only one owner is available. Do not send passwords in chat.
 3. **Update the app safely.** Finish the basket, resolve pending requests and synchronize saved sales. Open Settings → Application & recovery → Check for app update and follow the reopen message. Do not reset browser storage to obtain an update.
