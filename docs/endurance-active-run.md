@@ -21,3 +21,5 @@ The physical disconnect, actual sixty-minute checkpoint, eight-hour storage chec
 A future rehearsal needs a fresh online shift, new original purchases, a new export and a refreshed stock baseline. **Current stock is 140 kg**, not the earlier 195 kg. Do not restore old exports to manufacture new purchases or repeat the settled batches. Do not clear site data or delete recovery evidence.
 
 Physical equipment, independent staff, real opening stock and costs, production backup restoration and owner-approved one-branch pilot acceptance remain separate requirements. The application is staging only.
+
+After the recovery-download release, a further independent server comparison again matched all 400 original payloads, 400 payments, 400 movements, ₱3,850 combined cash, 140 kg stock, four other-branch sales and zero open shifts. The update did not alter the settled test figures.

@@ -66,7 +66,7 @@ With unchanged price and no other movements, this **new shift** adds **200 new I
 
 1. Reconnect. Renew the original identity's sign-in if requested. Wait for every original sale to be acknowledged and the queue to clear.
 2. Compare complete original IDs/payloads, exactly one payment and stock effect per sale, new-shift cash and the ledger/balance. Account for any additional tests separately.
-3. If the starting baseline and worksheet remained exact, the new run is **200 sales / ₱1,925 / 55 kg**, ending at **85 kg** from a refreshed 140 kg baseline. With no other activity, the branch would then have 600 TEST sales across three separate shifts. Never use the combined branch total as the cash in the second drawer.
+3. If the starting baseline and worksheet remained exact, the new run is **200 sales / ₱1,925 / 55 kg**, ending at **85 kg** from a refreshed 140 kg baseline. With no other activity, the branch would then have 600 TEST sales across three separate shifts. Never use the combined branch total as the cash in a later drawer.
 4. Close the new TEST shift online with the independently checked simulated cash. Record its expected/counted values and preserve the evidence.
 
 This sheet does not check the physical scale, printer, real opening stock/costs, separate employees, production backup or owner pilot sign-off. Those remain separate launch gates in the [pilot checklist](pilot-checklist.md).

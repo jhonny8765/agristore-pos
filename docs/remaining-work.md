@@ -1,5 +1,7 @@
 # Remaining release work
 
+**Recovery follow-up:** [clear filenames and repeatable downloads](recovery-download-verification.md) are released to staging after **322 unit tests, 74 browser scenarios, 811 database checks and the 40-table restore** passed. Read the [simple download guide](recovery-downloads.md); zero-sale files now show their stock/owner requests separately. No sale, cash or stock rule changed.
+
 **Current status, October 28:** the longer PC test is postponed at the user's request, with its reminder paused. Both batches are settled: **400 original TEST sales, ₱3,850 combined payments, 140 kg stock**, and two closed simulated drawers of **₱1,925 each**. The [settled record](endurance-active-run.md) supersedes earlier current-baseline instructions. Physical sixty-minute/eight-hour, browser-process reopening and Windows restart remain unpassed.
 
 Installed-profile follow-up, October 28: **Brave persistence is now granted**. The [200-sale cashier rehearsal](installed-cashier-rehearsal.md) passed locally saved quarter/half-kilo, gram and peso-request sales, offline reload, exact original-ID/payload synchronization, recovery-file replay without duplicates and a closed simulated drawer at ₱1,925 with 195 kg stock. The interruption lasted 9 minutes 49 seconds. Actual sixty-minute/eight-hour, installed-app/browser-process and Windows-restart checks, physical equipment/inventory/staff, production backup and pilot sign-off remain open.
