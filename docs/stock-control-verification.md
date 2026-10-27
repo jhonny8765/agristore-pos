@@ -1,6 +1,8 @@
 # Stock controls and durability verification
 
-Original stock-control release: October 25, 2026. Latest client follow-up assigned to staging: October 26, 2026 (Asia/Manila). This is staging work. It does not certify production or explain the reported real stock loss.
+Latest measured-stock evidence: [meter/ml purchasing, transfers and blind counts](measured-stock-workflow-verification.md), with 240 unit tests, 58 browser scenarios, 664 database assertions and a 40-table restore.
+
+Original stock-control release: October 25, 2026. Latest client follow-up assigned to staging: October 27, 2026 (Asia/Manila). This is staging work. It does not certify production or explain the reported real stock loss.
 
 The latest [expiry and assigned-investigation follow-up](expiry-followup-verification.md) is released to staging. Complete [40299113349](https://github.com/jhonny8765/agristore-pos-open-source/actions/runs/40299113349) passed 182 unit checks, 22 practice and 19 real Auth/database browser scenarios, 273 database assertions and the expanded 25-table restore. It includes the downloaded owner-recovery-file checksum correction; earlier evidence below remains scoped to its recorded source.
 
