@@ -1,5 +1,7 @@
 # Remaining release work
 
+**Maintainer safeguards:** [private support reports and waiting-sale warnings](maintainer-safeguards-verification.md) are released to staging after **328 unit tests, 76 browser scenarios, 811 database checks and the 40-table restore** passed. The user remains the website maintainer; Better Yield's owner manages business operations. Follow [the incident/update/rollback procedure](maintainer-operations.md). Reports are manually downloaded; automatic alert delivery and actual production backups remain unconfigured. The physical endurance test stays postponed.
+
 **Recovery follow-up:** [clear filenames and repeatable downloads](recovery-download-verification.md) are released to staging after **322 unit tests, 74 browser scenarios, 811 database checks and the 40-table restore** passed. Read the [simple download guide](recovery-downloads.md); zero-sale files now show their stock/owner requests separately. No sale, cash or stock rule changed.
 
 **Current status, October 28:** the longer PC test is postponed at the user's request, with its reminder paused. Both batches are settled: **400 original TEST sales, ₱3,850 combined payments, 140 kg stock**, and two closed simulated drawers of **₱1,925 each**. The [settled record](endurance-active-run.md) supersedes earlier current-baseline instructions. Physical sixty-minute/eight-hour, browser-process reopening and Windows restart remain unpassed.

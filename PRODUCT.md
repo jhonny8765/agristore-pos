@@ -9,7 +9,7 @@ web
 User-approved: Next.js, TypeScript, Supabase, Vercel, Tailwind, shadcn/ui, Dexie, Workbox, Zustand, Vitest, Playwright, pgTAP.
 
 ## Users
-Cashiers at a growing network of agricultural supply stores in the Philippines; branch managers, stock staff, and the owner. The user now operates five branches and may add more.
+Cashiers at a growing network of agricultural supply stores in the Philippines; branch managers, stock staff, and the owner. The merchant currently has five branches and may add more. The user maintains and runs the website for the merchant; the merchant owner manages business roles and stock decisions.
 
 ## Product Purpose
 Replace handwritten records with cash checkout that survives brief network outages and an auditable stock movement journal across all branches.
