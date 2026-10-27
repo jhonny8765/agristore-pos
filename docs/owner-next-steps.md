@@ -1,5 +1,7 @@
 # Better Yield: what you need to do next
 
+For a mistaken pending damage/spillage/other-stock request, follow [rejecting a pending request](rejecting-pending-stock-issues.md). The owner checks the actual goods and original evidence, chooses Reject stock issue, records a reason and verifies the retained decision. This changes no stock, cash or loss value and closes no missing-stock investigation. An approved request cannot be rejected. The [October 28 verification](stock-issue-rejection-verification.md) passed 264 unit tests, 70 browser scenarios, 811 database assertions and a forty-table restore, and is released to staging. Interactive browser control is currently disabled in Work settings, so manually apply the guarded update through Settings → Application & recovery → Check for app update after finishing the basket and synchronizing; keep the same profile and site data. Verify the saved receipts and clear queue after reopening.
+
 Use this with the [pilot sign-off](pilot-checklist.md). The app is still in staging. Automated results are recorded in [stock-control verification](stock-control-verification.md); real PC and store checks remain open.
 
 For the shorter step-by-step handoff and what to report back, start with [your next test session](next-test-session.md).

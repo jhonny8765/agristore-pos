@@ -30,6 +30,10 @@ If a completed sale is missing, checkout claims success without saving, or synch
 
 Open Sync center and retry the original request as the employee who began it. Do not create another count or observation to force confirmation. If a replacement test profile is required, export the recovery file, sign in to the same business/branch as the original employee, restore it and retry the retained request. Operation-only files work while shifts remain closed; files containing sales still require an authorized cashier shift. An owner may retain another employee's evidence for review but does not become that employee for retrying it. Keep the original PC and export until confirmation is independently checked.
 
+## Rehearse a mistaken pending stock request
+
+Use the [owner rejection procedure](rejecting-pending-stock-issues.md) with labelled TEST goods. Submit an intentionally mistaken quarter-meter or 125 ml request, check its physical evidence, then have the owner reject it with a reason. Verify that the original request and owner decision remain in Rejected stock issues and stock, cash and loss values stay unchanged. Staff cannot reject it. A rejected request cannot later be approved, and an approved request cannot use this control to undo stock. Keep any real missing-stock investigation open until its own evidence and outcome are recorded.
+
 ## Before real sales
 
 Use signed, independently verified opening stock, documented sack/kilo/packet conversions, lots and purchase costs. Arrange backup ownership and restore an actual cloud backup into a separate working test environment. Reconcile cash and stock daily during a one-branch pilot; expand only after the recorded checks pass. The automated disposable restore does not establish that a production backup is scheduled.
