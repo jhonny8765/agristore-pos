@@ -1,0 +1,49 @@
+# Meter/ml refunds and delivery corrections: verification
+
+October 27, 2026. Software verification uses disposable TEST goods and simulated cash. It does not verify physical cash, real goods, a production cloud backup or prolonged use on an unchosen cashier PC.
+
+## Implemented boundary
+
+Partial refunds now accept original receipt units or exact meter/liter/ml entry for the financial refund, actual physical return and mixed saleable portion. Every field displays its recorded original-unit and stock equivalent. Full-refund physical-return and mixed-saleable fields use the same helper, while the full-refund financial amount remains the entire original paid amount. Both flows remain online and owner-authorized, with original branch/drawer and pending-record restrictions.
+
+Partial refund entry now has a native validated form before cash review. Invalid entered quantities cannot be silently omitted from a multi-line refund. Remaining quantity, actual returned quantity and saleable portion bounds still receive authoritative domain/server validation. Preparing/cancelling a linked replacement or completing a saved refund remounts measured drafts together, so prefilled canonical values and entry modes agree. Refund history explicitly names the original receipt unit. There is no money-by-ml arithmetic using current catalog prices: the original paid line totals and cumulative centavo allocations remain authoritative.
+
+Corrected deliveries continue through the existing guarded full reversal and one linked replacement. Prefilled original quantities may be switched to meter/ml without changing the amount. Purchasing copy now tells employees to choose each entry unit and check its recorded equivalent. No server contract, migration, grant, privilege, dependency or completed-record mutation was introduced.
+
+## Local and isolated evidence
+
+Private local type checks, warning-free lint, optimized build and **248 unit tests** passed. Eight added unit cases combine measured conversion with original-price refund allocation, roll fractions, mixed physical returns, no returned goods, expired held returns, overclaims, nonrepresentable fractions and repeated switches. A three-milliliter paid line allocates successive one-ml refunds as 33, 34 and 33 centavos without losing a centavo.
+
+Supplementary PGlite/pgTAP preflight passed **690 assertions in thirteen files**. Twenty-six added database assertions verify exact original-pack refunds, cash recovery, linked replacement, idempotent retries, meter/ml delivery reversal and correction, precise order balances, held goods and zero ledger/projection differences. This Auth-double preflight supplements the genuine Supabase workflow.
+
+Manual browser review used the production component, explicit local TEST rope/liquid receipt data and an API that refuses saves. A malformed liquid quantity blocked the whole refund review and focused the invalid field. A valid mixed meter/ml example displayed the original cash allocation and separate saleable/held effects. Desktop, 390 px and 320 px layouts fit without page overflow. Screenshots: `.impeccable/review/measured-refund-desktop.png` and `measured-refund-mobile.png`. The bounded mechanical detector returned no findings. The existing forest/paper interface was retained.
+
+## Exact examples exercised
+
+A receipt sells one meter as 0.01 of a configured 100 m roll priced at ₱1,500, plus one 500 ml container priced at ₱45: total **₱60**. A **0.25 meter + 125 ml** financial refund is **₱15**. Physical returns of 0.2 meter/100 ml, with 0.15 meter/40 ml saleable, add only **0.15 meter + 0.04 liter** saleable and hold **0.05 meter + 0.06 liter**. The rest of the refunded quantity creates no stock. The correction recovers all ₱15, removes the exact original saleable credits and cancels untouched holds. Its linked 0.125 meter/50 ml replacement, with no returned goods, pays **₱6.38**, leaves **₱53.62** unrefunded and creates no stock. With ₱100 float, the drawer closes at **₱153.62**.
+
+A full financial refund of that receipt pays **₱60** even when only part of its goods returns. It adds only the entered inspected physical goods and leaves the opening float **₱100** in the drawer. A smaller financial refund must use the partial-refund flow.
+
+A linked corrected delivery with rope document 13 m, accepted 12.5 m, held 0.25 m and rejected 0.25 m adds only **12.5 m saleable**. Liquid document 200 ml, accepted 125 ml, held 25 ml and rejected 50 ml adds **0.125 liter saleable + 0.025 liter held**. From otherwise unreceived orders of 200 m/3 liters, unreceived balances are **187.25 m and 2.85 liters**. The original reversed inspection stays historical. Delivery corrections create no payment.
+
+## Restore drill
+
+The expanded real disposable 40-table dump/restore fixture preserves original meter/ml refund, recovered cash, linked replacement, closed drawer, measured full delivery reversal/correction, source movements, holds and order links. Retrying restored original IDs acknowledges their original effects. A further post-restore refund pays the exact remaining ₱53.62 from a new drawer; releasing 25 ml of inspected corrected held goods raises saleable stock from 0.125 to 0.15 liter. Original content fingerprints and all ledger/projection checks remain mandatory. This drill does not certify a scheduled cloud backup.
+
+The initial new restore fixture used receipt names different from its catalog and was correctly rejected; the fixture now uses the exact original names. A subsequent new retry assertion incorrectly expected the generic `duplicate` field from a sale response; sale acknowledgments use `status: duplicate`. The assertion now checks that established sale contract, while refund and delivery acknowledgments retain their own duplicate checks. No production rule or cash/stock assertion was weakened.
+
+## Complete gate and staging readback
+
+The complete [free public-source gate](https://github.com/jhonny8765/agristore-pos-open-source/actions/runs/40496073627) passed against public source **a59b44c**, corresponding private source **18775d5**: **248 unit tests, 22 practice-browser tests, 39 genuine Supabase Auth/database browser scenarios, 690 pgTAP assertions in thirteen files**, strict database lint with warnings failing, application type/lint checks, builds and the extended 40-table dump/restore. All three new genuine browser scenarios passed. The measured refund view also passed targeted WCAG A/AA checks and containment at 1440, 390 and 320 px. Existing permissions, isolation, concurrency, stale-history, expiry, pending-record and correction safeguards remain covered.
+
+The new browser tests actually save the mixed partial refund, deliberately lose its committed response, export its canonical original-unit request and restore/retry it in a fresh authenticated browser. The first PC also retries the same original ID. The owner then recovers the full original cash and saves the linked measured replacement before closing the drawer at exactly ₱153.62. A separate browser scenario saves the full financial refund with measured partial physical returns and closes at the original ₱100 float. Another reverses a mistaken measured delivery, edits the prefilled quantities with meter/ml switches, deliberately loses the corrected inspection's committed response and recovers/retries its original linked request without duplicate stock or order fulfilment. No real cash or hosted stock is used.
+
+Private preview **agristore-7vg5qpfzo-team-payaman2.vercel.app**, deployment **dpl_6Zrd7kmk8k1MKZbQNirLV1Qim16D**, was inspected **Preview / Ready** in `team-payaman2/agristore-pos`. It was built from application source **0cdef68**; a Git comparison confirmed its application/domain source is unchanged by subsequent restore-test corrections through **18775d5**. It was assigned to the [stable staging address](https://agristore-pos-staging-team-payaman2.vercel.app/) only after the complete gate passed. The existing authorized Vercel CLI was used because connector team scope remained unavailable. No production promotion, billing change or hosted migration occurred.
+
+The signed-in browser had a clear queue, empty basket and no open shift before the Settings guarded update. It reopened successfully. The four original fully refunded receipts remain visible; the retained legacy refund now names Kilo/Packet as its original units, preserves unrecorded physical quantities as **not recorded**, and prevents another refund. No new refund, cash recovery, delivery, product, shift or order was created in hosted staging. Its catalog has no meter/liter products; populated save paths were tested in the isolated genuine stack. Staging proof is `.impeccable/review/measured-refund-staging.png`.
+
+All **40 table content fingerprints matched before release and after the signed-in review**. Existing counts remain 4 sales, 8 payments, 8 receipts, 7 stock rows, 27 movements and 38 audit events. Open shifts, net existing payments and ledger/projection differences remain zero. Advisor findings remain 12 intentional private default-deny RLS INFO notices, one existing leaked-password-protection warning, 47 uncovered-foreign-key INFO findings and 33 unused-index INFO findings. No authorization or schema change was made by this release.
+
+## Owner handover
+
+Use [meter/ml refunds and corrected delivery instructions](measured-units.md#refunds-and-corrected-deliveries-in-meters-or-ml). Rehearse with labelled test goods and simulated cash on the selected cashier PC. Measure what actually returned; a financial refund must not invent physical stock. Distinguish a full cash refund from a partial-quantity refund. Use individual staff accounts, inspect held goods and retain owner evidence. Cashier-PC selection/storage, actual outage/Windows restart, measuring equipment, daily physical reconciliation and an actual production cloud-backup restore remain separate pilot requirements.

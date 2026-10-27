@@ -4,6 +4,8 @@ Use this with the [pilot sign-off](pilot-checklist.md). The app is still in stag
 
 For the shorter step-by-step handoff and what to report back, start with [your next test session](next-test-session.md).
 
+For measured refunds and delivery corrections, follow the [new meter/ml steps](measured-units.md#refunds-and-corrected-deliveries-in-meters-or-ml). The [latest verification](measured-refund-correction-verification.md) passed 248 unit tests, 61 browser scenarios, 690 database assertions and the extended 40-table restore. A partial refund follows original paid quantities/prices; a full refund still pays the entire original amount even when fewer goods physically returned. Rehearse this distinction and actual saleable/held measurements with the owner before store use.
+
 For rope and liquids, the [measured-stock guide](measured-units.md#purchase-transfer-and-count-using-meters-or-ml) now covers meter/ml entry in orders, inspections, quick receipts, transfers and blind counts. Check the displayed recorded equivalent before saving. The [latest software verification](measured-stock-workflow-verification.md) passed 240 unit tests, 58 browser scenarios, 664 database assertions and the 40-table restore. Rehearse real measuring and separate-person counts with the actual employees before business use.
 
 For purchasing, follow the [purchase-order and delivery guide](purchase-orders-and-deliveries.md). Add the actual supplier first, request the order, have the owner approve it and inspect goods into accepted/held/rejected quantities. Fully rejected deliveries retain their document and claim with no stock increase. Test a mixed receipt, full rejection and replacement with the real receiving employees before using business stock.

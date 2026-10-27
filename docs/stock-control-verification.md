@@ -1,6 +1,8 @@
 # Stock controls and durability verification
 
-Latest measured-stock evidence: [meter/ml purchasing, transfers and blind counts](measured-stock-workflow-verification.md), with 240 unit tests, 58 browser scenarios, 664 database assertions and a 40-table restore.
+Latest measured-refund evidence: [meter/ml refunds and delivery corrections](measured-refund-correction-verification.md), with 248 unit tests, 61 browser scenarios, 690 database assertions and a 40-table restore.
+
+Previous measured-stock evidence: [meter/ml purchasing, transfers and blind counts](measured-stock-workflow-verification.md), with 240 unit tests, 58 browser scenarios, 664 database assertions and a 40-table restore.
 
 Original stock-control release: October 25, 2026. Latest client follow-up assigned to staging: October 27, 2026 (Asia/Manila). This is staging work. It does not certify production or explain the reported real stock loss.
 
