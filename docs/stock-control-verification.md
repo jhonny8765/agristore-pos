@@ -1,5 +1,7 @@
 # Stock controls and durability verification
 
+Latest record-detail/concurrency evidence: [stale catalogs, exact stock identity and simultaneous owner saves](stock-record-details-verification.md), with 263 unit tests, 67 browser scenarios (22 practice and 45 real Auth/database), 769 database assertions and a 40-table restore. This is released to staging with the read-only metadata migration and cost-history save guard. All 40 hosted business-content fingerprints were preserved, cash was unchanged and ledger/projection differences remained zero.
+
 Latest worklist/report evidence: [all unresolved stock pages and consistent loss-report filters](stock-worklist-report-verification.md), with 258 unit tests, 65 browser scenarios (22 practice and 43 real Auth/database), 749 database assertions and a 40-table restore. This is released to staging with the read-only page migration. All 40 hosted business-content fingerprints were preserved, cash was unchanged and ledger/projection differences remained zero.
 
 Latest measured-loss evidence: [meter/ml damage, held goods and purchase-cost losses](measured-loss-verification.md), with 258 unit tests, 63 browser scenarios (22 practice and 41 real Auth/database), 727 database assertions and a 40-table restore. This is assigned to staging; all 40 hosted content fingerprints were preserved and the ledger/projection difference count remained zero.
