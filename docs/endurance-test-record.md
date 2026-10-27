@@ -1,6 +1,6 @@
 # Next cashier-PC test: record sheet
 
-**Status: prepared, not started.** Use Test Branch 4, TEST goods and simulated cash. Keep the installed Better Yield app and the same Brave Work profile. Do not use customer purchases for this test.
+**Status: the new run has started.** Follow the [active-run handoff](endurance-active-run.md) for the original pending batch, baseline recovery file and actual/planned times. The physical outage, Windows restart and timed checkpoints remain unverified. Use Test Branch 4, TEST goods and simulated cash. Keep the installed Better Yield app and the same Brave Work profile. Do not use customer purchases for this test.
 
 ## Already checked
 
@@ -8,7 +8,7 @@
 - The first 200 TEST sales synchronized once: ₱1,925, 55 kg sold, 195 kg remaining.
 - All original IDs/payloads survived an offline reload. Replaying the recovery file created no duplicates.
 - The first test shift is closed, with counted/expected simulated cash both ₱1,925.
-- The latest independent read still matches those results. The new long test has not opened a shift or changed stock.
+- The latest completed-run read still matched those results before the new run. A new TEST shift and 200 pending purchases now exist; they are identified in the active-run handoff. Do not start a duplicate run from this blank worksheet.
 
 These results cover a 9-minute-49-second tab outage, not the longer checks below. See [the completed rehearsal](installed-cashier-rehearsal.md) for evidence.
 
