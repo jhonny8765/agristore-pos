@@ -1,5 +1,7 @@
 # Remaining release work
 
+**Availability/backup follow-up:** [database-only monitoring and encrypted restore](availability-backup-verification.md) are verified. The real cloud database probe passed, recurring database checks are enabled and the user confirmed the test email. Full website checking remains limited by Vercel-protected staging. The production backup destination, key custody, schedule, actual production restore and independent missed-monitor alert remain open. No paid plan or off-site upload was started.
+
 **Maintainer safeguards:** [private support reports and waiting-sale warnings](maintainer-safeguards-verification.md) are released to staging after **328 unit tests, 76 browser scenarios, 811 database checks and the 40-table restore** passed. The user remains the website maintainer; Better Yield's owner manages business operations. Follow [the incident/update/rollback procedure](maintainer-operations.md). Reports are manually downloaded; automatic alert delivery and actual production backups remain unconfigured. The physical endurance test stays postponed.
 
 **Recovery follow-up:** [clear filenames and repeatable downloads](recovery-download-verification.md) are released to staging after **322 unit tests, 74 browser scenarios, 811 database checks and the 40-table restore** passed. Read the [simple download guide](recovery-downloads.md); zero-sale files now show their stock/owner requests separately. No sale, cash or stock rule changed.
