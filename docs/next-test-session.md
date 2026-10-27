@@ -2,6 +2,8 @@
 
 Use the existing staging business and clearly labelled TEST goods. Do not use real customer sales for failure tests. The current automated evidence is in [verification](stock-control-verification.md); the actual PC and store checks below still need people and equipment.
 
+Read the [candidate-PC audit](candidate-pc-verification.md) first. The current PC's Brave and in-app profiles have not granted persistent storage. The closed-shift offline receipt-display defect was corrected and released after its full gate passed; all four original receipts survived the repeated interactive check. Do not treat this short simulation as a successful installed-browser/Windows endurance test or begin real sales while the storage gate remains open.
+
 ## Start with these three things
 
 The [full readiness plan](store-readiness-plan.md) maps everyday work and failures to their controls. After the guarded app update, open **Settings → PC checks & store guide** for current local observations and sixteen expandable procedures. Check queue/authorization/storage warnings before rehearsal; the screen cannot pass hardware, real inventory or backup gates for you. The [same handbook](store-use-guide.md) is available as a separate document.
