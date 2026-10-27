@@ -1,5 +1,7 @@
 # Stock controls and durability verification
 
+Latest measured-loss evidence: [meter/ml damage, held goods and purchase-cost losses](measured-loss-verification.md), with 258 unit tests, 63 browser scenarios (22 practice and 41 real Auth/database), 727 database assertions and a 40-table restore. This is assigned to staging; all 40 hosted content fingerprints were preserved and the ledger/projection difference count remained zero.
+
 Latest measured-refund evidence: [meter/ml refunds and delivery corrections](measured-refund-correction-verification.md), with 248 unit tests, 61 browser scenarios, 690 database assertions and a 40-table restore.
 
 Previous measured-stock evidence: [meter/ml purchasing, transfers and blind counts](measured-stock-workflow-verification.md), with 240 unit tests, 58 browser scenarios, 664 database assertions and a 40-table restore.

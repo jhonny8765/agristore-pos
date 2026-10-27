@@ -4,6 +4,8 @@ Updated October 27, 2026. This list distinguishes missing workflows from failure
 
 ## Before real sales
 
+The subsequent [meter/ml damage, held-goods and purchase-cost loss gate](measured-loss-verification.md) passed 258 unit tests, 63 browser scenarios, 727 database assertions and the extended 40-table restore. Exact measured issue/outcome entry, explicit ml equivalents and a purchase-cost preview with unit-change reset are now assigned to staging. Disposal does not deduct saleable stock twice; supplier-return values stay separate from posted losses. All 40 hosted table fingerprints were preserved. Follow the [new guide](measured-units.md#damaged-stock-held-goods-and-purchase-cost-losses); the physical and operational gates below are still open.
+
 | Remaining gate | Who supplies the missing evidence | Pass condition |
 |---|---|---|
 | Cashier PC and browser storage | Owner/cashier with technical help | Selected Windows PC, persistent storage granted, all completed test sales survive actual offline Edge/Windows restarts and eight real hours |
