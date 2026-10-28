@@ -105,6 +105,7 @@ import {
   onlineOperation,
   pendingOperations,
   retryOperation,
+  requireNoPendingClosure,
   type PendingOperation,
 } from "../lib/operations";
 import { Button } from "./ui/button";
@@ -726,6 +727,7 @@ export function StoreApp() {
     event.preventDefault();
     const f = new FormData(event.currentTarget);
     await run(async () => {
+      await requireNoPendingClosure(db, member!.organizationId, branchId);
       let deviceId = await setting<string>(db, "deviceId");
       if (!deviceId) {
         deviceId = crypto.randomUUID();
@@ -2969,8 +2971,11 @@ export function StoreApp() {
                         }
                         onClick={() =>
                           void run(async () => {
-                            await retryOperation(db, member.userId, op);
-                            notify("Original operation confirmed.");
+                            const result = await retryOperation(db, member.userId, op);
+                            if (op.action === "close_shift") {
+                              setLease(await setting<Lease>(db, "lease"));
+                              notify(`Original shift closing confirmed. Expected cash ${money(Number(result.expected_cash))}; counted ${money(Number(result.counted_cash))}.`);
+                            } else notify("Original operation confirmed.");
                           })
                         }
                       >
@@ -3055,7 +3060,7 @@ export function StoreApp() {
                         </div>
                         <div>
                           <dt>Unconfirmed local sales</dt>
-                          <dd>{pending.length}</dd>
+                          <dd>{allPendingCount}</dd>
                         </div>
                       </dl>
                       <Button
@@ -3063,6 +3068,7 @@ export function StoreApp() {
                         disabled={!online || busy || practice}
                         onClick={() =>
                           void run(async () => {
+                            await requireNoPendingClosure(db, member.organizationId, branchId);
                             const next = await command<Lease>("renew_shift", {
                               ...context(),
                               deviceId: lease.deviceId,
@@ -3081,18 +3087,18 @@ export function StoreApp() {
                           e.preventDefault();
                           const f = new FormData(e.currentTarget);
                           void run(async () => {
+                            if (useCart.getState().items.length)
+                              throw new Error("Finish or remove the unfinished basket before closing the shift. No sale has been saved for that basket.");
                             if (pending.length)
                               throw new Error(
                                 "Synchronize every saved sale before closing the shift.",
                               );
-                            const result = await command<Row>("close_shift", {
+                            const result = await onlineOperation(db, member.userId, "close_shift", {
                               ...context(),
                               shiftId: lease.shiftId,
                               countedCash: cents(inputValue(f, "cash")),
                             });
-                            await db.settings.delete("lease");
-                            setLease(undefined);
-                            cart.clear();
+                            setLease(await setting<Lease>(db, "lease"));
                             notify(
                               `Shift closed. Expected cash ${money(Number(result.expected_cash))}; counted ${money(Number(result.counted_cash))}.`,
                             );
@@ -3110,12 +3116,13 @@ export function StoreApp() {
                         </Field>
                         <Button
                           disabled={
-                            !online || busy || practice || !!pending.length
+                            !online || busy || practice || allPendingCount > 0 || operations.length > 0 || cart.items.length > 0
                           }
                         >
                           Reconcile & close shift
                         </Button>
                       </form>
+                      <p>Finish the basket and confirm every saved sale, stock request and refund before closing. If closing is interrupted, keep this profile and use Sync center → Retry original request. The original counted cash is retained.</p>
                     </>
                   ) : (
                     <p className="muted">
