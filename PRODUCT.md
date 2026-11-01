@@ -9,7 +9,7 @@ web
 User-approved: Next.js, TypeScript, Supabase, Vercel, Tailwind, shadcn/ui, Dexie, Workbox, Zustand, Vitest, Playwright, pgTAP.
 
 ## Users
-Cashiers at a growing network of agricultural supply stores in the Philippines; branch managers, stock staff, and the owner. The merchant currently has five branches and may add more. The user maintains and runs the website for the merchant; the merchant owner manages business roles and stock decisions.
+Cashiers at agricultural supply stores in the Philippines; branch managers, stock staff, and the owner. As requested November 1, 2026, this Better Yield installation enables only **Magpet Branch**. Branch addition and renaming are fixed by the service provider; further branches are a separate maintainer change. The other existing branch records remain inactive historical references. The user maintains and runs the website for the merchant; the merchant owner manages business roles and stock decisions.
 
 ## Product Purpose
 Replace handwritten records with cash checkout that survives brief network outages and an auditable stock movement journal across all branches.
@@ -18,7 +18,7 @@ Replace handwritten records with cash checkout that survives brief network outag
 One Windows cashier PC per branch. PHP currency, Asia/Manila business time. Online login and shift opening; the same cashier may resume offline for up to 12 hours. Opening stock is imported and verified before live use.
 
 ## Capabilities and Constraints
-Cash-only checkout; product-specific sack/kilo conversions; batches and expiration; purchasing; transfers; owner-approved count discrepancies; cash reconciliation; owner-managed branch expansion. No customer credit, payment processing, AI, marketing, full accounting, or official tax invoices in the pilot. Illustrative fixtures belong in the separate practice database unless the user explicitly authorizes labelled synthetic data in their staging test business.
+Cash-only checkout; product-specific sack/kilo conversions; batches and expiration; purchasing; owner-approved count discrepancies; cash reconciliation. The generic system retains transfers and branch expansion, but this installation has a fixed single-branch setup: no customer add/rename controls, no transfer navigation or all-branch loss-report control, and Magpet-only dashboard totals. Do not delete or merge retired-branch sales, cash or stock history. No customer credit, payment processing, AI, marketing, full accounting, or official tax invoices in the pilot. Illustrative fixtures belong in the separate practice database unless the user explicitly authorizes labelled synthetic data in their staging test business.
 
 Customers request loose products by weight and by peso budget. The cashier enters fractional kg or grams using configured retail kilo prices; peso estimates require confirmation of actual scale weight. Whole-piece products remain indivisible. The owner's Better Yield public profile supplies crop nutrition/crop care context; it does not establish actual prices, stock, or branch changes.
 
