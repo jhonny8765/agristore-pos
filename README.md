@@ -46,6 +46,7 @@ Without Docker or GitHub-hosted compute, `npm run test:db:preflight`, `npm run t
 
 - Owner/assigned-manager [sales analytics](docs/sales-analytics.md): weekly/monthly/custom periods, comparisons, daily/weekly/monthly trends, complete CSVs and product popularity by distinct purchases or gross sales, with exact product units and separate refund/cash-recovery activity.
 - [Verified analytics snapshots](docs/sales-analytics-audit.md): inconsistent/partial responses retain the last valid report and complete exports; automated checks independently reconcile original receipts, quantities, trends and dated refund cash.
+- [Security and maintenance](docs/free-security-maintenance.md): baseline browser restrictions, explicit private-table client denials, pinned test actions, dependency gates and reviewed update proposals. See [the before-live checklist](docs/magpet-before-live.md) for the remaining Magpet launch work.
 - Cash checkout, exact centavo calculations, sack/kilo conversions, batch selection, expiry checks, cash change, and printable sale records.
 - Atomic local sale/outbox/stock accounting, unique checkout IDs, reload recovery, backoff, interrupted-upload recovery, authorization checks, and atomic snapshot reconciliation.
 - Supabase Auth; organization and branch RLS; RPC-only mutations; current-session and device checks; immutable sales, payments, journal entries, and audit records.
