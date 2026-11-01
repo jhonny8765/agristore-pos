@@ -52,6 +52,8 @@ jobs:
         run: bash scripts/install-test-browser.sh
         timeout-minutes: 6
       - run: npm run test:integration
+      - name: Test enabled workflows with the fixed Magpet branch setup
+        run: npm run test:magpet
       - name: Save synthetic interface review captures
         uses: actions/upload-artifact@v4
         if: always()
@@ -63,6 +65,9 @@ jobs:
             test-results/stock-history-*.png
             test-results/stock-controls-*.png
             test-results/blind-counts-*.png
+            test-results/single-branch-*.png
+            test-results/measured-*.png
+            test-results/count-recovery-*.png
           retention-days: 3
       - uses: actions/upload-artifact@v4
         if: failure()
