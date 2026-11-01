@@ -1,5 +1,7 @@
 # One-branch pilot sign-off
 
+**Current setup: Magpet Branch only.** Branch creation/renaming and transfers stay locked. Use [the Magpet store test sheet](magpet-store-test.md) and record owner acceptance before asking the maintainer to enable any additional branch.
+
 Record the PC, Windows version, actual browser name/version, tester, dates, results and retained evidence for each check. The current candidate uses the installed Brave profile selected by the user; a different PC/browser needs its own run. Use a staging business and clearly marked practice stock. Do not use customer transactions to test failures. The [200-sale rehearsal](installed-cashier-rehearsal.md) passed its short-outage checks; actual-duration and hardware checks below remain open.
 
 ## Cashier PC durability
@@ -21,7 +23,7 @@ Any missing completed sale or false success fails the browser-storage gate. Stop
 - Verify each employee's branch and role with separate accounts. Attempt prohibited cashier stock adjustments and cross-branch reads.
 - Verify opening-stock imports against signed physical counts, including sacks/kilos, lots and expiry dates. Import each branch's opening stock once.
 - Rehearse loose sales with the actual scale: ¼ kg, ½ kg, grams and a peso request. Confirm separate retail kilo/sack prices, actual-weight confirmation, exact remaining kg before/after sync, whole-piece packaging, cash change and the printed sale record. See [weighed sales](weighed-sales.md).
-- Dispatch and receive a test transfer; reconcile source stock, stock in transit and destination stock. Verify an owner-approved physical-count adjustment preserves its original expected and counted figures.
+- Verify an owner-approved physical-count adjustment preserves its original expected and counted figures. Transfers are unavailable in the current single-branch setup; rehearse dispatch, receipt and stock-in-transit reconciliation separately before a future second-branch launch.
 - Pilot one branch and sign daily cash and stock reconciliation. Record synchronization delays and resolve every pending/review record. Expand only after the owner signs off on the results.
 
 Official tax-invoice issuance remains outside this pilot. This checklist records work still requiring the intended hardware and verified business data; automated simulation does not check these boxes.

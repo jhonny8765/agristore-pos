@@ -10,7 +10,7 @@ Development preview: https://agristore-pos-staging-team-payaman2.vercel.app — 
 
 Use this stable staging address for browser-storage and update tests. Records saved under an older preview URL remain at that original browser origin; synchronize or export them there before moving to the stable address.
 
-For your real business: create and confirm your account, sign in, and create the business. This creates three starter branches. Under Settings → Branches, rename them and add as many additional branches as needed. Codes are assigned automatically, and interrupted creation requests can be retried from Sync center without duplicating a branch. Add the catalog, import each branch’s verified opening stock once, register its dedicated PC, and open a cashier shift. Employees create their own accounts; the owner assigns their role and branch under Staff access.
+This installation is configured for **Magpet Branch only**, with branch creation/renaming and transfers unavailable. Sign in to the existing business; do not create a replacement business to bypass the restriction. The owner adds the catalog, imports independently verified opening stock once, registers the dedicated PC and assigns individual employee roles under Staff access. Open cashier shifts online. A maintainer can enable another branch only after owner acceptance of the Magpet pilot. See [the fixed setup](docs/single-branch-setup.md), [software verification](docs/magpet-pilot-verification.md) and [the actual-store test sheet](docs/magpet-store-test.md).
 
 The selected Supabase project (`vbmnnouwmxcuibywdkjw`) is the staging database. Rollback-only SQL tests leave no test businesses or transactions in it. Create a separate production project before the pilot.
 
