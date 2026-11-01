@@ -24,6 +24,8 @@ Customers request loose products by weight and by peso budget. The cashier enter
 
 Catalog cards expose weight and peso choices for configured kg retail units. Owner product setup distinguishes sacks, loose kilos, sealed pieces and measured liquids; additional retail units are opt-in with independent positive prices, not automatically created at zero. Blank new weight/budget drafts block checkout and contribute no provisional kilo to Amount due.
 
+Owners and assigned branch managers can read branch-scoped Sales analytics outside practice mode, with Asia/Manila weekly, monthly and custom periods, daily/weekly/monthly grouping, comparison dates and explicit snapshot/synchronization context. The report separates original sales from refund and recovery posting activity, ranks products by distinct purchases or original gross sales, and retains each product's own base-unit quantity. Aggregated trend and all-product CSV exports cover the displayed report snapshot; pending offline sales are excluded, and a loaded report retains its original scope on offline or refresh failure.
+
 ## Brand Commitments
 Customer-facing identity: Better Yield POS, for Better Yield Agri Trading and Services. AgriStore remains the internal product/repository identity. Practical, clear, non-technical language. At the user’s request, use the actual logo, product-display photograph and public tagline from the supplied Better Yield Facebook page; source details are in docs/brand-assets.md. Extend the established forest/paper operational design and retain the cashier composition. This request applies to the existing POS only. It does not authorize replacing configured branches with public marketing locations or assigning photographed goods to synthetic catalog records.
 

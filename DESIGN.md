@@ -181,6 +181,8 @@ Stock-control records use fixed table columns with wrapping product, lot, reason
 
 Blind-count records use a single ruled article flow with wrapping context and identifiers. Entry and approval forms are bounded to (44rem). Sealed comparisons use two equal columns with gaps (12px vertically, 24px horizontally), collapsing to one column at (730px). The entry / review actions wrap with a gap (12px); long recorded lot identifiers remain inside the panel on narrow screens.
 
+Sales analytics appears first in Overview, above All-time recorded totals, inside the shared white record panel. Its order is heading and refresh, period/grouping filters, applied branch/date/snapshot scope, ruled summary, sales trend with exact-table disclosure, and product ranking. Filter labels wrap with a gap (16px), a flexible basis (180px), and a desktop maximum width (330px). Summary figures occupy four equal columns, reduce to two at (1100px), and stack at (730px). At the mobile breakpoint filter labels fill the row, each summary item gains a separating rule, and trend dates and values share a row above the full-width bar. The trend region scrolls within a maximum height (380px); exact totals and product records retain the shared horizontal table scrolling.
+
 ## Elevation & Depth
 
 The application is flat at rest: thin borders, pale fills, and forest navigation establish hierarchy. Product hover receives a faint lift; the fixed mobile basket uses a stronger ambient shadow to remain distinguishable over scrolled content. Other record panels have no resting shadow.
@@ -284,6 +286,18 @@ Browser storage feedback is a plain local status paragraph beside the outline Ch
 
 Persistence permission and quota estimates do not establish backup coverage, Windows free disk space, or readiness for real sales. When estimated space is low, guidance directs synchronization and export of pending records and restoration of space without clearing this site's data. Unavailable or failed checks direct the operator to the PC checks; they do not receive a success treatment.
 
+### Sales Analytics
+
+Extend the cooperative stock book with a read-only, branch-scoped report using the existing panel, heading hierarchy, fields, buttons, and Fine Rules. The owner and assigned branch manager see this section outside practice mode. Keep period selection and grouping as visibly labeled native selects, with Day, Week, and Month groupings. This month grouped by day is the initial state. Choose dates reveals native From / Through date fields; Apply sales period commits the draft controls. Today, current/previous week, current/previous month, and Last 12 months are the other period choices. Weeks begin Monday and current week/month periods run to date in Asia/Manila.
+
+Place the applied branch and date range before the summary, followed by the snapshot time, comparison dates, last PC synchronization, and the server-confirmed-sales limitation. Keep this scope tied to the loaded report rather than to unapplied filter drafts. The four summary items are Gross sales, Completed purchases, Average purchase, and Sales less refund cash. Use a definition list with Fine Rules above and below; forest Manrope figures (24px, weight 750) sit below muted labels (12px), with comparison or refund/recovery context in muted supporting text (12px). This is a ruled summary, without separate metric cards or resting shadows.
+
+The Sales trend is an ordered list of proportional gross-sales bars: Working Green fills over Soft Leaf tracks, with an exact currency value beside each date or date range. Bar widths are relative to the largest gross-sales bucket in the loaded report. Keep bars hidden from assistive technology while retaining their readable dates and values. The named, keyboard-focusable chart region uses the shared visible focus outline. A native Show exact sales and refund totals by period disclosure follows it, exposing purchases, gross sales, refund cash paid, recovered cash, and sales less refund cash in the shared table. In forced colors, tracks gain a CanvasText boundary and bar fills use Highlight.
+
+Popular products follows the trend. Use a native Rank products by select for Most purchases or Highest gross sales and a labeled product-name/SKU search. A purchase counts each product once even when it appears in several units or lots on one receipt. Keep original sales and quantities before refunds; show each product's own base-unit quantity without adding unlike units together. The table pairs product name and SKU with right-aligned purchases, quantity, gross sales, and comparison-period purchases. Show twenty matching products initially and reveal twenty more through the explicit action. Retain the matching/total snapshot counts and the statement that Export all product totals (CSV) includes every product in the report regardless of search or visible rows; the trend CSV likewise contains all aggregated report buckets. Each export identifies branch, applied dates, and snapshot.
+
+Sales follow the original sale date; refund cash and recovered refund cash follow their posting dates, including refunds from earlier purchases. Keep the local explanation that this is sales activity rather than profit or drawer cash. Loading retains the previous report; failed refreshes retain its displayed scope and exports with an alert. Offline guidance identifies the original snapshot and excludes pending offline sales, while refresh and period application require reconnection. Empty purchases and empty product/search results receive explicit local messages. Preserve the report's ordinary typography and shared status treatments rather than suggesting current or complete data from an old snapshot.
+
 ### Receipt History
 
 Keep confirmed receipts in the ruled table, with the loaded count and branch beside an explicit older-receipts action. Distinguish more available records from the end of history in text. Loading older records extends the existing list; offline and pending states disable the action.
@@ -350,9 +364,11 @@ Keep the top-bar branch picker at a minimum height (40px) across viewport sizes.
 - **Do** keep applied dates, loaded counts, end-of-history feedback, and CSV scope explicit beside the records they describe.
 - **Do** keep app update status beside its action, protect pending work before reopening, and preserve local records and browser site data in recovery guidance.
 - **Do** retain confirmed completion feedback alongside a distinct Refresh warning, clear confirmed forms, and preserve entered values on validation or submission failure.
+- **Do** keep sales analytics filters, applied scope, snapshot and summary before trend and product ranking; preserve exact table values beside proportional bars.
 
 ### Don't:
 
+- **Don't** combine unlike product units or present original-sale product rankings as quantities after refunds.
 - **Don't** infer catalog stock, prices or configured branches from public brand photography or marketing information.
 - **Don't** substitute emoji or text glyphs for the existing line SVG icon vocabulary.
 - **Don't** turn operational surfaces into decorative illustrations or marketing panels.
