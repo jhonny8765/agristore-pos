@@ -68,6 +68,7 @@ jobs:
             test-results/single-branch-*.png
             test-results/measured-*.png
             test-results/count-recovery-*.png
+            test-results/sales-analytics-*.png
           retention-days: 3
       - uses: actions/upload-artifact@v4
         if: failure()
