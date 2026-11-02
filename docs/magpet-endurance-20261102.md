@@ -18,6 +18,8 @@ The user explicitly chose **POS-only offline; other PC apps stay connected**. Do
 
 ## Current run and real-time deadlines
 
+At22:08:25 on November2 (`14:08:25.935Z`), after the original eight-hour deadline, the live queue still showed all200 original display references/₱1,925, protected storage and local445/400/50. The independent server subset remained the same verified25, global434/445/464 and feed492.85 with equal ledger/projection. A fresh200-record export was generated: `agristore-recovery-5d710a2a-c055-457a-b9f1-10f8bd726856-part-1-of-1.json`. Windows Save As shows `E:\New folder (2)`. The supported fresh Save control was unavailable and screenshot capture timed out; the user was asked once to Save this exact file. **The eight-hour local-retention verdict remains unverified until the actual file is saved and compared.** Keep native Offline and all originals intact. Do not prepare repeated exports or reconnect merely because eight hours elapsed. After actual-file verification, continue the authorized original-record synchronization/replay/cash reconciliation; the strict eight-hour offline verdict remains interrupted.
+
 Read the live private state first: `.impeccable/review/magpet-endurance-20261102.json`. Use actual UTC time, not a changed browser clock or elapsed chat time.
 
 - Site: `https://better-yield-magpet-pos.pages.dev/`, release `cf-mvyto2g0`.
