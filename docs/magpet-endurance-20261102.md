@@ -1,0 +1,84 @@
+# Active Magpet endurance run — November 2, 2026
+
+**IN PROGRESS. Neither timed checkpoint has passed yet.** This replaces the October 28 worksheet for the current run only; the settled older Test Branch 4 history and recovery files remain untouched.
+
+The user explicitly chose **POS-only offline; other PC apps stay connected**. Do not disconnect the entire PC or restart Windows. Whole-PC outage, browser-process restart and Windows restart remain separate untested gates.
+
+## Current run and real-time deadlines
+
+Read the live private state first: `.impeccable/review/magpet-endurance-20261102.json`. Use actual UTC time, not a changed browser clock or elapsed chat time.
+
+- Site: `https://better-yield-magpet-pos.pages.dev/`, release `cf-mvyto2g0`.
+- Installed Brave Work profile; current PWA tab `813289025`, app window `6750626`, native DevTools window `6685480`. Rediscover if IDs change. Only one POS window should access this profile during the test.
+- Shift `71117dd0-390a-4769-a525-8ab4c4a181b3`, device `23fa96f0-8fd5-4e8a-be9c-3f14e1e96d16`, zero opening cash.
+- Genuine protection is granted. The cached application shell and offline page reload work.
+- DevTools Network **Throttling → Offline** was selected through its native command menu. Keep this window open, even if minimized. The test does not depend on a tool-owned temporary network override; do not send raw CDP `Network.disable` or change network emulation during the hold.
+- Outage observed at **13:54:58** local / `05:54:58Z`. One-hour checkpoint is **not before 14:54:58** / `06:54:58Z`.
+- Last completed sale observed at **13:59:10.835** / `05:59:10.835Z`. The full eight-hour storage checkpoint is **not before 21:59:10.835** / `13:59:10.835Z`.
+- Original shift authorization expires **01:53:15.390 on November 3** / `17:53:15.390Z`. Do not change the clock or open another shift to disguise expiry.
+
+The existing `check-pos-eight-hour-endurance-evidence` heartbeat now checks this run every 15 minutes in this chat. Scheduled checks depend on this PC being powered, awake, connected for the assistant, and Codex running. A delayed/missed wake is not evidence that a checkpoint passed. Keep notifications quiet unless there is a meaningful milestone, failure or required user action.
+
+A temporary Windows system-awake request was accepted for the test. The current helper is identified in `.impeccable/review/magpet-endurance-awake-worker.json` (initial current PID12012); it appends UTC/monotonic/gap observations to `magpet-endurance-awake.ndjson` each minute. It does not change the saved power plan, require the display to stay on, unlock Windows or prevent deliberate shutdown/sleep. It releases the request when the run is settled or by **22:44:10.835 local** (`14:44:10.835Z`), 45 minutes after the eight-hour deadline. Its initial support process was replaced at14:17:39 after correcting a helper deadline-parsing issue; this did not change POS data, network state or the test deadlines. Read the current worker record and clock-gap log; do not treat a running helper as evidence that all browser/storage checks passed.
+
+## Verified starting and saved figures
+
+Hosted baseline: **409 sales, 420 payments, 439 inventory movements**, no earlier open shift. Magpet has **500 kg TEST feeds, 400 kg TEST fertilizer and 50 TEST seed packets**. Feeds sell at **₱35/kg**.
+
+Independent pre-upload hashes of prior sales, payments, shifts, inventory movements, other-branch stock and non-feed Magpet stock are retained in `.impeccable/review/magpet-endurance-history-hashes-before.json`; rerun its companion `.sql` after final recovery to verify those records stayed unchanged.
+
+The fresh shift contains **200 distinct original purchases**, all saved with simulated ₱20 tender:
+
+| Count | Cashier entry | Charge each | Change each | Total weight |
+|---:|---|---:|---:|---:|
+| 50 | Type `1/4` kg | ₱8.75 | ₱11.25 | 12.5 kg |
+| 50 | Type `0.5` kg | ₱17.50 | ₱2.50 | 25 kg |
+| 50 | Switch to grams; enter 100 g | ₱3.50 | ₱16.50 | 5 kg |
+| 50 | ₱10 budget, estimate, enter 250 g and confirm actual weight | ₱8.75 | ₱11.25 | 12.5 kg |
+
+Exact totals: **₱1,925 sales, ₱4,000 tender, ₱2,075 change, 55 kg feeds**. Local availability is **445 kg**, independently observed after reload. Server feeds must remain **500 kg** and this shift's server sales must remain **zero** until the authorized final reconnect. Other stock stays unchanged.
+
+## Original recovery evidence
+
+The first actual downloaded file is:
+
+`E:\agristore-recovery-d65d0cdd-28fc-4751-a4d3-79fbeb81165f-part-1-of-1.json`
+
+The checksum, all 200 unique full UUIDs, original payload/fingerprint, shift/device/cashier/branch, exact prices, quantities, amounts and cash were independently verified. The baseline copy is `.impeccable/review/magpet-endurance-baseline-recovery.json`; its file SHA-256 is recorded in the live state. `.impeccable/review/magpet-endurance-ui-sales.json` independently records every observed receipt, price and change. Keep these files private.
+
+After an actual offline reload, a fresh export was saved with user assistance:
+
+`E:\agristore-recovery-9560fb27-786f-4485-9b32-f49ea08057b0-part-1-of-1.json`
+
+The independent comparison matched **all 200 complete original IDs, immutable payloads/fingerprints, lease and exact amounts**. All 200 had moved to `authentication_required`; none was deleted or synchronized. Renewed sign-in is required before upload, after the hold. Synchronization status, retry fields and `updatedAt` are mutable recovery metadata; they must not be falsely treated as immutable checkout contents. Accept unresolved `pending`, `authentication_required` or `retryable` states before reconnect; investigate `sending`, review states or any prematurely synced sale.
+
+Use the existing verifier on every freshly saved checkpoint export:
+
+`node .impeccable/review/verify-magpet-endurance.bundle.mjs checkpoint <actual-downloaded-file>`
+
+This checks original contents; it deliberately does **not** mark either timed checkpoint passed based only on elapsed time. It must be combined with actual browser, transport, stock and server observations. If its source changes, rebuild it with the existing esbuild dependency before running. Never overwrite the original baseline.
+
+The download-event watcher timed out even though the first file really arrived in E:\. The second download opened a Windows Save As dialog; the user selected Save. Verify each actual file rather than assuming a successful click means it was downloaded. Computer control could read this modal but could not operate its cached Save button. If a later file dialog is blocked, ask the user to save that exact file; leave the checkpoint pending and do not reconnect early.
+
+## Required timed checkpoints
+
+Before either deadline, preserve all originals and keep the app/DevTools open. Do not create more purchases, force updates, clear data, restore old runs or close the shift. A quiet intermediate wake may inspect retained counts and server-zero without starting another download dialog.
+
+At/after the one-hour deadline:
+
+1. Check actual time and verify this exact POS transport is unavailable. At **14:13:32.652**, navigating this same PWA tab to its uncached `/api/health?enduranceProbe=20261102` endpoint produced `net::ERR_INTERNET_DISCONNECTED`; immediately going Back reopened the cached app. Repeat this balanced health-navigation-and-back probe as an independent transport check. Native DevTools had its Offline preset selected; keep it open. A selected preset, online badge, Wi-Fi icon or server-zero count alone is insufficient evidence of continuous network conditions. The app has displayed Connected while transport requests failed after reload, so do not certify networking from its badge. If the minimized native window cannot be inspected, the actual failing same-tab health probe can still establish transport unavailability. Preserve an unverified checkpoint if transport evidence cannot be established, and never bypass a security warning.
+2. Verify all 200 originals are unresolved, protection is still granted, local feeds are 445 kg and the other product quantities match.
+3. Export fresh recovery data, verify the actual file, and run the full original-ID/payload/checksum comparison.
+4. Independently query the correct Supabase project `vbmnnouwmxcuibywdkjw` using link `link_6ad9d4869ab08191ba50e0b2cf15f8c5`: shift sales zero; overall counts 409/420/439; server feeds500/fertilizer400/seeds50. Save evidence and only then mark `oneHourPassed`. Keep the batch offline for the eight-hour hold.
+
+At/after the eight-hour deadline, repeat every check **before reconnecting**. Do not infer an eight-hour pass from elapsed time, sleeping hardware, a previously downloaded file or an inaccessible browser. If sales uploaded early or network continuity is not established, record the actual boundary and keep the original transactions recoverable; never invent replacement purchases to hide an interrupted run. Storage-retention evidence and the network-duration verdict can be reported separately.
+
+## Reconnect and reconcile
+
+After complete checkpoint evidence is retained, restore only the POS's native DevTools network setting to **No throttling / Go online**. Do not alter the PC network adapter or other applications. Renew the same cashier's sign-in if needed; do not open a substitute shift or expose credentials in files/reports.
+
+Let the original queue synchronize, then compare all complete original IDs and JSON payloads with `public.sales.payload`. Require exactly 200 run sales, one matching sale item, one original cash payment and one exact sale stock movement per ID; all flags empty and no duplicate effects. Sum exactly **192,500 centavos**, quantity **55 kg**, server stock **445 kg**. Overall history then becomes **609 sales / 620 payments / 639 movements**, with fertilizer400 and seeds50 unchanged. Reconcile the append-only ledger/projection and old-history preservation separately; do not count the earlier closed shifts' cash in this new drawer.
+
+Restore/replay the same original recovery file through the normal UI while this shift is still authorized; verify no additional cash, sale or stock effect. Ask for manual selection if local-file permission prevents the normal chooser; do not bypass it. Close only this TEST shift after every original is acknowledged, with simulated counted and expected cash both **₱1,925**. Preserve these TEST sales and their exact stock effects rather than deleting or refunding them just to reset the display.
+
+Record completed evidence and pause this existing follow-up when the single run is settled. Actual cash, scale/printer, staff/count approvals, opening inventory, production backup and pilot sign-off remain outside this simulated-cash endurance run.

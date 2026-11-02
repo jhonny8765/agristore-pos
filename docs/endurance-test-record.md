@@ -1,5 +1,7 @@
 # Next cashier-PC test: record sheet
 
+**November 2 update:** a fresh [Magpet run is now active](magpet-endurance-20261102.md) on this PC, with explicit user authorization for POS-only offline and other apps connected. Use that run's new shift, 500 kg starting feeds, 445 kg expected local feeds and separate recovery files. The older worksheet below is retained as history; it does not authorize a Windows restart or a new replay of the October 28 records.
+
 **Status: postponed at the user's request; not passed.** The [settled run record](endurance-active-run.md) records 400 synchronized original TEST sales, 140 kg stock, two separately reconciled ₱1,925 drawers and no open shift. The reminder is paused. Physical outage, restart and actual-duration checkpoints remain blank. This worksheet is for a future fresh rehearsal, not for replaying the settled purchases.
 
 ## Already checked

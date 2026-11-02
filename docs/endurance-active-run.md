@@ -1,5 +1,7 @@
 # Endurance rehearsal — postponed October 28, 2026
 
+**New active run, November 2:** the user resumed endurance testing on this PC and chose POS-only offline while other apps remain connected. Follow [the new Magpet run](magpet-endurance-20261102.md) and its separate private live state. Its 200 new originals total ₱1,925 / 55 kg, starting from Magpet feeds500 kg with a new zero-cash shift. The one-hour/eight-hour verdicts are pending. The settled older run below is historical and must not be replayed or used as this run's baseline.
+
 **Postponed at the user's request; not passed.** The user is busy and asked to continue independent software work. The reminder `check-pos-eight-hour-endurance-evidence` is paused. No further physical disconnection or Windows restart is scheduled.
 
 ## Verified settlement
