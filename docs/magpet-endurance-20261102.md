@@ -1,6 +1,6 @@
 # Active Magpet endurance run — November 2, 2026
 
-**IN PROGRESS. Neither timed checkpoint has passed yet.** This replaces the October 28 worksheet for the current run only; the settled older Test Branch 4 history and recovery files remain untouched.
+**IN PROGRESS: the one-hour POS-only outage checkpoint passed at 14:55 on November 2. The eight-hour hold and final synchronization/recovery checks remain pending.** This replaces the October 28 worksheet for the current run only; the settled older Test Branch 4 history and recovery files remain untouched.
 
 The user explicitly chose **POS-only offline; other PC apps stay connected**. Do not disconnect the entire PC or restart Windows. Whole-PC outage, browser-process restart and Windows restart remain separate untested gates.
 
@@ -62,6 +62,14 @@ The download-event watcher timed out even though the first file really arrived i
 
 ## Required timed checkpoints
 
+### Completed one-hour checkpoint
+
+At **14:55:14.648** (`06:55:14.648Z`), the live POS health request still failed with `ERR_INTERNET_DISCONNECTED`, **60 minutes 16.648 seconds** after the observed outage start. A new recovery export generated at **14:55:16.844** was actually downloaded to `E:\agristore-recovery-3e40c72b-3ebf-4fa0-b7ab-bdf0273acaa3-part-1-of-1.json`. Its checksum, all **200 complete original UUIDs and immutable payloads/fingerprints**, original lease, **₱1,925 due / ₱4,000 tender / ₱2,075 change**, and **55 kg** matched the baseline. The original baseline file hash was unchanged. Verification completed at **14:55:29.773**.
+
+Storage protection remained granted. Local stock was **445 kg feeds / 400 kg fertilizer / 50 seed packets**. An independent server check at14:55:21 found **zero uploaded sales in this shift**, overall counts **409 sales / 420 payments / 439 movements**, and server stock **500 / 400 / 50**. All original records remained recoverable in `authentication_required`. Evidence is `.impeccable/review/magpet-endurance-one-hour-live.json`, `magpet-endurance-one-hour-server.json`, `magpet-endurance-one-hour-verdict.json` and the original-record verifier output identified in the live state.
+
+**Do not repeat the completed one-hour export or reconnect now.** Continue quiet retained-record/transport checks until the eight-hour deadline. This pass covers the real-duration app-only outage, not a Windows restart, whole-PC disconnection, physical cash count or completed server recovery.
+
 Before either deadline, preserve all originals and keep the app/DevTools open. Do not create more purchases, force updates, clear data, restore old runs or close the shift. A quiet intermediate wake may inspect retained counts and server-zero without starting another download dialog.
 
 At/after the one-hour deadline:
@@ -81,4 +89,4 @@ Let the original queue synchronize, then compare all complete original IDs and J
 
 Restore/replay the same original recovery file through the normal UI while this shift is still authorized; verify no additional cash, sale or stock effect. Ask for manual selection if local-file permission prevents the normal chooser; do not bypass it. Close only this TEST shift after every original is acknowledged, with simulated counted and expected cash both **₱1,925**. Preserve these TEST sales and their exact stock effects rather than deleting or refunding them just to reset the display.
 
-Record completed evidence and pause this existing follow-up when the single run is settled. Actual cash, scale/printer, staff/count approvals, opening inventory, production backup and pilot sign-off remain outside this simulated-cash endurance run.
+Record completed evidence and delete the completed one-off follow-up through the automation tool when the entire run is settled, as required by the current heartbeat instructions; do not stop it after only the one-hour pass. Actual cash, scale/printer, staff/count approvals, opening inventory, production backup and pilot sign-off remain outside this simulated-cash endurance run.
