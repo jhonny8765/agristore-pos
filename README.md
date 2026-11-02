@@ -44,6 +44,7 @@ Without Docker or GitHub-hosted compute, `npm run test:db:preflight`, `npm run t
 
 ## What is implemented
 
+- [Cloudflare Pages Free hosting](docs/cloudflare-hosting.md): a static/offline build, public-key-only configuration, live database health Worker, security headers and a dashboard ZIP upload guide. Publication and cashier cutover require separate verification.
 - Owner/assigned-manager [sales analytics](docs/sales-analytics.md): weekly/monthly/custom periods, comparisons, daily/weekly/monthly trends, complete CSVs and product popularity by distinct purchases or gross sales, with exact product units and separate refund/cash-recovery activity.
 - [Verified analytics snapshots](docs/sales-analytics-audit.md): inconsistent/partial responses retain the last valid report and complete exports; automated checks independently reconcile original receipts, quantities, trends and dated refund cash.
 - [Security and maintenance](docs/free-security-maintenance.md): baseline browser restrictions, explicit private-table client denials, pinned test actions, dependency gates and reviewed update proposals. See [the before-live checklist](docs/magpet-before-live.md) for the remaining Magpet launch work.
