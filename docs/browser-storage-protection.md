@@ -2,6 +2,8 @@
 
 Use the Cloudflare website: <https://better-yield-magpet-pos.pages.dev/>. Protection belongs to this exact website and browser profile. An installation or grant for the old Vercel website does not carry over.
 
+**Verified on November 2:** this PC's Brave Work profile now has a genuine grant after installation, and it stayed granted through offline reload with the same five test receipts. Repeat the steps below on the actual Magpet cashier PC when it is chosen; this result does not complete its endurance or Windows restart tests.
+
 ## What the update changes
 
 - Sign-in/catalog startup no longer requests storage permission. A rejected request cannot incorrectly turn successful membership verification into a sign-in failure.
@@ -24,3 +26,5 @@ Even persistent storage can be deleted manually and does not protect against a f
 The browser decides whether to grant persistence. Chromium considers signals including app installation and site use; a grant is not guaranteed. Requests should follow a user action instead of page load. Sources: [Google's persistent-storage guidance](https://web.dev/articles/persistent-storage/), [Storage Standard](https://storage.spec.whatwg.org/).
 
 See [the full before-live checklist](magpet-before-live.md) for staff, opening stock, accounts, backups, equipment and pilot sign-off.
+
+See [the verification record](browser-storage-verification.md) for completed tests, the genuine Brave grant after installation and the remaining actual-cashier-PC checks.

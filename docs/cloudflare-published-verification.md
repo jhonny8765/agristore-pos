@@ -1,5 +1,7 @@
 # Published Magpet site: sales and stock verification
 
+**Subsequent storage follow-up:** release `cf-mvyto2g0` now has [verified genuine protected storage](browser-storage-verification.md) in this Brave Work profile, with the original five TEST receipts retained through installation/update and offline reload. The record below describes the earlier `cf-mvyjyph5` financial rehearsal; its initial storage refusal was subsequently resolved. Actual cashier PC selection/endurance and the other before-live gates remain open.
+
 Verified November 2, 2026 at <https://better-yield-magpet-pos.pages.dev/>. The current release is **`cf-mvyjyph5`**. This is a pre-pilot TEST business, not evidence of actual store cash, physical inventory or Windows endurance.
 
 ## Published build and browser checks
