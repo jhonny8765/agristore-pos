@@ -1,15 +1,16 @@
 ---
 name: Better Yield POS (AgriStore)
-description: A cooperative stock book for practical cash checkout and traceable inventory.
+description: A forest-and-paper operational workspace for cash checkout and traceable stock records.
 colors:
-  forest: "#173e32"
-  green: "#31604c"
-  lime: "#dfebce"
-  paper: "#f6f7f2"
+  forest: "#063f2d"
+  forest-dark: "#003b2b"
+  green: "#17633c"
+  lime: "#e6f2d7"
+  paper: "#f8f7f3"
   white: "#fff"
-  ink: "#23352b"
-  muted: "#667468"
-  line: "#e3e7dd"
+  ink: "#15241c"
+  muted: "#586159"
+  line: "#e1e3dc"
   control-line: "#7a8873"
   soft: "#edf1e7"
   amber: "#865b16"
@@ -18,19 +19,19 @@ colors:
 typography:
   headline:
     fontFamily: '"Manrope Variable", sans-serif'
-    fontSize: "29px"
-    fontWeight: 750
+    fontSize: "34px"
+    fontWeight: 800
     lineHeight: 1.3
     letterSpacing: "-0.025em"
   title:
     fontFamily: '"Manrope Variable", sans-serif'
-    fontSize: "18px"
-    fontWeight: 750
-    lineHeight: 1.5
+    fontSize: "22px"
+    fontWeight: 780
+    lineHeight: 1.3
     letterSpacing: "-0.025em"
   body:
     fontFamily: '"DM Sans Variable", sans-serif'
-    fontSize: "14px"
+    fontSize: "15px"
     fontWeight: 400
     lineHeight: 1.5
   label:
@@ -39,18 +40,18 @@ typography:
     fontWeight: 650
     lineHeight: 1.5
 rounded:
-  tag: "4px"
-  field: "7px"
-  control: "8px"
-  product: "10px"
-  panel: "12px"
+  tag: "7px"
+  field: "8px"
+  control: "9px"
+  product: "15px"
+  panel: "15px"
 spacing:
   compact: "6px"
   control: "12px"
   form: "18px"
   receipt: "22px"
-  panel: "25px"
-  workspace: "36px"
+  panel: "22px"
+  workspace: "28px"
 components:
   button-primary:
     backgroundColor: "{colors.forest}"
@@ -80,12 +81,12 @@ components:
     textColor: "{colors.ink}"
     rounded: "{rounded.field}"
     padding: "11px 12px"
-    height: "43px"
+    height: "44px"
   panel:
     backgroundColor: "{colors.white}"
     textColor: "{colors.ink}"
     rounded: "{rounded.panel}"
-    padding: "25px"
+    padding: "22px"
 ---
 
 # Design System: Better Yield POS (AgriStore)
@@ -96,7 +97,7 @@ components:
 
 The cooperative stock book pairs forest ink with warm paper, quiet rules, and precise figures. It feels practical and orderly for cashiers completing sales and owners tracing stock changes to their source.
 
-Compact sans-serif typography and restrained tonal surfaces keep operational information close together. Flat category illustrations identify agricultural goods; borders and alignment organize the work rather than decorative effects.
+Compact sans-serif typography and restrained tonal surfaces keep operational information close together. Verified product photographs and explicit unverified-photo fallbacks identify agricultural goods. Compact registers, selected-record details, and task tabs organize work; borders and alignment carry the hierarchy.
 
 Better Yield POS is the customer-facing identity for Better Yield Agri Trading and Services; AgriStore remains the internal product identity. The original business logo and product-display photograph from the supplied Facebook page extend this established world on sign-in and navigation. The public tagline, “Your partner in every harvest.”, and crop nutrition / crop care context identify the business; configured branches, stock and prices remain operational records. Asset provenance is recorded in [docs/brand-assets.md](docs/brand-assets.md).
 
@@ -105,11 +106,12 @@ Better Yield POS is the customer-facing identity for Better Yield Agri Trading a
 - Forest navigation and primary actions against warm paper.
 - Ruled records, aligned figures, and explicit operational states.
 - Compact controls with rounded corners and clear focus outlines.
-- Original Better Yield business artwork on sign-in and navigation, with photography limited to desktop sign-in.
+- Original Better Yield artwork on sign-in and navigation; verified catalog photographs with honest fallbacks.
+- Focused task tabs, ten-record pages, paired register/detail views, and readable phone figures.
 
 ## Colors
 
-The palette carries agricultural familiarity through forest and pale leaf greens, with warm, near-white operational surfaces.
+The palette carries agricultural familiarity through deep forest and pale leaf greens, with warm, near-white operational surfaces. Frontmatter describes the current operational shell. Sign-in retains the earlier base forest/paper treatment in the global stylesheet; do not migrate it implicitly while extending an operational screen.
 
 ### Primary
 
@@ -149,23 +151,23 @@ Use Muted Ledger for placeholders and unselected category text. Working Green su
 
 ### Hierarchy
 
-- **Headline:** the frontmatter headline role is the desktop page heading; it reduces to (25px) at the mobile breakpoint.
-- **Title:** the frontmatter title role is the ordinary section heading. Smaller subsection headings use Manrope at (15px), while receipt headings use (16px).
-- **Body:** the frontmatter body role is the inherited application baseline. Product names use DM Sans at (14px), weight (700), with line-height (1.35).
+- **Headline:** the frontmatter headline role is the desktop page heading; it reduces to (27px) at the phone breakpoint.
+- **Title:** the frontmatter title role is the ordinary section heading. Supporting inherited subsection headings use Manrope at (15px); the selected receipt detail heading is (27px), and current-sale heading is (25px).
+- **Body:** the frontmatter body role is the inherited application baseline. Tables use (14px); controls use (15px). Product names use (17px) on desktop and (14px) on phones, with weight (700) and line-height (1.35).
 - **Label:** the frontmatter label role represents form labels. Checkout metadata commonly uses (11px); category filters use (12px) on desktop and (11px) on mobile.
-- **Figures:** totals use Manrope at (26px) and summary metrics at (28px) on wide screens. These are local financial emphasis roles rather than a large display scale.
+- **Figures:** totals use Manrope at (26px) and summary metrics at (28px) on wide screens, reducing to (24px) on phones. These are local financial emphasis roles rather than a large display scale.
 
-**The Precise Figures Rule.** Keep tabular numerals throughout the interface and right-align numerical table columns so quantities and money can be scanned vertically. Show bulk on-hand stock in exact base kg or liters across all batches; show piece-pack equivalents only when whole, otherwise retain base pieces, so small stock changes remain visible.
+**The Precise Figures Rule.** Keep tabular numerals throughout the interface and right-align numerical table columns so quantities and money can be scanned vertically. Keep each monetary figure on one intact line: summary labels may wrap or move above the value, but digits never split. Show bulk on-hand stock in exact base kg or liters across all batches; show piece-pack equivalents only when whole, otherwise retain base pieces, so small stock changes remain visible.
 
 Align quantity column headers with their right-aligned values, including receiving line counts, transferred quantities, and physical-count figures.
 
 ## Layout
 
-The desktop shell uses a fixed forest rail (220px) and a white branch and connection bar (73px tall). The workspace has horizontal gutters (36px) and a maximum content width (1900px). The rail narrows at (1250px), becomes an icon rail at (950px), and reaches (61px) at the mobile breakpoint.
+The operational desktop shell uses a fixed deep forest rail (248px), a white branch and connection bar inherited at (73px), and paper workspace gutters (28px). At (900px) and below the rail narrows to an icon strip (76px), and main gutters become (22px). At (650px) and below the fixed icon rail is (61px), the remaining workspace width is explicitly bounded, and main padding is (18px 14px). The real branch label and accessible destination names remain available. Magpet is the only enabled business branch.
 
-Checkout pairs a flexible searchable catalog with a persistent receipt column (335px), separated by a gap (27px). The receipt is sticky with a top offset (22px). The product grid has three columns by default, two below (1250px), and four from (1600px); receipt width and spacing adapt at the same breakpoints.
+Checkout pairs a searchable catalog with a persistent receipt column (410px) and gap (24px). The receipt narrows to (350px) below (1300px) and (330px) below (900px). Products occupy three columns on desktop, two below (1300px), and one below (900px); at the phone breakpoint checkout stacks, the product grid returns to two compact columns, and the receipt follows the catalog. Product identity and unit share the upper row with a contain-fit photo region; price and Add action occupy a ruled row below. The phone catalog uses vertically stacked photo and text. Inherited mobile basket access appears at (730px), so it remains available in the intermediate tablet width as well as on phones.
 
-At (730px) and below, checkout stacks into one column, retains a two-column product grid, and places the receipt below the catalog. A fixed forest basket summary near the bottom edge exposes the current total and a Review sale anchor. Checkout reserves bottom space (88px) for it. The icon rail remains present. General form grids and paired panels collapse to one column.
+Receipts pair the register and selected original detail in columns (1.5fr / minmax(340px, 1fr)), with a gap (24px). The detail is sticky at (18px) on wide screens. Receipt and order pairs stack at (1100px); counts also move their checklist beneath focused entry there. Settings summaries use three columns, then two below (1300px), then one below (900px). Shared four-part summaries become two columns below (1300px) and one below (650px). Phone summary rows wrap labels and preserve a complete non-shrinking monetary value.
 
 Sign-in uses two equal columns above (730px): a forest identity panel and a centered form bounded to (365px). At (730px) and below, the identity panel and its photograph are hidden; the form shows the compact Better Yield identity and remains the primary task. This brand treatment retains the existing operational checkout composition.
 
@@ -181,14 +183,18 @@ Stock-control records use fixed table columns with wrapping product, lot, reason
 
 Blind-count records use a single ruled article flow with wrapping context and identifiers. Entry and approval forms are bounded to (44rem). Sealed comparisons use two equal columns with gaps (12px vertically, 24px horizontally), collapsing to one column at (730px). The entry / review actions wrap with a gap (12px); long recorded lot identifiers remain inside the panel on narrow screens.
 
-Sales analytics appears first in Overview, above All-time recorded totals, inside the shared white record panel. Its order is heading and refresh, period/grouping filters, applied branch/date/snapshot scope, ruled summary, sales trend with exact-table disclosure, and product ranking. Filter labels wrap with a gap (16px), a flexible basis (180px), and a desktop maximum width (330px). Summary figures occupy four equal columns, reduce to two at (1100px), and stack at (730px). At the mobile breakpoint filter labels fill the row, each summary item gains a separating rule, and trend dates and values share a row above the full-width bar. The trend region scrolls within a maximum height (380px); exact totals and product records retain the shared horizontal table scrolling.
+Sales analytics appears first in Overview above all-time recorded totals. Keep heading/refresh, period and grouping filters, applied branch/date/snapshot scope, summary, chart/attention pair, exact-table disclosure, and product ranking in that order. The chart and attention columns use (1.5fr / minmax(280px, 1fr)), gap (20px), and stack at (1100px). The SVG measures its actual container and uses that width for its viewBox, keeping currency-axis labels (12px) and dates (11px) readable at phone size rather than scaling a fixed desktop canvas. Summary and exact records retain their own inherited responsive layout.
+
+Task tabs wrap rather than widening the page. Receipts, purchasing, settings, inventory follow-ups, and saved-transaction queues expose the current task without stacking every form at once. Saved registers show ten body records per page; pagination appears above and below when more than ten loaded rows exist. Record paging affects presentation, never totals, export scope, or pending-work checks. Native tables retain headers in named, keyboard-focusable horizontal scrolling regions; retain the specific inherited stock-control stacking exception described above.
 
 ## Elevation & Depth
 
-The application is flat at rest: thin borders, pale fills, and forest navigation establish hierarchy. Product hover receives a faint lift; the fixed mobile basket uses a stronger ambient shadow to remain distinguishable over scrolled content. Other record panels have no resting shadow.
+The application is mostly flat at rest: thin borders, pale fills, and forest navigation establish hierarchy. Product hover receives a faint lift; the fixed mobile basket uses a stronger ambient shadow to remain distinguishable over scrolled content. Current operational record panels use only a very faint resting shadow; sign-in and older base panels retain their original flat treatment.
 
 ### Shadow Vocabulary
 
+- **Operational panel** (`0 2px 6px rgb(20 48 30 / 3%)`): faint separation on current white panels.
+- **Product resting** (`0 2px 5px rgb(20 48 30 / 4%)`): quiet catalog-tile separation.
 - **Product hover** (`0 6px 16px #23352b0b`): subtle response on available product records.
 - **Mobile basket** (`0 8px 24px #173e3233`): separates the fixed checkout summary from content behind it.
 
@@ -196,7 +202,7 @@ The application is flat at rest: thin borders, pale fills, and forest navigation
 
 ## Shapes
 
-Corners are softly rounded, with the frontmatter field and control radii for interactions, product radius for catalog items, and panel radius for records and receipts. Small tags have the tighter tag radius. Outlines are generally (1px); the receipt total uses a dashed separator as a paper-record cue. Circular avatars and completion marks are specific identity and feedback shapes.
+Corners are softly rounded, with the frontmatter field and control radii for interactions and the product/panel radius for catalog items and current record panels. Receipt containers use (16px), task tabs (9px), metric cards (14px), and selected navigation (10px). Small status tags use the tighter tag radius. Phone record panels use (12px). Outlines are generally (1px); the receipt total uses a dashed separator as a paper-record cue. Circular avatars and completion marks are specific identity and feedback shapes.
 
 ## Components
 
@@ -204,7 +210,7 @@ Corners are softly rounded, with the frontmatter field and control radii for int
 
 Use the original local raster logo from `apps/web/public/brand/better-yield-logo.jpg` beside the Better Yield name and POINT OF SALE descriptor. The image preserves its full artwork with contain sizing, a white backing, and a (4px) corner radius. Its displayed size is (72px square) in desktop sign-in, (64px square) in mobile sign-in, and (42px square) in navigation. At the icon-rail breakpoint, the adjacent wordmark text hides while the logo and accessible home name remain.
 
-The local business photograph at `apps/web/public/brand/better-yield-display.jpg` appears only in the desktop sign-in identity panel. It spans the panel's available content width with height `clamp(180px, 24vh, 260px)`, cover cropping centered at (60%) vertically, and (8px) corners. Keep its descriptive alternative text and “From the Better Yield team” caption. The official Facebook link belongs beneath this sign-in identity content. These sourced images establish business identity; catalog tiles retain their existing category artwork.
+The local business photograph at `apps/web/public/brand/better-yield-display.jpg` appears only in the desktop sign-in identity panel. It spans the panel's available content width with height `clamp(180px, 24vh, 260px)`, cover cropping centered at (60%) vertically, and (8px) corners. Keep its descriptive alternative text and “From the Better Yield team” caption. The official Facebook link belongs beneath this sign-in identity content. These sourced images establish business identity. Catalog, inventory, receipt, count, and order lines use only their verified product image paths. Contain-fit images retain packaging; failed or unverified images show a category line SVG and the explicit Photo not verified label. Where available, the source link states Reference photo · pack may differ. Never assign public display photography to an unrelated catalog item.
 
 ### Buttons
 
@@ -222,7 +228,7 @@ Category filters use compact rounded rectangular buttons, with transparent defau
 
 ### Cards / Containers
 
-White record panels use the panel radius, a Fine Rule outline, and panel spacing. On mobile the panel padding reduces to (18px). Product records are semantic articles with the product radius and a flat tinted category strip with a line SVG icon; their name, unit, price, and available stock remain in the content area. The primary product action explicitly names its selling unit, such as Add Sack or Add 1 kg. This full-width action has a minimum height (36px); keyboard focus also outlines the parent article. Product hover changes the outline and adds the subtle elevation above.
+White record panels use the panel radius, a Fine Rule outline, and panel spacing. On phones panel padding reduces to (17px). Product records are semantic articles with the product radius, verified image or honest fallback, and a pale category tag; their name, unit, price, and available stock remain in the content area. The primary product action explicitly names its selling unit, such as Add Sack or Add 1 kg. This full-width action has a minimum height (36px); keyboard focus also outlines the parent article. Product hover changes the outline and adds the subtle elevation above.
 
 Configured loose-kilo products add a ruled group beneath the stock line with the independent retail price per kg, By weight, and By peso amount. These separate bordered actions wrap within the tile and retain a minimum height (36px). Keep each action's accessible name specific to its product and selling method; the article itself remains a record rather than a single overlapping click target.
 
@@ -272,6 +278,8 @@ Pending stock issues pair the recorded quantity with its product and lot context
 
 ### Blind Stock Counts
 
+Use a focused current count beside an independent checklist, followed by the open-count register. A three-step strip explains first count, independent recount, and separate owner review; it stacks on phones. Selecting a record brings only that record into the focused entry flow.
+
 Extend the cooperative stock book with the existing white panel, compact headings, shared controls, and Fine Rules between count records. Keep Enter blind counts and Review sealed counts as separate views, using forest for the selected action, outline for the other, and an explicit pressed state. The entry view hides expected stock, prior quantities, and the count history register. Start with product / batch and counting scope / reason, then present the eligible signed-in counter's labeled physical quantity and notes beside its Seal action. Explain that every branch shift must be closed and synchronized and that only saleable goods are counted.
 
 Keep product, lot, expiry, base unit, scope / reason, recorded date, and state together in each wrapping article. Resolve catalog context only from the matching product and batch. If a recorded lot is unavailable, retain its identifier and show Expiry unavailable; reserve No lot for a record with no batch. Use explicit text for first entry, independent recount, ready review, disputed, stale, approved, and closed states. A sealed first entry directs its counter to another signed-in person for the recount.
@@ -290,13 +298,23 @@ Persistence permission and quota estimates do not establish backup coverage, Win
 
 Extend the cooperative stock book with a read-only, branch-scoped report using the existing panel, heading hierarchy, fields, buttons, and Fine Rules. The owner and assigned branch manager see this section outside practice mode. Keep period selection and grouping as visibly labeled native selects, with Day, Week, and Month groupings. This month grouped by day is the initial state. Choose dates reveals native From / Through date fields; Apply sales period commits the draft controls. Today, current/previous week, current/previous month, and Last 12 months are the other period choices. Weeks begin Monday and current week/month periods run to date in Asia/Manila.
 
-Place the applied branch and date range before the summary, followed by the snapshot time, comparison dates, last PC synchronization, and the server-confirmed-sales limitation. Keep this scope tied to the loaded report rather than to unapplied filter drafts. The four summary items are Gross sales, Completed purchases, Average purchase, and Sales less refund cash. Use a definition list with Fine Rules above and below; forest Manrope figures (24px, weight 750) sit below muted labels (12px), with comparison or refund/recovery context in muted supporting text (12px). This is a ruled summary, without separate metric cards or resting shadows.
+Place the applied branch and date range before the summary, followed by the snapshot time, comparison dates, last PC synchronization, and the server-confirmed-sales limitation. Keep this scope tied to the loaded report rather than to unapplied filter drafts. The four summary items are Gross sales, Completed purchases, Average purchase, and Sales less refund cash. The report retains its ruled definition-list summary with forest Manrope figures and muted supporting context. Other workspace summaries use white outlined metric cards, quiet icon tiles, and the responsive figure treatment described in Layout; they are a separate component.
 
-The Sales trend is an ordered list of proportional gross-sales bars: Working Green fills over Soft Leaf tracks, with an exact currency value beside each date or date range. Bar widths are relative to the largest gross-sales bucket in the loaded report. Keep bars hidden from assistive technology while retaining their readable dates and values. The named, keyboard-focusable chart region uses the shared visible focus outline. A native Show exact sales and refund totals by period disclosure follows it, exposing purchases, gross sales, refund cash paid, recovered cash, and sales less refund cash in the shared table. In forced colors, tracks gain a CanvasText boundary and bar fills use Highlight.
+The Sales trend is a green line with a pale green area fill and ruled currency-axis grid. It plots the validated loaded gross-sales buckets, with a minimum axis maximum of (100), markers carrying exact date/value titles, and dates formatted in Asia/Manila. Responsive measured geometry preserves readable axis text and thins intermediate date labels on narrow plots while retaining endpoint dates. Keep the named, keyboard-focusable chart region and shared visible focus outline. A native Show exact sales and refund totals by period disclosure follows it, exposing purchases, gross sales, refund cash paid, recovered cash, and sales less refund cash in the shared native table. A neighboring attention list links to actual stock, expiry, and count tasks.
 
-Popular products follows the trend. Use a native Rank products by select for Most purchases or Highest gross sales and a labeled product-name/SKU search. A purchase counts each product once even when it appears in several units or lots on one receipt. Keep original sales and quantities before refunds; show each product's own base-unit quantity without adding unlike units together. The table pairs product name and SKU with right-aligned purchases, quantity, gross sales, and comparison-period purchases. Show twenty matching products initially and reveal twenty more through the explicit action. Retain the matching/total snapshot counts and the statement that Export all product totals (CSV) includes every product in the report regardless of search or visible rows; the trend CSV likewise contains all aggregated report buckets. Each export identifies branch, applied dates, and snapshot.
+Popular products follows the trend. Use a native Rank products by select for Most purchases or Highest gross sales and a labeled product-name/SKU search. A purchase counts each product once even when it appears in several units or lots on one receipt. Keep original sales and quantities before refunds; show each product's own base-unit quantity without adding unlike units together. The table pairs product name and SKU with right-aligned purchases, quantity, gross sales, and comparison-period purchases. Product ranking retains its own explicit loaded-row expansion and shared ten-row presentation pager; neither changes report-wide export scope. Retain the matching/total snapshot counts and the statement that Export all product totals (CSV) includes every product in the report regardless of search or visible rows; the trend CSV likewise contains all aggregated report buckets. Each export identifies branch, applied dates, and snapshot.
 
 Sales follow the original sale date; refund cash and recovered refund cash follow their posting dates, including refunds from earlier purchases. Keep the local explanation that this is sales activity rather than profit or drawer cash. Loading retains the previous report; failed refreshes retain its displayed scope and exports with an alert. Offline guidance identifies the original snapshot and excludes pending offline sales, while refresh and period application require reconnection. Empty purchases and empty product/search results receive explicit local messages. Preserve the report's ordinary typography and shared status treatments rather than suggesting current or complete data from an old snapshot.
+
+### Task Tabs and Selected Records
+
+Task tabs are white outlined controls with forest selected fill, white selected text, an explicit selected state, and arrow/Home/End keyboard navigation. Keep their wrapping rhythm (10px desktop, 7px phone) and compact selected labels. Inventory exposes searchable product records and direct expiry/stock follow-ups. Purchasing separates order and delivery/inspection tasks. Settings groups general, staff, cashier-PC, and recovery work rather than displaying every setup form at once; its overview reads actual branch/cashier/storage state.
+
+Receipts and purchase orders pair a compact register with selected detail. Selection uses Pale Leaf across the row and a distinct named record action. Receipt detail retains original identifiers, status, item quantities/units, cash/change, correction actions, and print layout. Order lines put product name and exact conversion on separate block rows with visible spacing; quantity/progress tiles retain each line's own unit. Do not infer progress from a decorative reference amount.
+
+### Held Sale Draft
+
+An outline Hold sale action sits beneath current checkout. A saved draft shows a pale summary, saved time, same-cashier/shift scope, and Resume / Remove actions. It explicitly states that cash and stock have not changed and that the draft is neither a completed sale nor a recovery export. The original authorization and pending-work controls remain authoritative.
 
 ### Receipt History
 
@@ -332,21 +350,30 @@ Expose owner-only PC setup recovery as an explicit outline action beside the ret
 
 ### Settings / Branches
 
-The owner’s branch panel extends the existing ruled record surface. Rename fields retain branch-code labels and outline Save buttons; Add branch sits beneath that grid with a labeled name field and the shared forest primary action. Branch codes are assigned automatically. Names allow up to (120 characters). The rename grid collapses to one column on narrower layouts, and the addition form follows the shared responsive form layout.
+The branch header reads the currently loaded branch with a compact icon and strong label, retaining a minimum control height (40px). This installation enables Magpet only. Historical branch records are retained; do not expose customer add/rename controls or imply public marketing locations are selectable business branches. Existing disabled/loading/error guidance continues to describe actual connection and loaded stock state.
 
-Creation requires an online connection and is disabled during practice or another pending operation. Keep feedback beside the form: the button reads “Adding branch…” while pending, errors use the existing error notice and preserve the name, and confirmed success clears the field before refreshing the branch list. If confirmation is uncertain, feedback directs the owner to the Sync center, where the original request can be recovered; if only the list refresh fails, retain the success message and offer Refresh. Use explicit local text and the existing status colors so the outcome stays visible within the branch panel.
+### Stock Reminder Worklists
+Use the existing Inventory panels, ruled tables and responsive stock-control rows. Keep lot, expiry, exact base quantities and separately held goods together. Show the snapshot time, online refresh action, totals and bounded-page continuation. Missing expiry is an inspection warning. Responsible employee, due/overdue status, assignment instructions and latest progress belong beside the source evidence. Use native labelled controls and inline approval forms; keep manager assignment separate from owner-only resolution. Preserve entered/pending work on failed writes, and keep recorded success distinct from refresh failures. Dropdown accessible names reference their visible labels explicitly; refresh controls wrap at narrow widths.
 
-The Current branch picker in the top bar changes the displayed branch and its stock together after the selected branch’s data finishes loading. A failed download retains the previously loaded branch selection. Disable live branch switching while offline, during an active cashier lease, or while another operation is pending, and confirm a successful change with “Branch stock loaded.”
+### Lists and Product Lookup
 
-Keep the top-bar branch picker at a minimum height (40px) across viewport sizes.
+Saved registers use the shared ten-row pager above and below their rows. Keep page position, loaded count and older-history/CSV scope explicit; paging must never become the source of financial totals or pending-work guards. Checkout catalog pages use the same limit and reset on search/category changes. Editable basket/order lines stay together. Searchable product, unit, batch, supplier and order fields show at most ten matching suggestions with keyboard navigation, visible focus, exact-ID selection and clear no-match feedback. Typing clears a previous choice before a new one can be submitted. Blind-count suggestions contain identity and measurement only, never expected or previous quantities. Preserve native fixed-choice controls and the forest/paper design.
+
+### Closing a Cashier Shift
+
+Expose a labelled **Close shift** outline action in the shared page heading while a shift is open, including narrow layouts. It opens a focused inline workspace, not a popup or Settings hunt. Show branch/cashier context, unfinished basket and unconfirmed branch work with direct recovery actions, then a labelled peso field and **Close shift / Keep shift open** actions. Keep the actual count blank, scope drafts to the shift, and retain the original closing command and recovery fencing. Never prefill expected cash or a sales total as the physical count. Use the existing paper panel, forest controls, explicit offline copy, visible focus and wrapping action row; essential mobile shortcut text must remain visible.
+
+### Browser Storage Setup
+
+Keep storage checks inside Settings → Application & recovery. State verified grant, confirmed refusal and unknown permission distinctly; quota errors must not hide the permission result. Requests follow an explicit button action. Installation is offered only when the browser exposes its native prompt, with cancellation/failure feedback and browser-menu instructions retained. Explain the current website/profile scope and preserve old-origin records. Use numbered steps, existing outline buttons in a wrapping row and normal operational paragraph spacing. A storage grant is not launch approval, backup verification or a physical Windows endurance test. The bounded desktop/mobile review retained the incumbent forest/paper design and corrected missing list markers and cramped instructions; no new raster assets were introduced.
 
 ## Do's and Don'ts
 
 ### Do:
 
-- **Do** retain the original Better Yield logo artwork and use the sourced business photograph only on desktop sign-in.
+- **Do** retain the original Better Yield logo artwork and use the sourced business display photograph only on desktop sign-in; use verified catalog photos or the honest fallback in product records.
 - **Do** use the shared forest, paper, ink, muted, and rule tokens for new operational surfaces.
-- **Do** keep currency and quantities aligned and retain tabular numerals.
+- **Do** keep currency and quantities aligned, retain tabular numerals, and keep each monetary value intact on one line.
 - **Do** label selling units explicitly, preserve quantity drafts, and keep peso estimates blocked until actual weighed amounts are confirmed.
 - **Do** replace stale line amounts and weight equivalents with an entry prompt, total the remaining valid lines, and retain valid unconfirmed estimates and zero-price amounts.
 - **Do** expose configured loose selling methods in catalog records and retain displayed units and currency in field accessible names.
@@ -364,7 +391,9 @@ Keep the top-bar branch picker at a minimum height (40px) across viewport sizes.
 - **Do** keep applied dates, loaded counts, end-of-history feedback, and CSV scope explicit beside the records they describe.
 - **Do** keep app update status beside its action, protect pending work before reopening, and preserve local records and browser site data in recovery guidance.
 - **Do** retain confirmed completion feedback alongside a distinct Refresh warning, clear confirmed forms, and preserve entered values on validation or submission failure.
-- **Do** keep sales analytics filters, applied scope, snapshot and summary before trend and product ranking; preserve exact table values beside proportional bars.
+- **Do** keep task tabs, selected register/detail pairing, and ten-record presentation pages inside the current shell.
+- **Do** keep order product names and exact conversions on separate readable rows.
+- **Do** keep sales analytics filters, applied scope, snapshot and summary before trend and product ranking; preserve exact table values beside the responsive line/area chart.
 
 ### Don't:
 
@@ -380,18 +409,3 @@ Keep the top-bar branch picker at a minimum height (40px) across viewport sizes.
 - **Don't** invite resubmission of a confirmed action after a refresh failure, or show opening-stock confirmation before CSV validation succeeds.
 - **Don't** treat unloaded held goods as a verified empty stock state or a recorded investigation outcome as proof of a shortage's cause.
 - **Don't** describe storage permission or estimated browser quota as proof of backup coverage, Windows disk capacity, or operational readiness.
-
-## Stock reminder worklists
-Use the existing Inventory panels, ruled tables and responsive stock-control rows. Keep lot, expiry, exact base quantities and separately held goods together. Show the snapshot time, online refresh action, totals and bounded-page continuation. Missing expiry is an inspection warning. Responsible employee, due/overdue status, assignment instructions and latest progress belong beside the source evidence. Use native labelled controls and inline approval forms; keep manager assignment separate from owner-only resolution. Preserve entered/pending work on failed writes, and keep recorded success distinct from refresh failures. Dropdown accessible names reference their visible labels explicitly; refresh controls wrap at narrow widths.
-
-## Lists and product lookup
-
-Saved registers use the shared ten-row pager above and below their rows. Keep page position, loaded count and older-history/CSV scope explicit; paging must never become the source of financial totals or pending-work guards. Checkout catalog pages use the same limit and reset on search/category changes. Editable basket/order lines stay together. Searchable product, unit, batch, supplier and order fields show at most ten matching suggestions with keyboard navigation, visible focus, exact-ID selection and clear no-match feedback. Typing clears a previous choice before a new one can be submitted. Blind-count suggestions contain identity and measurement only, never expected or previous quantities. Preserve native fixed-choice controls and the forest/paper design.
-
-## Closing a cashier shift
-
-Expose a labelled **Close shift** outline action in the shared page heading while a shift is open, including narrow layouts. It opens a focused inline workspace, not a popup or Settings hunt. Show branch/cashier context, unfinished basket and unconfirmed branch work with direct recovery actions, then a labelled peso field and **Close shift / Keep shift open** actions. Keep the actual count blank, scope drafts to the shift, and retain the original closing command and recovery fencing. Never prefill expected cash or a sales total as the physical count. Use the existing paper panel, forest controls, explicit offline copy, visible focus and wrapping action row; essential mobile shortcut text must remain visible.
-
-## Browser storage setup
-
-Keep storage checks inside Settings → Application & recovery. State verified grant, confirmed refusal and unknown permission distinctly; quota errors must not hide the permission result. Requests follow an explicit button action. Installation is offered only when the browser exposes its native prompt, with cancellation/failure feedback and browser-menu instructions retained. Explain the current website/profile scope and preserve old-origin records. Use numbered steps, existing outline buttons in a wrapping row and normal operational paragraph spacing. A storage grant is not launch approval, backup verification or a physical Windows endurance test. The bounded desktop/mobile review retained the incumbent forest/paper design and corrected missing list markers and cramped instructions; no new raster assets were introduced.

@@ -20,7 +20,7 @@ test("receipt pages preserve every sale, exact cash and available stock", async 
   await page.getByRole("button", { name: "Sales & receipts", exact: true }).click();
   for (const width of [1440, 390]) {
     await page.setViewportSize({ width, height: 1000 });
-    const pager = page.getByRole("navigation", { name: "Table records pages above", exact: true });
+    const pager = page.getByRole("navigation", { name: /^Table records:.* pages above$/ });
     await expect(page.locator("tbody tr")).toHaveCount(10);
     await pager.getByRole("button", { name: "Next", exact: true }).click(); await expect(page.locator("tbody tr")).toHaveCount(1);
     await expect(pager).toContainText("11–11 of 11 loaded");

@@ -21,8 +21,8 @@ function evidence(row: Investigation, products: Product[]) {
     d.reference ? `Supplier document: ${d.reference}` : "", item.documentQuantity !== undefined ? `Document quantity: ${item.documentQuantity} · Accepted: ${item.quantity} selling units` : "",
     Array.isArray(d.flags) ? `Review: ${d.flags.map(f => String(f).replaceAll("_", " ")).join(", ")}` : "", d.reason, d.notes, item.deliveryNotes].filter(Boolean).join("\n") || "Review the source record and physical goods before recording an outcome.";
 }
-export function StockFollowUps({ db, organizationId, branchId, actorId, products, owner, canAssign, online, disabled, revision, execute }: {
-  db: PosDatabase; organizationId: string; branchId: string; actorId: string; products: Product[];
+export function StockFollowUps({ focus="all", db, organizationId, branchId, actorId, products, owner, canAssign, online, disabled, revision, execute }: {
+  focus?: "all"|"expiry"; db: PosDatabase; organizationId: string; branchId: string; actorId: string; products: Product[];
   owner: boolean; canAssign: boolean; online: boolean; disabled: boolean; revision: number;
   execute: (fn: () => Promise<void>) => Promise<Error | undefined>;
 }) {
@@ -82,7 +82,7 @@ export function StockFollowUps({ db, organizationId, branchId, actorId, products
         {data.expiryNext && <Button variant="outline" disabled={blocked} onClick={() => void load("expiry", data.expiryNext)}>Load more expiry reminders</Button>}
       </> : !loading && <p>{error ? "Current reminders are unavailable. Retry online." : "Connect to load reminders."}</p>}
     </section>
-    <section className="panel stock-followups">
+    <section className="panel stock-followups" hidden={focus==="expiry"}>
       <h2>Stock investigations</h2>
       <p>Unresolved differences remain open until the owner records the evidence and outcome. Assigning a person or recording progress does not close a case or change stock.</p>
       <label className="field followup-filter"><span id={`${labelId}-investigation`}>Investigation filter</span><select aria-labelledby={`${labelId}-investigation`} value={filter} disabled={blocked} onChange={e => { setData(undefined); setFilter(e.target.value); }}><option value="all">All unresolved</option><option value="overdue">Overdue</option><option value="due_today">Due today</option><option value="unassigned">Unassigned / needs reassignment</option><option value="mine">Assigned to me</option></select></label>

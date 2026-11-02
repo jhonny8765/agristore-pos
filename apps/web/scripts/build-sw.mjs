@@ -1,5 +1,5 @@
 import { generateSW } from "workbox-build";
-import { mkdir, readFile } from "node:fs/promises";
+import { mkdir, readFile, readdir } from "node:fs/promises";
 import path from "node:path";
 import { createHash } from "node:crypto";
 export async function buildOffline(distDir, projectDir) {
@@ -24,6 +24,7 @@ export async function buildOffline(distDir, projectDir) {
           "manifest.webmanifest",
           "brand/better-yield-logo.jpg",
           "brand/better-yield-display.jpg",
+          ...(await readdir(path.join(projectDir,"public/products")).catch(error=>{if(error.code==='ENOENT')return [];throw error;})).filter(name=>/^[a-f0-9]{16}\.webp$/.test(name)).map(name=>`products/${name}`),
         ].map(async (name) => ({
           url: "/" + name,
           revision: createHash("sha256")

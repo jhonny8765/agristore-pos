@@ -29,6 +29,7 @@ export function draftLineTotal(
 }
 
 interface Cart {
+  heldDraftId: string | null;
   items: SaleItem[];
   lineIds: string[];
   drafts: Record<string, LineDraft>;
@@ -43,6 +44,7 @@ interface Cart {
   attempt: () => string;
 }
 export const useCart = create<Cart>((set, get) => ({
+  heldDraftId: null,
   items: [],
   lineIds: [],
   drafts: {},
@@ -115,6 +117,7 @@ export const useCart = create<Cart>((set, get) => ({
       return {
         drafts,
         items: s.items.filter((_, i) => i !== index),
+        heldDraftId: s.items.length===1?null:s.heldDraftId,
         lineIds: s.lineIds.filter((_, i) => i !== index),
         quantityErrors,
         attemptId: null,
@@ -122,6 +125,7 @@ export const useCart = create<Cart>((set, get) => ({
     }),
   clear: () =>
     set({
+      heldDraftId: null,
       items: [],
       lineIds: [],
       drafts: {},

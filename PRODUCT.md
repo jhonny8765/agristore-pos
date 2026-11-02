@@ -28,6 +28,8 @@ Owners and assigned branch managers can read branch-scoped Sales analytics outsi
 
 Analytics responses are verified before replacing a loaded report: branch/period/calendar scope, exact totals and averages, complete trend partitions, product gross totals, supported base quantities and possible receipt frequencies must agree. Incomplete or inconsistent responses use the existing retry flow and retain the last valid report/exports. Independent automated database checks compare reports with original receipts/items and dated refund/recovery payments; these checks do not establish that every physical sale was recorded.
 
+Checkout can hold one unfinished draft on the same PC for the same cashier and open shift. Holding or resuming a draft does not create a receipt or change cash/stock. The draft retains its original checkout attempt ID, including after a saved-sale cleanup interruption. A held draft must be completed or explicitly removed before closing that shift. Drafts are separate from completed-sale recovery exports; preserve the browser profile.
+
 ## Brand Commitments
 Customer-facing identity: Better Yield POS, for Better Yield Agri Trading and Services. AgriStore remains the internal product/repository identity. Practical, clear, non-technical language. At the user’s request, use the actual logo, product-display photograph and public tagline from the supplied Better Yield Facebook page; source details are in docs/brand-assets.md. Extend the established forest/paper operational design and retain the cashier composition. This request applies to the existing POS only. It does not authorize replacing configured branches with public marketing locations or assigning photographed goods to synthetic catalog records.
 

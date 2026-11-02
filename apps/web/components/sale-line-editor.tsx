@@ -17,6 +17,7 @@ import {
   pesoBudget,
   quantityFromDisplay,
 } from "../lib/quantity-entry";
+import { ProductPhoto } from "./product-photo";
 import { Button } from "./ui/button";
 
 const confirmation = "Confirm the actual scale weight before checkout.";
@@ -113,6 +114,7 @@ export function SaleLineEditor({
 
   return (
     <div className="receipt-item">
+      <div className="receipt-item-photo"><ProductPhoto product={product}/></div>
       <div className="receipt-item-top">
         <strong>{item.name}</strong>
         <button

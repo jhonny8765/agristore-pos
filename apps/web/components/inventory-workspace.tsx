@@ -1,0 +1,24 @@
+"use client";
+import {useState} from 'react';
+import Decimal from 'decimal.js';
+import {AlertTriangle,CalendarClock,Layers,Package,Search} from 'lucide-react';
+import {money,type Product} from '@agristore/domain';
+import {RecordTable} from './record-pages';
+import {ProductPhoto} from './product-photo';
+import {WorkspaceStat,useBusinessClock} from './workspace-ui';
+import {Button} from './ui/button';
+
+export function InventoryWorkspace({products,stock,onControls,onExpiry,onAdd,canManage}:{products:Product[];stock:Map<string,string>;onControls:()=>void;onExpiry:()=>void;onAdd:()=>void;canManage:boolean}) {
+ const now=useBusinessClock();
+ const [query,setQuery]=useState(''),[category,setCategory]=useState('all'),[availability,setAvailability]=useState('all');
+ const active=products.filter(p=>p.active);
+ const quantity=(p:Product)=>[...stock].filter(([key])=>key.startsWith(`${p.id}:`)).reduce((sum,[,value])=>sum.plus(value),new Decimal(0));
+ const state=(p:Product)=>quantity(p).lte(0)?'out':quantity(p).lte(p.minimumStock)?'low':'in';
+ const today=new Date(now+8*3600000).toISOString().slice(0,10),end=new Date(now+30*86400000+8*3600000).toISOString().slice(0,10);
+ const expiry=active.filter(p=>p.batches.some(b=>b.expiresOn&&b.expiresOn<=end&&new Decimal(stock.get(`${p.id}:${b.id}`)??0).gt(0)));
+ const rows=active.filter(p=>`${p.name} ${p.sku} ${'originalCode' in p?p.originalCode:''}`.toLowerCase().includes(query.toLowerCase())&&(category==='all'||p.category===category)&&(availability==='all'||state(p)===availability));
+ return <><div className="workspace-stats four"><WorkspaceStat icon={Package} label="Catalog products" value={active.length}/><WorkspaceStat icon={AlertTriangle} label="At or below minimum" value={active.filter(p=>state(p)!=='in').length}/><WorkspaceStat icon={CalendarClock} label="Expiry within 30 days / overdue" value={expiry.length}/><WorkspaceStat icon={Layers} label="Held goods" value={<button className="record-link" onClick={onControls}>Review holds</button>} detail="Tracked separately from saleable stock"/></div>
+ <section className="panel inventory-register" aria-label="Product inventory"><div className="section-heading"><h2>Products</h2>{canManage&&<Button onClick={onAdd}>Add product</Button>}</div><div className="register-filters"><label className="field search-field"><span className="sr-only">Search inventory</span><Search size={18}/><input type="search" placeholder="Search product name or SKU" value={query} onChange={e=>setQuery(e.target.value)}/></label><label className="field"><span className="sr-only">Inventory category</span><select aria-label="Inventory category" value={category} onChange={e=>setCategory(e.target.value)}><option value="all">All categories</option>{[...new Set(active.map(p=>p.category))].map(c=><option key={c}>{c}</option>)}</select></label><label className="field"><span className="sr-only">Stock availability</span><select aria-label="Stock availability" value={availability} onChange={e=>setAvailability(e.target.value)}><option value="all">All stock</option><option value="in">In stock</option><option value="low">Low stock</option><option value="out">Out of stock</option></select></label></div>
+  {rows.length?<div className="table-wrap" role="region" aria-label="Inventory products" tabIndex={0}><RecordTable key={`${query}:${category}:${availability}`}><thead><tr><th>Product / SKU</th><th>Category</th><th className="numeric">On hand</th><th>Selling unit & price</th><th>Batch / expiry</th><th>Status</th></tr></thead><tbody>{rows.map(p=><tr key={p.id}><td><div className="product-cell"><ProductPhoto product={p}/><div><strong>{p.name}</strong><small>SKU: {p.sku}</small></div></div></td><td>{p.category}</td><td className="numeric"><strong>{quantity(p).toFixed()} {p.baseUnit}</strong></td><td>{p.units.map(u=><div key={u.id}>{("setupPending" in p&&p.setupPending)?"Confirm selling unit":u.name} · {("pricePending" in p&&p.pricePending)?"Confirm price":money(u.price)}</div>)}</td><td>{p.batches.length?p.batches.map(b=><div key={b.id}>Lot: {b.lot}<small className={b.expiresOn&&b.expiresOn<today?'expiry-overdue':''}>Exp: {b.expiresOn??'Not recorded'}</small></div>):'No batches'}</td><td><span className={`status-tag ${state(p)==='in'?'good':state(p)==='low'?'warn':''}`}>{state(p)==='in'?'In stock':state(p)==='low'?'Low stock':'Out of stock'}</span></td></tr>)}</tbody></RecordTable></div>:<div className="register-empty"><h3>No matching products</h3><Button variant="outline" onClick={()=>{setQuery('');setCategory('all');setAvailability('all');}}>Clear inventory filters</Button></div>}
+ </section><div className="workspace-followups"><Button variant="outline" onClick={onExpiry}><CalendarClock size={22}/>Expiry reminders</Button><Button variant="outline" onClick={onControls}><Layers size={22}/>Stock controls & investigations</Button></div></>;
+}

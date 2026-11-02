@@ -27,6 +27,7 @@ test("storage requests are explicit and denied/failed checks retain pending rece
   }));
   const before = await records(); expect(before).toHaveLength(1);
   await page.getByRole("button", { name: "Settings", exact: true }).click();
+  await page.getByRole("tab",{name:"Application & recovery",exact:true}).click();
   const panel = page.getByRole("region", { name: "Browser storage protection", exact: true });
   await expect(panel).toContainText("Persistent storage is not granted.");
   expect(await page.evaluate(() => (window as unknown as { storageRequestCount: number }).storageRequestCount)).toBe(0);
@@ -40,6 +41,7 @@ test("storage requests are explicit and denied/failed checks retain pending rece
   await panel.screenshot({ path: ".impeccable/review/storage-test-denied-mobile.png" });
   expect(await panel.evaluate(el => el.scrollWidth <= el.clientWidth)).toBe(true);
   await page.reload(); await page.getByRole("button", { name: "Settings", exact: true }).click();
+  await page.getByRole("tab",{name:"Application & recovery",exact:true}).click();
   expect(await records()).toEqual(before);
   await expect(panel).toContainText("Never clear browsing data");
 });
@@ -50,11 +52,13 @@ test("a quota failure preserves a verified grant and has no mobile overflow", as
   } }));
   await page.goto("/"); await page.getByRole("button", { name: "Try practice checkout", exact: true }).click();
   await page.getByRole("button", { name: "Settings", exact: true }).click();
+  await page.getByRole("tab",{name:"Application & recovery",exact:true}).click();
   const panel = page.getByRole("region", { name: "Browser storage protection", exact: true });
   await expect(panel).toContainText("Persistent storage granted."); await expect(panel).toContainText("Usage estimate unavailable.");
-  await expect(page.getByRole("region", { name: "PC checks and store guide", exact: true })).toContainText("Storage protection is granted.");
   await page.setViewportSize({ width: 390, height: 844 });
   expect(await panel.evaluate(el => el.scrollWidth <= el.clientWidth)).toBe(true);
+  await page.getByRole("tab",{name:"Store guide",exact:true}).click();
+  await expect(page.getByRole("region", { name: "PC checks and store guide", exact: true })).toContainText("Storage protection is granted.");
 });
 
 test("an early install offer is available in Settings and cancellation remains recoverable", async ({ page }) => {
@@ -65,6 +69,7 @@ test("an early install offer is available in Settings and cancellation remains r
     window.dispatchEvent(event);
   });
   await page.getByRole("button", { name: "Settings", exact: true }).click();
+  await page.getByRole("tab",{name:"Application & recovery",exact:true}).click();
   const panel = page.getByRole("region", { name: "Browser storage protection", exact: true });
   await panel.getByRole("button", { name: /Install (Better Yield|AgriStore) on this PC/ }).click();
   await expect(panel).toContainText("Installation cancelled.");

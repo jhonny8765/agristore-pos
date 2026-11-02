@@ -30,9 +30,14 @@ export function RecordPages({ children, label = "Records", resetKey = "", classN
 }
 
 /** Keep native table semantics; only its body rows are paged. */
-export function RecordTable({ children, ...props }: ComponentProps<"table">) {
+export function RecordTable({ children, pageLabel, ...props }: ComponentProps<"table"> & {pageLabel?:string}) {
   const parts = Children.toArray(children);
   const body = parts.find(part => isValidElement(part) && part.type === "tbody") as ReactElement<{ children: ReactNode }> | undefined;
   if (!body) return <table {...props}>{children}</table>;
-  return <RecordPages label="Table records" render={rows => <table {...props}>{parts.map(part => part === body ? cloneElement(body, { children: rows }) : part)}</table>}>{body.props.children}</RecordPages>;
+  function text(node:ReactNode):string{return Children.toArray(node).map(n=>isValidElement<{children?:ReactNode}>(n)?text(n.props.children):String(n)).join(' ');}
+  const head=parts.find(part=>isValidElement(part)&&part.type==='thead') as ReactElement<{children:ReactNode}>|undefined;
+  const firstRow=head?Children.toArray(head.props.children)[0]:undefined;
+  const firstCell=isValidElement<{children:ReactNode}>(firstRow)?Children.toArray(firstRow.props.children)[0]:undefined;
+  const label=pageLabel??`Table records: ${firstCell?text(firstCell):'Saved records'}`;
+  return <RecordPages label={label} render={rows => <table {...props}>{parts.map(part => part === body ? cloneElement(body, { children: rows }) : part)}</table>}>{body.props.children}</RecordPages>;
 }

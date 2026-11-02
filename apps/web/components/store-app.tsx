@@ -1,6 +1,16 @@
 "use client";
 import { SearchableSelect } from "./search-select";
 import { RecordTable, RecordPages } from "./record-pages";
+import { HeldSaleControl } from "./held-sale";
+import { prepareHeldCheckout,removeHeldSale,heldSaleKey,type HeldSale } from "../lib/held-sale";
+import { DashboardAttention } from "./dashboard-attention";
+import { PriceHistory } from "./price-history";
+import { receiptActionCells } from "../lib/receipt-actions";
+import { ReceiptWorkspace } from "./receipt-workspace";
+import { InventoryWorkspace } from "./inventory-workspace";
+import { SettingsWorkspace } from "./settings-workspace";
+import { WorkspaceTabs } from "./workspace-ui";
+import type { ReceiptView } from "../lib/receipt-view";
 import { MeasuredQuantity } from "./measured-quantity";
 import { SalesAnalytics } from "./sales-analytics";
 import { PartialRefundControl } from "./partial-refund";
@@ -31,8 +41,6 @@ import {
   ClipboardCheck,
   CloudOff,
   FileText,
-  FlaskConical,
-  HeartPulse,
   Leaf,
   LogOut,
   Package,
@@ -47,14 +55,14 @@ import {
   Truck,
   Wifi,
   WifiOff,
-  Wheat,
-  Wrench,
   X,
 } from "lucide-react";
 import Decimal from "decimal.js";
 import Image from "next/image";
 import { StoreBrand } from "./store-brand";
 import { ProductSetupForm } from "./product-setup-form";
+import { ProductPhoto } from "./product-photo";
+import { ImportedProductReview } from "./imported-product-review";
 import { kiloUnit } from "../lib/quantity-entry";
 import { resumeBranch } from "../lib/resume-branch";
 import type { SaleEntry } from "../lib/cart";
@@ -268,8 +276,15 @@ export function StoreApp() {
     [category, setCategory] = useState("All products"),
     [cash, setCash] = useState(""),
     [checkoutDone, setCheckoutDone] = useState<LocalSale>();
+  const [heldDraftCount,setHeldDraftCount]=useState(0);
+  useEffect(()=>{let active=true;if(lease)void setting<HeldSale>(db,heldSaleKey(lease)).then(value=>{if(active)setHeldDraftCount(value?1:0);});else setHeldDraftCount(0);return()=>{active=false;};},[db,lease]);
   const [closingDraft, setClosingDraft] = useState<{shiftId: string; cash: string}>();
   const closingCash = closingDraft?.shiftId === lease?.shiftId ? closingDraft?.cash ?? "" : "";
+  const [inventoryQuery]=useState('');
+  const [inventoryTab,setInventoryTab]=useState("products");
+  const [purchasingTab,setPurchasingTab]=useState("orders");
+  const [syncQuery,setSyncQuery]=useState("");
+  const [syncFilter,setSyncFilter]=useState("all");
   const [authMode, setAuthMode] = useState<"login" | "signup">("login");
   const [salesCursor, setSalesCursor] = useState<SalesCursor>();
   const [savingSale, setSavingSale] = useState(false);
@@ -835,7 +850,10 @@ export function StoreApp() {
         total: total(cart.items),
         cashReceived: cents(cash),
       };
+      const heldId=useCart.getState().heldDraftId;
+      if(heldId){const draft=useCart.getState();await prepareHeldCheckout(db,lease,heldId,payload,{lineIds:[...draft.lineIds],drafts:structuredClone(draft.drafts),quantityErrors:{...draft.quantityErrors},cash});}
       const saved = await saveCheckout(db, payload);
+      if(heldId){try{await removeHeldSale(db,lease,heldId);setHeldDraftCount(0);}catch{setError("Sale saved. A held-draft copy remains on this PC; it cannot be charged again. Remove it after checking the original receipt.");}}
       setCheckoutDone(saved);
       cart.clear();
       setCash("");
@@ -861,6 +879,7 @@ export function StoreApp() {
     entry: SaleEntry = "unit",
   ) {
     if (updateLock.current || committing.current || !lease || isStock) return;
+    if(p.pricePending||p.setupPending||!p.active||!p.units.length){fail(new Error('The owner must confirm this product’s price and selling unit in Inventory.'));return;}
     try {
       const batch = preferredBatch(p,stock,new Date().toLocaleDateString("en-CA", { timeZone: "Asia/Manila" }));
       cart.add(
@@ -873,6 +892,7 @@ export function StoreApp() {
         entry,
       );
       setCheckoutDone(undefined);
+    setMessage("");
     } catch (e) {
       fail(e);
     }
@@ -950,8 +970,13 @@ export function StoreApp() {
     headers: string[],
     body: React.ReactNode,
     kind?: HistoryKind,
-  ) => (
-    <div
+  ) => {
+    if(view === "sales") {
+      const actionCells=practice?new Map<string,React.ReactNode>():receiptActionCells(body);
+      const receipts:ReceiptView[]=practice?sales.map(s=>({id:s.id,receipt:s.receipt??s.id.slice(0,8),occurredAt:s.payload.occurredAt,total:s.payload.total,cashReceived:s.payload.cashReceived,status:"local",payload:s.payload,original:s as unknown as Row})):branchSales.map(s=>({id:String(s.id),receipt:String(s.receipt??String(s.id).slice(0,8)),occurredAt:String(s.occurred_at),total:Number(s.total),cashReceived:Number(s.cash_received),status:Array.isArray(s.sale_refund_corrections)&&s.sale_refund_corrections.length?"corrected":s.sale_reversals&&(!Array.isArray(s.sale_reversals)||s.sale_reversals.length)?"refunded":Array.isArray(s.sale_partial_refunds)&&s.sale_partial_refunds.length?"partial":s.review_required===true?"review":"completed",payload:s.payload as Sale,original:s}));
+      return <ReceiptWorkspace key={`${member?.organizationId}:${branchId}:${practice}`} rows={receipts} products={products} branchName={selectedBranch?.name??"Selected branch"} practice={practice} actions={r=>actionCells.get(r.id)}/>;
+    }
+    return (<div
       className={kind ? "table-wrap history-table" : "table-wrap"}
       data-kind={kind}
       role="region"
@@ -962,7 +987,7 @@ export function StoreApp() {
           : `${titles[view]}: ${headers.slice(0, 2).join(", ")}`
       }
     >
-      <RecordTable key={`${member?.organizationId}:${branchId}:${view}:${kind ?? headers.join("|")}`}>
+      <RecordTable key={`${member?.organizationId}:${branchId}:${view}:${kind ?? headers.join("|")}:${view === "inventory" ? inventoryQuery : ""}`}>
         <thead>
           <tr>
             {headers.map((h) => (
@@ -974,8 +999,8 @@ export function StoreApp() {
         </thead>
         <tbody>{body}</tbody>
       </RecordTable>
-    </div>
-  );
+    </div>);
+  };
   const historyProps = {
     organizationId: member?.organizationId ?? "",
     branchId,
@@ -1196,7 +1221,7 @@ export function StoreApp() {
     );
   const categories = [
     "All products",
-    ...new Set(products.map((p) => p.category)),
+    ...new Set(products.filter(p=>p.active).map((p) => p.category)),
   ];
   const visible = products.filter(
     (p) =>
@@ -1216,11 +1241,12 @@ export function StoreApp() {
   const branchSales = (cloud.sales ?? []).filter(
     (s) => s.branch_id === branchId,
   );
+  const visibleQueue = sales.filter(s=>(`${s.id} ${s.receipt??""}`.toLowerCase().includes(syncQuery.toLowerCase()))&&(syncFilter==="all"||syncFilter==="synced"&&s.status==="synced"||syncFilter==="pending"&&(s.status==="pending"||s.status==="sending")||syncFilter==="attention"&&s.status!=="synced"&&s.status!=="pending"&&s.status!=="sending"));
   const summary = cloud.summary?.[0] ?? {};
   const branchTotals = (summary.branchTotals ?? []) as Row[];
   const titles: Record<View, string> = {
     pos: "Checkout",
-    overview: "Your stores, at a glance.",
+    overview: "Overview",
     inventory: "Inventory",
     receiving: "Purchasing & receiving",
     transfers: "Branch transfers",
@@ -1243,7 +1269,7 @@ export function StoreApp() {
     settings: "Your people, your branches, and your cashier shift.",
   };
   return (
-    <div className="app-shell">
+    <div className="app-shell reference-ui">
       <a href="#main" className="skip-link">
         Skip to main content
       </a>
@@ -1547,7 +1573,7 @@ export function StoreApp() {
                   <span>Prices in Philippine pesos</span>
                 </div>
                 {visible.length ? (
-                  <RecordPages className="product-grid" label="Products" resetKey={`${query}:${category}`}>
+                  <><h2 className="sr-only">Products</h2><RecordPages className="product-grid" label="Products" resetKey={`${query}:${category}`}>
                     {visible.map((p) => {
                       const available = productStock(p, stock);
                       const kilo = kiloUnit(p);
@@ -1565,22 +1591,8 @@ export function StoreApp() {
                           }
                           key={p.id}
                         >
-                          <div
-                            className={`product-art art-${p.category.toLowerCase().replace(/\W/g, "")}`}
-                          >
-                            {p.category === "Feeds" ? (
-                              <Wheat size={23} />
-                            ) : p.category === "Fertilizers" ? (
-                              <FlaskConical size={23} />
-                            ) : p.category === "Tools" ? (
-                              <Wrench size={23} />
-                            ) : p.category === "Animal care" ? (
-                              <HeartPulse size={23} />
-                            ) : p.category === "Seeds" ? (
-                              <Sprout size={23} />
-                            ) : (
-                              <Leaf size={23} />
-                            )}
+                          <ProductPhoto product={p}/>
+                          <div className="product-art">
                             <span className="product-category">
                               {p.category}
                             </span>
@@ -1592,17 +1604,17 @@ export function StoreApp() {
                               {p.units[0]?.name}
                             </span>
                             <div className="product-footer">
-                              <strong>{money(p.units[0]?.price ?? 0)}</strong>
+                              <strong>{p.pricePending?'Confirm price':money(p.units[0]?.price ?? 0)}</strong>
                               <button
                                 className="add-product"
                                 onClick={() => addProduct(p)}
                                 disabled={
-                                  !lease || isStock || busy || installingUpdate
+                                  !lease || isStock || busy || installingUpdate || p.pricePending || p.setupPending || !p.units.length
                                 }
                                 aria-label={`Add ${p.name} — ${addLabel}`}
                               >
                                 <Plus size={17} />
-                                <span>{addLabel}</span>
+                                <span>Add</span>
                               </button>
                             </div>
                             <span
@@ -1614,7 +1626,8 @@ export function StoreApp() {
                             >
                               {available.quantity} {available.unit} on hand
                             </span>
-                            {kilo && (
+                            {(p.pricePending||p.setupPending)&&<p className="catalog-warning">{p.setupPending?'Confirm selling unit in Inventory.':'Confirm the printed price in Inventory.'}</p>}
+                            {kilo && !p.pricePending && !p.setupPending && (
                               <div
                                 className="product-selling"
                                 role="group"
@@ -1658,7 +1671,7 @@ export function StoreApp() {
                         </article>
                       );
                     })}
-                  </RecordPages>
+                  </RecordPages></>
                 ) : (
                   <Empty
                     title={
@@ -1829,6 +1842,7 @@ export function StoreApp() {
                       : "Saved on this PC before checkout completes"}
                   </span>
                 </form>
+                {lease&&<HeldSaleControl onWorking={working=>{committing.current=working;setBusy(working);}} db={db} lease={lease} cash={cash} onCash={setCash} disabled={busy||savingSale||installingUpdate||isStock} revision={checkoutDone?.id} onChange={()=>{setCheckoutDone(undefined);void setting<HeldSale>(db,heldSaleKey(lease)).then(value=>setHeldDraftCount(value?1:0)).catch(()=>setError("Could not check the held draft. Keep site data and retry."));}}/>}
               </aside>
               <div className="mobile-basket">
                 <div>
@@ -1846,9 +1860,9 @@ export function StoreApp() {
           )}
 
           {view === "overview" && (
-            <>
-              {!practice && (isOwner || member.role === "manager") && <SalesAnalytics key={`sales-analytics:${member.organizationId}:${branchId}:${member.userId}`} organizationId={member.organizationId} branchId={branchId} branchName={selectedBranch?.name ?? "Selected branch"} online={online} disabled={busy} revision={historyRevision} />}
-              <h2>All-time recorded totals</h2>
+            <>{practice&&<section className="panel"><h2>Practice overview</h2><p>Local practice records on this PC. These figures are separate from business sales.</p><div className="workspace-stats three"><div className="workspace-stat"><div><span>Practice sales</span><strong>{money(sales.reduce((n,s)=>n+s.payload.total,0))}</strong></div></div><div className="workspace-stat"><div><span>Practice receipts saved</span><strong>{sales.length}</strong></div></div><div className="workspace-stat"><div><span>Average practice sale</span><strong>{money(sales.length?Math.round(sales.reduce((n,s)=>n+s.payload.total,0)/sales.length):0)}</strong></div></div></div><DashboardAttention products={products} stock={stock} pendingCounts={0} onInventory={pane=>{setInventoryTab(pane);setView("inventory");}} onCounts={()=>setView("counts")}/></section>}
+              {!practice && (isOwner || member.role === "manager") && <SalesAnalytics attention={<DashboardAttention products={products} stock={stock} pendingCounts={Number(summary.pendingCounts??0)} onInventory={pane=>{setInventoryTab(pane);setView("inventory");}} onCounts={()=>setView("counts")}/>} key={`sales-analytics:${member.organizationId}:${branchId}:${member.userId}`} organizationId={member.organizationId} branchId={branchId} branchName={selectedBranch?.name ?? "Selected branch"} online={online} disabled={busy} revision={historyRevision} />}
+              <details className="extra-registers"><summary>All-time totals, cash reconciliation & audit</summary><h2>All-time recorded totals</h2>
               <div className="summary-strip">
                 <div>
                   <span>Recorded sales · {branchLocked ? selectedBranch?.name : "all branches"}</span>
@@ -2036,70 +2050,16 @@ export function StoreApp() {
                   }
                 </HistoryRegister>
               )}
-            </>
+            </details></>
           )}
 
           {view === "inventory" && (
-            <>
-              <section className="panel">
-                <div className="section-heading">
-                  <h2>{products.length} catalog products</h2>
-                  <span className="muted">
-                    {selectedBranch?.name} · quantities in base units
-                  </span>
-                </div>
-                {products.length ? (
-                  table(
-                    [
-                      "Product",
-                      "Category",
-                      "On hand",
-                      "Selling units & price",
-                      "Batch / expiry",
-                    ],
-                    products.map((p) => (
-                      <tr key={p.id}>
-                        <td>
-                          <strong>{p.name}</strong>
-                          <small>{p.sku}</small>
-                        </td>
-                        <td>{p.category}</td>
-                        <td className="numeric">
-                          {[...stock.entries()]
-                            .filter(([k]) => k.startsWith(p.id + ":"))
-                            .reduce((n, [, v]) => n.plus(v), new Decimal(0))
-                            .toString()}{" "}
-                          {p.baseUnit}
-                        </td>
-                        <td>
-                          {p.units.map((u) => (
-                            <div key={u.id}>
-                              {u.name} · {money(u.price)}
-                            </div>
-                          ))}
-                        </td>
-                        <td>
-                          {p.batches.length
-                            ? p.batches.map((b) => (
-                                <div key={b.id}>
-                                  {b.lot} · {b.expiresOn ?? "No expiry"}
-                                </div>
-                              ))
-                            : "No batches"}
-                        </td>
-                      </tr>
-                    )),
-                  )
-                ) : (
-                  <Empty
-                    title="Add your first product"
-                    body="Start with the product name, base unit, selling price, and any sack conversion."
-                  />
-                )}
-              </section>
-              {!practice && member.role !== "cashier" && <StockControls key={`${member.organizationId}:${branchId}`} db={db} organizationId={member.organizationId} branchId={branchId} actorId={member.userId} products={products} owner={isOwner} canAssign={isOwner || member.role === "manager"} online={online} disabled={busy} revision={historyRevision} execute={fn => run(fn,true,true)} />}
+            <><WorkspaceTabs label="Inventory sections" value={inventoryTab} onChange={setInventoryTab} tabs={[{id:"products",label:"Products"},{id:"expiry",label:"Expiry reminders"},{id:"controls",label:"Stock controls"},...(isOwner?[{id:"prices",label:"Price history"},{id:"setup",label:"Product setup"}]:[])]}/><div hidden={inventoryTab!=="products"}>
+              <InventoryWorkspace products={products} stock={stock} onControls={()=>setInventoryTab("controls")} onExpiry={()=>setInventoryTab("expiry")} onAdd={()=>setInventoryTab("setup")} canManage={isOwner}/></div>
+              {!practice && member.role !== "cashier" && <div hidden={inventoryTab!=="controls"&&inventoryTab!=="expiry"}><StockControls focus={inventoryTab==="expiry"?"expiry":"all"} key={`${member.organizationId}:${branchId}`} db={db} organizationId={member.organizationId} branchId={branchId} actorId={member.userId} products={products} owner={isOwner} canAssign={isOwner || member.role === "manager"} online={online} disabled={busy} revision={historyRevision} execute={fn => run(fn,true,true)} /></div>}
               {isOwner && (
-                <div className="two-column">
+                <div className="two-column" hidden={inventoryTab!=="setup"}>
+                  {!practice&&<div hidden={inventoryTab!=="setup"}><ImportedProductReview products={products} disabled={busy||!online} onSave={async data=>{const problem=await run(async()=>{await command('review_imported_product',{...context(),...data});notify('Selling unit, current price and actual cost confirmed.');},true,true);if(problem)throw problem;}}/></div>}
                   <section className="panel">
                     <h2>Add a product</h2>
                     <p className="muted">
@@ -2183,14 +2143,14 @@ export function StoreApp() {
                   </section>
                 </div>
               )}
-            </>
+            {practice&&(inventoryTab==="expiry"||inventoryTab==="controls"||inventoryTab==="prices")&&<section className="panel"><h2>{inventoryTab==="expiry"?"Expiry reminders":inventoryTab==="controls"?"Stock controls":"Price history"}</h2><p>Practice checkout does not load business holds, investigations or historical price records. Sign in to inspect those records. This sample catalog and its local stock remain separate from your business.</p><Button variant="outline" onClick={()=>setInventoryTab("products")}>Return to products</Button></section>}{isOwner&&!practice&&inventoryTab==="prices"&&<PriceHistory key={`${member.organizationId}:${branchId}`} organizationId={member.organizationId} products={products} online={online} disabled={busy}/>}</>
           )}
 
           {view === "receiving" && (
-            <>
-              {!practice && member.role !== "cashier" && <PurchasingWorkspace key={`purchasing:${member.organizationId}:${branchId}`} db={db} organizationId={member.organizationId} branchId={branchId} branchName={selectedBranch?.name ?? "Selected branch"} actorId={member.userId} products={products} suppliers={(cloud.suppliers ?? []).map(s => ({ id: str(s,"id"), name: str(s,"name") }))} role={member.role} online={online} disabled={busy} revision={historyRevision} reversalBlocked={allPendingCount > 0 || syncing || !!lease || cart.items.length > 0} execute={fn => run(fn,true,true)} />}
+            <><WorkspaceTabs label="Purchasing sections" value={purchasingTab} onChange={setPurchasingTab} tabs={[{id:"orders",label:"Purchase orders"},{id:"inspections",label:"Delivery inspections"},{id:"quick",label:"Quick receipt"},{id:"suppliers",label:"Suppliers"},{id:"history",label:"Receiving history"},...(isOwner?[{id:"opening",label:"Opening stock"}]:[])]}/>{practice&&purchasingTab==="orders"&&<section className="panel"><h2>Purchase orders</h2><p>Purchase orders and supplier inspections use signed-in business records. Practice checkout does not create business orders or stock.</p><Button variant="outline" onClick={()=>setPurchasingTab("quick")}>View quick receipt</Button></section>}
+              {!practice && member.role !== "cashier" && <PurchasingWorkspace pane={purchasingTab} onPaneChange={setPurchasingTab} key={`purchasing:${member.organizationId}:${branchId}`} db={db} organizationId={member.organizationId} branchId={branchId} branchName={selectedBranch?.name ?? "Selected branch"} actorId={member.userId} products={products} suppliers={(cloud.suppliers ?? []).map(s => ({ id: str(s,"id"), name: str(s,"name") }))} role={member.role} online={online} disabled={busy} revision={historyRevision} reversalBlocked={allPendingCount > 0 || syncing || !!lease || cart.items.length > 0} execute={fn => run(fn,true,true)} />}
               <div className="two-column">
-                <section className="panel">
+                <section className="panel" hidden={purchasingTab!=="quick"}>
                   <h2>Quick receipt · saleable goods only</h2>
                   <p className="muted">
                     Record an unplanned, fully saleable receipt. For purchase orders, held or rejected goods, use Inspect supplier delivery above. Never record the same delivery in both forms.
@@ -2281,7 +2241,7 @@ export function StoreApp() {
                   </form>
                 </section>
                 <div>
-                  <section className="panel">
+                  <section className="panel" hidden={purchasingTab!=="suppliers"}>
                     <h2 id="purchasing-suppliers">Suppliers</h2>
                     {(cloud.suppliers ?? []).length ? (
                       <ul className="plain-list">
@@ -2333,7 +2293,7 @@ export function StoreApp() {
                     </form>
                   </section>
                   {isOwner && (
-                    <section className="panel">
+                    <section className="panel" hidden={purchasingTab!=="opening"}>
                       <h2>Import opening stock</h2>
                       <p className="muted">
                         CSV columns:{" "}
@@ -2418,7 +2378,7 @@ export function StoreApp() {
                 </div>
               </div>
               {!practice && (
-                <HistoryRegister
+                <div hidden={purchasingTab!=="history"}><HistoryRegister
                   {...historyProps}
                   key={`purchases:${member.organizationId}:${branchId}`}
                   title="Receiving history"
@@ -2469,7 +2429,7 @@ export function StoreApp() {
                       "purchases",
                     )
                   }
-                </HistoryRegister>
+                </HistoryRegister></div>
               )}
             </>
           )}
@@ -2690,8 +2650,8 @@ export function StoreApp() {
           )}
 
           {view === "sales" && (
-            <section className="panel">
-              <h2>{selectedBranch?.name} · cash sales</h2>
+            <section className="sales-page">
+              <h2 className="sr-only">{selectedBranch?.name} · cash sales</h2>
               {practice ? (
                 sales.length ? (
                   table(
@@ -2870,8 +2830,8 @@ export function StoreApp() {
                       ? "Reconnect to identify the saved branch"
                       : practice
                       ? "Practice records stay on this PC"
-                      : pending.length
-                        ? `${pending.length} sales waiting for confirmation`
+                      : branchPendingCount || branchOperationCount
+                        ? `${branchPendingCount} sales and ${branchOperationCount} requests awaiting confirmation`
                         : "Your local queue is clear"}
                   </h2>
                   <p>
@@ -2892,11 +2852,11 @@ export function StoreApp() {
                 </Button>
               </div>
               <section className="panel">
-                <h2>Saved transaction queue</h2>
+                <div className="workspace-stats three queue-stats"><div className="workspace-stat"><div><span>Branch unconfirmed sales</span><strong>{branchPendingCount}</strong></div></div><div className="workspace-stat"><div><span>Needs attention (visible)</span><strong>{sales.filter(s=>s.status!=="synced"&&s.status!=="pending"&&s.status!=="sending").length}</strong></div></div><div className="workspace-stat"><div><span>Confirmed records loaded</span><strong>{sales.filter(s=>s.status==="synced").length}</strong></div></div></div><h2>Saved transaction queue</h2>{sales.length>0&&!visibleQueue.length&&<div className="notice" role="status"><p>No transactions match these filters. Saved records remain on this PC.</p><Button variant="outline" onClick={()=>{setSyncQuery("");setSyncFilter("all");}}>Clear transaction filters</Button></div>}<div className="queue-filters"><WorkspaceTabs label="Saved transaction filters" value={syncFilter} onChange={setSyncFilter} tabs={[{id:"all",label:"All records"},{id:"pending",label:"Pending"},{id:"attention",label:"Needs attention"},{id:"synced",label:"Synced"}]}/><label className="field"><span className="sr-only">Search transaction</span><input type="search" aria-label="Search transaction" placeholder="Search transaction ID or receipt" value={syncQuery} onChange={e=>setSyncQuery(e.target.value)}/></label></div>
                 {sales.length ? (
                   table(
                     ["Transaction", "Amount", "Status", "Details", "Recovery"],
-                    sales.map((s) => (
+                    visibleQueue.map((s) => (
                       <tr key={s.id}>
                         <td>
                           {s.receipt ?? s.id.slice(0, 8)}
@@ -3074,7 +3034,7 @@ export function StoreApp() {
                 <h2>{selectedBranch?.name} · {lease.name}</h2>
                 <ol className="shift-close-steps">
                   <li><strong>Finish saved work</strong>
-                    {cart.items.length > 0 ? <><p>Your basket has {cart.items.length} unfinished {cart.items.length === 1 ? "item" : "items"}. Finish the sale or remove the items first.</p><Button variant="outline" onClick={() => setView("pos")}>Return to basket</Button></> : <p>Your basket is empty.</p>}
+                    {heldDraftCount>0&&<p className="notice">A held draft remains on this PC. Return to Checkout to resume or remove it before closing.</p>}{cart.items.length > 0 ? <><p>Your basket has {cart.items.length} unfinished {cart.items.length === 1 ? "item" : "items"}. Finish the sale or remove the items first.</p><Button variant="outline" onClick={() => setView("pos")}>Return to basket</Button></> : <p>Your basket is empty.</p>}
                     {branchPendingCount > 0 || branchOperationCount > 0 ? <><p>{branchPendingCount} unconfirmed {branchPendingCount === 1 ? "sale" : "sales"}{branchOperationCount > 0 ? ` and ${branchOperationCount} saved requests` : ""}. Confirm them before closing.</p><Button variant="outline" onClick={() => setView("sync")}>Open Sync center</Button></> : <p>All saved sales and requests are confirmed.</p>}
                   </li>
                   <li><strong>Count your drawer</strong><p>Include the opening cash. Enter the money actually in the drawer; do not copy your sales total.</p></li>
@@ -3086,6 +3046,7 @@ export function StoreApp() {
                     if (!counted) throw new Error("Count the drawer and enter the cash amount first.");
                     if (useCart.getState().items.length) throw new Error("Finish or remove the unfinished basket before closing the shift. No sale has been saved for that basket.");
                     if (branchPendingCount) throw new Error("Synchronize every saved sale before closing the shift.");
+                    if(await setting<HeldSale>(db,heldSaleKey(lease)))throw new Error("Resume or remove the held draft before closing this shift. It has not changed cash or stock.");
                     const result = await onlineOperation(db, member.userId, "close_shift", {
                       ...context(), shiftId: lease.shiftId, countedCash: cents(counted),
                     });
@@ -3098,7 +3059,7 @@ export function StoreApp() {
                   {!online && <p className="shift-close-warning">Reconnect to the internet to close. Your shift and saved sales stay on this PC.</p>}
                   {practice && <p>Practice mode does not close a live cashier shift.</p>}
                   <div className="shift-close-actions">
-                    <Button type="submit" disabled={!online || busy || syncing || savingSale || practice || installingUpdate || !closingCash.trim() || branchPendingCount > 0 || branchOperationCount > 0 || cart.items.length > 0}>{busy ? "Closing shift…" : "Close shift"}</Button>
+                    <Button type="submit" disabled={!online || busy || syncing || savingSale || practice || installingUpdate || !closingCash.trim() || branchPendingCount > 0 || branchOperationCount > 0 || cart.items.length > 0 || heldDraftCount > 0}>{busy ? "Closing shift…" : "Close shift"}</Button>
                     <Button type="button" variant="outline" disabled={busy} onClick={() => setView("pos")}>Keep shift open</Button>
                   </div>
                   <p id="shift-close-help">Closing compares your count with recorded cash. If confirmation is interrupted, open Sync center and retry the original closing request. Do not close again with a different amount.</p>
@@ -3108,7 +3069,7 @@ export function StoreApp() {
           )}
 
           {view === "settings" && (
-            <>
+            <SettingsWorkspace branchName={selectedBranch?.name??"Selected branch"} branchCode={selectedBranch?.code??""} cashierName={lease?.name} shiftOpen={!!lease} cacheReady={!!registration?.active} onClose={()=>setView("close-shift")}><>
               <div className="two-column">
                 <section className="panel">
                   <h2>Cashier shift</h2>
@@ -3633,7 +3594,7 @@ export function StoreApp() {
                   </section>
                 </>
               )}
-            </>
+            </></SettingsWorkspace>
           )}
         </main>
         <footer className="workspace-footer">

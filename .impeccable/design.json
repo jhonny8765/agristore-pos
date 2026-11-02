@@ -1,6 +1,6 @@
 {
   "schemaVersion": 2,
-  "generatedAt": "2026-11-01T11:36:49Z",
+  "generatedAt": "2026-11-02T22:28:04.046Z",
   "title": "Design System: Better Yield POS (AgriStore)",
   "extensions": {
     "colorMeta": {
@@ -8,56 +8,70 @@
         "role": "primary",
         "displayName": "Forest",
         "tonalRamp": [
-          "oklch(15.00% 0.0494 170.31)",
-          "oklch(26.43% 0.0494 170.31)",
-          "oklch(37.86% 0.0494 170.31)",
-          "oklch(49.29% 0.0494 170.31)",
-          "oklch(60.71% 0.0494 170.31)",
-          "oklch(72.14% 0.0494 170.31)",
-          "oklch(83.57% 0.0494 170.31)",
-          "oklch(95.00% 0.0494 170.31)"
+          "oklch(15.00% 0.0644 165.92)",
+          "oklch(26.43% 0.0644 165.92)",
+          "oklch(37.86% 0.0644 165.92)",
+          "oklch(49.29% 0.0644 165.92)",
+          "oklch(60.71% 0.0644 165.92)",
+          "oklch(72.14% 0.0644 165.92)",
+          "oklch(83.57% 0.0644 165.92)",
+          "oklch(95.00% 0.0644 165.92)"
+        ]
+      },
+      "forest-dark": {
+        "role": "primary",
+        "displayName": "Deep Forest",
+        "tonalRamp": [
+          "oklch(15.00% 0.0631 168.31)",
+          "oklch(26.43% 0.0631 168.31)",
+          "oklch(37.86% 0.0631 168.31)",
+          "oklch(49.29% 0.0631 168.31)",
+          "oklch(60.71% 0.0631 168.31)",
+          "oklch(72.14% 0.0631 168.31)",
+          "oklch(83.57% 0.0631 168.31)",
+          "oklch(95.00% 0.0631 168.31)"
         ]
       },
       "green": {
         "role": "primary",
         "displayName": "Working Green",
         "tonalRamp": [
-          "oklch(15.00% 0.0619 164.32)",
-          "oklch(26.43% 0.0619 164.32)",
-          "oklch(37.86% 0.0619 164.32)",
-          "oklch(49.29% 0.0619 164.32)",
-          "oklch(60.71% 0.0619 164.32)",
-          "oklch(72.14% 0.0619 164.32)",
-          "oklch(83.57% 0.0619 164.32)",
-          "oklch(95.00% 0.0619 164.32)"
+          "oklch(15.00% 0.0968 155.87)",
+          "oklch(26.43% 0.0968 155.87)",
+          "oklch(37.86% 0.0968 155.87)",
+          "oklch(49.29% 0.0968 155.87)",
+          "oklch(60.71% 0.0968 155.87)",
+          "oklch(72.14% 0.0968 155.87)",
+          "oklch(83.57% 0.0968 155.87)",
+          "oklch(95.00% 0.0968 155.87)"
         ]
       },
       "lime": {
         "role": "primary",
         "displayName": "Pale Leaf",
         "tonalRamp": [
-          "oklch(15.00% 0.0406 125.55)",
-          "oklch(26.43% 0.0406 125.55)",
-          "oklch(37.86% 0.0406 125.55)",
-          "oklch(49.29% 0.0406 125.55)",
-          "oklch(60.71% 0.0406 125.55)",
-          "oklch(72.14% 0.0406 125.55)",
-          "oklch(83.57% 0.0406 125.55)",
-          "oklch(95.00% 0.0406 125.55)"
+          "oklch(15.00% 0.0379 126.73)",
+          "oklch(26.43% 0.0379 126.73)",
+          "oklch(37.86% 0.0379 126.73)",
+          "oklch(49.29% 0.0379 126.73)",
+          "oklch(60.71% 0.0379 126.73)",
+          "oklch(72.14% 0.0379 126.73)",
+          "oklch(83.57% 0.0379 126.73)",
+          "oklch(95.00% 0.0379 126.73)"
         ]
       },
       "paper": {
         "role": "neutral",
         "displayName": "Warm Paper",
         "tonalRamp": [
-          "oklch(15.00% 0.0067 115.70)",
-          "oklch(26.43% 0.0067 115.70)",
-          "oklch(37.86% 0.0067 115.70)",
-          "oklch(49.29% 0.0067 115.70)",
-          "oklch(60.71% 0.0067 115.70)",
-          "oklch(72.14% 0.0067 115.70)",
-          "oklch(83.57% 0.0067 115.70)",
-          "oklch(95.00% 0.0067 115.70)"
+          "oklch(15.00% 0.0054 95.10)",
+          "oklch(26.43% 0.0054 95.10)",
+          "oklch(37.86% 0.0054 95.10)",
+          "oklch(49.29% 0.0054 95.10)",
+          "oklch(60.71% 0.0054 95.10)",
+          "oklch(72.14% 0.0054 95.10)",
+          "oklch(83.57% 0.0054 95.10)",
+          "oklch(95.00% 0.0054 95.10)"
         ]
       },
       "white": {
@@ -78,42 +92,56 @@
         "role": "neutral",
         "displayName": "Stock Ink",
         "tonalRamp": [
-          "oklch(15.00% 0.0296 159.73)",
-          "oklch(26.43% 0.0296 159.73)",
-          "oklch(37.86% 0.0296 159.73)",
-          "oklch(49.29% 0.0296 159.73)",
-          "oklch(60.71% 0.0296 159.73)",
-          "oklch(72.14% 0.0296 159.73)",
-          "oklch(83.57% 0.0296 159.73)",
-          "oklch(95.00% 0.0296 159.73)"
+          "oklch(15.00% 0.0257 160.41)",
+          "oklch(26.43% 0.0257 160.41)",
+          "oklch(37.86% 0.0257 160.41)",
+          "oklch(49.29% 0.0257 160.41)",
+          "oklch(60.71% 0.0257 160.41)",
+          "oklch(72.14% 0.0257 160.41)",
+          "oklch(83.57% 0.0257 160.41)",
+          "oklch(95.00% 0.0257 160.41)"
         ]
       },
       "muted": {
         "role": "neutral",
         "displayName": "Muted Ledger",
         "tonalRamp": [
-          "oklch(15.00% 0.0249 149.40)",
-          "oklch(26.43% 0.0249 149.40)",
-          "oklch(37.86% 0.0249 149.40)",
-          "oklch(49.29% 0.0249 149.40)",
-          "oklch(60.71% 0.0249 149.40)",
-          "oklch(72.14% 0.0249 149.40)",
-          "oklch(83.57% 0.0249 149.40)",
-          "oklch(95.00% 0.0249 149.40)"
+          "oklch(15.00% 0.0169 148.54)",
+          "oklch(26.43% 0.0169 148.54)",
+          "oklch(37.86% 0.0169 148.54)",
+          "oklch(49.29% 0.0169 148.54)",
+          "oklch(60.71% 0.0169 148.54)",
+          "oklch(72.14% 0.0169 148.54)",
+          "oklch(83.57% 0.0169 148.54)",
+          "oklch(95.00% 0.0169 148.54)"
         ]
       },
       "line": {
         "role": "neutral",
         "displayName": "Fine Rule",
         "tonalRamp": [
-          "oklch(15.00% 0.0140 124.56)",
-          "oklch(26.43% 0.0140 124.56)",
-          "oklch(37.86% 0.0140 124.56)",
-          "oklch(49.29% 0.0140 124.56)",
-          "oklch(60.71% 0.0140 124.56)",
-          "oklch(72.14% 0.0140 124.56)",
-          "oklch(83.57% 0.0140 124.56)",
-          "oklch(95.00% 0.0140 124.56)"
+          "oklch(15.00% 0.0096 119.59)",
+          "oklch(26.43% 0.0096 119.59)",
+          "oklch(37.86% 0.0096 119.59)",
+          "oklch(49.29% 0.0096 119.59)",
+          "oklch(60.71% 0.0096 119.59)",
+          "oklch(72.14% 0.0096 119.59)",
+          "oklch(83.57% 0.0096 119.59)",
+          "oklch(95.00% 0.0096 119.59)"
+        ]
+      },
+      "control-line": {
+        "role": "neutral",
+        "displayName": "Control Rule",
+        "tonalRamp": [
+          "oklch(15.00% 0.0351 135.12)",
+          "oklch(26.43% 0.0351 135.12)",
+          "oklch(37.86% 0.0351 135.12)",
+          "oklch(49.29% 0.0351 135.12)",
+          "oklch(60.71% 0.0351 135.12)",
+          "oklch(72.14% 0.0351 135.12)",
+          "oklch(83.57% 0.0351 135.12)",
+          "oklch(95.00% 0.0351 135.12)"
         ]
       },
       "soft": {
@@ -174,30 +202,16 @@
           "oklch(95.00% 0.1084 135.95)"
         ],
         "purpose": "Keyboard focus outline."
-      },
-      "control-line": {
-        "role": "neutral",
-        "displayName": "Control Rule",
-        "tonalRamp": [
-          "oklch(15.00% 0.0351 135.12)",
-          "oklch(26.43% 0.0351 135.12)",
-          "oklch(37.86% 0.0351 135.12)",
-          "oklch(49.29% 0.0351 135.12)",
-          "oklch(60.71% 0.0351 135.12)",
-          "oklch(72.14% 0.0351 135.12)",
-          "oklch(83.57% 0.0351 135.12)",
-          "oklch(95.00% 0.0351 135.12)"
-        ]
       }
     },
     "typographyMeta": {
       "headline": {
         "displayName": "Page heading",
-        "purpose": "Desktop operational page heading; 25px on mobile."
+        "purpose": "Current operational page heading; 27px on phones. Sign-in retains its base heading treatment."
       },
       "title": {
         "displayName": "Section title",
-        "purpose": "Ordinary record and form section headings."
+        "purpose": "Current operational section heading; receipt detail and inherited subsections retain local roles."
       },
       "body": {
         "displayName": "Operational body",
@@ -210,6 +224,16 @@
     },
     "shadows": [
       {
+        "name": "panel-resting",
+        "value": "0 2px 6px rgb(20 48 30 / 3%)",
+        "purpose": "Faint separation for current operational panels."
+      },
+      {
+        "name": "product-resting",
+        "value": "0 2px 5px rgb(20 48 30 / 4%)",
+        "purpose": "Quiet catalog-tile separation."
+      },
+      {
         "name": "product-hover",
         "value": "0 6px 16px #23352b0b",
         "purpose": "Subtle hover response on available products."
@@ -218,6 +242,11 @@
         "name": "mobile-basket",
         "value": "0 8px 24px #173e3233",
         "purpose": "Separate fixed mobile checkout summary from scrolling content."
+      },
+      {
+        "name": "search-options",
+        "value": "0 8px 24px rgb(23 62 50 / 14%)",
+        "purpose": "Transient searchable-selector popup."
       }
     ],
     "motion": [
@@ -239,28 +268,28 @@
     ],
     "breakpoints": [
       {
+        "name": "phone",
+        "value": "650px"
+      },
+      {
         "name": "stock-record-stack",
         "value": "720px"
       },
       {
-        "name": "mobile",
+        "name": "inherited-mobile-basket-and-sign-in",
         "value": "730px"
       },
       {
         "name": "icon-rail",
-        "value": "950px"
+        "value": "900px"
       },
       {
-        "name": "analytics-summary-two-column",
+        "name": "detail-and-chart-stack",
         "value": "1100px"
       },
       {
         "name": "compact-desktop",
-        "value": "1250px"
-      },
-      {
-        "name": "wide-desktop",
-        "value": "1600px"
+        "value": "1300px"
       }
     ]
   },
@@ -270,114 +299,87 @@
       "kind": "button",
       "refersTo": "button-primary",
       "description": "Forest action for submitting an operational form.",
-      "html": "<button class=\"ds-button ds-primary\">Complete sale</button>",
-      "css": ".ds-button{display:inline-flex;align-items:center;justify-content:center;gap:9px;min-height:43px;padding:10px 17px;border:1px solid transparent;border-radius:8px;font-family:var(--font-sans);font-size:14px;line-height:1.3;font-weight:650;white-space:nowrap;cursor:pointer;transition:background .16s ease,color .16s ease}.ds-button:disabled{opacity:.5;cursor:not-allowed}.ds-button:focus-visible{outline:3px solid var(--focus);outline-offset:3px}.ds-primary{background:var(--forest);color:#fff}.ds-primary:hover:not(:disabled){background:#285441}@media(forced-colors:active){.ds-button:focus-visible{outline-color:Highlight}}@media(prefers-reduced-motion:reduce){*,*:before,*:after{animation:none!important;transition:none!important;scroll-behavior:auto!important}}"
+      "html": "<button class=\"ds-button ds-primary\" type=\"button\">Save changes</button>",
+      "css": ".ds-button{font-family:\"DM Sans Variable\",sans-serif;font-size:15px;font-weight:650;line-height:1.3;min-height:43px;padding:10px 17px;border:1px solid transparent;border-radius:9px;cursor:pointer;transition:background .16s ease,color .16s ease}.ds-button:focus-visible{outline:3px solid var(--focus,#507c39);outline-offset:3px;}.ds-button:disabled{opacity:.5;cursor:not-allowed}.ds-button:active:not(:disabled){filter:brightness(.96)}@media(prefers-reduced-motion:reduce){.ds-button{transition:none}}.ds-primary{background:var(--forest,#063f2d);color:white;border-color:transparent}.ds-primary:hover:not(:disabled){background:#285441}"
     },
     {
       "name": "Outline Button",
       "kind": "button",
       "refersTo": "button-outline",
       "description": "Bordered secondary operational action.",
-      "html": "<button class=\"ds-button ds-outline\">Export recovery file</button>",
-      "css": ".ds-button{display:inline-flex;align-items:center;justify-content:center;gap:9px;min-height:43px;padding:10px 17px;border:1px solid transparent;border-radius:8px;font-family:var(--font-sans);font-size:14px;line-height:1.3;font-weight:650;white-space:nowrap;cursor:pointer;transition:background .16s ease,color .16s ease}.ds-button:disabled{opacity:.5;cursor:not-allowed}.ds-button:focus-visible{outline:3px solid var(--focus);outline-offset:3px}.ds-outline{background:#fff;color:var(--forest);border-color:#d6ddcf}.ds-outline:hover:not(:disabled){background:var(--soft)}@media(forced-colors:active){.ds-button:focus-visible{outline-color:Highlight}}@media(prefers-reduced-motion:reduce){*,*:before,*:after{animation:none!important;transition:none!important;scroll-behavior:auto!important}}"
+      "html": "<button class=\"ds-button ds-outline\" type=\"button\">Refresh</button>",
+      "css": ".ds-button{font-family:\"DM Sans Variable\",sans-serif;font-size:15px;font-weight:650;line-height:1.3;min-height:43px;padding:10px 17px;border:1px solid transparent;border-radius:9px;cursor:pointer;transition:background .16s ease,color .16s ease}.ds-button:focus-visible{outline:3px solid var(--focus,#507c39);outline-offset:3px;}.ds-button:disabled{opacity:.5;cursor:not-allowed}.ds-button:active:not(:disabled){filter:brightness(.96)}@media(prefers-reduced-motion:reduce){.ds-button{transition:none}}.ds-outline{background:white;color:var(--forest,#063f2d);border-color:#d6ddcf}.ds-outline:hover:not(:disabled){background:var(--soft,#edf1e7)}"
     },
     {
       "name": "Ghost Button",
       "kind": "button",
       "refersTo": "button-ghost",
       "description": "Quiet secondary action without a resting surface.",
-      "html": "<button class=\"ds-button ds-ghost\">Cancel</button>",
-      "css": ".ds-button{display:inline-flex;align-items:center;justify-content:center;gap:9px;min-height:43px;padding:10px 17px;border:1px solid transparent;border-radius:8px;font-family:var(--font-sans);font-size:14px;line-height:1.3;font-weight:650;white-space:nowrap;cursor:pointer;transition:background .16s ease,color .16s ease}.ds-button:disabled{opacity:.5;cursor:not-allowed}.ds-button:focus-visible{outline:3px solid var(--focus);outline-offset:3px}.ds-ghost{background:transparent;color:var(--forest)}.ds-ghost:hover{background:var(--soft)}@media(forced-colors:active){.ds-button:focus-visible{outline-color:Highlight}}@media(prefers-reduced-motion:reduce){*,*:before,*:after{animation:none!important;transition:none!important;scroll-behavior:auto!important}}"
+      "html": "<button class=\"ds-button ds-ghost\" type=\"button\">Keep open</button>",
+      "css": ".ds-button{font-family:\"DM Sans Variable\",sans-serif;font-size:15px;font-weight:650;line-height:1.3;min-height:43px;padding:10px 17px;border:1px solid transparent;border-radius:9px;cursor:pointer;transition:background .16s ease,color .16s ease}.ds-button:focus-visible{outline:3px solid var(--focus,#507c39);outline-offset:3px;}.ds-button:disabled{opacity:.5;cursor:not-allowed}.ds-button:active:not(:disabled){filter:brightness(.96)}@media(prefers-reduced-motion:reduce){.ds-button{transition:none}}.ds-ghost{background:transparent;color:var(--forest,#063f2d);border-color:transparent}.ds-ghost:hover:not(:disabled){background:var(--soft,#edf1e7)}"
     },
     {
       "name": "Destructive Button",
       "kind": "button",
       "refersTo": "button-danger",
       "description": "Correction Red for a destructive action; inherits the shared focus and disabled states.",
-      "html": "<button class=\"ds-button ds-danger\">Remove</button>",
-      "css": ".ds-button{display:inline-flex;align-items:center;justify-content:center;gap:9px;min-height:43px;padding:10px 17px;border:1px solid transparent;border-radius:8px;font-family:var(--font-sans);font-size:14px;line-height:1.3;font-weight:650;white-space:nowrap;cursor:pointer;transition:background .16s ease,color .16s ease}.ds-button:disabled{opacity:.5;cursor:not-allowed}.ds-button:focus-visible{outline:3px solid var(--focus);outline-offset:3px}.ds-danger{background:var(--danger);color:#fff}@media(forced-colors:active){.ds-button:focus-visible{outline-color:Highlight}}@media(prefers-reduced-motion:reduce){*,*:before,*:after{animation:none!important;transition:none!important;scroll-behavior:auto!important}}"
+      "html": "<button class=\"ds-button ds-danger\" type=\"button\">Remove draft</button>",
+      "css": ".ds-button{font-family:\"DM Sans Variable\",sans-serif;font-size:15px;font-weight:650;line-height:1.3;min-height:43px;padding:10px 17px;border:1px solid transparent;border-radius:9px;cursor:pointer;transition:background .16s ease,color .16s ease}.ds-button:focus-visible{outline:3px solid var(--focus,#507c39);outline-offset:3px;}.ds-button:disabled{opacity:.5;cursor:not-allowed}.ds-button:active:not(:disabled){filter:brightness(.96)}@media(prefers-reduced-motion:reduce){.ds-button{transition:none}}.ds-danger{background:var(--danger,#a3312b);color:white;border-color:transparent}.ds-danger:hover:not(:disabled){background:#a3312b}"
     },
     {
       "name": "Labeled Field",
       "kind": "input",
       "refersTo": "input",
-      "description": "The shared white field and compact label used in operational forms.",
-      "html": "<label class=\"ds-field\"><span>Cash received (₱)</span><input class=\"ds-input\" inputmode=\"decimal\" placeholder=\"0.00\"></label>",
-      "css": ".ds-field{display:flex;flex-direction:column;gap:6px;min-width:0;font-family:var(--font-sans)}.ds-field>span{font-size:12px;font-weight:650;color:#4c5a4e}.ds-input{min-width:0;width:100%;border:1px solid var(--control-line);background:#fff;border-radius:7px;padding:11px 12px;color:var(--ink);min-height:43px;font:14px/1.5 var(--font-sans);caret-color:var(--forest)}.ds-input::placeholder{color:var(--muted)}.ds-input:disabled{background:#f2f4ef}.ds-input:focus-visible{outline:3px solid var(--focus);outline-offset:3px}@media(forced-colors:active){.ds-input{border-color:ButtonText}.ds-input:focus-visible{outline-color:Highlight}}@media(prefers-reduced-motion:reduce){*,*:before,*:after{animation:none!important;transition:none!important;scroll-behavior:auto!important}}"
+      "description": "Readable operational field with stronger control boundary and visible focus.",
+      "html": "<label class=\"ds-field\"><span>Recorded reference</span><input type=\"text\" placeholder=\"Enter reference\"></label>",
+      "css": ".ds-field{display:grid;gap:6px;color:var(--ink,#15241c);font:650 12px/1.5 \"DM Sans Variable\",sans-serif}.ds-field input{font:400 15px/1.5 \"DM Sans Variable\",sans-serif;min-height:44px;padding:11px 12px;color:var(--ink,#15241c);background:white;border:1px solid var(--control-line,#7a8873);border-radius:8px}.ds-field input:hover{border-color:var(--forest,#063f2d)}.ds-field input:focus-visible{outline:3px solid var(--focus,#507c39);outline-offset:3px;}.ds-field input:disabled{background:var(--soft,#edf1e7);opacity:.5}"
     },
     {
       "name": "Rail Navigation",
       "kind": "nav",
-      "description": "Forest rail with Pale Leaf selection and line SVG icons.",
-      "html": "<nav class=\"ds-rail\" aria-label=\"Workspace\"><button class=\"ds-nav ds-active\" aria-current=\"page\"><svg width=\"18\" height=\"18\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><rect width=\"16\" height=\"20\" x=\"4\" y=\"2\" rx=\"2\"/><path d=\"M8 6h8M8 10h8M8 14h2m4 0h2M8 18h2m4 0h2\"/></svg>Checkout</button><button class=\"ds-nav\"><svg width=\"18\" height=\"18\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><path d=\"m21 8-9 5-9-5m9 5v9\"/><path d=\"m3 7 9-5 9 5v10l-9 5-9-5Z\"/></svg>Inventory</button></nav>",
-      "css": ".ds-rail{width:220px;padding:16px;background:var(--forest);display:flex;flex-direction:column;gap:5px;font-family:var(--font-sans)}.ds-nav{display:flex;align-items:center;gap:12px;width:100%;padding:12px 15px;border:0;background:transparent;color:#c4d2bf;border-radius:7px;text-align:left;font-family:inherit;font-size:13px;font-weight:550;min-height:45px;cursor:pointer;transition:none}.ds-nav:hover{background:#254d3b;color:#fff}.ds-nav.ds-active{background:var(--lime);color:var(--forest);font-weight:750}.ds-nav:focus-visible{outline:3px solid var(--lime);outline-offset:3px}@media(forced-colors:active){.ds-nav[aria-current=\"page\"]{border:2px solid ButtonText}.ds-nav:focus-visible{outline-color:Highlight}}@media(prefers-reduced-motion:reduce){*,*:before,*:after{animation:none!important;transition:none!important;scroll-behavior:auto!important}}"
+      "description": "Deep forest rail and pale current destination; accessible labels persist in the icon rail.",
+      "html": "<nav class=\"ds-rail\" aria-label=\"Preview navigation\"><button class=\"ds-nav\" aria-current=\"page\"><svg width=\"20\" height=\"20\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" aria-hidden=\"true\"><path d=\"M3 3h7v7H3zM14 3h7v7h-7zM3 14h7v7H3zM14 14h7v7h-7z\"/></svg><span>Overview</span></button><button class=\"ds-nav\"><svg width=\"20\" height=\"20\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" aria-hidden=\"true\"><path d=\"m3 7 9-4 9 4v10l-9 4-9-4V7Zm0 0 9 4 9-4M12 11v10\"/></svg><span>Inventory</span></button></nav>",
+      "css": ".ds-rail{width:216px;padding:16px;background:linear-gradient(145deg,#003c2f,#00372b);font-family:\"DM Sans Variable\",sans-serif}.ds-nav{display:flex;width:100%;align-items:center;gap:16px;padding:11px 15px;min-height:49px;margin:5px 0;border:0;border-radius:10px;background:transparent;color:#dce8df;font:400 16px/1.5 \"DM Sans Variable\",sans-serif;cursor:pointer}.ds-nav[aria-current=page]{background:var(--lime,#e6f2d7);color:#073b26;font-weight:750}.ds-nav:hover:not([aria-current]){background:#285441}.ds-nav:focus-visible{outline:3px solid var(--lime,#e6f2d7);outline-offset:3px}.ds-nav:active{filter:brightness(.96)}"
     },
     {
       "name": "Category Filters",
       "kind": "chip",
-      "description": "Compact catalog filters with an explicit forest selected state.",
-      "html": "<div class=\"ds-categories\" role=\"group\" aria-label=\"Product categories\"><button class=\"ds-category ds-selected\" aria-pressed=\"true\">All products</button><button class=\"ds-category\" aria-pressed=\"false\">Feeds</button><button class=\"ds-category\" aria-pressed=\"false\">Seeds</button></div>",
-      "css": ".ds-categories{display:flex;gap:7px;overflow-x:auto;padding-bottom:8px;font-family:var(--font-sans)}.ds-category{background:transparent;border:1px solid transparent;border-radius:6px;padding:7px 11px;white-space:nowrap;font-family:inherit;font-size:12px;color:var(--muted);font-weight:550;cursor:pointer;transition:background .16s ease,color .16s ease}.ds-category:hover{background:#e9eedf}.ds-category.ds-selected{background:var(--forest);color:#fff}.ds-category:focus-visible{outline:3px solid var(--focus);outline-offset:3px}@media(forced-colors:active){.ds-category[aria-pressed=\"true\"]{border:2px solid ButtonText}.ds-category:focus-visible{outline-color:Highlight}}@media(prefers-reduced-motion:reduce){*,*:before,*:after{animation:none!important;transition:none!important;scroll-behavior:auto!important}}"
+      "description": "Compact selected forest category with explicit pressed state.",
+      "html": "<div class=\"ds-filters\" aria-label=\"Preview categories\"><button class=\"ds-chip\" aria-pressed=\"true\">All products</button><button class=\"ds-chip\" aria-pressed=\"false\">Seeds</button></div>",
+      "css": ".ds-filters{display:flex;flex-wrap:wrap;gap:6px}.ds-chip{padding:8px 12px;border:1px solid transparent;border-radius:7px;background:transparent;color:var(--muted,#586159);font:650 12px/1.5 \"DM Sans Variable\",sans-serif;cursor:pointer}.ds-chip[aria-pressed=true]{background:var(--forest,#063f2d);color:white}.ds-chip:hover:not([aria-pressed=true]){background:var(--soft,#edf1e7)}.ds-chip:focus-visible{outline:3px solid var(--focus,#507c39);outline-offset:3px;}.ds-chip:active{filter:brightness(.96)}"
     },
     {
       "name": "Record Panel",
       "kind": "card",
       "refersTo": "panel",
-      "description": "Flat ruled container for operational records and forms.",
-      "html": "<section class=\"ds-panel\"><h2>Cashier shift</h2><p>Review the cash drawer and the current shift.</p><dl class=\"ds-details\"><div><dt>Branch</dt><dd>Main branch</dd></div><div><dt>Cashier</dt><dd>Current cashier</dd></div></dl></section>",
-      "css": ".ds-panel{background:#fff;border:1px solid var(--line);border-radius:12px;padding:25px;color:var(--ink);font:14px/1.5 var(--font-sans);min-width:0}.ds-panel h2{font:750 18px/1.5 var(--font-display);letter-spacing:-.025em;margin:0 0 17px}.ds-panel p{font-size:12px;max-width:72ch;margin:0 0 20px;color:var(--muted)}.ds-details{margin:0 0 22px;font-size:12px}.ds-details>div{display:flex;justify-content:space-between;gap:18px;padding:11px 0;border-bottom:1px solid var(--line)}.ds-details dt{color:var(--muted)}.ds-details dd{margin:0;text-align:right}@media(prefers-reduced-motion:reduce){*,*:before,*:after{animation:none!important;transition:none!important;scroll-behavior:auto!important}}"
+      "description": "Current white outlined operational container with a faint resting shadow.",
+      "html": "<section class=\"ds-panel\" aria-labelledby=\"ds-panel-title\"><h2 id=\"ds-panel-title\">Recorded work</h2><p>Keep the loaded scope, state and next action beside the record.</p><details><summary>Record details</summary><p>Original context remains available.</p></details></section>",
+      "css": ".ds-panel{padding:22px;border:1px solid #dcded6;border-radius:15px;background:white;color:var(--ink,#15241c);box-shadow:0 2px 6px rgb(20 48 30 / 3%);font:400 15px/1.5 \"DM Sans Variable\",sans-serif}.ds-panel h2{font:780 22px/1.3 \"Manrope Variable\",sans-serif;margin:0 0 16px;letter-spacing:-.025em}.ds-panel p{margin:0 0 16px}.ds-panel summary{cursor:pointer;color:var(--forest,#063f2d)}.ds-panel summary:hover{text-decoration:underline}.ds-panel summary:focus-visible{outline:3px solid var(--focus,#507c39);outline-offset:3px;}@media(max-width:650px){.ds-panel{padding:17px;border-radius:12px}}"
     },
     {
       "name": "Product Record",
       "kind": "card",
-      "description": "Semantic agricultural product article with explicit selling-unit Add, independent retail kilo price, and separate weight and peso actions; unavailable adding leaves metadata legible.",
-      "html": "<article class=\"ds-product\"><div class=\"ds-product-art\"><svg width=\"23\" height=\"23\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><path d=\"M2 22 16 8m3-6 3 3-3 3-3-3 3-3ZM12 8l-1-5 5 1M8 12l-5-1 1 5m12-4 5 1-1-5m-8 8 1 5-5-1\"/></svg><span>Feeds</span></div><div class=\"ds-product-body\"><h3 class=\"ds-product-name\">Grower feeds</h3><span class=\"ds-unit\">Sack (50 kg)</span><div class=\"ds-product-footer\"><strong class=\"ds-price\">₱1,580.00</strong><button class=\"ds-add\" aria-label=\"Add Grower feeds — Add Sack (50 kg)\"><svg width=\"17\" height=\"17\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\"><path d=\"M12 5v14M5 12h14\"/></svg><span>Add Sack (50 kg)</span></button></div><span class=\"ds-stock\">2100 kg on hand</span><div class=\"ds-selling\" role=\"group\" aria-label=\"Loose selling options for Grower feeds\"><span>₱33.60 / kg · loose</span><button aria-label=\"Sell Grower feeds by weight\">By weight</button><button aria-label=\"Sell Grower feeds by peso amount\">By peso amount</button></div></div></article>",
-      "css": ".ds-product{position:relative;width:220px;background:#fff;border:1px solid var(--line);padding:0;border-radius:10px;overflow:hidden;text-align:left;color:var(--ink);font-family:var(--font-sans);transition:border-color .18s ease,box-shadow .18s ease}.ds-product:hover:not(.ds-unavailable){border-color:#9aaa8b;box-shadow:0 6px 16px #23352b0b}.ds-product:focus-within{outline:3px solid var(--focus);outline-offset:3px}.ds-product-art{min-height:54px;padding:12px 14px;background:#edf0e3;display:flex;align-items:center;gap:9px;color:#4c6650}.ds-product-art>span{font-size:11px;font-weight:650;color:#4c6043}.ds-product-body{display:block;padding:14px 14px 13px}.ds-product-name{font-size:14px;font-weight:700;line-height:1.35;margin:5px 0 3px;letter-spacing:-.01em}.ds-unit,.ds-stock{display:block;font-size:11px;color:var(--muted);line-height:1.5}.ds-product-footer{display:flex;justify-content:space-between;align-items:stretch;flex-direction:column;gap:6px;margin-top:12px}.ds-price{font-size:14px;font-weight:750;color:var(--forest);font-variant-numeric:tabular-nums}.ds-stock{margin-top:8px}.ds-add{border:1px solid var(--control-line);padding:7px;flex-shrink:0;width:100%;min-height:36px;display:flex;justify-content:center;align-items:center;gap:5px;font-size:12px;background:var(--soft);border-radius:5px;color:var(--green);cursor:pointer;transition:background .16s ease,color .16s ease}.ds-add:focus-visible{outline:3px solid var(--focus);outline-offset:3px}.ds-add:disabled{opacity:1;cursor:not-allowed}.ds-unavailable .ds-add{background:var(--line);color:var(--muted)}@media(forced-colors:active){.ds-product:focus-within{outline-color:Highlight}}@media(prefers-reduced-motion:reduce){*,*:before,*:after{animation:none!important;transition:none!important;scroll-behavior:auto!important}}.ds-add svg{flex-shrink:0}.ds-selling{margin-top:12px;padding-top:10px;border-top:1px solid var(--line);display:flex;flex-wrap:wrap;gap:6px}.ds-selling>span{width:100%;font-size:11px;color:var(--muted)}.ds-selling button{flex:1 1 100px;min-height:36px;padding:6px;border:1px solid var(--control-line);border-radius:5px;background:#fff;color:var(--forest);font:12px var(--font-sans)}.ds-selling button:focus-visible{outline:3px solid var(--focus);outline-offset:3px}.ds-selling button:disabled{opacity:.5;cursor:not-allowed}"
+      "description": "Verified contain-fit photograph or explicit unverified-photo fallback; product identity and independent selling controls remain legible.",
+      "html": "<article class=\"ds-product\"><div class=\"ds-photo\"><svg width=\"30\" height=\"30\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.5\" aria-hidden=\"true\"><path d=\"M20 4c-8-1-15 2-15 8a7 7 0 0 0 2 5c5 2 12-1 13-13ZM4 21l10-11\"/></svg><span>Photo not verified</span></div><div><span class=\"ds-category\">Catalog category</span><h3>Product identity</h3><span class=\"ds-unit\">Configured selling unit</span></div><div class=\"ds-product-footer\"><span>Price from catalog</span><button type=\"button\">View product</button></div></article>",
+      "css": ".ds-product{display:grid;grid-template-columns:40% minmax(0,1fr);gap:10px;padding:15px;border:1px solid #dcded6;border-radius:15px;background:white;color:var(--ink,#15241c);box-shadow:0 2px 5px rgb(20 48 30 / 4%);font:400 14px/1.5 \"DM Sans Variable\",sans-serif}.ds-photo{height:140px;display:flex;flex-direction:column;justify-content:center;align-items:center;gap:8px;color:var(--muted,#586159);text-align:center;font-size:11px}.ds-category{background:#e8f3df;color:#21482a;padding:4px 8px;border-radius:6px;font-size:10px}.ds-product h3{font-size:17px;line-height:1.35;overflow-wrap:anywhere;margin:8px 0}.ds-unit{color:var(--muted,#586159);font-size:12px}.ds-product-footer{grid-column:1/-1;display:flex;flex-wrap:wrap;justify-content:space-between;gap:8px;border-top:1px solid var(--line,#e1e3dc);padding-top:12px}.ds-product button{background:var(--forest,#063f2d);color:white;border:0;border-radius:7px;padding:7px 10px;font:650 13px/1.5 \"DM Sans Variable\",sans-serif;cursor:pointer}.ds-product button:hover{background:#285441}.ds-product button:focus-visible{outline:3px solid var(--focus,#507c39);outline-offset:3px;}.ds-product:focus-within{outline:3px solid var(--focus,#507c39);outline-offset:3px}.ds-product:hover{box-shadow:0 6px 16px #23352b0b}.ds-product button:active{filter:brightness(.96)}"
     },
     {
-      "name": "Current Sale",
+      "name": "Sales Trend",
       "kind": "custom",
-      "description": "Ruled receipt with explicit retail units and editable quantity. Invalid, incomplete, or stale-mismatched drafts show Enter weight or Enter quantity, hide stale amounts and weight equivalents, and contribute nothing to displayed totals while other valid lines remain included. Incomplete baskets block completion; valid unconfirmed peso estimates retain their amount and equivalent weight until actual-weight confirmation, and valid zero-price lines remain priced at zero.",
-      "html": "<section class=\"ds-receipt\"><header class=\"ds-receipt-heading\"><div><h2>Current sale</h2><span>1 item · Cash payment</span></div><svg width=\"21\" height=\"21\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><circle cx=\"8\" cy=\"21\" r=\"1\"/><circle cx=\"19\" cy=\"21\" r=\"1\"/><path d=\"M2.05 2.05h2l2.66 12.42a2 2 0 0 0 2 1.58h9.78a2 2 0 0 0 2-1.58L22.2 7H5.12\"/></svg></header><div class=\"ds-line\"><strong>Loose feeds</strong><p class=\"ds-line-note\">₱35.00 / Kilo · loose weight</p><label class=\"ds-quantity-label\" for=\"ds-sale-quantity\">Quantity (kg)</label><div class=\"ds-quantity-row\"><div class=\"ds-quantity\"><button aria-label=\"Decrease Loose feeds\"><svg width=\"13\" height=\"13\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\"><path d=\"M5 12h14\"/></svg></button><input id=\"ds-sale-quantity\" aria-label=\"Quantity (kg) for Loose feeds\" value=\"1.428\" inputmode=\"decimal\" aria-invalid=\"true\" aria-describedby=\"ds-sale-error\"/><button aria-label=\"Increase Loose feeds\"><svg width=\"13\" height=\"13\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\"><path d=\"M12 5v14M5 12h14\"/></svg></button></div><select aria-label=\"Weight entry for Loose feeds\"><option>kg</option><option>g</option></select><strong>₱49.98</strong></div><p class=\"ds-quantity-error\" id=\"ds-sale-error\">Confirm the actual scale weight before checkout.</p><p class=\"ds-line-note\">1.428 kg = 1428 g · weight not confirmed</p><div class=\"ds-peso\"><label for=\"ds-sale-budget\">Customer budget (₱)</label><div class=\"ds-peso-controls\"><input id=\"ds-sale-budget\" aria-label=\"Customer budget (₱) for Loose feeds\" value=\"50\" inputmode=\"decimal\"/><button class=\"ds-estimate\">Estimate weight</button></div><p class=\"ds-line-note\">Estimate uses ₱35.00 / kg, rounded down to whole grams. Weigh the product and enter the actual scale weight above. The recorded weight sets the final price.</p><div class=\"ds-peso-actions\"><button class=\"ds-confirm\">Confirm weighed amount</button><button class=\"ds-cancel\">Cancel</button></div></div></div><div class=\"ds-payment\"><div class=\"ds-subtotal\"><span>Subtotal</span><span>₱1,450.00</span></div><div class=\"ds-due\"><span>Amount due</span><strong>₱1,450.00</strong></div><p class=\"ds-receipt-note\">Cash sales only</p></div></section>",
-      "css": ".ds-receipt{width:335px;background:#fff;border:1px solid var(--line);border-radius:12px;overflow:hidden;color:var(--ink);font:14px/1.5 var(--font-sans);font-variant-numeric:tabular-nums}.ds-receipt-heading{display:flex;align-items:center;justify-content:space-between;color:var(--green);padding:21px 22px;border-bottom:1px solid var(--line)}.ds-receipt-heading h2{color:var(--ink);font:750 16px/1.5 var(--font-display);letter-spacing:-.025em;margin:0}.ds-receipt-heading span{display:block;font-size:11px;color:var(--muted);margin-top:3px}.ds-payment{border-top:1px solid var(--line);padding:19px 22px;background:#fcfcf9}.ds-subtotal{display:flex;justify-content:space-between;font-size:11px;color:var(--muted);margin-bottom:16px}.ds-due{display:flex;justify-content:space-between;align-items:center;font-size:12px;font-weight:650;margin-bottom:21px;padding-bottom:17px;border-bottom:1px dashed #d6ddcd;gap:12px}.ds-due strong{font-family:var(--font-display);font-size:26px;line-height:1.5;color:var(--forest);letter-spacing:-.03em;white-space:nowrap}.ds-receipt-note{font-size:10px;color:var(--muted);text-align:center;margin:12px 0 0}@media(prefers-reduced-motion:reduce){*,*:before,*:after{animation:none!important;transition:none!important;scroll-behavior:auto!important}}.ds-line{padding:17px 21px;border-bottom:1px solid var(--line)}.ds-line>strong{font-size:13px;font-weight:650}.ds-line-note{color:var(--muted);font-size:12px;line-height:1.5;margin:6px 0}.ds-quantity-label,.ds-peso>label{display:block;font-size:12px;margin-bottom:5px}.ds-quantity-row,.ds-peso-controls,.ds-peso-actions{display:flex;flex-wrap:wrap;align-items:center;gap:6px}.ds-quantity-row>strong{margin-left:auto;font-size:12px}.ds-quantity{display:flex;align-items:center;border:1px solid var(--control-line);border-radius:5px;height:38px}.ds-quantity button{display:grid;place-items:center;width:32px;height:36px;background:none;border:0;color:var(--green)}.ds-quantity input{height:34px;width:78px;padding:3px;border:0;background:none;text-align:center;font:12px var(--font-sans);color:var(--ink)}.ds-quantity-row select{width:58px;min-height:38px;padding:5px;border:1px solid var(--control-line);border-radius:7px;background:#fff;color:var(--ink);font:12px var(--font-sans)}.ds-quantity-error{color:var(--danger);font-size:12px;line-height:1.5;margin:8px 0}.ds-peso{border-top:1px solid var(--line);margin-top:12px;padding-top:12px}.ds-peso-controls input{flex:1 1 85px;min-width:0;width:85px;min-height:43px;padding:11px 12px;border:1px solid var(--control-line);border-radius:7px;background:#fff;color:var(--ink);font:14px/1.5 var(--font-sans)}.ds-estimate,.ds-confirm,.ds-cancel{min-height:34px;border-radius:8px;padding:7px 11px;font:650 12px/1.5 var(--font-sans);cursor:pointer}.ds-estimate{border:1px solid var(--control-line);background:#fff;color:var(--forest)}.ds-confirm{border:1px solid transparent;background:var(--forest);color:#fff}.ds-cancel{border:1px solid transparent;background:transparent;color:var(--forest)}.ds-estimate:hover,.ds-cancel:hover{background:var(--soft)}.ds-confirm:hover{background:#285441}.ds-peso-actions{margin-top:10px}.ds-line :focus-visible{outline:3px solid var(--focus);outline-offset:3px}.ds-line button:disabled{opacity:.5;cursor:not-allowed}@media(forced-colors:active){.ds-quantity,.ds-line input,.ds-line select{border-color:ButtonText}.ds-line :focus-visible{outline-color:Highlight}}"
-    },
-    {
-      "name": "Stock Control Record",
-      "kind": "custom",
-      "description": "Ruled held-stock record with exact base quantity and contextual owner outcome. Fixed columns wrap long context; at 720px the native table stacks into records while retaining scoped headers and labeled quantities. Investigations use the same pattern with a native recorded-evidence disclosure. Unloaded goods do not establish a verified empty state.",
-      "html": "<section class=\"ds-stock-panel\"><h2>Held goods · excluded from saleable stock</h2><p>Keep these goods physically separate. Inspect them before release; expired goods cannot be released for sale.</p><div class=\"ds-stock-wrap\" role=\"region\" aria-label=\"Held stock\" tabindex=\"0\"><table role=\"table\"><thead><tr><th scope=\"col\">Product / lot / reason</th><th scope=\"col\" class=\"ds-stock-numeric\">Still held</th><th scope=\"col\">Outcome</th></tr></thead><tbody><tr><td>Recorded product · recorded lot (kg)<small>Recorded inspection reason</small></td><td class=\"ds-stock-numeric\" data-label=\"Still held: \">0.25</td><td><form class=\"ds-stock-approval\" aria-label=\"Record held-goods outcome\"><p>Release only goods verified saleable. Disposal or supplier return does not deduct saleable stock again.</p><fieldset><label><span>Quantity from held stock (base units)</span><input type=\"number\" min=\"0.000001\" step=\"0.000001\" value=\"0.25\" required></label><label><span>Held-goods outcome</span><select><option>Dispose / write off held goods</option><option>Return held goods to supplier</option><option>Release inspected goods for sale</option></select></label></fieldset><label><span>Inspection / disposition reason</span><input required minlength=\"3\" maxlength=\"1000\"></label><div class=\"ds-stock-actions\"><button type=\"button\" class=\"ds-stock-confirm\">Record outcome</button><button type=\"button\" class=\"ds-stock-cancel\">Cancel</button></div></form></td></tr></tbody></table></div></section>",
-      "css": ".ds-stock-panel { padding:25px; border:1px solid var(--line); border-radius:12px; background:var(--white); color:var(--ink); font-family:var(--font-sans); font-variant-numeric:tabular-nums; } .ds-stock-panel h2 { margin:0 0 17px; font:750 18px/1.5 var(--font-display); letter-spacing:-.025em; } .ds-stock-panel > p { font-size:12px; max-width:72ch; margin:0 0 20px; } .ds-stock-wrap { width:100%; overflow:auto; } .ds-stock-wrap table { width:100%; border-collapse:collapse; table-layout:fixed; white-space:normal; font-size:12px; text-align:left; } .ds-stock-wrap :is(th,td) { overflow-wrap:anywhere; vertical-align:top; } .ds-stock-wrap th { padding:11px 13px; border-bottom:1px solid var(--line); background:#f7f8f3; color:var(--ink); font-size:11px; font-weight:550; } .ds-stock-wrap td { padding:15px 13px; color:#52604b; border-bottom:1px solid #ecede7; } .ds-stock-wrap :is(th,td):last-child { width:44%; } .ds-stock-wrap :is(th,td).ds-stock-numeric { width:12%; text-align:right; } .ds-stock-wrap small { display:block; margin-top:3px; font-size:10px; color:var(--muted); } .ds-stock-approval { width:100%; min-width:0; padding:6px; } .ds-stock-approval p { margin:0 0 12px; } .ds-stock-approval fieldset { border:0; padding:0; margin:0; min-width:0; } .ds-stock-approval label { display:block; margin-bottom:15px; } .ds-stock-approval label span { display:block; margin-bottom:6px; font-size:12px; font-weight:650; color:#4c5a4e; } .ds-stock-approval :is(input,select) { width:100%; min-width:0; min-height:43px; padding:11px 12px; border:1px solid var(--control-line); border-radius:7px; background:var(--white); color:var(--ink); font:inherit; } .ds-stock-approval select { padding-right:28px; } .ds-stock-actions { display:flex; flex-wrap:wrap; gap:8px; } .ds-stock-actions button { min-height:34px; padding:7px 11px; border:1px solid transparent; border-radius:8px; font:650 12px/1.3 var(--font-sans); white-space:normal; cursor:pointer; transition:background-color .16s ease,color .16s ease; } .ds-stock-confirm { background:var(--forest); color:var(--white); } .ds-stock-confirm:hover { background:#285441; } .ds-stock-cancel { background:transparent; color:var(--forest); } .ds-stock-cancel:hover { background:var(--soft); } .ds-stock-wrap:focus-visible,.ds-stock-approval :is(input,select):focus-visible { outline:3px solid var(--focus); outline-offset:3px; } .ds-stock-actions button:focus-visible { outline:3px solid var(--focus); outline-offset:-3px; } .ds-stock-approval :disabled { opacity:.5; cursor:not-allowed; } @media(max-width:730px) { .ds-stock-panel { padding:18px; } .ds-stock-panel h2 { font-size:17px; } } @media(max-width:720px) { .ds-stock-wrap thead { position:absolute; width:1px; height:1px; overflow:hidden; clip-path:inset(50%); } .ds-stock-wrap :is(tbody,tr,td) { display:block; width:100%; } .ds-stock-wrap tr { border-bottom:1px solid var(--line); padding-block:10px; } .ds-stock-wrap :is(td,td:last-child,td.ds-stock-numeric) { width:100%; border:0; padding:8px 4px; text-align:left; } .ds-stock-wrap td.ds-stock-numeric::before { content:attr(data-label); font-weight:650; } } @media(prefers-reduced-motion:reduce) { .ds-stock-actions button { transition:none; } }"
-    },
-    {
-      "name": "Sealed Count Review",
-      "kind": "custom",
-      "description": "Review view of the blind-count extension. Entry remains separate and hides expected stock, previous quantities, and history. After both independent entries are sealed, show comparisons, notes, and counter identities; a third signed-in owner opens the shared approval form. Wrap unresolved recorded lot IDs and state Expiry unavailable. This snippet illustrates the review layout only, without an authenticated workflow.",
-      "html": "<section class=\"ds-count-panel\" aria-label=\"Blind stock counts\"><h2>Blind stock counts</h2><p>Two different people enter sealed counts, then an owner who entered neither approves.</p><div class=\"ds-count-views\"><button type=\"button\" aria-pressed=\"false\">Enter blind counts</button><button type=\"button\" class=\"ds-count-selected\" aria-pressed=\"true\">Review sealed counts</button></div><p class=\"ds-count-muted\">Comparisons appear only after both entries are sealed.</p><article class=\"ds-count-record\"><h3>TEST loose feeds · Recorded lot 75000000-0000-4000-8000-000000000007 · Expiry unavailable (kg)</h3><p>TEST end-of-day loose feeds</p><strong>Ready for owner review</strong><dl class=\"ds-count-comparison\"><div><dt>Expected</dt><dd>10.5 kg</dd></div><div><dt>First count</dt><dd>10.25 kg</dd></div><div><dt>Independent recount</dt><dd>10.25 kg</dd></div><div><dt>Difference from expected</dt><dd>-0.25 kg</dd></div></dl><p>First count notes: TEST physical net weight after tare</p><p>Recount notes: TEST independent physical net weight after tare</p><small>First counter: TEST first counter · Recounted by: TEST independent counter</small><form class=\"ds-count-approval\" aria-label=\"Approve adjustment\"><p>Both signed-in counters agree. Verify their evidence before posting one linked stock adjustment. The discrepancy investigation remains open.</p><label><span>Approval evidence</span><input required minlength=\"3\" maxlength=\"1000\"></label><div class=\"ds-count-actions\"><button type=\"button\" class=\"ds-count-selected\">Confirm adjustment</button><button type=\"button\" class=\"ds-count-cancel\">Cancel</button></div></form></article></section>",
-      "css": ".ds-count-panel { padding:25px; border:1px solid var(--line); border-radius:12px; background:var(--white); color:var(--ink); font:14px/1.5 var(--font-sans); font-variant-numeric:tabular-nums; min-width:0; } .ds-count-panel h2 { margin:0 0 22px; font:750 18px/1.5 var(--font-display); letter-spacing:-.025em; } .ds-count-panel > p { max-width:72ch; font-size:12px; margin:0 0 20px; } .ds-count-views { display:flex; flex-wrap:wrap; gap:12px; margin-block:18px; } .ds-count-panel button { min-height:43px; padding:10px 17px; border:1px solid #d6ddcf; border-radius:8px; background:var(--white); color:var(--forest); font:650 14px/1.3 var(--font-sans); cursor:pointer; transition:background-color .16s ease,color .16s ease; } .ds-count-panel button:hover { background:var(--soft); } .ds-count-panel button.ds-count-selected { border-color:transparent; background:var(--forest); color:var(--white); } .ds-count-panel button.ds-count-selected:hover { background:#285441; } .ds-count-muted { color:var(--muted); } .ds-count-record { min-width:0; padding-block:22px; border-bottom:1px solid var(--line); overflow-wrap:anywhere; } .ds-count-record h3 { margin:0 0 8px; font:750 15px/1.5 var(--font-display); letter-spacing:-.025em; } .ds-count-record p { margin:6px 0; } .ds-count-record small { display:block; font-size:12px; } .ds-count-comparison { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:12px 24px; margin-block:18px; } .ds-count-comparison dt { color:var(--muted); font-size:12px; } .ds-count-comparison dd { margin:4px 0 0; font-weight:650; font-variant-numeric:tabular-nums; } .ds-count-approval { width:100%; max-width:44rem; min-width:0; padding:6px; } .ds-count-approval p { margin:0 0 12px; } .ds-count-approval label { display:flex; flex-direction:column; gap:6px; margin-bottom:15px; min-width:0; } .ds-count-approval label span { font-size:12px; font-weight:650; color:#4c5a4e; } .ds-count-approval input { width:100%; min-width:0; min-height:43px; border:1px solid var(--control-line); border-radius:7px; padding:11px 12px; background:var(--white); color:var(--ink); font:inherit; } .ds-count-actions { display:flex; flex-wrap:wrap; gap:8px; } .ds-count-actions button { min-height:34px; padding:7px 11px; font-size:12px; } .ds-count-actions button.ds-count-cancel { border-color:transparent; background:transparent; } .ds-count-actions button.ds-count-cancel:hover { background:var(--soft); } .ds-count-panel :is(button,input):focus-visible { outline:3px solid var(--focus); outline-offset:3px; } .ds-count-panel button:disabled { opacity:.5; cursor:not-allowed; } @media(max-width:730px) { .ds-count-panel { padding:18px; } .ds-count-panel h2 { font-size:17px; } .ds-count-comparison { grid-template-columns:1fr; } } @media(prefers-reduced-motion:reduce) { .ds-count-panel button { transition:none; } }"
-    },
-    {
-      "name": "Storage Status",
-      "kind": "custom",
-      "description": "Local browser persistence and quota feedback with an outline protection check. Checking disables the action; unavailable or failed checks stay explicit. This reports neither Windows free disk space nor backup coverage or readiness for real sales.",
-      "html": "<div class=\"ds-storage\"><p role=\"status\">Persistent storage is not granted. This browser may remove local records under storage pressure. Usage estimate unavailable. This estimate does not measure Windows free disk space or replace backups.</p><button type=\"button\">Check storage protection</button></div>",
-      "css": ".ds-storage { margin-block:16px; color:var(--ink); font:14px/1.5 var(--font-sans); } .ds-storage p { margin:0; } .ds-storage button { display:inline-flex; align-items:center; justify-content:center; min-height:43px; padding:10px 17px; border:1px solid #d6ddcf; border-radius:8px; background:var(--white); color:var(--forest); font:650 14px/1.3 var(--font-sans); cursor:pointer; transition:background-color .16s ease,color .16s ease; } .ds-storage button:hover:not(:disabled) { background:var(--soft); } .ds-storage button:focus-visible { outline:3px solid var(--focus); outline-offset:3px; } .ds-storage button:disabled { opacity:.5; cursor:not-allowed; } @media(prefers-reduced-motion:reduce) { .ds-storage button { transition:none; } }"
-    },
-    {
-      "name": "Sales Analytics",
-      "kind": "custom",
-      "description": "Read-only Overview report: native period/grouping controls, explicit loaded scope and snapshot, ruled four/two/one-column summary, proportional gross-sales trend with native exact-table disclosure, and product ranking in own base units. Report CSV covers all aggregated rows. Static illustrative layout; live requests, access checks and export behavior remain in the application.",
-      "html": "<section class=\"ds-analytics\" aria-labelledby=\"ds-analytics-title\"><div class=\"ds-heading\"><div><h2 id=\"ds-analytics-title\">Sales analytics</h2><p class=\"ds-muted\">Review confirmed sales for the selected branch.</p></div><button class=\"ds-outline\">Refresh sales analytics</button></div><div class=\"ds-filters\"><label class=\"ds-field\"><span id=\"ds-analytics-period-label\">Sales period</span><select aria-labelledby=\"ds-analytics-period-label\"><option>This month</option><option>This week</option><option>Choose dates</option></select></label><label class=\"ds-field\"><span id=\"ds-analytics-interval-label\">Group sales by</span><select aria-labelledby=\"ds-analytics-interval-label\"><option>Day</option><option>Week</option><option>Month</option></select></label><button class=\"ds-apply\">Apply sales period</button></div><p class=\"ds-scope\"><strong>Selected branch · Nov 1, 2026 – Nov 1, 2026</strong><br>Snapshot: Nov 1, 2026, 10:00 AM · Asia/Manila<br>Compare with Oct 1, 2026 – Oct 1, 2026.<br>Only server-confirmed sales are included; synchronize every cashier PC for a complete report.</p><dl class=\"ds-metrics\"><div><dt>Gross sales</dt><dd>₱1,000.00<small>+25.0% versus comparison period</small></dd></div><div><dt>Completed purchases</dt><dd>5<small>4 in comparison period</small></dd></div><div><dt>Average purchase</dt><dd>₱200.00<small>Original gross sales ÷ purchases</small></dd></div><div><dt>Sales less refund cash</dt><dd>₱950.00<small>Refunds paid ₱50.00 · Cash recovered ₱0.00</small></dd></div></dl><p class=\"ds-muted\">Sales follow the original sale date. Refund cash and recovered cash follow their posting date. This is sales activity, not profit or drawer cash.</p><h3>Sales trend</h3><div class=\"ds-chart\" role=\"region\" aria-label=\"Gross sales trend\" tabindex=\"0\"><ol><li><span>Nov 1, 2026</span><span class=\"ds-track\" aria-hidden=\"true\"><span style=\"width:100%\"></span></span><strong>₱1,000.00</strong></li></ol></div><details class=\"ds-detail\"><summary>Show exact sales and refund totals by period</summary><div class=\"ds-table-wrap\" role=\"region\" aria-label=\"Sales trend details\" tabindex=\"0\"><table><thead><tr><th scope=\"col\">Period</th><th scope=\"col\">Purchases</th><th scope=\"col\">Gross sales</th><th scope=\"col\">Refund cash paid</th><th scope=\"col\">Cash recovered</th><th scope=\"col\">Sales less refund cash</th></tr></thead><tbody><tr><td>Nov 1, 2026</td><td>5</td><td>₱1,000.00</td><td>₱50.00</td><td>₱0.00</td><td>₱950.00</td></tr></tbody></table></div></details><h3>Popular products</h3><p>Separate purchases containing each product; original sales and quantities before refunds.</p><div class=\"ds-filters\"><label class=\"ds-field\"><span id=\"ds-analytics-rank-label\">Rank products by</span><select aria-labelledby=\"ds-analytics-rank-label\"><option>Most purchases</option><option>Highest gross sales</option></select></label><label class=\"ds-field\"><span>Find a popular product</span><input type=\"search\" placeholder=\"Product name or SKU\"></label></div><div class=\"ds-table-wrap\" role=\"region\" aria-label=\"Popular product totals\" tabindex=\"0\"><table><thead><tr><th scope=\"col\">Product</th><th scope=\"col\">Purchases</th><th scope=\"col\">Quantity sold</th><th scope=\"col\">Gross sales</th><th scope=\"col\">Purchases in comparison period</th></tr></thead><tbody><tr><td><strong>Illustrative product</strong><small>SAMPLE-01</small></td><td>5</td><td>20 kg</td><td>₱1,000.00</td><td>4</td></tr></tbody></table></div><p class=\"ds-muted\">The CSV includes every product in the report, regardless of search.</p></section>",
-      "css": ".ds-analytics{min-width:0;background:#fff;border:1px solid var(--line);border-radius:12px;padding:25px;color:var(--ink);font:14px/1.5 var(--font-sans);font-variant-numeric:tabular-nums}.ds-analytics h2{font:750 18px/1.5 var(--font-display);letter-spacing:-.025em;margin:0 0 6px}.ds-analytics h3{font:750 15px/1.5 var(--font-display);margin:30px 0 16px}.ds-muted{color:var(--muted)}.ds-analytics>p{font-size:12px;max-width:72ch;margin-bottom:20px}.ds-heading{display:flex;align-items:center;justify-content:space-between;gap:14px;margin-bottom:22px;flex-wrap:wrap}.ds-outline{min-height:43px;padding:10px 17px;border:1px solid #d6ddcf;border-radius:8px;background:#fff;color:var(--forest);font:650 14px/1.3 var(--font-sans);cursor:pointer;transition:background .16s ease}.ds-outline:hover:not(:disabled){background:var(--soft)}.ds-outline:disabled{opacity:.5;cursor:not-allowed}.ds-filters{display:flex;align-items:end;flex-wrap:wrap;gap:16px;margin:20px 0}.ds-field{display:flex;flex-direction:column;gap:6px;margin-bottom:15px;flex:1 1 180px;min-width:0;max-width:330px}.ds-field>span{font-size:12px;font-weight:650;color:#4c5a4e}.ds-field select,.ds-field input{min-width:0;width:100%;border:1px solid var(--control-line);background:#fff;border-radius:7px;padding:11px 12px;color:var(--ink);min-height:43px;font:inherit}.ds-field select{padding-right:28px}.ds-field input::placeholder{color:var(--muted)}.ds-apply{min-height:43px;padding:10px 17px;border:1px solid transparent;border-radius:8px;background:var(--forest);color:#fff;font:650 14px/1.3 var(--font-sans);cursor:pointer;transition:background .16s ease}.ds-apply:hover:not(:disabled){background:#285441}.ds-apply:disabled{opacity:.5;cursor:not-allowed}.ds-scope{margin:24px 0;color:var(--muted)}.ds-scope strong{color:var(--ink)}.ds-metrics{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));margin:24px 0;border-block:1px solid var(--line)}.ds-metrics>div{padding:20px 18px 20px 0;min-width:0}.ds-metrics dt{color:var(--muted);font-size:12px}.ds-metrics dd{margin:7px 0;font:750 24px/1.5 var(--font-display);overflow-wrap:anywhere;color:var(--forest)}.ds-metrics small{display:block;color:var(--muted);font:400 12px/1.5 var(--font-sans);margin-top:6px}.ds-chart{max-height:380px;overflow:auto;border-block:1px solid var(--line);padding:12px 0}.ds-chart ol{list-style:none;margin:0;padding:0}.ds-chart li{display:grid;grid-template-columns:minmax(110px,150px) minmax(0,1fr) minmax(90px,150px);align-items:center;gap:16px;padding:10px 4px}.ds-chart strong{text-align:right;overflow-wrap:anywhere}.ds-track{display:block;background:var(--soft);height:12px;border-radius:3px;overflow:hidden}.ds-track>span{display:block;height:100%;background:var(--green)}.ds-detail{margin-top:16px}.ds-detail summary{cursor:pointer;font-weight:650;padding:10px 0}.ds-table-wrap{overflow:auto;width:100%;container-type:inline-size}.ds-table-wrap table{width:100%;border-collapse:collapse;font-size:12px;white-space:nowrap}.ds-table-wrap th,.ds-table-wrap td{text-align:right}.ds-table-wrap th{font-size:11px;font-weight:550;color:#59664f;background:#f7f8f3;padding:11px 13px;border-bottom:1px solid var(--line)}.ds-table-wrap td{padding:15px 13px;border-bottom:1px solid #ecede7;color:#52604b}.ds-table-wrap th:first-child,.ds-table-wrap td:first-child{text-align:left}.ds-table-wrap td strong{color:var(--ink);font-weight:650}.ds-table-wrap td small{display:block;color:var(--muted);font-size:10px;margin-top:3px}.ds-table-wrap tbody tr:last-child td{border-bottom:0}.ds-analytics :focus-visible{outline:3px solid var(--focus);outline-offset:3px}@media(max-width:1100px){.ds-metrics{grid-template-columns:repeat(2,minmax(0,1fr))}}@media(max-width:730px){.ds-analytics{padding:18px}.ds-field{max-width:none;flex-basis:100%}.ds-metrics{grid-template-columns:1fr}.ds-metrics>div{padding:15px 0;border-bottom:1px solid var(--line)}.ds-metrics>div:last-child{border-bottom:0}.ds-chart li{grid-template-columns:minmax(0,1fr) auto;gap:8px}.ds-track{grid-column:1/-1;grid-row:2}.ds-chart strong{max-width:150px}}@media(forced-colors:active){.ds-track{border:1px solid CanvasText}.ds-track>span{background:Highlight;forced-color-adjust:none}.ds-field select,.ds-field input{border-color:ButtonText}.ds-analytics :focus-visible{outline-color:Highlight}}@media(prefers-reduced-motion:reduce){.ds-apply,.ds-outline{transition:none}}"
+      "description": "Illustrative component preview only: measured-width green line/area plot and readable axes, with exact figures in a native disclosure. The live app uses validated report rows and explicit snapshot scope.",
+      "html": "<section class=\"ds-trend\"><h3>Sales trend</h3><p>Illustrative visual preview</p><svg viewBox=\"0 0 300 180\" role=\"img\" aria-label=\"Illustrative line and area plot\"><path d=\"M72 30H280M72 85H280M72 140H280\" fill=\"none\" stroke=\"#e1e3dc\"/><path d=\"M72 125L124 90L176 110L228 55L280 35V140H72Z\" fill=\"#8cc75b\" fill-opacity=\".2\"/><path d=\"M72 125L124 90L176 110L228 55L280 35\" stroke=\"#17633c\" stroke-width=\"3\" fill=\"none\"/><text x=\"62\" y=\"34\" text-anchor=\"end\">High</text><text x=\"62\" y=\"144\" text-anchor=\"end\">Zero</text><text x=\"72\" y=\"165\" text-anchor=\"middle\">Start</text><text x=\"280\" y=\"165\" text-anchor=\"middle\">End</text></svg><details><summary>Show exact report totals</summary><p>Live report totals remain tied to their loaded branch, dates and snapshot.</p></details></section>",
+      "css": ".ds-trend{min-width:0;padding:16px;background:white;color:var(--ink,#15241c);font:400 15px/1.5 \"DM Sans Variable\",sans-serif}.ds-trend h3{font:780 22px/1.3 \"Manrope Variable\",sans-serif;margin:0 0 8px}.ds-trend p{font-size:12px;color:var(--muted,#586159)}.ds-trend svg{display:block;width:100%;max-width:360px;height:auto}.ds-trend text{font:12px \"DM Sans Variable\",sans-serif;fill:var(--muted,#586159)}.ds-trend summary{cursor:pointer;color:var(--forest,#063f2d)}.ds-trend summary:hover{text-decoration:underline}.ds-trend summary:focus-visible{outline:3px solid var(--focus,#507c39);outline-offset:3px;}"
     }
   ],
   "narrative": {
     "northStar": "The Cooperative Stock Book",
-    "overview": "The cooperative stock book pairs forest ink with warm paper, quiet rules, and precise figures. It feels practical and orderly for cashiers completing sales and owners tracing stock changes to their source.\n\nCompact sans-serif typography and restrained tonal surfaces keep operational information close together. Flat category illustrations identify agricultural goods; borders and alignment organize the work rather than decorative effects.\n\nBetter Yield POS is the customer-facing identity for Better Yield Agri Trading and Services; AgriStore remains the internal product identity. The original business logo and product-display photograph from the supplied Facebook page extend this established world on sign-in and navigation. The public tagline, “Your partner in every harvest.”, and crop nutrition / crop care context identify the business; configured branches, stock and prices remain operational records. Asset provenance is recorded in [docs/brand-assets.md](docs/brand-assets.md).",
+    "overview": "The cooperative stock book pairs forest ink with warm paper, quiet rules, and precise figures. It feels practical and orderly for cashiers completing sales and owners tracing stock changes to their source.\n\nCompact sans-serif typography and restrained tonal surfaces keep operational information close together. Verified product photographs and explicit unverified-photo fallbacks identify agricultural goods. Compact registers, selected-record details, and task tabs organize work; borders and alignment carry the hierarchy.\n\nBetter Yield POS is the customer-facing identity for Better Yield Agri Trading and Services; AgriStore remains the internal product identity. The original business logo and product-display photograph from the supplied Facebook page extend this established world on sign-in and navigation. The public tagline, “Your partner in every harvest.”, and crop nutrition / crop care context identify the business; configured branches, stock and prices remain operational records. Asset provenance is recorded in [docs/brand-assets.md](docs/brand-assets.md).",
     "keyCharacteristics": [
       "Forest navigation and primary actions against warm paper.",
       "Ruled records, aligned figures, and explicit operational states.",
       "Compact controls with rounded corners and clear focus outlines.",
-      "Original Better Yield business artwork on sign-in and navigation, with photography limited to desktop sign-in."
+      "Original Better Yield artwork on sign-in and navigation; verified catalog photographs with honest fallbacks.",
+      "Focused task tabs, ten-record pages, paired register/detail views, and readable phone figures."
     ],
     "rules": [
       {
@@ -387,7 +389,7 @@
       },
       {
         "name": "The Precise Figures Rule",
-        "body": "Keep tabular numerals throughout the interface and right-align numerical table columns so quantities and money can be scanned vertically. Show bulk on-hand stock in exact base kg or liters across all batches; show piece-pack equivalents only when whole, otherwise retain base pieces, so small stock changes remain visible.",
+        "body": "Keep tabular numerals throughout the interface and right-align numerical table columns so quantities and money can be scanned vertically. Keep each monetary figure on one intact line: summary labels may wrap or move above the value, but digits never split. Show bulk on-hand stock in exact base kg or liters across all batches; show piece-pack equivalents only when whole, otherwise retain base pieces, so small stock changes remain visible.",
         "section": "typography"
       },
       {
@@ -402,9 +404,9 @@
       }
     ],
     "dos": [
-      "Do retain the original Better Yield logo artwork and use the sourced business photograph only on desktop sign-in.",
+      "Do retain the original Better Yield logo artwork and use the sourced business display photograph only on desktop sign-in; use verified catalog photos or the honest fallback in product records.",
       "Do use the shared forest, paper, ink, muted, and rule tokens for new operational surfaces.",
-      "Do keep currency and quantities aligned and retain tabular numerals.",
+      "Do keep currency and quantities aligned, retain tabular numerals, and keep each monetary value intact on one line.",
       "Do label selling units explicitly, preserve quantity drafts, and keep peso estimates blocked until actual weighed amounts are confirmed.",
       "Do replace stale line amounts and weight equivalents with an entry prompt, total the remaining valid lines, and retain valid unconfirmed estimates and zero-price amounts.",
       "Do expose configured loose selling methods in catalog records and retain displayed units and currency in field accessible names.",
@@ -422,7 +424,9 @@
       "Do keep applied dates, loaded counts, end-of-history feedback, and CSV scope explicit beside the records they describe.",
       "Do keep app update status beside its action, protect pending work before reopening, and preserve local records and browser site data in recovery guidance.",
       "Do retain confirmed completion feedback alongside a distinct Refresh warning, clear confirmed forms, and preserve entered values on validation or submission failure.",
-      "Do keep sales analytics filters, applied scope, snapshot and summary before trend and product ranking; preserve exact table values beside proportional bars."
+      "Do keep task tabs, selected register/detail pairing, and ten-record presentation pages inside the current shell.",
+      "Do keep order product names and exact conversions on separate readable rows.",
+      "Do keep sales analytics filters, applied scope, snapshot and summary before trend and product ranking; preserve exact table values beside the responsive line/area chart."
     ],
     "donts": [
       "Don't combine unlike product units or present original-sale product rankings as quantities after refunds.",

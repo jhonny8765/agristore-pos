@@ -149,11 +149,13 @@ test("pending checkout keeps manual app updates blocked across reload", async ({
   await practice(page);
   await buy(page);
   await page.getByRole("button", { name: "Settings", exact: true }).click();
+  await page.getByRole("tab",{name:"Application & recovery",exact:true}).click();
   await expect(
     page.getByRole("button", { name: "Check for app update", exact: true }),
   ).toBeDisabled();
   await page.reload();
   await page.getByRole("button", { name: "Settings", exact: true }).click();
+  await page.getByRole("tab",{name:"Application & recovery",exact:true}).click();
   await expect(
     page.getByRole("button", { name: "Check for app update", exact: true }),
   ).toBeDisabled();
@@ -265,7 +267,7 @@ test("200 browser checkouts persist through a simulated hour offline", async ({
   await page.reload();
   await page.getByRole("button", { name: "Sync center" }).click();
   await expect(page.locator("tbody tr")).toHaveCount(10);
-  const pages = page.getByRole("navigation", {name: "Table records pages above", exact:true});
+  const pages = page.getByRole("navigation", {name: /^Table records:.* pages above$/});
   await expect(pages).toContainText("1–10 of 200 loaded");
   await pages.getByRole("button", {name:"Last loaded",exact:true}).click();
   await expect(pages).toContainText("Page 20 of 20");
@@ -386,8 +388,10 @@ test("multipart recovery downloads can retry the same part without advancing or 
   expect(retained.every(sale => sale.status === "pending")).toBe(true);
   expect(retained.map(sale => sale.id).sort()).toEqual(ids.sort());
   await page.getByRole("button", {name:"Settings", exact:true}).click();
+  await page.getByRole("tab",{name:"Application & recovery",exact:true}).click();
   await expect(page.getByRole("region", {name:"Prepared recovery download"})).toContainText(last.name);
   await page.reload();
   await page.getByRole("button", {name:"Settings", exact:true}).click();
+  await page.getByRole("tab",{name:"Application & recovery",exact:true}).click();
   await expect(page.getByRole("region", {name:"Prepared recovery download"})).toHaveCount(0);
 });

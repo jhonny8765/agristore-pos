@@ -1,5 +1,8 @@
 "use client";
 import { SearchableSelect } from "./search-select";
+import { Check,LockKeyhole } from "lucide-react";
+import { RecordTable } from "./record-pages";
+import { ProductPhoto } from "./product-photo";
 import { RecordPages } from "./record-pages";
 
 // Extend the cooperative stock book: sealed entry first; comparisons and approval in a separate review view.
@@ -23,6 +26,8 @@ export function BlindCounts({db,organizationId,branchId,actorId,products,owner,o
  const [rows,setRows]=useState<BlindCount[]>([]),[next,setNext]=useState<ReturnType<typeof countPage>['next']>();
  const [openCount,setOpenCount]=useState(0),[review,setReview]=useState(false),[loading,setLoading]=useState(false);
  const [error,setError]=useState(''),[feedback,setFeedback]=useState('');
+ const [selectedId,setSelectedId]=useState(''),[showStart,setShowStart]=useState(false),[history,setHistory]=useState(false);
+ const selected=rows.find(r=>r.id===selectedId)??rows[0];
  const generation=useRef(0);
  const load=useCallback(async(before?:{beforeAt:string;beforeId:string})=>{
   const token=++generation.current;setLoading(true);setError('');
@@ -44,16 +49,16 @@ export function BlindCounts({db,organizationId,branchId,actorId,products,owner,o
   await load();
  }
  return <><section className="panel blind-counts" aria-label="Blind stock counts">
-  <div className="section-heading"><h2>Blind stock counts</h2><Button variant="outline" disabled={disabled || !online || loading} onClick={()=>void execute(async()=>{await load();})}>Refresh counts</Button></div>
-  <p>Close and synchronize every branch shift first. Two different people enter sealed counts, then an owner who entered neither approves. Count saleable goods only; keep held goods and stock in transit separate.</p>
-  <div className="button-row"><Button variant={review?'outline':'default'} aria-pressed={!review} onClick={()=>setReview(false)}>Enter blind counts</Button><Button variant={review?'default':'outline'} aria-pressed={review} onClick={()=>setReview(true)}>Review sealed counts</Button></div>
+  <div className="section-heading"><h2>Blind stock counts</h2><Button aria-label="Start blind count: open new form" onClick={()=>{setShowStart(v=>!v);setHistory(false);setReview(false);}}>Start blind count</Button><Button variant="outline" disabled={disabled || !online || loading} onClick={()=>void execute(async()=>{await load();})}>Refresh counts</Button></div>
+  <p className="notice">Close and synchronize every branch shift before counting.</p><div className="count-steps"><div><strong>1. First count</strong><p>Count items without seeing the system quantity.</p></div><div><strong>2. Independent recount</strong><p>A different signed-in person counts the same goods.</p></div><div><strong>3. Owner approval</strong><p>An owner who entered neither count reviews both sealed entries.</p></div></div>
+  <div className="button-row"><Button variant={review?'outline':'default'} aria-pressed={!review} onClick={()=>{setReview(false);setHistory(false);}}>Enter blind counts</Button><Button variant={review?'default':'outline'} aria-pressed={review} onClick={()=>{setReview(true);setHistory(false);}}>Review sealed counts</Button><Button variant={history?"default":"outline"} aria-pressed={history} onClick={()=>setHistory(true)}>History</Button></div>
   <p className="muted">{openCount} open count{openCount===1?'':'s'}. {review ? 'Comparisons appear only after both entries are sealed.' : 'Expected stock and previous quantities are hidden in this entry view. Count from the physical goods.'}</p>
   {!online && <p role="status" className="notice">Counts and approvals require a connection. Saved evidence remains on the server.</p>}
   {feedback && <p role="status" className="notice success">{feedback}</p>}
   {error && <p role="alert" className="notice error">{error} Select Refresh counts to retry.</p>}
-  {!review && <form aria-label="Start a blind count" className="count-start" onSubmit={e=>{
+  {!review && !history && (showStart||!rows.length) && <form aria-label="Start a blind count" className="count-start" onSubmit={e=>{
    e.preventDefault();const form=e.currentTarget,f=new FormData(form);const [productId,batchId]=field(f,'stock').split(':');
-   void execute(async()=>{await save('start_blind_count',{productId,batchId:batchId==='none'?null:batchId,reason:field(f,'reason')},'countId');form.reset();});
+   void execute(async()=>{await save('start_blind_count',{productId,batchId:batchId==='none'?null:batchId,reason:field(f,'reason')},'countId');form.reset();setSelectedId('');setShowStart(false);});
   }}>
    <h3>Start a blind count</h3>
    <label className="field"><span>Product / batch</span><SearchableSelect name="stock" aria-label="Product / batch" required disabled={blocked}>
@@ -63,13 +68,13 @@ export function BlindCounts({db,organizationId,branchId,actorId,products,owner,o
    <Button disabled={blocked || !products.length}>Start blind count</Button>
   </form>}
   {!loading && !rows.length && <p>No blind counts yet. Start after all sales are synchronized and shifts are closed.</p>}
-  <div className="count-records" aria-busy={loading}>
-   <RecordPages label="Saved records">{rows.map(row=>{
+  <div className="count-workspace-grid" hidden={history}><section className="panel count-entry-panel"><h3>{review?"Review sealed count":"Enter physical count"}</h3><div className="count-records" aria-busy={loading}>
+   <RecordPages label="Saved records">{rows.filter(row=>row.id===selected?.id).map(row=>{
     const first=row.state==='first_count' && row.startedBy===actorId;
     const recount=row.state==='recount' && row.startedBy!==actorId;
     const unit=products.find(p=>p.id===row.productId)?.baseUnit ?? 'base units';
     return <article className="count-record" key={row.id} aria-label={countLabel(row,products)}>
-     <h3>{countLabel(row,products)}</h3><p className="count-context">{row.reason}</p>
+     {products.find(p=>p.id===row.productId)&&<div className="count-record-photo"><ProductPhoto product={products.find(p=>p.id===row.productId)!}/></div>}<h3>{countLabel(row,products)}</h3><p className="count-context">{row.reason}</p>
      <small>Count {row.id.slice(0,8)} · {new Date(row.createdAt).toLocaleString('en-PH',{timeZone:'Asia/Manila'})}</small>
      <p><strong>{countState[row.state]}</strong></p>
      {row.stale && <p className="notice error">Stock moved after this count started. Close this record and start a fresh count; it cannot adjust stock.</p>}
@@ -97,8 +102,9 @@ export function BlindCounts({db,organizationId,branchId,actorId,products,owner,o
      {row.state!=='approved' && row.state!=='cancelled' && (owner || row.startedBy===actorId) && <ApprovalForm action="Close without adjustment" label="Reason for closing this count" description="Keep the original evidence and close this count without changing stock. Start a fresh count if counting must continue." confirmLabel="Close count" disabled={blocked} onConfirm={reason=>execute(()=>save('cancel_blind_count',{countId:row.id,reason}))} />}
     </article>;
    })}</RecordPages>
-  </div>
+  </div></section><aside className="panel count-checklist"><h3>Counting checklist</h3><ul>{['Separate held goods and stock in transit.','Count saleable goods only.','A different signed-in person performs the recount.','A separate owner reviews after both entries are sealed.'].map(item=><li key={item}><Check size={20}/>{item}</li>)}</ul><p className="notice"><LockKeyhole size={16}/> Expected stock stays hidden until both entries are sealed. Count the physical goods.</p></aside></div>
+  <section className="panel count-open-list" aria-label="Count records"><h3>{history?'Count records':'Open and recent counts'}</h3><div className="table-wrap" role="region" aria-label="Count worklist" tabIndex={0}><RecordTable><thead><tr><th>Product / lot</th><th>Stage</th><th>Recorded</th><th>Action</th></tr></thead><tbody>{rows.map(row=><tr key={row.id} className={selected?.id===row.id?'selected-record':''}><td><strong>{countLabel(row,products)}</strong><small>{row.reason}</small></td><td>{countState[row.state]}</td><td>{new Date(row.createdAt).toLocaleString('en-PH',{timeZone:'Asia/Manila'})}</td><td><Button variant="outline" size="sm" onClick={()=>{setSelectedId(row.id);setHistory(false);setReview(row.state!=='first_count'&&row.state!=='recount');}}>Continue</Button></td></tr>)}</tbody></RecordTable></div></section>
   {loading && <p role="status">Loading count records…</p>}
   {next && <Button variant="outline" disabled={blocked} onClick={()=>void load(next)}>Load older counts</Button>}
- </section>{review && children}</>;
+ </section>{history && children}</>;
 }

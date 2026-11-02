@@ -8,7 +8,8 @@ test("support downloads refresh scoped counts offline and leave original receipt
   const db=await new Promise<IDBDatabase>((resolve,reject)=>{const open=indexedDB.open("agristore-practice-v1");open.onsuccess=()=>resolve(open.result);open.onerror=()=>reject(open.error);});
   try{await new Promise<void>((resolve,reject)=>{const tx=db.transaction("sales","readwrite"),store=tx.objectStore("sales"),cursor=store.openCursor();cursor.onsuccess=()=>{const row=cursor.result!;row.update({...row.value,updatedAt:Date.now(),payload:{...row.value.payload,occurredAt:new Date(Date.now()-20*60_000).toISOString()}});};tx.oncomplete=()=>resolve();tx.onerror=()=>reject(tx.error);});}finally{db.close();}
  });
- await page.getByRole("button",{name:"Settings",exact:true}).click();const guide=page.getByRole("region",{name:"PC checks and store guide",exact:true});
+ await page.getByRole("button",{name:"Settings",exact:true}).click();
+ await page.getByRole("tab",{name:"Store guide",exact:true}).click();const guide=page.getByRole("region",{name:"PC checks and store guide",exact:true});
  await expect(guide).toContainText("waited at least 15 minutes");
  // A second window's write after the displayed check must be included by the
  // export's fresh read, without changing or retrying either receipt.

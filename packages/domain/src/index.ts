@@ -90,6 +90,15 @@ export interface Product {
   tracksExpiry: boolean;
   units: Unit[];
   batches: Batch[];
+  catalogSource?: string | null;
+  originalCode?: string | null;
+  catalogNote?: string;
+  pricePending?: boolean;
+  setupPending?: boolean;
+  costPending?: boolean;
+  imagePath?: string | null;
+  imageSourceUrl?: string | null;
+  imageLabel?: string | null;
 }
 export interface Branch {
   id: string;

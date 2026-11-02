@@ -17,8 +17,8 @@ type Row = Record<string,unknown>;
 type Cursor={at:string;id:string}|null;
 interface Controls { openExceptions: number; exceptions: Row[]; holds: Row[]; issues: Row[]; holdCount?:number; issueCount?:number; holdsNext?:Cursor; issuesNext?:Cursor; rejected?:Row[]; rejectedCount?:number; rejectedNext?:Cursor }
 const val = (form: FormData, name: string) => String(form.get(name) ?? "").trim();
-export function StockControls({db, organizationId, branchId, actorId, products, owner, canAssign, online, disabled, revision, execute}: {
-  db: PosDatabase; organizationId: string; branchId: string; actorId: string; products: Product[];
+export function StockControls({focus="all",db, organizationId, branchId, actorId, products, owner, canAssign, online, disabled, revision, execute}: {
+  focus?: "all"|"expiry"; db: PosDatabase; organizationId: string; branchId: string; actorId: string; products: Product[];
   owner: boolean; canAssign: boolean; online: boolean; disabled: boolean; revision: number;
   execute: (fn: () => Promise<void>) => Promise<Error | undefined>;
 }) {
@@ -57,8 +57,8 @@ export function StockControls({db, organizationId, branchId, actorId, products, 
     await load();
   }
   return <>
-    <StockFollowUps {...{db, organizationId, branchId, actorId, products, owner, canAssign, online, disabled, revision, execute}} />
-    <section className="panel">
+    <StockFollowUps focus={focus} {...{db, organizationId, branchId, actorId, products, owner, canAssign, online, disabled, revision, execute}} />
+    <section className="panel" hidden={focus==="expiry"}>
       <div className="section-heading"><h2>Held goods · excluded from saleable stock</h2><Button variant="outline" disabled={!online || disabled || loading} onClick={() => void load()}>Refresh stock controls</Button></div>
       {feedback && <p role="status" className="notice success">{feedback}</p>}
       {error && <p role="alert" className="notice error">{error}</p>}
@@ -73,7 +73,7 @@ export function StockControls({db, organizationId, branchId, actorId, products, 
       </tbody></RecordTable></div>}
       {data&&<><p>{data.holds.length} of {data.holdCount??data.holds.length} open held-goods records loaded, oldest first. {data.holdsNext?"More held goods are available.":"End of open held goods."} Refresh to check current balances.</p><Button variant="outline" disabled={disabled||!online||loading||!data.holdsNext} onClick={()=>void load("holds",data)}>Load more held goods</Button></>}
     </section>
-    <section className="panel">
+    <section className="panel" hidden={focus==="expiry"}>
       <h2>Damage, spillage and other stock issues</h2>
       <p>Choose the actual measurement and check its recorded stock equivalent. Nothing changes saleable stock until the owner approves. Do not use this to erase an unexplained count difference.</p>
       {!!data?.issues.length && <div className="table-wrap history-table stock-control-table" role="region" aria-label="Stock issues awaiting approval" tabIndex={0}><RecordTable role="table"><thead><tr><th scope="col">Issue</th><th scope="col" className="numeric">Quantity</th><th scope="col">Owner decision</th></tr></thead><tbody>{data.issues.map(s => <tr key={String(s.id)}><td>{label(s)}<small>{String(s.category)} · {String(s.disposition)} · {String(s.reason)}</small></td><td className="numeric" data-label="Quantity: ">{stockMeasurement(s.quantity,stockControlIdentity(products,s).baseUnit||"base units")}</td><td>{owner && <div className="followup-actions"><ApprovalForm action="Approve stock issue" label="Approval notes" description="This deducts the recorded quantity from saleable stock and retains a separate movement. Held goods remain separately tracked." confirmLabel="Approve issue" disabled={disabled || !online} onConfirm={reason => execute(() => save("approve_stock_issue",{issueId:s.id,reason}))} /><ApprovalForm action="Reject stock issue" label="Rejection notes" description="Reject only a mistaken pending request. Record what was checked and why. This keeps the original request and your decision without changing stock, cash, loss values or an investigation." confirmLabel="Reject request" disabled={disabled || !online} onConfirm={reason=>execute(()=>save("reject_stock_issue",{issueId:s.id,reason},"decisionId"))}/></div>}</td></tr>)}</tbody></RecordTable></div>}
@@ -91,7 +91,7 @@ export function StockControls({db, organizationId, branchId, actorId, products, 
         <Button disabled={disabled || !online || !products.length}>Submit stock issue</Button>
       </form>
     </section>
-    <section className="panel rejected-stock-issues">
+    <section className="panel rejected-stock-issues" hidden={focus==="expiry"}>
       <h2>Rejected stock issues</h2>
       <p>Original requests and owner decisions remain here. A rejection changes no stock or cash and does not resolve a missing-stock investigation. Submit a new correct request when needed.</p>
       {!!data?.rejected?.length?<div className="table-wrap history-table stock-control-table" role="region" aria-label="Rejected stock issues" tabIndex={0}><RecordTable><thead><tr><th scope="col">Original request</th><th scope="col" className="numeric">Quantity</th><th scope="col">Owner rejection</th></tr></thead><tbody>{data.rejected.map(s=><tr key={String(s.decision_id)}><td><strong>{label(s)}</strong><small>{String(s.category).replaceAll("_"," ")} · {String(s.disposition).replaceAll("_"," ")}</small><p className="stock-evidence">{String(s.reason)}</p><small>Request: {String(s.id)}</small></td><td className="numeric" data-label="Original quantity: ">{stockMeasurement(s.quantity,stockControlIdentity(products,s).baseUnit||"base units")}</td><td><strong>Rejected · no stock change</strong><p className="stock-evidence">{String(s.rejection_reason)}</p><small>{String(s.decided_name??"Recorded owner")} · {new Date(String(s.rejected_at)).toLocaleString("en-PH",{timeZone:"Asia/Manila"})}</small><small>Decision: {String(s.decision_id)}</small></td></tr>)}</tbody></RecordTable></div>:<p>No rejected requests loaded.</p>}

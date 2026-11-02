@@ -1,0 +1,4 @@
+import {createElement as h,Fragment} from 'react';
+import {it,expect} from 'vitest';
+import {receiptActionCells} from '../../apps/web/lib/receipt-actions';
+it('binds original correction closures to complete UUIDs across arrays and fragments',()=>{const first='71117dd0-390a-4769-a525-8ab4c4a181b3',second='71117dd0-1111-4222-8333-999999999999',calls:string[]=[];const row=(id:string)=>h('tr',{key:id},h('td',null,'B01-'+id.slice(0,8)),h('td',null,h('button',{onClick:()=>calls.push(id)},'Partial refund')));const cells=receiptActionCells([row(first),h(Fragment,{key:'group'},row(second))]);expect(cells.size).toBe(2);const a=cells.get(first) as ReturnType<typeof h<{onClick:()=>void}>>,b=cells.get(second) as typeof a;a.props.onClick();b.props.onClick();expect(calls).toEqual([first,second]);expect(cells.has(first.slice(0,8))).toBe(false);});

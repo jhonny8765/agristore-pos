@@ -1,0 +1,12 @@
+"use client";
+import {useEffect,useRef,useState} from 'react';
+import Decimal from 'decimal.js';
+import {analyticsMoney} from '../lib/sales-analytics';
+export function SalesTrend({rows}:{rows:{date:string;grossSales:string}[]}) {
+ const container=useRef<HTMLDivElement>(null),[width,setWidth]=useState(720);
+ useEffect(()=>{const node=container.current;if(!node)return;const observer=new ResizeObserver(entries=>{const actual=entries[0]?.contentRect.width;if(actual)setWidth(Math.max(240,Math.round(actual)));});observer.observe(node);return()=>observer.disconnect();},[]);
+ const top=rows.reduce((n,p)=>Decimal.max(n,p.grossSales),new Decimal(0)),max=Decimal.max(top,100),left=Math.min(150,Math.max(82,analyticsMoney(max.toFixed(0)).length*7+8)),right=width-28,bottom=235,height=200;
+ const points=rows.map((p,n)=>({x:rows.length===1?(left+right)/2:left+n*(right-left)/(rows.length-1),y:bottom-new Decimal(p.grossSales).div(max).mul(height).toNumber(),...p}));
+ const path=points.map((p,n)=>`${n?'L':'M'}${p.x},${p.y}`).join(' '),area=points.length?`${path} L${points.at(-1)!.x},${bottom} L${points[0].x},${bottom} Z`:'';
+ return <div className="sales-trend-plot" ref={container}><svg viewBox={`0 0 ${width} 285`} role="img" aria-label="Gross sales trend. Exact figures are available in the sales trend details table."><defs><linearGradient id="sales-trend-fill" x1="0" x2="0" y1="0" y2="1"><stop offset="0%" stopColor="#8cc75b" stopOpacity=".48"/><stop offset="100%" stopColor="#8cc75b" stopOpacity=".05"/></linearGradient></defs>{[0,1,2,3,4].map(n=>{const y=bottom-n*height/4;return <g key={n}><line x1={left} x2={right} y1={y} y2={y} stroke="var(--line)"/><text x={left-10} y={y+4} textAnchor="end" fill="var(--muted)" fontSize="12">{analyticsMoney(max.mul(n).div(4).toFixed(0))}</text></g>;})}{area&&<path d={area} fill="url(#sales-trend-fill)"/>}{path&&<path d={path} stroke="var(--green)" strokeWidth="3" fill="none"/>}{points.map((p,n)=><g key={p.date}><circle cx={p.x} cy={p.y} r="4" fill="white" stroke="var(--green)" strokeWidth="2"><title>{p.date}: {analyticsMoney(p.grossSales)}</title></circle>{(n===0||n===points.length-1||n%Math.max(1,Math.ceil(points.length/(width<450?2:5)))===0)&&<text x={p.x} y={bottom+25} fill="var(--muted)" fontSize="11" textAnchor="middle">{new Date(`${p.date}T00:00:00+08:00`).toLocaleDateString('en-PH',{timeZone:'Asia/Manila',month:'short',day:'numeric'})}</text>}</g>)}</svg></div>;
+}

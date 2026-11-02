@@ -1,0 +1,7 @@
+import {describe,it,expect} from 'vitest';
+import {inReceiptPeriod,receiptMatches,type ReceiptView} from '../../apps/web/lib/receipt-view';
+describe('receipt filters use Manila calendar boundaries without changing records',()=>{
+ const now=Date.parse('2026-11-03T02:00:00Z');
+ it('handles Monday weeks and local midnight across UTC dates',()=>{expect(inReceiptPeriod('2026-11-02T15:59:59Z','today',now)).toBe(false);expect(inReceiptPeriod('2026-11-02T16:00:00Z','today',now)).toBe(true);expect(inReceiptPeriod('2026-11-01T15:59:59Z','week',now)).toBe(false);expect(inReceiptPeriod('2026-11-01T16:00:00Z','week',now)).toBe(true);expect(inReceiptPeriod('2026-10-31T16:00:00Z','month',now)).toBe(true);expect(inReceiptPeriod('2026-11-03T16:00:00Z','today',now)).toBe(false);});
+ it('searches full permanent IDs and receipt aliases without mutating cash or status',()=>{const row:ReceiptView={id:'71117dd0-390a-4769-a525-8ab4c4a181b3',receipt:'B01-71117DD0390A',occurredAt:'2026-11-03T01:00:00Z',total:192500,cashReceived:400000,status:'partial',original:{}};const before=JSON.stringify(row);expect(receiptMatches(row,' 71117DD0 ','week','partial',now)).toBe(true);expect(receiptMatches(row,'b01-71117dd0390a','all','all',now)).toBe(true);expect(receiptMatches(row,'missing','all','all',now)).toBe(false);expect(receiptMatches(row,'','all','completed',now)).toBe(false);expect(JSON.stringify(row)).toBe(before);});
+});
