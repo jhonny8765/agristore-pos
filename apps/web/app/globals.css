@@ -745,6 +745,16 @@ form > .button {
   align-items: center;
   gap: 12px;
 }
+.close-shift-panel { max-width: 640px; }
+.shift-close-steps { list-style: decimal; padding-inline-start: 24px; margin: 24px 0; }
+.shift-close-steps > li { padding-inline-start: 6px; margin-block: 18px; }
+.shift-close-steps p { margin: 6px 0 10px; }
+.shift-close-form { border-top: 1px solid var(--line); padding-top: 22px; }
+.shift-close-form .field { max-width: 340px; }
+.shift-close-form input { font-size: 20px; min-height: 52px; }
+.shift-close-actions { display: flex; flex-wrap: wrap; gap: 12px; margin-block: 20px 14px; }
+.shift-close-form > p { max-width: 60ch; }
+.shift-close-warning { color: var(--amber); font-weight: 600; }
 .shift-badge {
   display: inline-flex;
   align-items: center;
@@ -2106,6 +2116,7 @@ code {
     padding: 8px;
     gap: 0;
   }
+  .heading-actions > .close-shift-shortcut { font-size: 12px; gap: 6px; padding: 8px 10px; }
   .practice-banner {
     font-size: 9px;
     padding: 8px 16px;

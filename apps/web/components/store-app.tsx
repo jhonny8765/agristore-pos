@@ -132,6 +132,7 @@ type View =
   | "counts"
   | "sales"
   | "sync"
+  | "close-shift"
   | "settings";
 type Row = Record<string, unknown>;
 const navigation = [
@@ -152,6 +153,7 @@ const viewTables: Record<View, string[]> = {
   counts: [],
   sales: [],
   sync: [],
+  "close-shift": [],
   settings: ["devices", "staff_memberships"],
 };
 const str = (row: Row, key: string) => String(row[key] ?? "");
@@ -228,6 +230,7 @@ export function StoreApp() {
   const [allPendingCount, setAllPendingCount] = useState(0);
   const [branchPendingCount, setBranchPendingCount] = useState(0);
   const [allOperationCount, setAllOperationCount] = useState(0);
+  const [branchOperationCount, setBranchOperationCount] = useState(0);
   const [practice, setPractice] = useState(false);
   const [operations, setOperations] = useState<PendingOperation[]>([]);
   const db = useMemo(
@@ -263,6 +266,8 @@ export function StoreApp() {
     [category, setCategory] = useState("All products"),
     [cash, setCash] = useState(""),
     [checkoutDone, setCheckoutDone] = useState<LocalSale>();
+  const [closingDraft, setClosingDraft] = useState<{shiftId: string; cash: string}>();
+  const closingCash = closingDraft?.shiftId === lease?.shiftId ? closingDraft?.cash ?? "" : "";
   const [authMode, setAuthMode] = useState<"login" | "signup">("login");
   const [salesCursor, setSalesCursor] = useState<SalesCursor>();
   const [savingSale, setSavingSale] = useState(false);
@@ -337,6 +342,7 @@ export function StoreApp() {
     setBranchPendingCount(local.branchPendingCount);
     setHasOlderLocal(local.hasOlder);
     setAllOperationCount(allOperations.length);
+    setBranchOperationCount(allOperations.filter(op => op.data.organizationId === org && (!op.data.branchId || op.data.branchId === b)).length);
     setOperations(
       allOperations.filter(
         (op) =>
@@ -1219,6 +1225,7 @@ export function StoreApp() {
     counts: "Physical stock counts",
     sales: "Sales & receipts",
     sync: "Synchronization",
+    "close-shift": "Close shift",
     settings: "Store settings",
   };
   const descriptions: Record<View, string> = {
@@ -1230,6 +1237,7 @@ export function StoreApp() {
     counts: "Compare what’s on the shelf with what’s in the book.",
     sales: "Every completed checkout, with its original record.",
     sync: "Every saved sale has a place. Nothing disappears from the queue.",
+    "close-shift": "Count the cash in your drawer, then finish your shift.",
     settings: "Your people, your branches, and your cashier shift.",
   };
   return (
@@ -1415,6 +1423,12 @@ export function StoreApp() {
                   <span />
                   Shift open
                 </span>
+              )}
+              {lease && view !== "close-shift" && (
+                <Button className="close-shift-shortcut" variant="outline" size="sm" disabled={busy || savingSale || installingUpdate}
+                  onClick={() => setView("close-shift")}>
+                  <LogOut size={15} /> Close shift
+                </Button>
               )}
               {view !== "pos" && (
                 <Button
@@ -3052,6 +3066,45 @@ export function StoreApp() {
             </>
           )}
 
+          {view === "close-shift" && (
+            <section className="panel close-shift-panel" aria-label="Close cashier shift">
+              {lease ? <>
+                <h2>{selectedBranch?.name} · {lease.name}</h2>
+                <ol className="shift-close-steps">
+                  <li><strong>Finish saved work</strong>
+                    {cart.items.length > 0 ? <><p>Your basket has {cart.items.length} unfinished {cart.items.length === 1 ? "item" : "items"}. Finish the sale or remove the items first.</p><Button variant="outline" onClick={() => setView("pos")}>Return to basket</Button></> : <p>Your basket is empty.</p>}
+                    {branchPendingCount > 0 || branchOperationCount > 0 ? <><p>{branchPendingCount} unconfirmed {branchPendingCount === 1 ? "sale" : "sales"}{branchOperationCount > 0 ? ` and ${branchOperationCount} saved requests` : ""}. Confirm them before closing.</p><Button variant="outline" onClick={() => setView("sync")}>Open Sync center</Button></> : <p>All saved sales and requests are confirmed.</p>}
+                  </li>
+                  <li><strong>Count your drawer</strong><p>Include the opening cash. Enter the money actually in the drawer; do not copy your sales total.</p></li>
+                </ol>
+                <form className="shift-close-form" onSubmit={(event) => {
+                  event.preventDefault();
+                  const counted = closingCash.trim();
+                  void run(async () => {
+                    if (!counted) throw new Error("Count the drawer and enter the cash amount first.");
+                    if (useCart.getState().items.length) throw new Error("Finish or remove the unfinished basket before closing the shift. No sale has been saved for that basket.");
+                    if (branchPendingCount) throw new Error("Synchronize every saved sale before closing the shift.");
+                    const result = await onlineOperation(db, member.userId, "close_shift", {
+                      ...context(), shiftId: lease.shiftId, countedCash: cents(counted),
+                    });
+                    setLease(await setting<Lease>(db, "lease"));
+                    setClosingDraft(undefined);
+                    notify(`Shift closed. Expected cash ${money(Number(result.expected_cash))}; counted ${money(Number(result.counted_cash))}.`);
+                  });
+                }}>
+                  <Field label="Cash counted in drawer (₱)"><input name="cash" type="number" inputMode="decimal" min="0" step="0.01" required placeholder="Enter counted cash" value={closingCash} onChange={event => setClosingDraft({shiftId: lease.shiftId, cash: event.target.value})} disabled={busy} aria-describedby="shift-close-help" /></Field>
+                  {!online && <p className="shift-close-warning">Reconnect to the internet to close. Your shift and saved sales stay on this PC.</p>}
+                  {practice && <p>Practice mode does not close a live cashier shift.</p>}
+                  <div className="shift-close-actions">
+                    <Button type="submit" disabled={!online || busy || syncing || savingSale || practice || installingUpdate || !closingCash.trim() || branchPendingCount > 0 || branchOperationCount > 0 || cart.items.length > 0}>{busy ? "Closing shift…" : "Close shift"}</Button>
+                    <Button type="button" variant="outline" disabled={busy} onClick={() => setView("pos")}>Keep shift open</Button>
+                  </div>
+                  <p id="shift-close-help">Closing compares your count with recorded cash. If confirmation is interrupted, open Sync center and retry the original closing request. Do not close again with a different amount.</p>
+                </form>
+              </> : <><h2>No shift is open</h2><p>No cashier shift is open. Open one from Checkout.</p><p>Your saved sales and closing records are retained.</p><Button variant="outline" onClick={() => setView("pos")}>Return to checkout</Button></>}
+            </section>
+          )}
+
           {view === "settings" && (
             <>
               <div className="two-column">
@@ -3097,48 +3150,8 @@ export function StoreApp() {
                       >
                         Renew offline authorization
                       </Button>
-                      <form
-                        className="spaced-form"
-                        onSubmit={(e) => {
-                          e.preventDefault();
-                          const f = new FormData(e.currentTarget);
-                          void run(async () => {
-                            if (useCart.getState().items.length)
-                              throw new Error("Finish or remove the unfinished basket before closing the shift. No sale has been saved for that basket.");
-                            if (branchPendingCount)
-                              throw new Error(
-                                "Synchronize every saved sale before closing the shift.",
-                              );
-                            const result = await onlineOperation(db, member.userId, "close_shift", {
-                              ...context(),
-                              shiftId: lease.shiftId,
-                              countedCash: cents(inputValue(f, "cash")),
-                            });
-                            setLease(await setting<Lease>(db, "lease"));
-                            notify(
-                              `Shift closed. Expected cash ${money(Number(result.expected_cash))}; counted ${money(Number(result.counted_cash))}.`,
-                            );
-                          });
-                        }}
-                      >
-                        <Field label="Cash counted in drawer (₱)">
-                          <input
-                            name="cash"
-                            type="number"
-                            min="0"
-                            step="0.01"
-                            required
-                          />
-                        </Field>
-                        <Button
-                          disabled={
-                            !online || busy || practice || branchPendingCount > 0 || operations.length > 0 || cart.items.length > 0
-                          }
-                        >
-                          Reconcile & close shift
-                        </Button>
-                      </form>
-                      <p>Finish the basket and confirm every saved sale, stock request and refund before closing. If closing is interrupted, keep this profile and use Sync center → Retry original request. The original counted cash is retained.</p>
+                      <Button variant="outline" disabled={busy || savingSale || installingUpdate} onClick={() => setView("close-shift")}>Count cash & close shift</Button>
+                      <p>Use Close shift at the top of any screen to finish your day.</p>
                     </>
                   ) : (
                     <p className="muted">

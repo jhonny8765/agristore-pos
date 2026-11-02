@@ -15,8 +15,8 @@ async function login(p:Page,a:{email:string;password:string}){await p.goto("/");
 
 test("closing waits for the basket and uncertain branch requests without changing cash or stock",async({page})=>{
  const a=await fixture();await login(page,a);await page.getByRole("button",{name:"Open shift",exact:true}).click();
- await page.getByRole("button",{name:"Add TEST operating feeds"}).click();await page.getByRole("button",{name:"Settings",exact:true}).click();
- const close=page.getByRole("button",{name:"Reconcile & close shift",exact:true});await expect(close).toBeDisabled();await expect(page.getByText(/Finish the basket and confirm every saved sale/)).toBeVisible();
+ await page.getByRole("button",{name:"Add TEST operating feeds"}).click();await page.getByRole("button",{name:"Close shift",exact:true}).click();
+ const close=page.getByRole("button",{name:"Close shift",exact:true});await expect(close).toBeDisabled();await expect(page.getByRole("button",{name:"Return to basket",exact:true})).toBeVisible();
  await page.getByRole("button",{name:"Checkout POS",exact:true}).click();await page.getByLabel("Cash received",{exact:true}).fill("2");await page.getByRole("button",{name:"Complete cash sale",exact:true}).click();
  await expect(page.getByRole("heading",{name:"Sale saved.",exact:true})).toBeVisible();await page.getByRole("button",{name:/^Sync center(?:\s+\d+)?$/}).click();await expect(page.getByRole("heading",{name:"Your local queue is clear",exact:true})).toBeVisible();
  // A second window can leave an uncertain request after this tab's last view.
@@ -26,9 +26,9 @@ test("closing waits for the basket and uncertain branch requests without changin
   const db=await new Promise<IDBDatabase>((resolve,reject)=>{const r=indexedDB.open("agristore-live-v1");r.onsuccess=()=>resolve(r.result);r.onerror=()=>reject(r.error);});
   try{await new Promise<void>((resolve,reject)=>{const tx=db.transaction("settings","readwrite"),store=tx.objectStore("settings"),l=store.get("lease");l.onsuccess=()=>{const key=`operation:receive_stock:${organizationId}:${branchId}`;store.put({key,value:{key,action:"receive_stock",actorId:l.result.value.cashierId,data:{organizationId,branchId,receiptId,source:"purchase",reference:"TEST rejected request",items:[]},fingerprint:"TEST",error:"TEST uncertain delivery response"}});};tx.oncomplete=()=>resolve();tx.onerror=()=>reject(tx.error);});}finally{db.close();}
  },{...a.ctx,receiptId:randomUUID()});
- await page.getByRole("button",{name:"Settings",exact:true}).click();await expect(close).toBeDisabled();
+ await page.getByRole("button",{name:"Close shift",exact:true}).click();await expect(close).toBeDisabled();
  await page.getByRole("button",{name:/^Sync center(?:\s+\d+)?$/}).click();await page.getByRole("button",{name:"Retry original request",exact:true}).click();await expect(page.getByRole("button",{name:"Retry original request",exact:true})).toHaveCount(0);
- await page.getByRole("button",{name:"Settings",exact:true}).click();await expect(close).toBeEnabled();await page.getByLabel("Cash counted in drawer (₱)",{exact:true}).fill("1");await close.click();await expect(page.getByText("No cashier shift is open. Open one from Checkout.",{exact:true})).toBeVisible();
+ await page.getByRole("button",{name:"Close shift",exact:true}).click();await expect(close).toBeDisabled();await page.getByLabel("Cash counted in drawer (₱)",{exact:true}).fill("1");await expect(close).toBeEnabled();await close.click();await expect(page.getByText("No cashier shift is open. Open one from Checkout.",{exact:true})).toBeVisible();
  const shifts=await a.owner.from("cashier_shifts").select("expected_cash,counted_cash,closed_at").eq("branch_id",a.branchId);expect(shifts.error).toBeNull();expect(shifts.data).toHaveLength(1);expect(shifts.data![0]).toMatchObject({expected_cash:100,counted_cash:100});expect(shifts.data![0].closed_at).not.toBeNull();
  const stock=await a.owner.from("branch_inventory").select("quantity").eq("branch_id",a.branchId).single();expect(stock.error).toBeNull();expect(Number(stock.data!.quantity)).toBe(99);
 });
@@ -38,7 +38,7 @@ test("a committed close with a lost response survives reload and recovery replay
  await page.getByRole("button",{name:"Add TEST operating feeds"}).click();await page.getByLabel("Cash received",{exact:true}).fill("2");await page.getByRole("button",{name:"Complete cash sale",exact:true}).click();await expect(page.getByRole("heading",{name:"Sale saved.",exact:true})).toBeVisible();
  await page.getByRole("button",{name:/^Sync center(?:\s+\d+)?$/}).click();await expect(page.getByRole("heading",{name:"Your local queue is clear",exact:true})).toBeVisible();
  let lost=false;await page.route("**/rest/v1/rpc/agri_command",async route=>{if(route.request().postDataJSON().action==="close_shift"&&!lost){const response=await route.fetch();expect(response.ok()).toBe(true);lost=true;await route.abort("failed");}else await route.continue();});
- await page.getByRole("button",{name:"Settings",exact:true}).click();await page.getByLabel("Cash counted in drawer (₱)",{exact:true}).fill("1");await page.getByRole("button",{name:"Reconcile & close shift",exact:true}).click();await expect.poll(()=>lost).toBe(true);
+ await page.getByRole("button",{name:"Close shift",exact:true}).click();await page.getByLabel("Cash counted in drawer (₱)",{exact:true}).fill("1");await page.getByRole("button",{name:"Close shift",exact:true}).click();await expect.poll(()=>lost).toBe(true);
  await page.getByRole("button",{name:"Checkout POS",exact:true}).click();await page.getByRole("button",{name:"Add TEST operating feeds"}).click();await page.getByLabel("Cash received",{exact:true}).fill("2");await page.getByRole("button",{name:"Complete cash sale",exact:true}).click();await expect(page.locator(".notice[role=alert]")).toContainText("Shift closing is awaiting confirmation");await expect(page.getByLabel(/^Quantity \(.+\) for TEST operating feeds$/)).toHaveValue("1");
  await page.getByRole("button",{name:/^Sync center(?:\s+\d+)?$/}).click();const dl=page.waitForEvent("download");await page.getByRole("button",{name:"Export recovery file",exact:true}).click();const file=await dl,bytes=await(await import("node:fs/promises")).readFile((await file.path())!);const exported=JSON.parse(bytes.toString());expect(exported.sales).toHaveLength(0);expect(exported.pendingOperations).toHaveLength(1);expect(exported.pendingOperations[0].data.countedCash).toBe(100);
  await page.reload();await page.getByRole("button",{name:/^Sync center(?:\s+\d+)?$/}).click();await page.getByRole("button",{name:"Retry original request",exact:true}).click();await expect(page.getByText(/Original shift closing confirmed/)).toBeVisible();await page.getByRole("button",{name:"Settings",exact:true}).click();await expect(page.getByText("No cashier shift is open. Open one from Checkout.",{exact:true})).toBeVisible();
@@ -62,9 +62,9 @@ test("closed-shift offline reload retains the downloaded branch and receipts wit
  const queue=page.getByRole("region",{name:/Synchronization: Transaction, Amount/});
  await expect(queue).toContainText("synced");
  const saved=await a.owner.from("sales").select("id,receipt,total").eq("branch_id",a.branchId);expect(saved.error).toBeNull();expect(saved.data).toHaveLength(1);const original=saved.data![0];
- await page.getByRole("button",{name:"Settings",exact:true}).click();
+ await page.getByRole("button",{name:"Close shift",exact:true}).click();
  await page.getByLabel("Cash counted in drawer (₱)",{exact:true}).fill("1");
- await page.getByRole("button",{name:"Reconcile & close shift",exact:true}).click();
+ await page.getByRole("button",{name:"Close shift",exact:true}).click();
  await expect(page.getByText("No cashier shift is open. Open one from Checkout.",{exact:true})).toBeVisible();
  // Initial installation deliberately does not claim a running checkout tab.
  // Wait for the cache, then reopen online so the next navigation is controlled.

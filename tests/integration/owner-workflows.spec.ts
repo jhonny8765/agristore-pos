@@ -116,12 +116,12 @@ async function login(
   ).toBeVisible();
 }
 async function closeShift(page: Page) {
-  await page.getByRole("button", { name: "Settings", exact: true }).click();
+  await page.getByRole("button", { name: "Close shift", exact: true }).click();
   await page
     .getByLabel("Cash counted in drawer (₱)", { exact: true })
     .fill("0");
   await page
-    .getByRole("button", { name: "Reconcile & close shift", exact: true })
+    .getByRole("button", { name: "Close shift", exact: true })
     .click();
   await expect(
     page.getByText("No cashier shift is open. Open one from Checkout.", {

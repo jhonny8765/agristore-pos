@@ -268,10 +268,10 @@ test("registered cashier recovers real offline sales after a lost acknowledgment
   await expect(branchPicker).toBeDisabled();
   await context.setOffline(false);
   await openShift(page, "0");
-  await page.getByRole("button", { name: "Settings", exact: true }).click();
+  await page.getByRole("button", { name: "Close shift", exact: true }).click();
   await page.getByLabel("Cash counted in drawer (₱)").fill("0");
   await page
-    .getByRole("button", { name: "Reconcile & close shift", exact: true })
+    .getByRole("button", { name: "Close shift", exact: true })
     .click();
   await expect(
     page.getByText("No cashier shift is open. Open one from Checkout.", {
