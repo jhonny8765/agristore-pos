@@ -1,6 +1,18 @@
 # Active Magpet endurance run — November 2, 2026
 
-**IN PROGRESS: the one-hour POS-only outage checkpoint passed at 14:55 on November 2. The eight-hour hold and final synchronization/recovery checks remain pending.** This replaces the October 28 worksheet for the current run only; the settled older Test Branch 4 history and recovery files remain untouched.
+**IN PROGRESS WITH AN INTERRUPTED NETWORK HOLD:** the one-hour POS-only outage checkpoint passed at14:55 on November2. At17:23, the server revealed25 original sales received at17:10:06–17:10:09, before the eight-hour deadline. The strict all-200-unuploaded eight-hour hold cannot pass in this run. Continue the same original records to21:59:10.835 for local retention evidence and final exact-once financial recovery. Do not restart the deadline, fabricate replacements, or present storage retention as eight uninterrupted offline hours. The settled October28 Test Branch4 history remains untouched.
+
+## Early partial upload: observed facts and continuing scope
+
+The server remained at zero run sales at09:08:35Z, then accepted25 original transactions at09:10:06–09:10:09Z. The reason is not established. The same-tab health request still failed with `ERR_INTERNET_DISCONNECTED` at09:23Z, proving that this probe alone does not guarantee isolation of all API writes. Do not blame staff or change browser/network settings to hide the interruption.
+
+Independent comparison of all25 complete server payloads with the original recovery baseline passed. Each has exactly one item, one original cash payment and one matching sale stock movement; none has review flags. The partial totals are25,025centavos (₱250.25),7.15kg, server feeds492.85kg, and overall434sales/445payments/464movements. The feed ledger equals the projection. All six prior-history/other-stock hashes remain unchanged. Private evidence is `magpet-endurance-partial-server-0924.json`, `magpet-endurance-partial-server-verdict.json` and `magpet-endurance-history-hashes-partial.json` under `.impeccable/review`.
+
+The POS still retained200 unresolved records, ₱1,925 visible total and local stock445/400/50 with persistent storage granted. Twenty-five displayed references now use the server's `B01-<12 uppercase UUID hex>` receipt instead of the local eight-character UUID prefix. Normalize that receipt before comparing display references; this does not replace complete UUID/payload verification. An acknowledged sale can remain unresolved until a fresh server snapshot incorporates it; do not deduct it again or delete it.
+
+A fresh recovery export `agristore-recovery-6b4f9328-254c-439d-a58a-4bf5a97c6ea0-part-1-of-1.json` was requested after detection. Its Windows Save As dialog required user assistance. Only record full local payload verification after the actual saved file is located and checked. The user has replied Saved; exact saved location is being checked.
+
+For later checkpoints, compare hosted totals with the actual subset of original IDs already received, starting from the unchanged409/420/439 baseline; the old zero-sales requirement below describes the original strict test and is now interrupted. Keep other apps online, preserve these same originals and the original eight-hour deadline, and do not intentionally reconnect/sign in early. At/after the deadline, fresh local-record evidence may establish eight-hour storage retention only. Final full recovery still requires all200 exact originals once, ₱1,925,55kg, final445/400/50 and overall609/620/639, followed by recovery replay without extra effects and closure of only this TEST shift.
 
 The user explicitly chose **POS-only offline; other PC apps stay connected**. Do not disconnect the entire PC or restart Windows. Whole-PC outage, browser-process restart and Windows restart remain separate untested gates.
 
