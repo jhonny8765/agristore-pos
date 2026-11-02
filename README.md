@@ -6,13 +6,13 @@ This is a development implementation. The real Windows restart test, an actual t
 
 ## Open the application
 
-Development preview: https://agristore-pos-staging-team-payaman2.vercel.app — Vercel authentication protects previews. Select **Try practice checkout** for a separate, local-only sample business. Practice transactions never upload to Supabase.
+Published pre-pilot site: **https://better-yield-magpet-pos.pages.dev/**. The [published-site rehearsal](docs/cloudflare-published-verification.md) covers genuine labelled TEST sales, offline reload/synchronization, refunds/correction, stock restoration, weekly/monthly analytics and the actual deployment/update. Select **Try practice checkout** for a separate, local-only sample business; Practice transactions never upload to Supabase.
 
-Use this stable staging address for browser-storage and update tests. Records saved under an older preview URL remain at that original browser origin; synchronize or export them there before moving to the stable address.
+The old Vercel preview remains available at https://agristore-pos-staging-team-payaman2.vercel.app with its preview authentication. Earlier records and the old installed shortcut belong to that origin; synchronize/export unresolved records before moving, and keep the old profile/site data. Install the PWA from the Pages address on the actual cashier PC and verify storage protection there.
 
 This installation is configured for **Magpet Branch only**, with branch creation/renaming and transfers unavailable. Sign in to the existing business; do not create a replacement business to bypass the restriction. The owner adds the catalog, imports independently verified opening stock once, registers the dedicated PC and assigns individual employee roles under Staff access. Open cashier shifts online. A maintainer can enable another branch only after owner acceptance of the Magpet pilot. See [the fixed setup](docs/single-branch-setup.md), [software verification](docs/magpet-pilot-verification.md) and [the actual-store test sheet](docs/magpet-store-test.md).
 
-The selected Supabase project (`vbmnnouwmxcuibywdkjw`) is the staging database. Rollback-only SQL tests leave no test businesses or transactions in it. Create a separate production project before the pilot.
+The selected Supabase project (`vbmnnouwmxcuibywdkjw`) is still the TEST/staging database and contains retained synthetic rehearsal history, including linked refunds. Rollback-only SQL tests do not add business records, but explicitly authorized UI rehearsals remain recorded. Prepare isolated production data and verify opening stock/backups before the pilot; do not delete completed TEST journals to make the history appear clean.
 
 ## Develop locally
 
