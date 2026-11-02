@@ -114,6 +114,7 @@ import { activateReadyUpdate, findReadyUpdate } from "../lib/pwa-update";
 import { ApprovalForm } from "./approval-form";
 import { HistoryRegister } from "./history-register";
 import { StorageHealth } from "./storage-health";
+import { useAppInstall } from "../lib/use-app-install";
 import { OperatingGuide } from "./operating-guide";
 import { StockControls } from "./stock-controls";
 import { StockLossReport } from "./stock-loss-report";
@@ -216,6 +217,7 @@ function download(name: string, data: unknown) {
 }
 
 export function StoreApp() {
+  const appInstall = useAppInstall();
   const [dispatchStock,setDispatchStock]=useState("");
   const [quickUnit,setQuickUnit]=useState("");
   const [partialRefundSaleId,setPartialRefundSaleId]=useState<string>();
@@ -520,8 +522,6 @@ export function StoreApp() {
           }
         }
       }
-      if (navigator.storage?.persist && !practice)
-        await navigator.storage.persist();
       if (current()) setReady(true);
     })().catch((e) => {
       if (!current()) return;
@@ -3148,12 +3148,7 @@ export function StoreApp() {
                 </section>
                 <section className="panel">
                   <h2>Application & recovery</h2>
-                  <StorageHealth />
-                  <p className="muted">
-                    Install Better Yield from your browser’s app menu after opening your
-                    shift online. Keep this dedicated browser profile and its
-                    site data.
-                  </p>
+                  <StorageHealth appInstall={appInstall} appName="Better Yield" />
                   <dl className="detail-list">
                     <div>
                       <dt>Database</dt>

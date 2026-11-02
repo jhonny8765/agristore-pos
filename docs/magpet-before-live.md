@@ -34,6 +34,8 @@ Provide real product names/SKUs, selling prices, purchase costs, each sack/bottl
 
 Choose the Windows PC and browser profile, install/open the PWA, verify protected storage and keep site data. Finish the postponed real 60-minute offline and eight-hour endurance checks, including an authorized normal Windows restart. Save other work first. No restart is performed without your agreement.
 
+Follow [the storage setup steps](browser-storage-protection.md). Use the installation for the **Cloudflare address** and confirm **Persistent storage granted** in Settings; the old Vercel app's permission does not carry over. A refusal or an unknown result leaves the offline pilot gate open. Never clear site data to fix the warning.
+
 Use a protected Windows login and screen lock. Use an ordinary dedicated browser profile, not guest/private browsing; check that exit/cleanup settings do not erase this site's data. Keep any existing device-encryption recovery key private and recoverable before changing disk security. The application does not encrypt a stolen or unlocked Windows session by itself.
 
 Every completed test sale must survive and synchronize once. Recheck the original IDs, payments, stock movements and recovery-file replay. A simulated clock change or a short automated run does not complete this step. Follow [the endurance record sheet](endurance-test-record.md).
