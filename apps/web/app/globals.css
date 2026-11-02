@@ -1,4 +1,16 @@
 @import "tailwindcss";
+.record-pages { min-width: 0; width: 100%; }
+.record-pagination { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: .75rem; padding: .85rem 0; color: var(--muted); font-size: .85rem; }
+.record-page-buttons { display: flex; align-items: center; gap: .65rem; flex-wrap: wrap; color: var(--ink); }
+.search-select { position: relative; min-width: 0; width: 100%; }
+.search-select > input[role="combobox"] { width: 100%; }
+.search-select-popup { position: absolute; z-index: 30; top: calc(100% + 4px); left: 0; width: 100%; min-width: 0; background: var(--white); color: var(--ink); border: 1px solid var(--control-line); border-radius: var(--radius); box-shadow: 0 8px 24px rgb(23 62 50 / 14%); overflow: hidden; }
+.search-select-popup [role="listbox"] { max-height: 280px; overflow-y: auto; }
+.search-select-popup [role="option"] { padding: .7rem .85rem; cursor: pointer; overflow-wrap: anywhere; }
+.search-select-popup [role="option"]:hover, .search-select-popup [role="option"].active { background: var(--soft); }
+.search-select-popup [aria-selected="true"] { font-weight: 700; }
+.search-select-popup small { display: block; padding: .7rem .85rem; border-top: 1px solid var(--line); color: var(--muted); }
+
 @theme {
   --font-sans: "DM Sans Variable", sans-serif;
 }

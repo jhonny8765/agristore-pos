@@ -264,7 +264,15 @@ test("200 browser checkouts persist through a simulated hour offline", async ({
   await page.clock.setSystemTime(Date.now() + 3600_000);
   await page.reload();
   await page.getByRole("button", { name: "Sync center" }).click();
-  await expect(page.locator("tbody tr")).toHaveCount(200);
+  await expect(page.locator("tbody tr")).toHaveCount(10);
+  const pages = page.getByRole("navigation", {name: "Table records pages above", exact:true});
+  await expect(pages).toContainText("1–10 of 200 loaded");
+  await pages.getByRole("button", {name:"Last loaded",exact:true}).click();
+  await expect(pages).toContainText("Page 20 of 20");
+  await expect(page.locator("tbody tr")).toHaveCount(10);
+  expect(await page.evaluate(() => new Promise<number>((resolve,reject) => {
+    const request=indexedDB.open("agristore-practice-v1");request.onsuccess=()=>{const db=request.result;const tx=db.transaction("sales","readonly"), count=tx.objectStore("sales").count();count.onsuccess=()=>resolve(count.result);tx.oncomplete=()=>db.close();tx.onerror=()=>reject(tx.error);};request.onerror=()=>reject(request.error);
+  }))).toBe(200);
 });
 
 
@@ -296,7 +304,7 @@ test("a cashier with 100000 retained receipts can reload, sell and export only u
   await expect(page.getByRole('button',{name:'Add Grower feeds'})).toBeEnabled();
   await buy(page);
   await page.getByRole('button',{name:/^Sync center(?:\s+\d+)?$/}).click();
-  await expect(page.locator('tbody tr')).toHaveCount(50);
+  await expect(page.locator('tbody tr')).toHaveCount(10);
   const downloadPromise=page.waitForEvent('download');
   await page.getByRole('button',{name:'Export recovery file',exact:true}).click();
   const download=await downloadPromise;
@@ -306,7 +314,7 @@ test("a cashier with 100000 retained receipts can reload, sell and export only u
   expect(archive.sales).toHaveLength(1); expect(archive.sales[0].status).toBe('pending');
   await page.reload();
   await page.getByRole('button',{name:/^Sync center(?:\s+\d+)?$/}).click();
-  await expect(page.locator('tbody tr')).toHaveCount(50);
+  await expect(page.locator('tbody tr')).toHaveCount(10);
   const count=await page.evaluate(()=>new Promise<number>((resolve,reject)=>{
     const request=indexedDB.open('agristore-practice-v1');request.onsuccess=()=>{const db=request.result;const tx=db.transaction('sales','readonly');const count=tx.objectStore('sales').count();count.onsuccess=()=>resolve(count.result);tx.oncomplete=()=>db.close();tx.onerror=()=>reject(tx.error);};request.onerror=()=>reject(request.error);
   }));

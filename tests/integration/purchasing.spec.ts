@@ -1,3 +1,4 @@
+import { selectChoice } from "../helpers/search-choice";
 import { randomUUID } from "node:crypto";
 import { readFile } from "node:fs/promises";
 import { createClient } from "@supabase/supabase-js";
@@ -21,7 +22,7 @@ async function login(page:Page,a:{email:string;password:string}){
   await page.goto("/");await page.getByLabel("Email address",{exact:true}).fill(a.email);await page.getByLabel("Password",{exact:true}).fill(a.password);await page.getByRole("button",{name:"Sign in",exact:true}).click();await page.getByRole("button",{name:"Purchasing",exact:true}).click();await expect(page.getByRole("heading",{name:"Purchase orders",exact:true})).toBeVisible();
 }
 async function fillDelivery(page:Page,orderId:string,reference:string,accepted="0",held="0",rejected="10"){
-  await page.getByLabel("Delivery purchase order",{exact:true}).selectOption(orderId);
+  await selectChoice(page.getByLabel("Delivery purchase order",{exact:true}), orderId);
   await page.getByLabel("Supplier inspection document reference",{exact:true}).fill(reference);
   await page.getByLabel("Delivery inspection explanation",{exact:true}).fill("TEST actual delivery counted and inspected");
   for(const [label,value] of [["Supplier document quantity 1","10"],["Accepted saleable quantity 1",accepted],["Held quantity 1",held],["Rejected quantity 1",rejected],["Inspection difference evidence 1","TEST damaged packaging and supplier shortage"]])await page.getByLabel(label,{exact:true}).fill(value);
@@ -29,7 +30,7 @@ async function fillDelivery(page:Page,orderId:string,reference:string,accepted="
 test("owner-approved order supports fully rejected and mixed deliveries, held return, claim resolution and accessible exports",async({page,browser})=>{
   const a=await fixture();await login(page,a);
   await page.getByText("Request a purchase order",{exact:true}).click();
-  await page.getByLabel("Order supplier",{exact:true}).selectOption(a.supplierId);await page.getByLabel("Purchase order reference",{exact:true}).fill("TEST-PO-001");await page.getByLabel("Order explanation",{exact:true}).fill("TEST order ten sacks");await page.getByLabel("Ordered product / unit 1",{exact:true}).selectOption(a.unitId);await page.getByLabel("Ordered quantity 1",{exact:true}).fill("10");
+  await selectChoice(page.getByLabel("Order supplier",{exact:true}), a.supplierId);await page.getByLabel("Purchase order reference",{exact:true}).fill("TEST-PO-001");await page.getByLabel("Order explanation",{exact:true}).fill("TEST order ten sacks");await selectChoice(page.getByLabel("Ordered product / unit 1",{exact:true}), a.unitId);await page.getByLabel("Ordered quantity 1",{exact:true}).fill("10");
   await page.getByRole("button",{name:"Save order request",exact:true}).click();
   const orders=page.getByRole("region",{name:"Purchase order register",exact:true});await expect(orders).toContainText("Awaiting owner approval");
   await orders.getByRole("button",{name:"Approve purchase order",exact:true}).click();await page.getByLabel("Order approval / closure evidence",{exact:true}).fill("TEST supplier and quantity verified by owner");await page.getByRole("button",{name:"Approve order",exact:true}).click();await expect(orders).toContainText("Approved / open");

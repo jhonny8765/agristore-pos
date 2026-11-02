@@ -1,4 +1,5 @@
 "use client";
+import { RecordTable } from "./record-pages";
 import { useCallback, useEffect, useId, useRef, useState } from "react";
 import Decimal from "decimal.js";
 import type { PosDatabase } from "@agristore/offline";
@@ -73,10 +74,10 @@ export function StockFollowUps({ db, organizationId, branchId, actorId, products
       {loading && <p role="status">Refreshing reminders and investigations…</p>}
       {data ? <>
         <p>As of {time(data.asOf)} · Asia/Manila · {data.expiryTotals.expired} expired · {data.expiryTotals.today} expire today · {data.expiryTotals.soon} approaching expiry · {data.expiryTotals.missing} missing expiry. Refresh before acting.</p>
-        {data.expiry.length ? <div className="table-wrap history-table stock-control-table" role="region" aria-label="Expiry reminders" tabIndex={0}><table role="table"><thead><tr><th scope="col">Product / lot</th><th scope="col">Reminder / physical quantities</th></tr></thead><tbody>{data.expiry.map(row => <tr key={`${row.product_id}:${row.batch_id ?? "none"}`}>
+        {data.expiry.length ? <div className="table-wrap history-table stock-control-table" role="region" aria-label="Expiry reminders" tabIndex={0}><RecordTable role="table"><thead><tr><th scope="col">Product / lot</th><th scope="col">Reminder / physical quantities</th></tr></thead><tbody>{data.expiry.map(row => <tr key={`${row.product_id}:${row.batch_id ?? "none"}`}>
           <td><strong>{row.product_name}</strong><small>{row.sku} · Lot: {row.lot}</small><small>Expiry: {row.expires_on ?? "not recorded"}</small></td>
           <td><strong>{expiryStatus(row)}</strong><small>On hand: {new Decimal(row.saleable).toFixed()} {row.base_unit}</small><small>Held separately: {new Decimal(row.held).toFixed()} {row.base_unit}</small></td>
-        </tr>)}</tbody></table></div> : <p>No stock matches this expiry filter. Missing expiry dates appear separately when expiry tracking is required.</p>}
+        </tr>)}</tbody></RecordTable></div> : <p>No stock matches this expiry filter. Missing expiry dates appear separately when expiry tracking is required.</p>}
         <p>{data.expiry.length} reminder rows loaded. {data.expiryNext ? "More reminders are available." : "End of matching reminders."}</p>
         {data.expiryNext && <Button variant="outline" disabled={blocked} onClick={() => void load("expiry", data.expiryNext)}>Load more expiry reminders</Button>}
       </> : !loading && <p>{error ? "Current reminders are unavailable. Retry online." : "Connect to load reminders."}</p>}
@@ -87,7 +88,7 @@ export function StockFollowUps({ db, organizationId, branchId, actorId, products
       <label className="field followup-filter"><span id={`${labelId}-investigation`}>Investigation filter</span><select aria-labelledby={`${labelId}-investigation`} value={filter} disabled={blocked} onChange={e => { setData(undefined); setFilter(e.target.value); }}><option value="all">All unresolved</option><option value="overdue">Overdue</option><option value="due_today">Due today</option><option value="unassigned">Unassigned / needs reassignment</option><option value="mine">Assigned to me</option></select></label>
       {data && <>
         <p role="status">{data.totals.open} open investigations · {data.totals.overdue} overdue · {data.totals.dueToday} due today · {data.totals.unassigned} need assignment. Showing {data.cases.length} matching cases, oldest first.</p>
-        {data.cases.length ? <div className="table-wrap history-table stock-control-table" role="region" aria-label="Open stock investigations" tabIndex={0}><table role="table"><thead><tr><th scope="col">Issue / evidence / follow-up</th><th scope="col">Follow-up actions</th></tr></thead><tbody>{data.cases.map(row => <tr key={`${row.id}:${row.follow_up_version}`}>
+        {data.cases.length ? <div className="table-wrap history-table stock-control-table" role="region" aria-label="Open stock investigations" tabIndex={0}><RecordTable role="table"><thead><tr><th scope="col">Issue / evidence / follow-up</th><th scope="col">Follow-up actions</th></tr></thead><tbody>{data.cases.map(row => <tr key={`${row.id}:${row.follow_up_version}`}>
           <td><strong>{row.kind.replaceAll("_", " ")}</strong><small>{time(row.created_at)} · Source: {row.source_id}</small>
             <details><summary>Recorded details</summary><p className="stock-evidence">{evidence(row, products)}</p></details>
             <p><strong>Responsible: {row.assigned_user_id ? row.assigned_to : "Unassigned"}</strong></p>
@@ -105,7 +106,7 @@ export function StockFollowUps({ db, organizationId, branchId, actorId, products
             {(canAssign || row.assigned_user_id === actorId) && <ApprovalForm action="Record progress" label="Progress evidence" description="Record what was checked and what is still unresolved. Only the owner can close the investigation." confirmLabel="Save progress" disabled={blocked} onConfirm={reason => execute(() => save("note_stock_exception", { exceptionId: row.id, expectedVersion: row.follow_up_version, reason }))} />}
             {row.details.purchasingInspection === true ? <p>Resolve this supplier claim in Purchasing with its credit, return or outcome reference. Assignment and progress remain available here.</p> : owner ? <ApprovalForm action="Resolve investigation" label="Evidence and outcome" description="Record what was checked, the cause if established, and the corrective action. This does not change stock." confirmLabel="Record resolution" disabled={blocked} onConfirm={reason => execute(() => save("resolve_stock_exception", { exceptionId: row.id, reason }))} /> : <p>Owner resolution required.</p>}
           </div></td>
-        </tr>)}</tbody></table></div> : <p>No unresolved investigations match this filter.</p>}
+        </tr>)}</tbody></RecordTable></div> : <p>No unresolved investigations match this filter.</p>}
         <p>{data.next ? "Older-first worklist continues; more matching cases remain." : "End of matching unresolved cases. Resolved history remains retained."}</p>
         {data.next && <Button variant="outline" disabled={blocked} onClick={() => void load("cases", data.next)}>Load more investigations</Button>}
       </>}

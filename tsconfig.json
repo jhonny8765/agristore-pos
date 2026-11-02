@@ -25,6 +25,7 @@
     "apps/**/*.tsx",
     "packages/**/*.ts",
     "tests/**/*.ts",
+    "tests/**/*.tsx",
     "*.ts"
   ],
   "exclude": ["node_modules", "apps/web/.next"]

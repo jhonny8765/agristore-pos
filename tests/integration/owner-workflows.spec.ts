@@ -1,3 +1,4 @@
+import { selectChoice } from "../helpers/search-choice";
 import {sealedCount} from "./blind-count-fixtures";
 import { randomUUID } from "node:crypto";
 import { createClient, type SupabaseClient } from "@supabase/supabase-js";
@@ -177,7 +178,7 @@ test("confirmed deliveries and opening imports stay saved when the following sto
       await route.fulfill({ response });
     } else await route.continue();
   });
-  await page.getByLabel("Product and unit").selectOption(a.unitId, { timeout: 20_000 });
+  await selectChoice(page.getByLabel("Product and unit"), a.unitId, { timeout: 20_000 });
   await page.getByLabel("Delivery / invoice reference", { exact: true }).fill("TEST confirmed delivery");
   await page.getByLabel("Quantity received", { exact: true }).fill("2");
   await page.getByRole("button", { name: "Receive stock", exact: true }).click();
@@ -279,7 +280,7 @@ test("transfers and count approvals identify separate lots, base quantities and 
   await page.getByRole("button", { name: "Transfers", exact: true }).click();
   for (const lot of lots) {
     const batchId = batches.data!.find((batch) => batch.lot === lot.lot)!.id;
-    await page.getByLabel("Product / batch").selectOption(`${productId}:${batchId}`);
+    await selectChoice(page.getByLabel("Product / batch"), `${productId}:${batchId}`);
     await page.getByRole("combobox", { name: "Destination branch", exact: true }).selectOption(destination);
     await page.getByLabel("Quantity in base units (kg / liter / meter / piece)", { exact: true }).fill(lot.transfer);
     await page.getByRole("button", { name: "Dispatch stock", exact: true }).click();

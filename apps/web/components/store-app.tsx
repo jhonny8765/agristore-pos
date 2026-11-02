@@ -1,4 +1,6 @@
 "use client";
+import { SearchableSelect } from "./search-select";
+import { RecordTable, RecordPages } from "./record-pages";
 import { MeasuredQuantity } from "./measured-quantity";
 import { SalesAnalytics } from "./sales-analytics";
 import { PartialRefundControl } from "./partial-refund";
@@ -936,10 +938,10 @@ export function StoreApp() {
     );
   };
   const dispatchOptions=useMemo(()=>products.flatMap(p=>p.batches.length?p.batches.map(b=>`${p.id}:${b.id}`):[`${p.id}:none`]),[products]);
-  const dispatchSelection=dispatchOptions.includes(dispatchStock)?dispatchStock:dispatchOptions[0]??"";
+  const dispatchSelection=dispatchOptions.includes(dispatchStock)?dispatchStock:"";
   const dispatchProduct=products.find(p=>p.id===dispatchSelection.split(":")[0]);
-  const quickProduct=products.find(p=>p.units.some(u=>u.id===quickUnit))??products.find(p=>p.units.length);
-  const quickSellingUnit=quickProduct?.units.find(u=>u.id===quickUnit)??quickProduct?.units[0];
+  const quickProduct=products.find(p=>p.units.some(u=>u.id===quickUnit));
+  const quickSellingUnit=quickProduct?.units.find(u=>u.id===quickUnit);
   const stockQuantity = (row: Row, quantity: string) =>
     `${new Decimal(quantity).toFixed()} ${historicalStock(products, row).baseUnit || "(base unit unavailable)"}`;
   const branchName = (id: unknown) =>
@@ -960,7 +962,7 @@ export function StoreApp() {
           : `${titles[view]}: ${headers.slice(0, 2).join(", ")}`
       }
     >
-      <table>
+      <RecordTable key={`${member?.organizationId}:${branchId}:${view}:${kind ?? headers.join("|")}`}>
         <thead>
           <tr>
             {headers.map((h) => (
@@ -971,7 +973,7 @@ export function StoreApp() {
           </tr>
         </thead>
         <tbody>{body}</tbody>
-      </table>
+      </RecordTable>
     </div>
   );
   const historyProps = {
@@ -1545,7 +1547,7 @@ export function StoreApp() {
                   <span>Prices in Philippine pesos</span>
                 </div>
                 {visible.length ? (
-                  <div className="product-grid">
+                  <RecordPages className="product-grid" label="Products" resetKey={`${query}:${category}`}>
                     {visible.map((p) => {
                       const available = productStock(p, stock);
                       const kilo = kiloUnit(p);
@@ -1656,7 +1658,7 @@ export function StoreApp() {
                         </article>
                       );
                     })}
-                  </div>
+                  </RecordPages>
                 ) : (
                   <Empty
                     title={
@@ -2146,15 +2148,15 @@ export function StoreApp() {
                       }}
                     >
                       <Field label="Product and selling unit">
-                        <select name="unit" required>
+                        <SearchableSelect name="unit" aria-label="Product and selling unit" required>
                           {products.flatMap((p) =>
                             p.units.map((u) => (
-                              <option key={u.id} value={u.id}>
+                              <option key={u.id} value={u.id} data-search={`${p.sku} ${("originalCode" in p ? String(p.originalCode??"") : "")}`}>
                                 {p.name} · {u.name}
                               </option>
                             )),
                           )}
-                        </select>
+                        </SearchableSelect>
                       </Field>
                       <Field label="New price (₱)">
                         <input
@@ -2232,28 +2234,28 @@ export function StoreApp() {
                     }}
                   >
                     <Field label="Supplier">
-                      <select name="supplier">
+                      <SearchableSelect name="supplier" aria-label="Supplier">
                         <option value="">No supplier selected</option>
                         {(cloud.suppliers ?? []).map((r) => (
                           <option key={str(r, "id")} value={str(r, "id")}>
                             {str(r, "name")}
                           </option>
                         ))}
-                      </select>
+                      </SearchableSelect>
                     </Field>
                     <Field label="Delivery / invoice reference">
                       <input name="reference" required />
                     </Field>
                     <Field label="Product and unit">
-                      <select name="unit" aria-label="Product and unit" required value={quickSellingUnit?.id??""} onChange={e=>setQuickUnit(e.target.value)}>
+                      <SearchableSelect name="unit" aria-label="Product and unit" required value={quickSellingUnit?.id??""} onValueChange={value =>setQuickUnit(value)}>
                         {products.flatMap((p) =>
                           p.units.map((u) => (
-                            <option key={u.id} value={u.id}>
+                            <option key={u.id} value={u.id} data-search={`${p.sku} ${("originalCode" in p ? String(p.originalCode??"") : "")}`}>
                               {p.name} · {u.name}
                             </option>
                           )),
                         )}
-                      </select>
+                      </SearchableSelect>
                     </Field>
                     <MeasuredQuantity key={`quick:${branchId}:${quickSellingUnit?.id}`} label="Quantity received" name="quantity" measurement={{baseUnit:quickProduct?.baseUnit??"base units",unitName:quickSellingUnit?.name??"selected unit",factor:quickSellingUnit?.factor??"1"}} positive disabled={busy||!online||!quickSellingUnit}/>
 
@@ -2980,13 +2982,13 @@ export function StoreApp() {
                     body={branchId ? "Every completed checkout remains listed here, including failed uploads." : "Reconnect to identify this account’s downloaded branch. Existing records are retained; this empty view does not mean the PC has no saved sales."}
                   />
                 )}
-                <p className="muted">All unresolved sales and up to {localHistoryLimit} recent saved records are shown. Earlier confirmed history remains retained.</p>
+                <p className="muted">All unresolved sales and up to {localHistoryLimit} recent saved records are available in pages of 10. Earlier confirmed history remains retained.</p>
                 {hasOlderLocal && localHistoryLimit < 10000 && <Button variant="outline" onClick={() => setLocalHistoryLimit(n => Math.min(10000,n + 50))}>Load older saved records</Button>}
               </section>
               {operations.length > 0 && (
                 <section className="panel">
                   <h2>Online operations awaiting confirmation</h2>
-                  {operations.map((op) => (
+                  <RecordPages label="Saved records">{operations.map((op) => (
                     <div className="pending-operation" key={op.key}>
                       <div>
                         <strong>{op.action.replaceAll("_", " ")}</strong>
@@ -3012,7 +3014,7 @@ export function StoreApp() {
                         Retry original request
                       </Button>
                     </div>
-                  ))}
+                  ))}</RecordPages>
                 </section>
               )}
               <div className="recovery-actions">
@@ -3654,21 +3656,21 @@ export function StoreApp() {
 function StockSelect({ products,onChange,value }: { products: Product[];onChange?:(value:string)=>void;value?:string }) {
   return (
     <Field label="Product / batch">
-      <select name="stock" aria-label="Product / batch" required value={value} onChange={e=>onChange?.(e.target.value)}>
+      <SearchableSelect name="stock" aria-label="Product / batch" required value={value} onValueChange={value =>onChange?.(value)}>
         {products.flatMap((p) =>
           p.batches.length
             ? p.batches.map((b) => (
-                <option key={b.id} value={`${p.id}:${b.id}`}>
+                <option key={b.id} value={`${p.id}:${b.id}`} data-search={`${p.sku} ${("originalCode" in p ? String(p.originalCode??"") : "")}`}>
                   {p.name} · {b.lot} ({p.baseUnit})
                 </option>
               ))
             : [
-                <option key={p.id} value={`${p.id}:none`}>
+                <option key={p.id} value={`${p.id}:none`} data-search={`${p.sku} ${("originalCode" in p ? String(p.originalCode??"") : "")}`}>
                   {p.name} ({p.baseUnit})
                 </option>,
               ],
         )}
-      </select>
+      </SearchableSelect>
     </Field>
   );
 }

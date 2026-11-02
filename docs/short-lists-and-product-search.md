@@ -1,0 +1,15 @@
+# Short lists and product search
+
+Receipts, saved transaction queues, inventory and other saved registers now show at most **10 records per page**. Use **Previous**, **Next**, **First** or **Last loaded** above or below the list. The page number and loaded count show where you are. When the server has older records, the existing **Load older…** action fetches more pages without growing the visible list beyond ten. CSV exports still include all loaded records, as labelled.
+
+The same paging applies to blind-count records, purchasing and delivery registers, stock issues, held goods, expiry reminders, investigations, loss reports, analytics, staff/device/branch tables, pending requests, supplier-claim notes and refund history. Basket lines and editable order/inspection lines remain together so a page change cannot hide an unfinished quantity.
+
+In **Stock counts → Start a blind count**, type part of a product name, SKU, original supplier code or lot in **Product / batch**, then choose the matching result. Suggestions show at most ten matches; type more letters to narrow a large catalog. Arrow keys and Enter choose a result, and Escape dismisses suggestions. No expected stock or previous count is included in this picker.
+
+The same search works for product/unit choices in receiving, price changes, transfers, stock issues, purchase orders and delivery inspections, and for supplier/order choices in purchasing. A typed phrase alone is not a product selection. An optional supplier may be blank, but a typed supplier name must be chosen from the results before saving. Editing a previously selected choice clears its saved ID until another result is chosen, and dependent quantity fields reset when the product or unit changes. New count, issue, transfer and receiving forms require an explicit product choice.
+
+Paging changes presentation only. Full saved records, unresolved-sale counts, pending-request checks, cash totals, stock calculations and original transaction IDs retain their existing sources. It does not delete, refund, import, synchronize or duplicate a sale.
+
+Verification: large-catalog browser fixtures cover 120 products, original-code and lot search, keyboard selection, invalid free text, reset, hidden blind-count balances and exact submitted product/batch IDs. List fixtures cover first/last/next pages, newly loaded rows, shrinking refresh results and intact aggregate amounts. Axe found no violations at 1440px and 390px, with no horizontal page overflow. All 473 unit tests passed. Existing browser checkout checks include 200 retained sales across 20 pages, weighed quantities, cash/change and closing. The published preview passed 26 Practice regression cases. Genuine authenticated Supabase integration selectors were updated; Docker is unavailable on this PC, so those integration cases require their existing disposable-database environment.
+
+The original Magpet endurance verdict remains in `magpet-endurance-20261102-results.md`. These UI checks create no live business purchases or stock movements.

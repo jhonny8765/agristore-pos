@@ -1,4 +1,5 @@
 "use client";
+import { RecordTable } from "./record-pages";
 import { useCallback, useEffect, useId, useRef, useState } from "react";
 import Decimal from "decimal.js";
 import type { Product } from "@agristore/domain";
@@ -113,7 +114,7 @@ export function StockLossReport({ db, organizationId, branchId, branchName, acto
           <p>Other authorised removals: {reportMoney(data.totals.documentedOtherCentavos)} documented · {data.totals.otherRows} rows · {data.totals.missingOtherCosts} unvalued. This amount is separate from the loss subtotal.</p>
         </div>
         <p>Held goods, pending counts, unreceived transfers and supplier-document shortfalls are not automatically posted losses. Review them in Inventory. Transfer shortages are attributed to the dispatch branch; disposing held goods is recorded once at the branch holding them.</p>
-        {data.rows.length ? <div className="table-wrap history-table loss-table" role="region" aria-label="Purchase-cost stock-loss rows" tabIndex={0}><table role="table"><thead><tr><th scope="col">Product / lot / source</th><th scope="col">Removed quantity</th><th scope="col">Documented value / evidence</th></tr></thead><tbody>{data.rows.map(row => {
+        {data.rows.length ? <div className="table-wrap history-table loss-table" role="region" aria-label="Purchase-cost stock-loss rows" tabIndex={0}><RecordTable role="table"><thead><tr><th scope="col">Product / lot / source</th><th scope="col">Removed quantity</th><th scope="col">Documented value / evidence</th></tr></thead><tbody>{data.rows.map(row => {
           const product = products.find(p => p.id === row.product_id);
           const units = row.purchase_units ?? product?.units ?? [];
           return <tr key={`${row.loss_key}:${row.evidence_id ?? "missing"}`}>
@@ -131,14 +132,14 @@ export function StockLossReport({ db, organizationId, branchId, branchName, acto
             <CostHistory organizationId={organizationId} row={row} asOf={data.asOf} online={online} disabled={blocked} />
             </td>
           </tr>;
-        })}</tbody></table></div> : <p>No posted removals match this report. This does not prove that physical stock has no unrecorded shortage.</p>}
+        })}</tbody></RecordTable></div> : <p>No posted removals match this report. This does not prove that physical stock has no unrecorded shortage.</p>}
         <div className="loss-report-actions"><Button variant="outline" disabled={blocked || !data.next} onClick={() => void load("losses", data)}>Load more loss rows</Button><Button variant="outline" disabled={loading || !data.rows.length} onClick={() => downloadCsv("stock-loss-loaded-rows.csv", lossCsv(data, scope))}>Export loaded loss rows (CSV)</Button></div>
         <p>{data.rows.length} loss/removal rows loaded. {data.next ? "More matching rows are available." : "End of matching removals."} Totals above cover the complete range; CSV contains only loaded rows. Keep exported records private.</p>
       </> : !loading && <p>Connect to load the report.</p>}
     </section>
     {data && <section className="panel stock-loss-report">
       <h2>Stock reconciliation</h2><p>{scope} · Same recorded-date range and snapshot as the loss report. Starting quantity plus the signed movements equals closing book quantity. Held goods and outstanding dispatch are separate balances; do not add them into that equation.</p>
-      {data.reconciliation.length ? <div className="table-wrap history-table" role="region" aria-label="Stock-loss quantity reconciliation" tabIndex={0}><table><thead><tr><th scope="col">Branch / product / lot</th>{reconciliationQuantities.map(([key, label]) => <th scope="col" key={key}>{label}</th>)}</tr></thead><tbody>{data.reconciliation.map(row => <tr key={`${row.branch_id}:${row.product_id}:${row.batch_id ?? "none"}`}><td><strong>{row.product_name}</strong><small>{row.branch_name} · {row.lot} · {row.base_unit}</small></td>{reconciliationQuantities.map(([key]) => <td className="numeric" key={key}>{new Decimal(row[key]).toFixed()}</td>)}</tr>)}</tbody></table></div> : <p>No stock-book movements match this cutoff.</p>}
+      {data.reconciliation.length ? <div className="table-wrap history-table" role="region" aria-label="Stock-loss quantity reconciliation" tabIndex={0}><RecordTable><thead><tr><th scope="col">Branch / product / lot</th>{reconciliationQuantities.map(([key, label]) => <th scope="col" key={key}>{label}</th>)}</tr></thead><tbody>{data.reconciliation.map(row => <tr key={`${row.branch_id}:${row.product_id}:${row.batch_id ?? "none"}`}><td><strong>{row.product_name}</strong><small>{row.branch_name} · {row.lot} · {row.base_unit}</small></td>{reconciliationQuantities.map(([key]) => <td className="numeric" key={key}>{new Decimal(row[key]).toFixed()}</td>)}</tr>)}</tbody></RecordTable></div> : <p>No stock-book movements match this cutoff.</p>}
       <div className="loss-report-actions"><Button variant="outline" disabled={blocked || !data.reconciliationNext} onClick={() => void load("reconciliation", data)}>Load more stock reconciliation</Button><Button variant="outline" disabled={loading || !data.reconciliation.length} onClick={() => downloadCsv("stock-reconciliation-loaded-rows.csv", reconciliationCsv(data, scope))}>Export loaded reconciliation (CSV)</Button></div>
       <p>{data.reconciliation.length} product/lot rows loaded. {data.reconciliationNext ? "More stock rows are available." : "End of stock reconciliation."} Quantities from different base units are not combined into a single total.</p>
     </section>}
