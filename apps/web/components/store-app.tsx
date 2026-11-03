@@ -1214,11 +1214,11 @@ export function StoreApp() {
       <main className="setup-page">
         <div className="setup-panel">
           <Sprout size={34} />
-          <h1>Let’s set up your stores.</h1>
+          <h1>Your account needs store access.</h1>
           <p>
-            If you’re an employee, ask your owner to add your account under
-            Staff access, then sign in again. Business owners can create their
-            business below. Start with three branches and add more in Settings.
+            To use the existing Better Yield store, ask the current administrator to
+            authorize your account for Magpet, then sign in again. Create business
+            below starts a separate empty business; it does not link existing records.
           </p>
           {Notice}
           <form onSubmit={bootstrap}>
