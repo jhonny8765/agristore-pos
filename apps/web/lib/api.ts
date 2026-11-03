@@ -84,6 +84,8 @@ export async function branches(org: string): Promise<Branch[]> {
 }
 export async function requestSnapshot(db: PosDatabase | undefined, input: Record<string, unknown>): Promise<Snapshot> {
   const localRequestId = db ? crypto.randomUUID() : undefined;
+  const archive=db&&typeof input.organizationId==='string'&&typeof input.branchId==='string'
+    ?await setting<Snapshot['historyArchive']>(db,`testHistoryArchive:${input.organizationId}:${input.branchId}`):undefined;
   let catalogVersion = db ? await db.transaction("rw",db.settings,async()=>{
     await setSetting(db,"snapshotRequestId",localRequestId);
     return setting<string>(db,"catalogVersion");
@@ -95,7 +97,7 @@ export async function requestSnapshot(db: PosDatabase | undefined, input: Record
   // All earlier acknowledgments are included in the final, later stock snapshot:
   // completed sales are immutable. Never submit a lifetime-sized RPC body.
   for (let offset = 0; offset < Math.max(1,ids.length); offset += 1000) {
-    latest = await command<Snapshot>("snapshot", { ...input, transactionIds: ids.slice(offset,offset+1000), ...(catalogVersion ? {catalogVersion} : {}) });
+    latest = await command<Snapshot>("snapshot", { ...input, transactionIds: ids.slice(offset,offset+1000), ...(catalogVersion ? {catalogVersion} : {}),...(archive?{historyArchiveVersion:archive.id}:{}) });
     latest.confirmedIds.forEach(id => confirmed.add(id));
     if (!latest.catalogUnchanged) fullCatalog = latest.products;
     catalogVersion = latest.catalogVersion;

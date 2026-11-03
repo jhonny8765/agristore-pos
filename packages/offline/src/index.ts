@@ -90,6 +90,8 @@ export async function saveCheckout(
           throw new Error("This checkout ID already contains a different sale");
         return previous;
       }
+      const retired=await setting<Snapshot['historyArchive']>(db,`testHistoryArchive:${sale.organizationId}:${sale.branchId}`);
+      if(retired?.sales.some(s=>s.id===sale.transactionId))throw new Error('This test checkout was archived. Start a new sale.');
       const lease = await setting<Lease>(db, "lease");
       requireLease(lease, now);
       if (await setting(db, `operation:close_shift:${lease.organizationId}:${lease.branchId}`))
@@ -162,6 +164,27 @@ export async function applySnapshot(db: PosDatabase, snapshot: Snapshot, syncGua
       if (syncGuard) await requireSyncContext(db,syncGuard.lease,syncGuard.owner);
       if (snapshot.localRequestId && await setting(db,"snapshotRequestId") !== snapshot.localRequestId)
         throw new Error("A newer stock download or store change replaced this request. Refresh the current branch. Saved sales remain on this PC.");
+      // A TEST reset names exact backed-up originals. Unknown records and
+      // mismatched payloads are retained; dates/statuses never authorize removal.
+      const scope=snapshot.localScope;
+      const archiveKey=scope?`testHistoryArchive:${scope.organizationId}:${scope.branchId}`:undefined;
+      const archive=snapshot.historyArchive??(archiveKey?await setting<Snapshot['historyArchive']>(db,archiveKey):undefined);
+      if(archive){
+        if(!scope||archive.organizationId!==scope.organizationId||archive.branchId!==scope.branchId||!Array.isArray(archive.sales)||!Array.isArray(archive.shiftIds))
+          throw new Error('Test history archive scope could not be verified. Saved records are retained.');
+        for(const retired of archive.sales){
+          const local=await db.sales.get(retired.id);
+          if(!local)continue;
+          if(local.payload.organizationId!==scope.organizationId||local.payload.branchId!==scope.branchId||stableJSON(local.payload)!==local.fingerprint||await Dexie.waitFor(checksum(local.payload))!==retired.fingerprint)
+            throw new Error('A saved record differs from the test history backup. Keep this PC for maintainer review.');
+          await db.sales.delete(retired.id);
+        }
+        const savedLease=await setting<Lease>(db,'lease');
+        if(savedLease?.organizationId===scope.organizationId&&savedLease.branchId===scope.branchId&&archive.shiftIds.includes(savedLease.shiftId))await db.settings.delete('lease');
+        // A held basket has not been recorded by the server. Preserve it for
+        // explicit operator review even when its old test shift was archived.
+        await setSetting(db,archiveKey!,archive);
+      }
       if (!snapshot.catalogUnchanged) {
         await db.products.clear();
         await db.products.bulkPut(snapshot.products);
@@ -631,6 +654,12 @@ export async function importRecovery(db: PosDatabase, input: unknown, confirmedI
     }
     for (const row of sourceRows.slice(offset, offset + RECOVERY_PART_SIZE)) {
       const record = normalize(row);
+      const archive=await setting<Snapshot['historyArchive']>(db,`testHistoryArchive:${record.payload.organizationId}:${record.payload.branchId}`);
+      const retired=archive?.sales.find(s=>s.id===record.id);
+      if(retired){
+        if(retired.fingerprint!==await Dexie.waitFor(checksum(record.payload)))throw new Error('Recovery differs from the archived test transaction. Keep the original files.');
+        continue;
+      }
       const existing = await db.sales.get(record.id);
       if (existing) {
         if (existing.fingerprint !== record.fingerprint)

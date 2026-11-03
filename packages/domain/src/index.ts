@@ -139,6 +139,14 @@ export interface Snapshot {
   asOf: string;
   catalogVersion?: string;
   catalogUnchanged?: boolean;
+  /** Explicit maintainer-authorized TEST history archive; never a time cutoff. */
+  historyArchive?: {
+    id: string;
+    organizationId: string;
+    branchId: string;
+    sales: { id: string; fingerprint: string }[];
+    shiftIds: string[];
+  };
   /** Local request fence, attached by the browser, never submitted to the server. */
   localRequestId?: string;
   /** Browser metadata: the authorized request that produced this stock snapshot. */
