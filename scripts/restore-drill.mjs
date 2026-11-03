@@ -244,9 +244,6 @@ try {
   assert.deepEqual(fingerprints(database),original,"Every retained fixture row must survive dump/restore unchanged");
     assert.equal(command('supplier_record_invoice',supplierBill,database).duplicate,true);assert.equal(command('supplier_record_payment',supplierPayment,database).duplicate,true);
     const restoredSupplier=command('supplier_invoice_history',{...ctx(),billId:id(240)},database);assert.equal(restoredSupplier.invoice.balance,50000);assert.equal(restoredSupplier.invoice.dueOn,supplierDue);assert.equal(restoredSupplier.entries.length,3);
-    command('supplier_reverse_entry',{...supplierPayment,requestId:id(243),entryId:id(242),expectedVersion:3,expectedBalance:50000,reference:'TEST-RESTORED-SUPPLIER-CREDIT-REVERSAL'},database);
-    command('supplier_record_payment',{...supplierPayment,requestId:id(244),expectedVersion:4,expectedBalance:60000,amount:60000,reference:'TEST-RESTORED-SUPPLIER-REMAINDER'},database);
-    assert.equal(command('supplier_invoice_history',{...ctx(),billId:id(240)},database).invoice.balance,0);
   assert.equal(command('record_sale',discountSale,database).status,'duplicate');
   const restoredDiscount=command('partial_refund_plan',{...ctx(230),saleId:id(233)},database);assert.equal(restoredDiscount.remainingCash,1440);assert.equal(restoredDiscount.lines[0].discountBps,1000);
   assert.equal(command('record_sale',archivedCash,database).status,'duplicate');
@@ -321,6 +318,10 @@ try {
   assert.equal(command('reject_stock_issue',restoredRejection,database).duplicate,true);
   const retried = fingerprints(database);
   for (const table of tables.filter(t=>t!=="devices")) assert.deepEqual(retried[table],original[table],`Restored retry changed ${table}`);
+  // Only after proving retries made no changes, exercise new post-restore work.
+  command('supplier_reverse_entry',{...supplierPayment,requestId:id(243),entryId:id(242),expectedVersion:3,expectedBalance:50000,reference:'TEST-RESTORED-SUPPLIER-CREDIT-REVERSAL'},database);
+  command('supplier_record_payment',{...supplierPayment,requestId:id(244),expectedVersion:4,expectedBalance:60000,amount:60000,reference:'TEST-RESTORED-SUPPLIER-REMAINDER'},database);
+  assert.equal(command('supplier_invoice_history',{...ctx(),billId:id(240)},database).invoice.balance,0);
   const controls = command("stock_controls",ctx(),database);
   assert.equal(controls.holds.reduce((sum,h)=>sum+Number(h.remaining),0),1);
   assert.equal(controls.holdCount,controls.holds.length);
