@@ -3200,9 +3200,9 @@ export function StoreApp() {
                       </Button>
                     </form>
                   </section>
-                  {isOwner&&<CashierPcMode enabled={selectedBranch?.multiPc===true} disabled={!online||busy||practice||!!lease||branchPendingCount>0||branchOperationCount>0||cart.items.length>0} onEnable={reason=>run(async()=>{await onlineOperation(db,member.userId,'configure_cashier_pcs',{...context(),enabled:true,reason});notify('Multiple cashier PCs enabled. Each sale now needs online confirmation.');},true,true)}/>}
                   <section className="panel">
                     <h2>Registered cashier PCs</h2>
+                    {isOwner&&<CashierPcMode enabled={selectedBranch?.multiPc===true} disabled={!online||busy||practice||!!lease||branchPendingCount>0||branchOperationCount>0||cart.items.length>0} onEnable={reason=>run(async()=>{await onlineOperation(db,member.userId,'configure_cashier_pcs',{...context(),enabled:true,reason});notify('Multiple cashier PCs enabled. Each sale now needs online confirmation.');},true,true)}/>}
                     {table(
                       ["PC", "Branch", "Status", "Last sync", "Action"],
                       (cloud.devices ?? []).map((d) => (

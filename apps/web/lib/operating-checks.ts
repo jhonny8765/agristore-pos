@@ -51,7 +51,7 @@ export function operatingChecks(input:{scope:OperatingScope;local:LocalOperating
   else if(!Number.isFinite(l.issuedAt)||!Number.isFinite(l.expiresAt))invalid="The saved authorization time cannot be verified. Reconnect and ask the owner to review it.";
   else {try{requireLease(l,now);}catch(e){invalid=e instanceof Error?e.message:"Renew shift authorization online.";}}
   const minutes=Math.max(0,Math.floor((l.expiresAt-now)/60_000));
-  add("shift","Cashier authorization",invalid?"Action needed":minutes<=60?"Review":"Information",invalid||`${minutes} minutes remain; expires ${new Date(l.expiresAt).toLocaleString("en-PH",{timeZone:"Asia/Manila"})} (Asia/Manila). ${minutes<=60?"Reconnect and renew offline authorization in Cashier shift now.":"Renew online before a planned interruption. An expired shift cannot save a new sale; completed records stay recoverable."}`);
+  add("shift","Cashier authorization",invalid?"Action needed":minutes<=60?"Review":"Information",invalid||(l.onlineOnly?`Multiple-PC mode requires internet confirmation for every sale. ${minutes} authorization minutes remain. Renew online when needed; preserve and retry any original request awaiting confirmation.`:`${minutes} minutes remain; expires ${new Date(l.expiresAt).toLocaleString("en-PH",{timeZone:"Asia/Manila"})} (Asia/Manila). ${minutes<=60?"Reconnect and renew offline authorization in Cashier shift now.":"Renew online before a planned interruption. An expired shift cannot save a new sale; completed records stay recoverable."}`));
  }
  const validSpace=Number.isFinite(storage.usage)&&storage.usage!>=0&&Number.isFinite(storage.quota)&&storage.quota!>0;
  const low=validSpace&&(storage.usage!/storage.quota!>=0.8||storage.quota!-storage.usage!<50*1024*1024);
