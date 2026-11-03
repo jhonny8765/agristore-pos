@@ -16,6 +16,12 @@ do $credit_checkout$declare src text;anchor text;begin
  anchor:='  if exists(select 1 from public.credit_invoices i where i.organization_id=org and i.client_id=client.id and app_private.credit_due(org,i.sale_id) is null and app_private.credit_balance(org,i.sale_id)>0) then raise exception ''Confirm the historical invoice due dates before approving another credit purchase'';end if;';
  if (length(src)-length(replace(src,anchor,'')))/length(anchor)<>1 then raise exception 'Historical due-date guard changed';end if;
  src:=replace(src,anchor,'  -- Missing historical due dates remain unknown; new invoices get their own agreed due date.');
+ anchor:='outstanding bigint;overdue bigint;';
+ if (length(src)-length(replace(src,anchor,'')))/length(anchor)<>1 then raise exception 'Legacy balance declarations changed';end if;
+ src:=replace(src,anchor,'');
+ anchor:='  select coalesce(sum(app_private.credit_balance(org,i.sale_id)),0),coalesce(sum(app_private.credit_balance(org,i.sale_id)) filter(where app_private.credit_due(org,i.sale_id)<today),0) into outstanding,overdue from public.credit_invoices i where i.organization_id=org and i.client_id=client.id;';
+ if (length(src)-length(replace(src,anchor,'')))/length(anchor)<>1 then raise exception 'Legacy credit limit aggregate changed';end if;
+ src:=replace(src,anchor,'');
  anchor:=' if action=''save_credit_client'' then';
  if (length(src)-length(replace(src,anchor,'')))/length(anchor)<>1 then raise exception 'Client save route changed';end if;
  src:=replace(src,anchor,$contact$ if action='save_credit_contact' then
