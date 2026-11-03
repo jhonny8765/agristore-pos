@@ -1,6 +1,12 @@
 name: Verify Cloudflare hosting
 on:
   workflow_dispatch:
+    inputs:
+      scope:
+        description: Verification jobs to run
+        type: choice
+        options: [all, application, database]
+        default: all
 env:
   AGRISTORE_HOSTING_TARGET: cloudflare
   WRANGLER_SEND_METRICS: "false"
@@ -8,6 +14,7 @@ permissions:
   contents: read
 jobs:
   application:
+    if: inputs.scope != 'database'
     runs-on: ubuntu-latest
     timeout-minutes: 20
     steps:
@@ -39,6 +46,7 @@ jobs:
             playwright-report/
             test-results/
   database:
+    if: inputs.scope != 'application'
     runs-on: ubuntu-latest
     timeout-minutes: 20
     steps:
