@@ -356,6 +356,8 @@ Payment entry says **Record payment already made** and requires the actual bank 
 
 ## Do's and Don'ts
 
+Inventory Price, On hand and Status headers are keyboard-accessible sort buttons with direction icons and aria-sort on the active header. Sort the complete filtered catalog before pagination and reset to page one. Unconfirmed prices/quantities stay last in either direction. Price means the first displayed selling unit; On hand means each product's own displayed base-unit quantity, with differing units disclosed. Sorting changes presentation only.
+
 ### Records and exports
 
 Keep the owner’s full-history workspace under Overview with contextual links and a return to the originating register. Reuse the forest/paper shell, labelled search/date/status controls, one server-paged table and one CSV action. Invoice tables prioritize reference, customer/supplier, due date, current outstanding amount and status; full financial columns and original IDs belong in the CSV. Show applied scope, checked time, loading/offline/failure states and changed-filter notice. Export only after filters are applied; a complete selection is independent of the current page. Keep paid and older entries accessible through filters without deleting history. Use a contained horizontal table on narrow screens, with no whole-page overflow. Put detailed source/date/backup explanations in a disclosure.

@@ -2597,3 +2597,7 @@ td small {
 .record-report .table-wrap { overflow-x: auto; max-width: 100%; }
 .report-help { margin-block-start: 20px; max-width: 75ch; }
 .report-help summary { cursor: pointer; font-weight: 650; }
+.inventory-sort { display: inline-flex; align-items: center; gap: 7px; min-height: 36px; padding: 3px 0; border: 0; background: transparent; color: inherit; font: inherit; font-weight: inherit; cursor: pointer; white-space: nowrap; }
+.inventory-sort:hover { text-decoration: underline; text-underline-offset: 4px; }
+.inventory-sort svg { flex: 0 0 16px; }
+.inventory-sort:focus-visible { outline: 2px solid var(--forest); outline-offset: 3px; border-radius: 3px; }
