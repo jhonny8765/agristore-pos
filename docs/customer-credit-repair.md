@@ -1,0 +1,21 @@
+# Credit-page database reference repair
+
+November 3, 2026. The owner reported `missing FROM-clause entry for table "command"` while viewing Clients & credit. The issue was repaired in the hosted database and the signed-in page's Refresh action returned `Records refreshed.` without a database error.
+
+## Cause and correction
+
+Store preparation had installed an archive safeguard outside the migration sequence used by the disposable tests. It referred to its JSON argument as `command.data`, using the containing function's implicit name as a scope. The credit migration renamed that function to `command_before_customer_credit`. PostgreSQL then interpreted the old qualifier as a missing table reference when the background refresh traversed the old command chain. The credit report could still load because its new command took another route. This combination allowed a correct balance display alongside the error toast.
+
+The forward repair replaces that fragile parameter qualification with an explicitly declared local JSON variable. A guarded deployment compared the function definition before and after: the only changes were the new local binding and its use in the existing archive predicate. Original authorization, archived-request payload comparison, duplicate acknowledgements, and the archived-ID adjustment block remain intact. No financial formula or data row was rewritten.
+
+`20261103030000_test_history_archive_baseline.sql` now gives fresh test/recovery installations the same archive layer before the credit rename. On an existing installation it preserves the installed layer. `20261103042000_archive_command_parameter_scope.sql` repairs the affected renamed function and is safe to apply again. The standalone maintenance support SQL also uses the stable local binding. Existing applied credit/import migrations were retained.
+
+## Data preservation and checks
+
+- Private snapshots compared every row in all 47 application/archive tables immediately before and after the repair: 6,664 rows unchanged, including 221 clients and 855 opening invoices. Exact balances, client approvals/limits, terms and due dates were preserved. Sales/payments/open shifts stayed at zero; inventory movements stayed at 993. Precise source amounts, function signatures and snapshots are retained privately outside source control.
+- The regression test injects the original legacy qualifier before the credit function rename, observes the exact PostgreSQL `42P01` error, applies the forward repair, and verifies working snapshot/dashboard/count/purchasing paths. Reapplying the repair leaves ledger counts unchanged.
+- The archive database suite checks exact archived-sale retries, rejection of changed money or another cashier, private archive access, blocked archived-ID adjustments, retained reconciliation metadata, and zero new sales/payments/stock effects. All 1,277 local database assertions and all 506 unit tests passed; TypeScript and lint passed.
+- The [repair release gate](https://github.com/jhonny8765/agristore-pos/actions/runs/41588450996) passed real PostgreSQL lint, all 1,277 database assertions, encrypted dump/restore with the populated archive records and 47 retained table fingerprints, and four genuine signed-in browser cases in each of the generic and locked Magpet configurations. They cover Refresh with no failed browser RPCs, credit-limit/collection races and role boundaries, offline cash recovery, three-person stock counts, and delivery correction/stock safeguards. The page test requires Refresh success rather than accepting a rendered balance alongside a failed background command.
+- The actual signed-in Magpet owner page was refreshed after repair: success confirmation, unchanged receivable total, 221 clients and 855 invoices, and no error text in the page's alert region. No live test sale, payment, credit approval or stock adjustment was entered.
+
+The broader older UI integration suite still needs its remaining pre-tab/search selectors updated. Its prior failures must not be described as a passing full-store gate. This repair's regression and targeted release evidence are separate from real employee/hardware acceptance and from official manual VAT invoice issuance.
