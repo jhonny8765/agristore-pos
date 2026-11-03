@@ -179,6 +179,9 @@ const openingShift=command('open_shift',{...ctx(),deviceId:id(8),openingCash:0})
 const openingPayment={...ctx(),requestId:id(203),saleId:openingInvoice,shiftId:openingShift.shiftId,amount:10000,reference:'TEST opening collection',reason:'TEST exact counted cash'};
 command('collect_credit_payment',openingPayment);
 command('close_shift',{...ctx(),shiftId:openingShift.shiftId,countedCash:10000});
+// The deployed store also retains retired TEST requests outside live ledgers.
+const archivedCash={...sale,transactionId:id(221)};
+sql(`insert into app_private.test_history_archives(id,organization_id,data,retired_ids) values('${id(220)}','${id(2)}','{"tables":{"public.cashier_shifts":[]}}',array['${id(221)}']);insert into app_private.archived_test_sales values('${id(221)}','${id(2)}','${id(3)}','${id(1)}','${id(220)}','${JSON.stringify(archivedCash)}'::jsonb,'TEST-ARCHIVE-RESTORE','${'a'.repeat(64)}');`);
 const fingerprints = target => lastJSON(sql(fingerprintSQL(id(2)),target));
 const original = fingerprints("postgres");
 const before = command("snapshot",{...ctx(),transactionIds:[id(9)]});
@@ -222,6 +225,8 @@ try {
     "/tmp/agristore-verified.dump",
   ]);
   assert.deepEqual(fingerprints(database),original,"Every retained fixture row must survive dump/restore unchanged");
+  assert.equal(command('record_sale',archivedCash,database).status,'duplicate');
+  assert.ok(command('snapshot',{...ctx(),transactionIds:[id(221)]},database).confirmedIds.includes(id(221)));
   assert.equal(command('credit_book',ctx(),database).outstanding,80000);
   assert.equal(command('collect_credit_payment',openingPayment,database).duplicate,true);
   assert.equal(command('set_credit_due_date',openingDue,database).duplicate,true);

@@ -19,7 +19,7 @@ do $$begin
 end$$;
 create or replace function app_private.command(action text,data jsonb) returns jsonb
 language plpgsql security definer set search_path='' as $$
-declare org uuid:=(data->>'organizationId')::uuid; branch uuid:=(data->>'branchId')::uuid;
+declare archive_request_data jsonb:=data; org uuid:=(data->>'organizationId')::uuid; branch uuid:=(data->>'branchId')::uuid;
  retired app_private.archived_test_sales; archive_id uuid; result jsonb; owner_access boolean;
 begin
  if action='record_sale' then
@@ -37,7 +37,7 @@ begin
   end if;
  end if;
  if action<>'snapshot' and exists(
-  select 1 from app_private.test_history_archives a cross join lateral jsonb_each_text(command.data) e
+  select 1 from app_private.test_history_archives a cross join lateral jsonb_each_text(archive_request_data) e
   where a.organization_id=org and e.value=any(a.retired_ids)
  ) then
   if not app_private.can_access(org,branch) then raise exception 'Store access denied' using errcode='42501';end if;

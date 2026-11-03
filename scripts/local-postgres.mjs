@@ -3,7 +3,8 @@ import {PGlite} from '@electric-sql/pglite';
 import {pgtap} from '@electric-sql/pglite-pgtap';
 import {readFile,readdir} from 'node:fs/promises';
 import path from 'node:path';
-export async function localPostgres(){
+/** @param {{beforeMigration?:(db:PGlite,file:string)=>Promise<void>}} [options] */
+export async function localPostgres(options={}){
  const db=await PGlite.create({extensions:{pgtap}});
  try{
   await db.exec(`create role anon nologin;create role authenticated nologin;create role service_role nologin bypassrls;
@@ -16,6 +17,7 @@ export async function localPostgres(){
    grant usage on schema auth,extensions to anon,authenticated,service_role;`);
   const folder=path.resolve('supabase/migrations');
   for(const file of (await readdir(folder)).filter(f=>f.endsWith('.sql')).sort()){
+   await options.beforeMigration?.(db,file);
    try{await db.exec(await readFile(path.join(folder,file),'utf8'));}
    catch(e){throw new Error(`Migration ${file}: ${e.message}`,{cause:e});}
   }

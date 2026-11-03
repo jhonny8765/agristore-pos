@@ -6,6 +6,8 @@ import type {CreditBook} from '@agristore/domain';
 const dueOn=(days:number)=>{const date=new Date(new Date(Date.now()+8*3600000).toISOString().slice(0,10)+'T00:00:00Z');date.setUTCDate(date.getUTCDate()+days);return date.toISOString().slice(0,10);};
 
 test('genuine signed-in credit sale, racing retries, collections and role boundaries',async({page})=>{
+ const uiFailures:string[]=[];
+ page.on('response',response=>{if(response.url().endsWith('/rest/v1/rpc/agri_command')&&response.status()>=400)uiFailures.push(`${response.request().postDataJSON()?.action}: HTTP ${response.status()}`);});
  if(process.env.AGRISTORE_LOCAL_INTEGRATION!=='1'||process.env.NEXT_PUBLIC_SUPABASE_URL!=='http://127.0.0.1:55321')throw Error('Disposable loopback credit fixtures only');
  const owner=createClient(process.env.NEXT_PUBLIC_SUPABASE_URL,process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY!,{auth:{persistSession:false,autoRefreshToken:false}}),email=`credit-${randomUUID()}@example.invalid`,password=`TEST-${randomUUID()}!`;
  const signup=await owner.auth.signUp({email,password});expect(signup.error).toBeNull();
@@ -29,6 +31,7 @@ test('genuine signed-in credit sale, racing retries, collections and role bounda
  const staff=await testCountStaff({owner,organizationId,branchId});const denied=await staff.owner.rpc('agri_command',{action:'credit_book',data:ctx});expect(denied.error?.code).toBe('42501');
  for(const table of ['credit_clients','credit_invoices','credit_entries','credit_due_history']){const direct=await owner.from(table).select('*');expect(direct.error?.code).toBe('42501');}
  await page.goto('/');await page.getByLabel('Email address',{exact:true}).fill(email);await page.getByLabel('Password',{exact:true}).fill(password);await page.getByRole('button',{name:'Sign in',exact:true}).click();await page.getByRole('button',{name:'Clients & credit',exact:true}).click();await expect(page.getByRole('button',{name:'TEST credit farmer',exact:true})).toBeVisible();await expect(page.locator('.credit-workspace')).toContainText('₱700.00');
+ await page.getByRole('button',{name:'Refresh',exact:true}).click();await expect(page.getByText('Records refreshed.',{exact:true})).toBeVisible();expect(uiFailures).toEqual([]);
  await countCommand(owner,'close_shift',{...ctx,shiftId,countedCash:80000});
 });
 

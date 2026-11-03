@@ -1,4 +1,5 @@
 export const retainedTables=[
+ 'app_private.test_history_archives','app_private.archived_test_sales',
  'credit_clients','credit_invoices','credit_entries','credit_due_history','app_private.credit_import_batches',
  'sale_refund_corrections','app_private.refund_correction_replacements',
  'sale_partial_refunds','app_private.partial_refund_lines','app_private.delivery_reversals',
