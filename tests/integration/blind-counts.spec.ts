@@ -24,7 +24,10 @@ async function fixture(){
 async function login(page:Page,account:{email:string;password:string}){
  await page.goto('/');await page.getByLabel('Email address',{exact:true}).fill(account.email);await page.getByLabel('Password',{exact:true}).fill(account.password);
  await page.getByRole('button',{name:'Sign in',exact:true}).click();await expect(page.getByRole('button',{name:'Stock counts',exact:true})).toBeVisible();
- await page.getByRole('button',{name:'Stock counts',exact:true}).click();await expect(page.getByRole('heading',{name:'Physical stock counts',exact:true})).toBeVisible();
+ // Decide whether to start a count only after the existing worklist has loaded.
+ // Its initial empty render also shows the start form, which disappears for a recounter.
+ const loaded=page.waitForResponse(response=>response.url().endsWith('/rest/v1/rpc/agri_command')&&response.request().postDataJSON()?.action==='count_workspace');
+ await page.getByRole('button',{name:'Stock counts',exact:true}).click();await loaded;await expect(page.locator('.count-records')).toHaveAttribute('aria-busy','false');await expect(page.getByRole('heading',{name:'Physical stock counts',exact:true})).toBeVisible();
  if(await page.getByRole('form',{name:'Start a blind count',exact:true}).isVisible()){
   await page.getByRole('combobox',{name:'Product / batch',exact:true}).fill('TEST blind feeds');
   await page.getByRole('option',{name:'TEST blind feeds (kg)',exact:true}).click();
