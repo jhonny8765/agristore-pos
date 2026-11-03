@@ -24,7 +24,7 @@ async function fixture(){
 async function login(page:Page,account:{email:string;password:string}){
  await page.goto('/');await page.getByLabel('Email address',{exact:true}).fill(account.email);await page.getByLabel('Password',{exact:true}).fill(account.password);
  await page.getByRole('button',{name:'Sign in',exact:true}).click();await expect(page.getByRole('button',{name:'Stock counts',exact:true})).toBeVisible();
- await page.getByRole('button',{name:'Stock counts',exact:true}).click();await expect(page.getByRole('heading',{name:'Blind stock counts',exact:true})).toBeVisible();
+ await page.getByRole('button',{name:'Stock counts',exact:true}).click();await expect(page.getByRole('heading',{name:'Physical stock counts',exact:true})).toBeVisible();
  if(await page.getByRole('form',{name:'Start a blind count',exact:true}).isVisible()){
   await page.getByRole('combobox',{name:'Product / batch',exact:true}).fill('TEST blind feeds');
   await page.getByRole('option',{name:'TEST blind feeds (kg)',exact:true}).click();
