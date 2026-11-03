@@ -60,6 +60,18 @@ Actual new collections may be applied to opening invoices through the employee's
 - Choose one client and **Statement**, load every older page, then **Print statement / Save PDF**. The printed statement renders all loaded invoices and related events instead of only the ten visible rows.
 - Issued sale/client details are snapshots; later client renaming does not rewrite old documents. Current balance figures carry a displayed snapshot time.
 
+## Finding saved clients at checkout
+
+Credit checkout loads the branch's saved clients from the signed-in organization/branch, including before a cashier shift is open. A missing shift previously left an active empty dropdown because the lookup incorrectly depended on the shift authorization. Searching or selecting a client does not open a shift or create a financial record.
+
+Use **Search saved clients** to filter by name or phone, then choose the correct **Credit client**. Search ignores name case/accents and accepts local or +63 phone formatting. It shows the saved-client count, search matches and last checked time. **Refresh clients** reloads policy changes. A selected client stays explicitly visible if the search stops matching; searching requires confirmation again, and Enter in this search field does not submit checkout. Phone layouts give the search input its own full-width row.
+
+All saved clients remain findable, including those whose new credit is disabled. The picker distinguishes credit not enabled, overdue balances and exhausted credit. A saved opening debt does not itself approve another loan. Existing debt collection remains separate from enabling new purchases.
+
+For a client who needs new credit, the owner opens **Customers & credit**, selects that client, chooses **Edit credit policy**, sets the total credit limit and allowed terms, enables new credit purchases and saves the documented approval. The available credit is the approved limit less current unpaid debt. Return to checkout or refresh clients after approval. New checkout still requires the employee's own online open shift, sufficient available credit, no overdue debt, an allowed term and the linked manual invoice confirmation.
+
+Loading and failed-refresh states do not masquerade as an empty saved directory. A failed refresh preserves the last loaded client/check time and blocks a new credit sale until it can be checked again. Existing uncertain original requests retain their retry path. If owner-approved terms changed, refreshing selects a permitted term and requires invoice confirmation again.
+
 ## What the owner still needs to provide
 
 1. Approved customer list with names, contacts, billing details, credit limits and allowed terms.
@@ -75,3 +87,17 @@ Local tests use an isolated PostgreSQL/PGlite database with simulated Auth claim
 The hosted release evidence records genuine disposable Supabase/Auth/PostgREST checks, concurrent-limit/collection behavior, role/direct-API denials, a full synthetic restore including credit source/due-date/payment evidence, current-UI credit checkout and retained offline cash recovery. The older full browser suite still needs migration to the new UI; focused credit/cash verification is not full-store recertification. Before real use, the owner should rehearse one approved customer end to end and reconcile the manual invoice, sale, collection, drawer and stock. Update installed cashier windows after original pending work clears. Automated tests do not establish BIR software approval, a certified production restore, real customer credit approval or physical cash/stock acceptance.
 
 The migration depends on the existing imported-catalog setup fields. Preserve the existing catalog migration and user changes when packaging this release. Do not push a migration history that omits them.
+
+## Saved-client search release — November 3, 2026
+
+Read-only live checks confirmed **221 saved clients**, zero open shifts and **0 clients enabled for new credit**, each with a zero approved limit. The empty checkout dropdown came from a lookup scoped through the missing shift lease, not a failed credit-register import. The released lookup now uses the authenticated branch independently of shift opening.
+
+Final application source `ec3fa84` passed [application verification](https://github.com/jhonny8765/agristore-pos/actions/runs/41629095072): type/lint, **576 unit tests, all 66 browser tests**, production dependency scan and the hosting build. Focused fixtures cover 221 saved-but-disabled clients before a shift, name/phone search, permission blocking, owner-approved policy refresh, changed terms, preserved selection, failed refresh/retry, held drafts, original lost-response retries and Enter staying separate from financial submission. Desktop/phone checks include accessibility and horizontal fit.
+
+The unchanged database code passed [database verification](https://github.com/jhonny8765/agristore-pos/actions/runs/41628295361): strict lint, **1,430 PostgreSQL assertions**, authenticated encrypted restoration with **49 table fingerprints**, and **6 signed-in workflows normally plus 6 under the fixed Magpet setup**. This remains a focused signed-in selection, not the entire legacy integration suite. No production transaction was used for testing.
+
+Cloudflare confirmed deployment **`cf-mw0m661u`**, 189 files, ZIP SHA-256 **`21e874fba30a54a2ab40d295c4c649d5eb94b9efe74421b60c9fca63f83b8276`**. The live health endpoint returned the matching release and the served home-page bytes matched the package at **19:47:11 Manila time**.
+
+Before/after read-only fingerprints matched all **10,116 rows across 49 application tables**, excluding device heartbeat timestamps. Database functions also matched. There was no schema migration, re-import, client approval or change to limits, balances, sales, payments or stock. All 221 clients remain saved, new-credit approval remains owner-controlled, and outstanding customer balances remain **₱45,882,590.60**. The previous tested deployment package is retained privately for rollback.
+
+On an already-open till, finish or hold the current sale, confirm saved records in **Sync center**, then use **Settings → Check for app update**. After updating, choose credit payment, search the saved client and select the intended name. Use **Refresh clients** after an owner changes that client's approved policy.
