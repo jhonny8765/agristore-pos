@@ -23,6 +23,7 @@ export const saleItemSchema = z
     unitCost: cents,
     priceVersion: z.number().int().positive(),
     discountBps: z.number().int().min(0).max(10000).optional(),
+    discountAmount: cents.optional(),
     lineTotal: cents,
   })
   .strict();
@@ -44,8 +45,9 @@ export const saleSchema = z
   .superRefine((sale, ctx) => {
     let sum = new Decimal(0);
     for (const item of sale.items) {
-      const expected = discountedLineTotal(item.quantity, item.unitPrice, item.discountBps);
-      if (expected !== item.lineTotal)
+      let valid=false;
+      try{valid=lineAmounts(item).total===item.lineTotal;}catch{}
+      if (!valid)
         ctx.addIssue({
           code: "custom",
           message: "Line amount does not match quantity and price",
@@ -180,13 +182,15 @@ export function canonicalQuantity(quantity: string, factor: string): string {
     throw new Error("Quantity conversion exceeds supported precision");
   return result.toFixed();
 }
-/** Round the original line to centavos, then round its percentage reduction.
- * Both server and browser subtract that exact reduction from the same gross. */
-export function lineAmounts(item:Pick<SaleItem,'quantity'|'unitPrice'|'discountBps'>){
+/** Subtract exact line centavos; retain percentage arithmetic for old receipts.
+ * Both server and browser use the same rounded original gross. */
+export function lineAmounts(item:Pick<SaleItem,'quantity'|'unitPrice'|'discountBps'|'discountAmount'>){
+ if(item.discountAmount!==undefined&&item.discountBps!==undefined)throw Error('Use one discount amount per product line.');
  const rate=item.discountBps??0;
  if(!Number.isInteger(rate)||rate<0||rate>10000)throw Error('Choose a discount from 0 to 100%, with at most two decimal places.');
  const gross=lineTotal(item.quantity,item.unitPrice);
- const discount=new ExactMoney(gross).times(rate).div(10000).toDecimalPlaces(0,Decimal.ROUND_HALF_UP).toNumber();
+ const discount=item.discountAmount??new ExactMoney(gross).times(rate).div(10000).toDecimalPlaces(0,Decimal.ROUND_HALF_UP).toNumber();
+ if(!Number.isSafeInteger(discount)||discount<0||discount>gross)throw Error('Discount cannot exceed this product line total.');
  return {gross,discount,total:gross-discount};
 }
 export function discountedLineTotal(quantity:string,unitPrice:number,discountBps=0){return lineAmounts({quantity,unitPrice,discountBps}).total;}
@@ -195,8 +199,15 @@ export function discountBasisPoints(percent:string){
  return new Decimal(percent).times(100).toNumber();
 }
 export function applyLineDiscount(item:SaleItem,discountBps:number):SaleItem{
- const clean={...item};delete clean.discountBps;
+ const clean={...item};delete clean.discountBps;delete clean.discountAmount;
  return {...clean,...(discountBps?{discountBps}:{}),lineTotal:discountedLineTotal(item.quantity,item.unitPrice,discountBps)};
+}
+/** Fixed integer-centavo reduction from the entire line, independent of quantity. */
+export function applyAmountDiscount(item:SaleItem,discountAmount:number):SaleItem{
+ const clean={...item};delete clean.discountBps;delete clean.discountAmount;
+ const next={...clean,...(discountAmount?{discountAmount}:{})};
+ if(!Number.isSafeInteger(discountAmount)||discountAmount<0)throw Error('Enter an exact non-negative discount amount.');
+ return {...next,lineTotal:lineAmounts(next).total};
 }
 export function total(items: Pick<SaleItem, "lineTotal">[]) {
   let sum=0n;

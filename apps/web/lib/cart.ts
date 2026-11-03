@@ -1,6 +1,6 @@
 import { create } from "zustand";
 import Decimal from "decimal.js";
-import {applyLineDiscount,total,type SaleItem} from "@agristore/domain";
+import {applyAmountDiscount,total,type SaleItem} from "@agristore/domain";
 import { quantityFromDisplay } from "./quantity-entry";
 export interface LineDraft {
   draft: string;
@@ -11,6 +11,7 @@ export interface LineDraft {
   original: SaleItem | null;
   focus?: "quantity" | "budget" | null;
   discount?: string;
+  discountKind?: "amount";
   discountError?: string;
 }
 export type SaleEntry = "unit" | "weight" | "budget";
@@ -43,7 +44,7 @@ interface Cart {
   attemptId: string | null;
   add: (item: SaleItem, entry?: SaleEntry) => void;
   replace: (index: number, item: SaleItem) => void;
-  discount: (index:number,bps:number) => void;
+  discount: (index:number,amount:number) => void;
   remove: (index: number) => void;
   clear: () => void;
   attempt: () => string;
@@ -120,7 +121,7 @@ export const useCart = create<Cart>((set, get) => ({
         attemptId: null,
       };
     }),
-  discount:(index,bps)=>set(s=>{const items=s.items.map((item,n)=>n===index?applyLineDiscount(item,bps):item);total(items);return {items,attemptId:null};}),
+  discount:(index,amount)=>set(s=>{const items=s.items.map((item,n)=>n===index?applyAmountDiscount(item,amount):item);total(items);return {items,attemptId:null};}),
   remove: (index) =>
     set((s) => {
       const quantityErrors = { ...s.quantityErrors };

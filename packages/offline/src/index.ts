@@ -94,7 +94,7 @@ export async function saveCheckout(
       if(retired?.sales.some(s=>s.id===sale.transactionId))throw new Error('This test checkout was archived. Start a new sale.');
       const lease = await setting<Lease>(db, "lease");
       requireLease(lease, now);
-      if(sale.items.some(i=>(i.discountBps??0)>0)&&!['owner','cashier'].includes(lease.role))throw new Error('Only the owner or cashier may apply a product discount.');
+      if(sale.items.some(i=>(i.discountAmount??0)>0||(i.discountBps??0)>0)&&!['owner','cashier'].includes(lease.role))throw new Error('Only the owner or cashier may apply a product discount.');
       if(await setting(db,`operation:record_credit_sale:${sale.organizationId}:${sale.branchId}`)||await setting(db,`credit-stock-refresh:${sale.organizationId}:${sale.branchId}`))
         throw new Error('Confirm the original credit sale in Sync center and refresh stock online before another cash sale. Keep this browser profile and basket.');
       if (await setting(db, `operation:close_shift:${lease.organizationId}:${lease.branchId}`))

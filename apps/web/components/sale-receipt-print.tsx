@@ -34,7 +34,7 @@ export function SaleReceiptPrint({id,receipt,occurredAt,branchName,items,total,c
   measure();const observer=new ResizeObserver(measure);observer.observe(element);return()=>observer.disconnect();
  },[printing,id,receipt,occurredAt,branchName,items,total,cashReceived,practice,paymentMode,copy,statusLabel]);
  if(!printing||typeof document==='undefined')return null;
- const discount=items.reduce((sum,item)=>sum+lineAmounts(item).discount,0);
+ const discount=items.reduce((sum,item)=>sum+BigInt(lineAmounts(item).discount),0n);
  const date=new Date(occurredAt).toLocaleString('en-PH',{timeZone:'Asia/Manila',year:'numeric',month:'short',day:'numeric',hour:'numeric',minute:'2-digit'});
  return createPortal(<div ref={paper} className="thermal-receipt" data-paper-mm="58" data-receipt-id={id} aria-hidden="true">
   <style>{`@media print{@page better-yield-receipt{size:58mm ${height}mm;margin:5mm}}`}</style>
@@ -55,11 +55,11 @@ export function SaleReceiptPrint({id,receipt,occurredAt,branchName,items,total,c
    {items.map((item,index)=><div className="thermal-line" key={index}>
     <strong className="thermal-product">{item.name}</strong>
     <div className="thermal-line-amount"><span>{item.quantity} {item.unitName} × {money(item.unitPrice)}</span><strong>{money(item.lineTotal)}</strong></div>
-    {(item.discountBps??0)>0&&<div className="thermal-discount"><span>{item.discountBps!/100}% discount</span><span>−{money(lineAmounts(item).discount)}</span></div>}
+    {lineAmounts(item).discount>0&&<div className="thermal-discount"><span>{item.discountAmount!==undefined?'Line discount':`${item.discountBps!/100}% discount`}</span><span>−{money(lineAmounts(item).discount)}</span></div>}
    </div>)}
   </div>
   <dl className="thermal-totals">
-   {discount>0&&<><div><dt>Subtotal</dt><dd>{money(total+discount)}</dd></div><div><dt>Discounts</dt><dd>−{money(discount)}</dd></div></>}
+   {discount>0&&<><div><dt>Subtotal</dt><dd>{money(BigInt(total)+discount)}</dd></div><div><dt>Discounts</dt><dd>−{money(discount)}</dd></div></>}
    <div className="thermal-total"><dt>TOTAL</dt><dd>{money(total)}</dd></div>
    <div><dt>{paymentMode==='credit'?'Cash paid':'Cash received'}</dt><dd>{money(cashReceived)}</dd></div>
    <div><dt>{paymentMode==='credit'?'Balance on credit':'Change'}</dt><dd>{money(paymentMode==='credit'?total-cashReceived:cashReceived-total)}</dd></div>
