@@ -14,6 +14,8 @@ Validation: 480 unit tests in 37 files, type checks, lint, Next production build
 
 Corrected release: **cf-mvzx3zdw**, SHA-256 `33b9747ec8022abae3642e584283c1daf282d6c4d4534045fbd23b1305902a98`, 189 files, 2,602,421 archive bytes. The exact same archive was deployed to **https://copy-reference.better-yield-magpet-pos.pages.dev/** and then **https://better-yield-magpet-pos.pages.dev/**. Both health responses report the expected release and `status: ok`. All **8 final production smoke cases passed**: both close-shift cases, receipt pagination with exact cash/stock, failed hold/cleanup protection, durable held drafts completing once, receipt/settings filters, desktop/phone accessibility and response headers. Captures of the published Practice checkout and receipts are saved privately as `copy-live-checkout.png` and `copy-live-receipts.png`. The previous cf-mvztt182 archive and checksum are preserved privately for rollback.
 
+Implementation commit: **59e40b7**. The private machine-readable verification record is `.impeccable/review/copy-release-final.json`; it binds this commit, archive checksum, preview/production health, test counts, visual verdict and screenshot proof. The final fresh documenter validated the rebuilt DESIGN.md and sidecar against the skill parser, canonical sections, token references and component/narrative consistency.
+
 An already-open installed POS can load this update through **Settings → Application & recovery → Check for app update**, after finishing the basket and checking unresolved records. The user's open cashier tabs were not reloaded or cleared. The earlier implementation and its evidence follow for historical context; its typography description does not govern the corrected release.
 
 ## Earlier implementation

@@ -1,6 +1,6 @@
 {
   "schemaVersion": 2,
-  "generatedAt": "2026-11-02T22:28:04.046Z",
+  "generatedAt": "2026-11-03T00:08:46.884Z",
   "title": "Design System: Better Yield POS (AgriStore)",
   "extensions": {
     "colorMeta": {
@@ -8,126 +8,126 @@
         "role": "primary",
         "displayName": "Forest",
         "tonalRamp": [
-          "oklch(15.00% 0.0644 165.92)",
-          "oklch(26.43% 0.0644 165.92)",
-          "oklch(37.86% 0.0644 165.92)",
-          "oklch(49.29% 0.0644 165.92)",
-          "oklch(60.71% 0.0644 165.92)",
-          "oklch(72.14% 0.0644 165.92)",
-          "oklch(83.57% 0.0644 165.92)",
-          "oklch(95.00% 0.0644 165.92)"
+          "oklch(15.00% 0.0657 162.92)",
+          "oklch(26.43% 0.0657 162.92)",
+          "oklch(37.86% 0.0657 162.92)",
+          "oklch(49.29% 0.0657 162.92)",
+          "oklch(60.71% 0.0657 162.92)",
+          "oklch(72.14% 0.0657 162.92)",
+          "oklch(83.57% 0.0657 162.92)",
+          "oklch(95.00% 0.0657 162.92)"
         ]
       },
       "forest-dark": {
         "role": "primary",
         "displayName": "Deep Forest",
         "tonalRamp": [
-          "oklch(15.00% 0.0631 168.31)",
-          "oklch(26.43% 0.0631 168.31)",
-          "oklch(37.86% 0.0631 168.31)",
-          "oklch(49.29% 0.0631 168.31)",
-          "oklch(60.71% 0.0631 168.31)",
-          "oklch(72.14% 0.0631 168.31)",
-          "oklch(83.57% 0.0631 168.31)",
-          "oklch(95.00% 0.0631 168.31)"
+          "oklch(15.00% 0.0547 169.52)",
+          "oklch(26.43% 0.0547 169.52)",
+          "oklch(37.86% 0.0547 169.52)",
+          "oklch(49.29% 0.0547 169.52)",
+          "oklch(60.71% 0.0547 169.52)",
+          "oklch(72.14% 0.0547 169.52)",
+          "oklch(83.57% 0.0547 169.52)",
+          "oklch(95.00% 0.0547 169.52)"
         ]
       },
       "green": {
         "role": "primary",
         "displayName": "Working Green",
         "tonalRamp": [
-          "oklch(15.00% 0.0968 155.87)",
-          "oklch(26.43% 0.0968 155.87)",
-          "oklch(37.86% 0.0968 155.87)",
-          "oklch(49.29% 0.0968 155.87)",
-          "oklch(60.71% 0.0968 155.87)",
-          "oklch(72.14% 0.0968 155.87)",
-          "oklch(83.57% 0.0968 155.87)",
-          "oklch(95.00% 0.0968 155.87)"
+          "oklch(15.00% 0.1061 151.16)",
+          "oklch(26.43% 0.1061 151.16)",
+          "oklch(37.86% 0.1061 151.16)",
+          "oklch(49.29% 0.1061 151.16)",
+          "oklch(60.71% 0.1061 151.16)",
+          "oklch(72.14% 0.1061 151.16)",
+          "oklch(83.57% 0.1061 151.16)",
+          "oklch(95.00% 0.1061 151.16)"
         ]
       },
       "lime": {
         "role": "primary",
         "displayName": "Pale Leaf",
         "tonalRamp": [
-          "oklch(15.00% 0.0379 126.73)",
-          "oklch(26.43% 0.0379 126.73)",
-          "oklch(37.86% 0.0379 126.73)",
-          "oklch(49.29% 0.0379 126.73)",
-          "oklch(60.71% 0.0379 126.73)",
-          "oklch(72.14% 0.0379 126.73)",
-          "oklch(83.57% 0.0379 126.73)",
-          "oklch(95.00% 0.0379 126.73)"
+          "oklch(15.00% 0.0419 126.34)",
+          "oklch(26.43% 0.0419 126.34)",
+          "oklch(37.86% 0.0419 126.34)",
+          "oklch(49.29% 0.0419 126.34)",
+          "oklch(60.71% 0.0419 126.34)",
+          "oklch(72.14% 0.0419 126.34)",
+          "oklch(83.57% 0.0419 126.34)",
+          "oklch(95.00% 0.0419 126.34)"
         ]
       },
       "paper": {
         "role": "neutral",
         "displayName": "Warm Paper",
         "tonalRamp": [
-          "oklch(15.00% 0.0054 95.10)",
-          "oklch(26.43% 0.0054 95.10)",
-          "oklch(37.86% 0.0054 95.10)",
-          "oklch(49.29% 0.0054 95.10)",
-          "oklch(60.71% 0.0054 95.10)",
-          "oklch(72.14% 0.0054 95.10)",
-          "oklch(83.57% 0.0054 95.10)",
-          "oklch(95.00% 0.0054 95.10)"
+          "oklch(15.00% 0.0086 84.57)",
+          "oklch(26.43% 0.0086 84.57)",
+          "oklch(37.86% 0.0086 84.57)",
+          "oklch(49.29% 0.0086 84.57)",
+          "oklch(60.71% 0.0086 84.57)",
+          "oklch(72.14% 0.0086 84.57)",
+          "oklch(83.57% 0.0086 84.57)",
+          "oklch(95.00% 0.0086 84.57)"
         ]
       },
       "white": {
         "role": "neutral",
         "displayName": "White",
         "tonalRamp": [
-          "oklch(15.00% 0.0000 89.88)",
-          "oklch(26.43% 0.0000 89.88)",
-          "oklch(37.86% 0.0000 89.88)",
-          "oklch(49.29% 0.0000 89.88)",
-          "oklch(60.71% 0.0000 89.88)",
-          "oklch(72.14% 0.0000 89.88)",
-          "oklch(83.57% 0.0000 89.88)",
-          "oklch(95.00% 0.0000 89.88)"
+          "oklch(15.00% 0.0000 0.00)",
+          "oklch(26.43% 0.0000 0.00)",
+          "oklch(37.86% 0.0000 0.00)",
+          "oklch(49.29% 0.0000 0.00)",
+          "oklch(60.71% 0.0000 0.00)",
+          "oklch(72.14% 0.0000 0.00)",
+          "oklch(83.57% 0.0000 0.00)",
+          "oklch(95.00% 0.0000 0.00)"
         ]
       },
       "ink": {
         "role": "neutral",
         "displayName": "Stock Ink",
         "tonalRamp": [
-          "oklch(15.00% 0.0257 160.41)",
-          "oklch(26.43% 0.0257 160.41)",
-          "oklch(37.86% 0.0257 160.41)",
-          "oklch(49.29% 0.0257 160.41)",
-          "oklch(60.71% 0.0257 160.41)",
-          "oklch(72.14% 0.0257 160.41)",
-          "oklch(83.57% 0.0257 160.41)",
-          "oklch(95.00% 0.0257 160.41)"
+          "oklch(15.00% 0.0068 157.04)",
+          "oklch(26.43% 0.0068 157.04)",
+          "oklch(37.86% 0.0068 157.04)",
+          "oklch(49.29% 0.0068 157.04)",
+          "oklch(60.71% 0.0068 157.04)",
+          "oklch(72.14% 0.0068 157.04)",
+          "oklch(83.57% 0.0068 157.04)",
+          "oklch(95.00% 0.0068 157.04)"
         ]
       },
       "muted": {
         "role": "neutral",
         "displayName": "Muted Ledger",
         "tonalRamp": [
-          "oklch(15.00% 0.0169 148.54)",
-          "oklch(26.43% 0.0169 148.54)",
-          "oklch(37.86% 0.0169 148.54)",
-          "oklch(49.29% 0.0169 148.54)",
-          "oklch(60.71% 0.0169 148.54)",
-          "oklch(72.14% 0.0169 148.54)",
-          "oklch(83.57% 0.0169 148.54)",
-          "oklch(95.00% 0.0169 148.54)"
+          "oklch(15.00% 0.0061 145.47)",
+          "oklch(26.43% 0.0061 145.47)",
+          "oklch(37.86% 0.0061 145.47)",
+          "oklch(49.29% 0.0061 145.47)",
+          "oklch(60.71% 0.0061 145.47)",
+          "oklch(72.14% 0.0061 145.47)",
+          "oklch(83.57% 0.0061 145.47)",
+          "oklch(95.00% 0.0061 145.47)"
         ]
       },
       "line": {
         "role": "neutral",
         "displayName": "Fine Rule",
         "tonalRamp": [
-          "oklch(15.00% 0.0096 119.59)",
-          "oklch(26.43% 0.0096 119.59)",
-          "oklch(37.86% 0.0096 119.59)",
-          "oklch(49.29% 0.0096 119.59)",
-          "oklch(60.71% 0.0096 119.59)",
-          "oklch(72.14% 0.0096 119.59)",
-          "oklch(83.57% 0.0096 119.59)",
-          "oklch(95.00% 0.0096 119.59)"
+          "oklch(15.00% 0.0081 106.56)",
+          "oklch(26.43% 0.0081 106.56)",
+          "oklch(37.86% 0.0081 106.56)",
+          "oklch(49.29% 0.0081 106.56)",
+          "oklch(60.71% 0.0081 106.56)",
+          "oklch(72.14% 0.0081 106.56)",
+          "oklch(83.57% 0.0081 106.56)",
+          "oklch(95.00% 0.0081 106.56)"
         ]
       },
       "control-line": {
@@ -145,17 +145,17 @@
         ]
       },
       "soft": {
-        "role": "neutral",
+        "role": "primary",
         "displayName": "Soft Leaf",
         "tonalRamp": [
-          "oklch(15.00% 0.0139 124.55)",
-          "oklch(26.43% 0.0139 124.55)",
-          "oklch(37.86% 0.0139 124.55)",
-          "oklch(49.29% 0.0139 124.55)",
-          "oklch(60.71% 0.0139 124.55)",
-          "oklch(72.14% 0.0139 124.55)",
-          "oklch(83.57% 0.0139 124.55)",
-          "oklch(95.00% 0.0139 124.55)"
+          "oklch(15.00% 0.0240 127.58)",
+          "oklch(26.43% 0.0240 127.58)",
+          "oklch(37.86% 0.0240 127.58)",
+          "oklch(49.29% 0.0240 127.58)",
+          "oklch(60.71% 0.0240 127.58)",
+          "oklch(72.14% 0.0240 127.58)",
+          "oklch(83.57% 0.0240 127.58)",
+          "oklch(95.00% 0.0240 127.58)"
         ]
       },
       "amber": {
@@ -170,8 +170,7 @@
           "oklch(72.14% 0.0981 73.68)",
           "oklch(83.57% 0.0981 73.68)",
           "oklch(95.00% 0.0981 73.68)"
-        ],
-        "purpose": "Operational caution and offline status."
+        ]
       },
       "danger": {
         "role": "neutral",
@@ -185,8 +184,7 @@
           "oklch(72.14% 0.1509 27.29)",
           "oklch(83.57% 0.1509 27.29)",
           "oklch(95.00% 0.1509 27.29)"
-        ],
-        "purpose": "Destructive actions and errors."
+        ]
       },
       "focus": {
         "role": "neutral",
@@ -200,96 +198,237 @@
           "oklch(72.14% 0.1084 135.95)",
           "oklch(83.57% 0.1084 135.95)",
           "oklch(95.00% 0.1084 135.95)"
-        ],
-        "purpose": "Keyboard focus outline."
+        ]
+      },
+      "primary-hover": {
+        "role": "primary",
+        "displayName": "primary hover",
+        "tonalRamp": [
+          "oklch(15.00% 0.0591 163.65)",
+          "oklch(26.43% 0.0591 163.65)",
+          "oklch(37.86% 0.0591 163.65)",
+          "oklch(49.29% 0.0591 163.65)",
+          "oklch(60.71% 0.0591 163.65)",
+          "oklch(72.14% 0.0591 163.65)",
+          "oklch(83.57% 0.0591 163.65)",
+          "oklch(95.00% 0.0591 163.65)"
+        ]
+      },
+      "good-bg": {
+        "role": "neutral",
+        "displayName": "good bg",
+        "tonalRamp": [
+          "oklch(15.00% 0.0394 127.53)",
+          "oklch(26.43% 0.0394 127.53)",
+          "oklch(37.86% 0.0394 127.53)",
+          "oklch(49.29% 0.0394 127.53)",
+          "oklch(60.71% 0.0394 127.53)",
+          "oklch(72.14% 0.0394 127.53)",
+          "oklch(83.57% 0.0394 127.53)",
+          "oklch(95.00% 0.0394 127.53)"
+        ]
+      },
+      "good-text": {
+        "role": "neutral",
+        "displayName": "good text",
+        "tonalRamp": [
+          "oklch(15.00% 0.0845 147.20)",
+          "oklch(26.43% 0.0845 147.20)",
+          "oklch(37.86% 0.0845 147.20)",
+          "oklch(49.29% 0.0845 147.20)",
+          "oklch(60.71% 0.0845 147.20)",
+          "oklch(72.14% 0.0845 147.20)",
+          "oklch(83.57% 0.0845 147.20)",
+          "oklch(95.00% 0.0845 147.20)"
+        ]
+      },
+      "warning-bg": {
+        "role": "neutral",
+        "displayName": "warning bg",
+        "tonalRamp": [
+          "oklch(15.00% 0.0555 90.32)",
+          "oklch(26.43% 0.0555 90.32)",
+          "oklch(37.86% 0.0555 90.32)",
+          "oklch(49.29% 0.0555 90.32)",
+          "oklch(60.71% 0.0555 90.32)",
+          "oklch(72.14% 0.0555 90.32)",
+          "oklch(83.57% 0.0555 90.32)",
+          "oklch(95.00% 0.0555 90.32)"
+        ]
+      },
+      "warning-text": {
+        "role": "neutral",
+        "displayName": "warning text",
+        "tonalRamp": [
+          "oklch(15.00% 0.0870 72.86)",
+          "oklch(26.43% 0.0870 72.86)",
+          "oklch(37.86% 0.0870 72.86)",
+          "oklch(49.29% 0.0870 72.86)",
+          "oklch(60.71% 0.0870 72.86)",
+          "oklch(72.14% 0.0870 72.86)",
+          "oklch(83.57% 0.0870 72.86)",
+          "oklch(95.00% 0.0870 72.86)"
+        ]
+      },
+      "info-bg": {
+        "role": "neutral",
+        "displayName": "info bg",
+        "tonalRamp": [
+          "oklch(15.00% 0.0286 254.68)",
+          "oklch(26.43% 0.0286 254.68)",
+          "oklch(37.86% 0.0286 254.68)",
+          "oklch(49.29% 0.0286 254.68)",
+          "oklch(60.71% 0.0286 254.68)",
+          "oklch(72.14% 0.0286 254.68)",
+          "oklch(83.57% 0.0286 254.68)",
+          "oklch(95.00% 0.0286 254.68)"
+        ]
+      },
+      "info-text": {
+        "role": "neutral",
+        "displayName": "info text",
+        "tonalRamp": [
+          "oklch(15.00% 0.1061 251.92)",
+          "oklch(26.43% 0.1061 251.92)",
+          "oklch(37.86% 0.1061 251.92)",
+          "oklch(49.29% 0.1061 251.92)",
+          "oklch(60.71% 0.1061 251.92)",
+          "oklch(72.14% 0.1061 251.92)",
+          "oklch(83.57% 0.1061 251.92)",
+          "oklch(95.00% 0.1061 251.92)"
+        ]
+      },
+      "local-bg": {
+        "role": "neutral",
+        "displayName": "local bg",
+        "tonalRamp": [
+          "oklch(15.00% 0.0126 126.37)",
+          "oklch(26.43% 0.0126 126.37)",
+          "oklch(37.86% 0.0126 126.37)",
+          "oklch(49.29% 0.0126 126.37)",
+          "oklch(60.71% 0.0126 126.37)",
+          "oklch(72.14% 0.0126 126.37)",
+          "oklch(83.57% 0.0126 126.37)",
+          "oklch(95.00% 0.0126 126.37)"
+        ]
+      },
+      "local-text": {
+        "role": "neutral",
+        "displayName": "local text",
+        "tonalRamp": [
+          "oklch(15.00% 0.0386 154.16)",
+          "oklch(26.43% 0.0386 154.16)",
+          "oklch(37.86% 0.0386 154.16)",
+          "oklch(49.29% 0.0386 154.16)",
+          "oklch(60.71% 0.0386 154.16)",
+          "oklch(72.14% 0.0386 154.16)",
+          "oklch(83.57% 0.0386 154.16)",
+          "oklch(95.00% 0.0386 154.16)"
+        ]
       }
     },
     "typographyMeta": {
       "headline": {
-        "displayName": "Page heading",
-        "purpose": "Current operational page heading; 27px on phones. Sign-in retains its base heading treatment."
+        "displayName": "headline",
+        "purpose": "Page title; 30px on phones."
       },
-      "title": {
-        "displayName": "Section title",
-        "purpose": "Current operational section heading; receipt detail and inherited subsections retain local roles."
+      "heading": {
+        "displayName": "heading",
+        "purpose": "Panel headings."
+      },
+      "subheading": {
+        "displayName": "subheading",
+        "purpose": "Subsections."
       },
       "body": {
-        "displayName": "Operational body",
-        "purpose": "Inherited application copy and controls; tabular numerals."
+        "displayName": "body",
+        "purpose": "Operational baseline; 16px on phones."
       },
-      "label": {
-        "displayName": "Form label",
-        "purpose": "Compact labels above operational fields."
+      "control": {
+        "displayName": "control",
+        "purpose": "Default commands."
+      },
+      "ledger-label": {
+        "displayName": "ledger label",
+        "purpose": "Table headers."
+      },
+      "metric": {
+        "displayName": "metric",
+        "purpose": "Summary emphasis; contextual sizes in DESIGN.md."
+      },
+      "metadata": {
+        "displayName": "metadata",
+        "purpose": "Supporting scope and disclosure context."
       }
     },
     "shadows": [
       {
-        "name": "panel-resting",
-        "value": "0 2px 6px rgb(20 48 30 / 3%)",
-        "purpose": "Faint separation for current operational panels."
-      },
-      {
-        "name": "product-resting",
-        "value": "0 2px 5px rgb(20 48 30 / 4%)",
-        "purpose": "Quiet catalog-tile separation."
+        "name": "working-surface",
+        "value": "0 2px 3px rgb(24 43 21 / 3%)",
+        "purpose": "Panels/products at rest."
       },
       {
         "name": "product-hover",
         "value": "0 6px 16px #23352b0b",
-        "purpose": "Subtle hover response on available products."
+        "purpose": "Product hover."
       },
       {
-        "name": "mobile-basket",
-        "value": "0 8px 24px #173e3233",
-        "purpose": "Separate fixed mobile checkout summary from scrolling content."
+        "name": "period-popover",
+        "value": "0 6px 20px rgb(3 44 22 / 15%)",
+        "purpose": "Period overlay."
       },
       {
-        "name": "search-options",
+        "name": "product-selector",
         "value": "0 8px 24px rgb(23 62 50 / 14%)",
-        "purpose": "Transient searchable-selector popup."
+        "purpose": "Product listbox."
+      },
+      {
+        "name": "operational-notice",
+        "value": "0 4px 18px rgb(3 44 22 / 15%)",
+        "purpose": "Transient feedback."
       }
     ],
     "motion": [
       {
-        "name": "control-state",
+        "name": "button-feedback",
         "value": "background 0.16s ease, color 0.16s ease",
-        "purpose": "Button state changes; navigation changes colors immediately. Globally removed for reduced motion."
+        "purpose": "Observed button states."
       },
       {
-        "name": "product-state",
+        "name": "product-feedback",
         "value": "border-color 0.18s ease, box-shadow 0.18s ease",
-        "purpose": "Available catalog record hover; globally removed for reduced motion."
+        "purpose": "Observed product states."
       },
       {
-        "name": "sync-spin",
-        "value": "spin 1s linear infinite",
-        "purpose": "Ongoing synchronization; disabled by reduced-motion preference."
+        "name": "reduced-motion",
+        "value": "animation: none !important; transition: none !important; scroll-behavior: auto !important;",
+        "purpose": "Under prefers-reduced-motion: reduce."
       }
     ],
     "breakpoints": [
       {
-        "name": "phone",
-        "value": "650px"
+        "name": "compact-checkout",
+        "value": "1350px"
       },
       {
-        "name": "stock-record-stack",
-        "value": "720px"
+        "name": "narrow-rail",
+        "value": "1200px"
       },
       {
-        "name": "inherited-mobile-basket-and-sign-in",
+        "name": "icon-rail-and-stack",
+        "value": "1000px"
+      },
+      {
+        "name": "inherited-sign-in-and-basket",
         "value": "730px"
       },
       {
-        "name": "icon-rail",
-        "value": "900px"
+        "name": "inherited-stock-records",
+        "value": "720px"
       },
       {
-        "name": "detail-and-chart-stack",
-        "value": "1100px"
-      },
-      {
-        "name": "compact-desktop",
-        "value": "1300px"
+        "name": "phone",
+        "value": "650px"
       }
     ]
   },
@@ -298,149 +437,130 @@
       "name": "Primary Button",
       "kind": "button",
       "refersTo": "button-primary",
-      "description": "Forest action for submitting an operational form.",
-      "html": "<button class=\"ds-button ds-primary\" type=\"button\">Save changes</button>",
-      "css": ".ds-button{font-family:\"DM Sans Variable\",sans-serif;font-size:15px;font-weight:650;line-height:1.3;min-height:43px;padding:10px 17px;border:1px solid transparent;border-radius:9px;cursor:pointer;transition:background .16s ease,color .16s ease}.ds-button:focus-visible{outline:3px solid var(--focus,#507c39);outline-offset:3px;}.ds-button:disabled{opacity:.5;cursor:not-allowed}.ds-button:active:not(:disabled){filter:brightness(.96)}@media(prefers-reduced-motion:reduce){.ds-button{transition:none}}.ds-primary{background:var(--forest,#063f2d);color:white;border-color:transparent}.ds-primary:hover:not(:disabled){background:#285441}"
+      "description": "Observed operational command; application guards remain intact.",
+      "html": "<button type=\"button\" class=\"ds-button-primary\">Save changes</button>",
+      "css": ".ds-button-primary{font-family:\"Roboto Variable\",sans-serif;font-size:18px;font-weight:650;line-height:1.3;min-height:44px;padding:9px 17px;border:1px solid transparent;border-radius:9px;cursor:pointer;transition:background .16s ease,color .16s ease;background:linear-gradient(100deg,#03422a,#003d28 80%,#074731);color:white;}.ds-button-primary:hover:not(:disabled){background:#285441;}.ds-button-primary:focus-visible{outline:3px solid var(--focus,#507c39);outline-offset:3px;}.ds-button-primary:disabled{opacity:.5;cursor:not-allowed}@media(prefers-reduced-motion:reduce){.ds-button-primary{transition:none}}"
     },
     {
       "name": "Outline Button",
       "kind": "button",
       "refersTo": "button-outline",
-      "description": "Bordered secondary operational action.",
-      "html": "<button class=\"ds-button ds-outline\" type=\"button\">Refresh</button>",
-      "css": ".ds-button{font-family:\"DM Sans Variable\",sans-serif;font-size:15px;font-weight:650;line-height:1.3;min-height:43px;padding:10px 17px;border:1px solid transparent;border-radius:9px;cursor:pointer;transition:background .16s ease,color .16s ease}.ds-button:focus-visible{outline:3px solid var(--focus,#507c39);outline-offset:3px;}.ds-button:disabled{opacity:.5;cursor:not-allowed}.ds-button:active:not(:disabled){filter:brightness(.96)}@media(prefers-reduced-motion:reduce){.ds-button{transition:none}}.ds-outline{background:white;color:var(--forest,#063f2d);border-color:#d6ddcf}.ds-outline:hover:not(:disabled){background:var(--soft,#edf1e7)}"
+      "description": "Observed operational command; application guards remain intact.",
+      "html": "<button type=\"button\" class=\"ds-button-outline\">View details</button>",
+      "css": ".ds-button-outline{font-family:\"Roboto Variable\",sans-serif;font-size:18px;font-weight:650;line-height:1.3;min-height:44px;padding:9px 17px;border:1px solid transparent;border-radius:9px;cursor:pointer;transition:background .16s ease,color .16s ease;background:white;color:#043c28;border-color:#9da9a0;}.ds-button-outline:hover:not(:disabled){background:#edf5e4;}.ds-button-outline:focus-visible{outline:3px solid var(--focus,#507c39);outline-offset:3px;}.ds-button-outline:disabled{opacity:.5;cursor:not-allowed}@media(prefers-reduced-motion:reduce){.ds-button-outline{transition:none}}"
     },
     {
       "name": "Ghost Button",
       "kind": "button",
       "refersTo": "button-ghost",
-      "description": "Quiet secondary action without a resting surface.",
-      "html": "<button class=\"ds-button ds-ghost\" type=\"button\">Keep open</button>",
-      "css": ".ds-button{font-family:\"DM Sans Variable\",sans-serif;font-size:15px;font-weight:650;line-height:1.3;min-height:43px;padding:10px 17px;border:1px solid transparent;border-radius:9px;cursor:pointer;transition:background .16s ease,color .16s ease}.ds-button:focus-visible{outline:3px solid var(--focus,#507c39);outline-offset:3px;}.ds-button:disabled{opacity:.5;cursor:not-allowed}.ds-button:active:not(:disabled){filter:brightness(.96)}@media(prefers-reduced-motion:reduce){.ds-button{transition:none}}.ds-ghost{background:transparent;color:var(--forest,#063f2d);border-color:transparent}.ds-ghost:hover:not(:disabled){background:var(--soft,#edf1e7)}"
+      "description": "Observed operational command; application guards remain intact.",
+      "html": "<button type=\"button\" class=\"ds-button-ghost\">Close shift</button>",
+      "css": ".ds-button-ghost{font-family:\"Roboto Variable\",sans-serif;font-size:18px;font-weight:650;line-height:1.3;min-height:44px;padding:9px 17px;border:1px solid transparent;border-radius:9px;cursor:pointer;transition:background .16s ease,color .16s ease;background:transparent;color:#043c28;}.ds-button-ghost:hover:not(:disabled){background:#edf5e4;}.ds-button-ghost:focus-visible{outline:3px solid var(--focus,#507c39);outline-offset:3px;}.ds-button-ghost:disabled{opacity:.5;cursor:not-allowed}@media(prefers-reduced-motion:reduce){.ds-button-ghost{transition:none}}"
     },
     {
       "name": "Destructive Button",
       "kind": "button",
       "refersTo": "button-danger",
-      "description": "Correction Red for a destructive action; inherits the shared focus and disabled states.",
-      "html": "<button class=\"ds-button ds-danger\" type=\"button\">Remove draft</button>",
-      "css": ".ds-button{font-family:\"DM Sans Variable\",sans-serif;font-size:15px;font-weight:650;line-height:1.3;min-height:43px;padding:10px 17px;border:1px solid transparent;border-radius:9px;cursor:pointer;transition:background .16s ease,color .16s ease}.ds-button:focus-visible{outline:3px solid var(--focus,#507c39);outline-offset:3px;}.ds-button:disabled{opacity:.5;cursor:not-allowed}.ds-button:active:not(:disabled){filter:brightness(.96)}@media(prefers-reduced-motion:reduce){.ds-button{transition:none}}.ds-danger{background:var(--danger,#a3312b);color:white;border-color:transparent}.ds-danger:hover:not(:disabled){background:#a3312b}"
+      "description": "Observed operational command; application guards remain intact.",
+      "html": "<button type=\"button\" class=\"ds-button-danger\">Remove draft</button>",
+      "css": ".ds-button-danger{font-family:\"Roboto Variable\",sans-serif;font-size:18px;font-weight:650;line-height:1.3;min-height:44px;padding:9px 17px;border:1px solid transparent;border-radius:9px;cursor:pointer;transition:background .16s ease,color .16s ease;background:var(--danger,#a3312b);color:white;}.ds-button-danger:hover:not(:disabled){background:var(--danger,#a3312b);}.ds-button-danger:focus-visible{outline:3px solid var(--focus,#507c39);outline-offset:3px;}.ds-button-danger:disabled{opacity:.5;cursor:not-allowed}@media(prefers-reduced-motion:reduce){.ds-button-danger{transition:none}}"
     },
     {
-      "name": "Labeled Field",
+      "name": "Search Field",
       "kind": "input",
       "refersTo": "input",
-      "description": "Readable operational field with stronger control boundary and visible focus.",
-      "html": "<label class=\"ds-field\"><span>Recorded reference</span><input type=\"text\" placeholder=\"Enter reference\"></label>",
-      "css": ".ds-field{display:grid;gap:6px;color:var(--ink,#15241c);font:650 12px/1.5 \"DM Sans Variable\",sans-serif}.ds-field input{font:400 15px/1.5 \"DM Sans Variable\",sans-serif;min-height:44px;padding:11px 12px;color:var(--ink,#15241c);background:white;border:1px solid var(--control-line,#7a8873);border-radius:8px}.ds-field input:hover{border-color:var(--forest,#063f2d)}.ds-field input:focus-visible{outline:3px solid var(--focus,#507c39);outline-offset:3px;}.ds-field input:disabled{background:var(--soft,#edf1e7);opacity:.5}"
+      "description": "Labelled type-to-search field with clear boundary and focus.",
+      "html": "<label class=\"ds-search\"><span>Search records</span><input type=\"search\" placeholder=\"Search receipt number or transaction ID\" /></label>",
+      "css": ".ds-search{display:grid;gap:8px;font-family:\"Roboto Variable\",sans-serif;font-size:18px;line-height:1.4;color:#080b09}.ds-search input{width:100%;min-height:44px;padding:11px 12px;border:1px solid var(--control-line,#7a8873);border-radius:9px;background:white;color:#080b09;font:inherit;caret-color:#043c28}.ds-search input::placeholder{color:#6b6e6b;opacity:1}.ds-search input:hover{border-color:var(--control-line,#7a8873)}.ds-search input:focus-visible{outline:3px solid var(--focus,#507c39);outline-offset:3px;}"
     },
     {
-      "name": "Rail Navigation",
+      "name": "Active Navigation",
       "kind": "nav",
-      "description": "Deep forest rail and pale current destination; accessible labels persist in the icon rail.",
-      "html": "<nav class=\"ds-rail\" aria-label=\"Preview navigation\"><button class=\"ds-nav\" aria-current=\"page\"><svg width=\"20\" height=\"20\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" aria-hidden=\"true\"><path d=\"M3 3h7v7H3zM14 3h7v7h-7zM3 14h7v7H3zM14 14h7v7h-7z\"/></svg><span>Overview</span></button><button class=\"ds-nav\"><svg width=\"20\" height=\"20\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" aria-hidden=\"true\"><path d=\"m3 7 9-4 9 4v10l-9 4-9-4V7Zm0 0 9 4 9-4M12 11v10\"/></svg><span>Inventory</span></button></nav>",
-      "css": ".ds-rail{width:216px;padding:16px;background:linear-gradient(145deg,#003c2f,#00372b);font-family:\"DM Sans Variable\",sans-serif}.ds-nav{display:flex;width:100%;align-items:center;gap:16px;padding:11px 15px;min-height:49px;margin:5px 0;border:0;border-radius:10px;background:transparent;color:#dce8df;font:400 16px/1.5 \"DM Sans Variable\",sans-serif;cursor:pointer}.ds-nav[aria-current=page]{background:var(--lime,#e6f2d7);color:#073b26;font-weight:750}.ds-nav:hover:not([aria-current]){background:#285441}.ds-nav:focus-visible{outline:3px solid var(--lime,#e6f2d7);outline-offset:3px}.ds-nav:active{filter:brightness(.96)}"
+      "refersTo": "nav-active",
+      "description": "Pale leaf destination on the observed forest rail gradient.",
+      "html": "<nav class=\"ds-rail\" aria-label=\"Store navigation\"><a class=\"ds-nav\" href=\"#receipts\" aria-current=\"page\"><svg width=\"24\" height=\"24\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.8\" aria-hidden=\"true\"><path d=\"M6 3h9l4 4v14H5V3h1Z M14 3v5h5 M8 12h8 M8 16h8\"/></svg><span>Sales &amp; receipts</span></a></nav>",
+      "css": ".ds-rail{padding:16px;background:radial-gradient(ellipse at 0 40%,#073f30 0,transparent 70%),linear-gradient(130deg,#033326,#00372a);width:224px}.ds-nav{display:flex;align-items:center;gap:18px;min-height:51px;padding:11px 16px;border-radius:10px;background:linear-gradient(100deg,#eaf5d9,#dfefca);color:#05391f;font-family:\"Roboto Variable\",sans-serif;font-size:20px;font-weight:700;line-height:1.4;text-decoration:none}.ds-nav:hover{background:linear-gradient(100deg,#eaf5d9,#dfefca)}.ds-nav:focus-visible{outline:3px solid #e6f3d5;outline-offset:3px}"
     },
     {
-      "name": "Category Filters",
+      "name": "State Badge",
       "kind": "chip",
-      "description": "Compact selected forest category with explicit pressed state.",
-      "html": "<div class=\"ds-filters\" aria-label=\"Preview categories\"><button class=\"ds-chip\" aria-pressed=\"true\">All products</button><button class=\"ds-chip\" aria-pressed=\"false\">Seeds</button></div>",
-      "css": ".ds-filters{display:flex;flex-wrap:wrap;gap:6px}.ds-chip{padding:8px 12px;border:1px solid transparent;border-radius:7px;background:transparent;color:var(--muted,#586159);font:650 12px/1.5 \"DM Sans Variable\",sans-serif;cursor:pointer}.ds-chip[aria-pressed=true]{background:var(--forest,#063f2d);color:white}.ds-chip:hover:not([aria-pressed=true]){background:var(--soft,#edf1e7)}.ds-chip:focus-visible{outline:3px solid var(--focus,#507c39);outline-offset:3px;}.ds-chip:active{filter:brightness(.96)}"
+      "refersTo": "status-good",
+      "description": "Meaningful state words plus icon; preview is not a business result.",
+      "html": "<span class=\"ds-status\"><svg width=\"17\" height=\"17\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.8\" aria-hidden=\"true\"><path d=\"m7 12 3 3 7-7\"/><circle cx=\"12\" cy=\"12\" r=\"9\"/></svg><span>Approved</span></span>",
+      "css": ".ds-status{display:inline-flex;align-items:center;gap:7px;padding:6px 12px;border-radius:8px;background:#e8f5d9;color:#073b14;font-family:\"Roboto Variable\",sans-serif;font-size:16px;line-height:1.2}.ds-status svg{flex:0 0 17px}"
     },
     {
-      "name": "Record Panel",
+      "name": "Working Panel",
       "kind": "card",
       "refersTo": "panel",
-      "description": "Current white outlined operational container with a faint resting shadow.",
-      "html": "<section class=\"ds-panel\" aria-labelledby=\"ds-panel-title\"><h2 id=\"ds-panel-title\">Recorded work</h2><p>Keep the loaded scope, state and next action beside the record.</p><details><summary>Record details</summary><p>Original context remains available.</p></details></section>",
-      "css": ".ds-panel{padding:22px;border:1px solid #dcded6;border-radius:15px;background:white;color:var(--ink,#15241c);box-shadow:0 2px 6px rgb(20 48 30 / 3%);font:400 15px/1.5 \"DM Sans Variable\",sans-serif}.ds-panel h2{font:780 22px/1.3 \"Manrope Variable\",sans-serif;margin:0 0 16px;letter-spacing:-.025em}.ds-panel p{margin:0 0 16px}.ds-panel summary{cursor:pointer;color:var(--forest,#063f2d)}.ds-panel summary:hover{text-decoration:underline}.ds-panel summary:focus-visible{outline:3px solid var(--focus,#507c39);outline-offset:3px;}@media(max-width:650px){.ds-panel{padding:17px;border-radius:12px}}"
+      "description": "Quiet white operational surface with honest unavailable context.",
+      "html": "<section class=\"ds-panel\"><h2>Shift information</h2><p>Opening cash is unavailable.</p></section>",
+      "css": ".ds-panel{padding:22px;border:1px solid #deded9;border-radius:16px;background:white;color:#080b09;box-shadow:0 2px 3px rgb(24 43 21 / 3%);font-family:\"Roboto Variable\",sans-serif;font-size:18px;line-height:1.4}.ds-panel h2{font-size:28px;font-weight:760;line-height:1.2;letter-spacing:-.025em;margin:0}.ds-panel p{margin:10px 0 16px;color:#535653}"
     },
     {
-      "name": "Product Record",
-      "kind": "card",
-      "description": "Verified contain-fit photograph or explicit unverified-photo fallback; product identity and independent selling controls remain legible.",
-      "html": "<article class=\"ds-product\"><div class=\"ds-photo\"><svg width=\"30\" height=\"30\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.5\" aria-hidden=\"true\"><path d=\"M20 4c-8-1-15 2-15 8a7 7 0 0 0 2 5c5 2 12-1 13-13ZM4 21l10-11\"/></svg><span>Photo not verified</span></div><div><span class=\"ds-category\">Catalog category</span><h3>Product identity</h3><span class=\"ds-unit\">Configured selling unit</span></div><div class=\"ds-product-footer\"><span>Price from catalog</span><button type=\"button\">View product</button></div></article>",
-      "css": ".ds-product{display:grid;grid-template-columns:40% minmax(0,1fr);gap:10px;padding:15px;border:1px solid #dcded6;border-radius:15px;background:white;color:var(--ink,#15241c);box-shadow:0 2px 5px rgb(20 48 30 / 4%);font:400 14px/1.5 \"DM Sans Variable\",sans-serif}.ds-photo{height:140px;display:flex;flex-direction:column;justify-content:center;align-items:center;gap:8px;color:var(--muted,#586159);text-align:center;font-size:11px}.ds-category{background:#e8f3df;color:#21482a;padding:4px 8px;border-radius:6px;font-size:10px}.ds-product h3{font-size:17px;line-height:1.35;overflow-wrap:anywhere;margin:8px 0}.ds-unit{color:var(--muted,#586159);font-size:12px}.ds-product-footer{grid-column:1/-1;display:flex;flex-wrap:wrap;justify-content:space-between;gap:8px;border-top:1px solid var(--line,#e1e3dc);padding-top:12px}.ds-product button{background:var(--forest,#063f2d);color:white;border:0;border-radius:7px;padding:7px 10px;font:650 13px/1.5 \"DM Sans Variable\",sans-serif;cursor:pointer}.ds-product button:hover{background:#285441}.ds-product button:focus-visible{outline:3px solid var(--focus,#507c39);outline-offset:3px;}.ds-product:focus-within{outline:3px solid var(--focus,#507c39);outline-offset:3px}.ds-product:hover{box-shadow:0 6px 16px #23352b0b}.ds-product button:active{filter:brightness(.96)}"
-    },
-    {
-      "name": "Sales Trend",
+      "name": "Original Identity Disclosure",
       "kind": "custom",
-      "description": "Illustrative component preview only: measured-width green line/area plot and readable axes, with exact figures in a native disclosure. The live app uses validated report rows and explicit snapshot scope.",
-      "html": "<section class=\"ds-trend\"><h3>Sales trend</h3><p>Illustrative visual preview</p><svg viewBox=\"0 0 300 180\" role=\"img\" aria-label=\"Illustrative line and area plot\"><path d=\"M72 30H280M72 85H280M72 140H280\" fill=\"none\" stroke=\"#e1e3dc\"/><path d=\"M72 125L124 90L176 110L228 55L280 35V140H72Z\" fill=\"#8cc75b\" fill-opacity=\".2\"/><path d=\"M72 125L124 90L176 110L228 55L280 35\" stroke=\"#17633c\" stroke-width=\"3\" fill=\"none\"/><text x=\"62\" y=\"34\" text-anchor=\"end\">High</text><text x=\"62\" y=\"144\" text-anchor=\"end\">Zero</text><text x=\"72\" y=\"165\" text-anchor=\"middle\">Start</text><text x=\"280\" y=\"165\" text-anchor=\"middle\">End</text></svg><details><summary>Show exact report totals</summary><p>Live report totals remain tied to their loaded branch, dates and snapshot.</p></details></section>",
-      "css": ".ds-trend{min-width:0;padding:16px;background:white;color:var(--ink,#15241c);font:400 15px/1.5 \"DM Sans Variable\",sans-serif}.ds-trend h3{font:780 22px/1.3 \"Manrope Variable\",sans-serif;margin:0 0 8px}.ds-trend p{font-size:12px;color:var(--muted,#586159)}.ds-trend svg{display:block;width:100%;max-width:360px;height:auto}.ds-trend text{font:12px \"DM Sans Variable\",sans-serif;fill:var(--muted,#586159)}.ds-trend summary{cursor:pointer;color:var(--forest,#063f2d)}.ds-trend summary:hover{text-decoration:underline}.ds-trend summary:focus-visible{outline:3px solid var(--focus,#507c39);outline-offset:3px;}"
+      "description": "Compact identity retaining an inspectable original ID.",
+      "html": "<details class=\"ds-identity\"><summary>Original transaction</summary><code>Full original transaction ID appears here</code><small>Original identity retained.</small></details>",
+      "css": ".ds-identity{max-width:250px;color:#080b09;font-family:\"Roboto Variable\",sans-serif;font-size:18px;font-weight:700;line-height:1.4}.ds-identity summary{cursor:pointer;white-space:nowrap}.ds-identity summary:hover{text-decoration:underline}.ds-identity summary:focus-visible{outline:3px solid var(--focus,#507c39);outline-offset:3px;}.ds-identity code{display:block;min-width:180px;font-family:\"Roboto Variable\",sans-serif;font-size:13px;font-weight:400;line-height:1.5;user-select:all;overflow-wrap:anywhere;white-space:normal}.ds-identity small{display:block;margin-top:8px;color:#535653;font-size:12px;font-weight:400}"
+    },
+    {
+      "name": "Recovery Card",
+      "kind": "custom",
+      "description": "Icon/copy/adjacent action; real recovery/download logic remains guarded.",
+      "html": "<section class=\"ds-recovery\"><span class=\"ds-recovery-icon\"><svg width=\"24\" height=\"24\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.8\" aria-hidden=\"true\"><path d=\"M6 3h9l4 4v14H5V3h1Z M14 3v5h5 M8 12h8 M8 16h8\"/></svg></span><div class=\"ds-recovery-copy\"><h2>Recovery copy</h2><p>Save a copy of transactions from this PC.</p></div><button type=\"button\" class=\"ds-recovery-button\">Export copy</button></section>",
+      "css": ".ds-recovery{display:grid;grid-template-columns:52px minmax(0,1fr) auto;align-items:center;gap:16px;min-height:125px;padding:18px 20px;border:1px solid #deded9;border-radius:16px;background:white;color:#080b09;font-family:\"Roboto Variable\",sans-serif;font-size:15px;line-height:1.4;box-shadow:0 2px 3px rgb(24 43 21 / 3%)}.ds-recovery-icon{display:grid;place-items:center;width:52px;height:56px;background:#edf6e2;border-radius:11px;color:#043c28}.ds-recovery-copy h2{margin:0;font-size:23px;font-weight:760;line-height:1.2}.ds-recovery-copy p{margin:6px 0 0;max-width:40ch;color:#535653}.ds-recovery-button{font-family:\"Roboto Variable\",sans-serif;font-size:16px;font-weight:650;line-height:1.3;min-height:42px;padding:8px 14px;border:1px solid #9da9a0;border-radius:9px;background:white;color:#043c28;cursor:pointer;transition:background .16s ease}.ds-recovery-button:hover{background:#edf5e4}.ds-recovery-button:focus-visible{outline:3px solid var(--focus,#507c39);outline-offset:3px;}@media(max-width:650px){.ds-recovery{grid-template-columns:44px minmax(0,1fr);gap:12px;padding:17px;min-height:0}.ds-recovery-icon{width:44px;height:50px}.ds-recovery-button{grid-column:1/-1;min-height:44px}}@media(prefers-reduced-motion:reduce){.ds-recovery-button{transition:none}}"
     }
   ],
   "narrative": {
-    "northStar": "The Cooperative Stock Book",
-    "overview": "The cooperative stock book pairs forest ink with warm paper, quiet rules, and precise figures. It feels practical and orderly for cashiers completing sales and owners tracing stock changes to their source.\n\nCompact sans-serif typography and restrained tonal surfaces keep operational information close together. Verified product photographs and explicit unverified-photo fallbacks identify agricultural goods. Compact registers, selected-record details, and task tabs organize work; borders and alignment carry the hierarchy.\n\nBetter Yield POS is the customer-facing identity for Better Yield Agri Trading and Services; AgriStore remains the internal product identity. The original business logo and product-display photograph from the supplied Facebook page extend this established world on sign-in and navigation. The public tagline, “Your partner in every harvest.”, and crop nutrition / crop care context identify the business; configured branches, stock and prices remain operational records. Asset provenance is recorded in [docs/brand-assets.md](docs/brand-assets.md).",
+    "northStar": "The Supplied Better Yield POS Screens",
+    "overview": "The supplied November 3, 2026 screenshots are the visual authority: reproduce their heavy Roboto hierarchy, forest navigation, warm paper, pale green selections, strong figures and specific register/detail compositions. The eight distinct supplied compositions replace the former Manrope/DM Sans operational interpretation; they do not invite a new concept or generic dashboard treatment.\n\nThis is a readable working counter: product identity and prices, original cash receipts, stock ledgers and actual workflow stages remain visible in a stable shell. Actual Better Yield artwork and verified photographs occupy the reference media slots. Unverified-photo fallbacks, unavailable information, Practice and TEST labels remain explicit.\n\nBetter Yield POS is the customer-facing identity; AgriStore remains the repository identity. Original logo, business photograph and tagline provenance remain in [docs/brand-assets.md](docs/brand-assets.md). Sign-in retains its existing Manrope Variable headings and DM Sans Variable body; those font imports are intentional.",
     "keyCharacteristics": [
-      "Forest navigation and primary actions against warm paper.",
-      "Ruled records, aligned figures, and explicit operational states.",
-      "Compact controls with rounded corners and clear focus outlines.",
-      "Original Better Yield artwork on sign-in and navigation; verified catalog photographs with honest fallbacks.",
-      "Focused task tabs, ten-record pages, paired register/detail views, and readable phone figures."
+      "Fixed forest rail and white branch bar on warm paper.",
+      "Heavy Roboto headings, dark figures and quiet metadata.",
+      "Reference-specific registers, selected details, photo cards and shallow summary strips.",
+      "Pale green selections, restrained gradients and soft structural depth.",
+      "Truthful states, inspectable original IDs and contained phone ledgers."
     ],
     "rules": [
       {
-        "name": "The Forest Anchor Rule",
-        "body": "Use forest for navigation, selected category filters, primary actions, and financial emphasis; use pale green for selected navigation and supporting surfaces.",
-        "section": "colors"
+        "name": "The Pinned Composition Rule",
+        "body": "Follow the supplied arrangement and hierarchy. Adapt actual data and permissions within its slots; do not substitute a new visual world.",
+        "section": "overview"
       },
       {
-        "name": "The Precise Figures Rule",
-        "body": "Keep tabular numerals throughout the interface and right-align numerical table columns so quantities and money can be scanned vertically. Keep each monetary figure on one intact line: summary labels may wrap or move above the value, but digits never split. Show bulk on-hand stock in exact base kg or liters across all batches; show piece-pack equivalents only when whole, otherwise retain base pieces, so small stock changes remain visible.",
-        "section": "typography"
+        "name": "The State Has Meaning Rule",
+        "body": "Color, icon and words describe the actual recorded state. Pale green alone does not certify synchronization, approval or reconciliation.",
+        "section": "state colors"
       },
       {
-        "name": "The Ruled Record Rule",
-        "body": "Separate record rows, receipt sections, and workspace regions with fine rules; retain tonal surfaces as the primary means of grouping.",
-        "section": "elevation"
+        "name": "The Intact Figure Rule",
+        "body": "Use tabular numerals and right-aligned numeric columns. Keep monetary values on one line; labels may wrap, digits may not.",
+        "section": "hierarchy"
       },
       {
-        "name": "The Traceable Stock Record Rule",
-        "body": "In transfer and count history, keep the lot and known expiry beside the product, name the base unit with every quantity, and keep the count reason beside its discrepancy and approval action. Resolve this context from the current product catalog; when batch details are unavailable, retain the recorded batch ID rather than borrowing another product's lot or implying that no batch was recorded.",
-        "section": "components"
+        "name": "The Quiet Depth Rule",
+        "body": "Use small soft shadows and tonal boundaries for working surfaces. Reserve stronger depth for notices and popovers.",
+        "section": "shadow vocabulary"
       }
     ],
     "dos": [
-      "Do retain the original Better Yield logo artwork and use the sourced business display photograph only on desktop sign-in; use verified catalog photos or the honest fallback in product records.",
-      "Do use the shared forest, paper, ink, muted, and rule tokens for new operational surfaces.",
-      "Do keep currency and quantities aligned, retain tabular numerals, and keep each monetary value intact on one line.",
-      "Do label selling units explicitly, preserve quantity drafts, and keep peso estimates blocked until actual weighed amounts are confirmed.",
-      "Do replace stale line amounts and weight equivalents with an entry prompt, total the remaining valid lines, and retain valid unconfirmed estimates and zero-price amounts.",
-      "Do expose configured loose selling methods in catalog records and retain displayed units and currency in field accessible names.",
-      "Do keep additional retail units opt-in, price them independently, and show stock conversion beside product setup.",
-      "Do provide a visible focus outline and explicit text for connection, stock, and save states.",
-      "Do preserve the responsive receipt access and fixed mobile basket summary on checkout.",
-      "Do keep approval reasons, errors, and keyboard focus within the affected record, with forms contained inside horizontally scrolling tables.",
-      "Do keep stock-control context and inline approval together when records stack at (720px), retaining native table headers and explicit quantity labels.",
-      "Do distinguish investigations, physically held goods, pending stock issues, and confirmed outcomes in local copy, with exact base quantities.",
-      "Do describe browser storage protection and quota estimates as their actual reported states, preserving the instruction to retain site data.",
-      "Do give history table scrolling regions accessible names, keyboard access, and the shared visible focus outline.",
-      "Do keep transfer and count context readable beside its record, with explicit base units and traceable identifiers in CSV exports.",
-      "Do retain stronger control boundaries, surface-appropriate focus outlines, and explicit current or pressed states.",
-      "Do keep catalog metadata legible when adding is disabled, with only the Add control changing appearance.",
-      "Do keep applied dates, loaded counts, end-of-history feedback, and CSV scope explicit beside the records they describe.",
-      "Do keep app update status beside its action, protect pending work before reopening, and preserve local records and browser site data in recovery guidance.",
-      "Do retain confirmed completion feedback alongside a distinct Refresh warning, clear confirmed forms, and preserve entered values on validation or submission failure.",
-      "Do keep task tabs, selected register/detail pairing, and ten-record presentation pages inside the current shell.",
-      "Do keep order product names and exact conversions on separate readable rows.",
-      "Do keep sales analytics filters, applied scope, snapshot and summary before trend and product ranking; preserve exact table values beside the responsive line/area chart."
+      "Do follow each supplied composition within the shared Roboto, forest and warm-paper shell.",
+      "Do use verified media or a clear Photo not verified fallback in the intended slot.",
+      "Do keep monetary values intact, numerical columns aligned and product units explicit.",
+      "Do retain full original transaction, receipt, count and order IDs through concise disclosures.",
+      "Do retain loaded scope, sync context and ten-row page summaries without changing totals or exports.",
+      "Do retain keyboard search, named table regions, visible focus and mobile sale/receipt access.",
+      "Do retain truthful empty, unavailable, Practice and TEST states and guarded commands."
     ],
     "donts": [
-      "Don't combine unlike product units or present original-sale product rankings as quantities after refunds.",
-      "Don't infer catalog stock, prices or configured branches from public brand photography or marketing information.",
-      "Don't substitute emoji or text glyphs for the existing line SVG icon vocabulary.",
-      "Don't turn operational surfaces into decorative illustrations or marketing panels.",
-      "Don't introduce heavy resting shadows on record panels.",
-      "Don't reduce essential product and payment copy to the smallest incidental text sizes present in older supporting UI.",
-      "Don't shrink transfer and count lot, expiry, or reason text to incidental metadata sizes, or let long context widen the first column without wrapping.",
-      "Don't imply that a loaded-row CSV includes matching records that have not been loaded.",
-      "Don't describe the open app window as current solely because no new download is available, or force other windows to reload.",
-      "Don't invite resubmission of a confirmed action after a refresh failure, or show opening-stock confirmation before CSV validation succeeds.",
-      "Don't treat unloaded held goods as a verified empty stock state or a recorded investigation outcome as proof of a shortage's cause.",
-      "Don't describe storage permission or estimated browser quota as proof of backup coverage, Windows disk capacity, or operational readiness."
+      "Don't revert the operational workspace to the former Manrope/DM Sans world or invent a new concept.",
+      "Don't replace reference register/detail arrangements with generic stacked dashboard cards.",
+      "Don't copy sample products, prices, stock, balances, staff or branch names into real records.",
+      "Don't hide original IDs, unit differences or weight/peso options to achieve visual similarity.",
+      "Don't imply local records are synchronized, drawer cash is reconciled or a receipt is a tax invoice.",
+      "Don't widen the phone page for a ledger or compress monetary digits to fit.",
+      "Don't migrate sign-in fonts and brand treatment implicitly."
     ]
   }
 }
