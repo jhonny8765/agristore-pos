@@ -1,6 +1,6 @@
 import { create } from "zustand";
 import Decimal from "decimal.js";
-import {applyLineDiscount,type SaleItem} from "@agristore/domain";
+import {applyLineDiscount,total,type SaleItem} from "@agristore/domain";
 import { quantityFromDisplay } from "./quantity-entry";
 export interface LineDraft {
   draft: string;
@@ -48,7 +48,8 @@ interface Cart {
   clear: () => void;
   attempt: () => string;
 }
-export function hasCartErrors(cart:Pick<Cart,'quantityErrors'|'drafts'>){return Object.keys(cart.quantityErrors).length>0||Object.values(cart.drafts).some(d=>!!d.discountError);}
+export function cartAmount(items:Pick<SaleItem,'lineTotal'>[]):number|null{try{return total(items);}catch{return null;}}
+export function hasCartErrors(cart:Pick<Cart,'quantityErrors'|'drafts'>&{items?:SaleItem[]}){return Object.keys(cart.quantityErrors).length>0||Object.values(cart.drafts).some(d=>!!d.discountError)||!!cart.items&&(cart.items.length>100||cartAmount(cart.items)===null);}
 export const useCart = create<Cart>((set, get) => ({
   credit: {enabled:false,clientId:'',term:30,officialReference:'',cash:''},
   creditAttempt: undefined,
@@ -72,6 +73,8 @@ export const useCart = create<Cart>((set, get) => ({
   attemptId: null,
   add: (item, entry = "unit") =>
     set((s) => {
+      if(s.items.length>=100)throw Error('A receipt supports up to 100 lines. Increase an existing quantity or start another sale.');
+      total([...s.items,item]);
       const lineId = crypto.randomUUID();
       return {
         items: [...s.items, item],
@@ -108,6 +111,7 @@ export const useCart = create<Cart>((set, get) => ({
     }),
   replace: (index, item) =>
     set((s) => {
+      total(s.items.map((value,n)=>n===index?item:value));
       const quantityErrors = { ...s.quantityErrors };
       delete quantityErrors[s.lineIds[index]];
       return {
@@ -116,7 +120,7 @@ export const useCart = create<Cart>((set, get) => ({
         attemptId: null,
       };
     }),
-  discount:(index,bps)=>set(s=>({items:s.items.map((item,n)=>n===index?applyLineDiscount(item,bps):item),attemptId:null})),
+  discount:(index,bps)=>set(s=>{const items=s.items.map((item,n)=>n===index?applyLineDiscount(item,bps):item);total(items);return {items,attemptId:null};}),
   remove: (index) =>
     set((s) => {
       const quantityErrors = { ...s.quantityErrors };

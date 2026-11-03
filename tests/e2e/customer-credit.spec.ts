@@ -17,6 +17,23 @@ test.beforeEach(async({page})=>{
 });
 test.afterEach(async()=>{await db?.close();});
 
+test('credit policy saves and reloads the last centavo at the supported money boundary',async({page})=>{
+ await page.getByRole('button',{name:'Add client',exact:true}).click();const profile=page.getByRole('form',{name:'Client credit policy'});
+ await profile.getByLabel('Name',{exact:true}).fill('TEST exact money boundary');await profile.getByLabel('Credit limit (₱)').fill('90071992547409.85');await profile.getByLabel('Approval/change reason').fill('TEST exact integer boundary evidence');await profile.getByLabel('I approve this limit and these terms for this client.').check();await profile.getByRole('button',{name:'Save client policy'}).click();
+ await expect(page.getByRole('button',{name:'TEST exact money boundary',exact:true})).toBeVisible();await page.getByRole('button',{name:'TEST exact money boundary',exact:true}).click();
+ await page.getByRole('button',{name:'Edit credit policy',exact:true}).click();await expect(profile.getByLabel('Credit limit (₱)')).toHaveValue('90071992547409.85');
+ await db.exec('reset role');expect((await db.query<{limit:string}>(`select credit_limit::text as limit from public.credit_clients where name='TEST exact money boundary'`)).rows[0].limit).toBe('9007199254740985');
+});
+
+test('price history searches older versions beyond 1000 and pages tied timestamps',async({page})=>{
+ await db.exec(`reset role;insert into public.unit_prices(organization_id,unit_id,version,price,cost,created_at) select pg_temp.i(1),pg_temp.i(401),n,10000,5000,now() from generate_series(2,1003)n;insert into public.products(id,organization_id,name,sku,base_unit,active) values(pg_temp.i(302),pg_temp.i(1),'TEST archived needle','TEST-NEEDLE','piece',false);insert into public.product_units(id,organization_id,product_id,name,factor) values(pg_temp.i(402),pg_temp.i(1),pg_temp.i(302),'Old packet',1);insert into public.unit_prices(organization_id,unit_id,version,price,cost,created_at) values(pg_temp.i(1),pg_temp.i(402),1,9007199254740985,0,'2020-01-01');set local role authenticated;select pg_temp.login(11);`);
+ await page.getByRole('button',{name:'Price history',exact:true}).click();const history=page.getByRole('region',{name:'Price history',exact:true});await expect(history).toContainText('50 of 1004 matching price versions loaded');
+ await history.getByRole('button',{name:'Load older price versions'}).click();await expect(history).toContainText('100 of 1004 matching price versions loaded');
+ await history.getByRole('searchbox',{name:'Search price history'}).fill('no matching product');await expect(history).toContainText('0 of 0 matching price versions loaded');
+ await history.getByRole('searchbox',{name:'Search price history'}).fill('NEEDLE');await expect(history).toContainText('1 of 1 matching price versions loaded');await expect(history).toContainText('₱90,071,992,547,409.85');
+});
+
+
 async function supplierView(page:import('@playwright/test').Page){
  await db.exec(`reset role;insert into public.suppliers(id,organization_id,name) values(pg_temp.i(601),pg_temp.i(1),'TEST Grower Supply');set local role authenticated;select pg_temp.login(11);`);
  await page.getByRole('button',{name:'Supplier accounts',exact:true}).click();await expect(page.getByRole('button',{name:'Add supplier invoice',exact:true})).toBeEnabled();

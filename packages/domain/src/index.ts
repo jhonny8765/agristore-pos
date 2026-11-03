@@ -1,13 +1,10 @@
 import Decimal from "decimal.js";
 import { z } from "zod";
 export * from './credit';
+export * from './money';
 
 export const OFFLINE_HOURS = 12;
 const ExactMoney=Decimal.clone({precision:80,rounding:Decimal.ROUND_HALF_UP});
-export const money = (centavos: number) =>
-  new Intl.NumberFormat("en-PH", { style: "currency", currency: "PHP" }).format(
-    centavos / 100,
-  );
 export const quantitySchema = z
   .string()
   .regex(/^\d{1,12}(\.\d{1,6})?$/)
@@ -176,7 +173,7 @@ export function lineTotal(quantity: string, unitPrice: number): number {
   return value.toNumber();
 }
 export function canonicalQuantity(quantity: string, factor: string): string {
-  const result = new Decimal(quantitySchema.parse(quantity)).mul(
+  const result = new ExactMoney(quantitySchema.parse(quantity)).mul(
     quantitySchema.parse(factor),
   );
   if (result.decimalPlaces() > 6 || result.gte("1000000000000"))
@@ -202,7 +199,9 @@ export function applyLineDiscount(item:SaleItem,discountBps:number):SaleItem{
  return {...clean,...(discountBps?{discountBps}:{}),lineTotal:discountedLineTotal(item.quantity,item.unitPrice,discountBps)};
 }
 export function total(items: Pick<SaleItem, "lineTotal">[]) {
-  return items.reduce((sum, item) => sum + item.lineTotal, 0);
+  let sum=0n;
+  for(const item of items){if(!Number.isSafeInteger(item.lineTotal)||item.lineTotal<0)throw Error('Each sale line must use exact non-negative centavos.');sum+=BigInt(item.lineTotal);}
+  if(sum>BigInt(Number.MAX_SAFE_INTEGER))throw Error('The sale total is too large. Split it into separate invoices.');return Number(sum);
 }
 export function stableJSON(value: unknown): string {
   if (Array.isArray(value)) return "[" + value.map(stableJSON).join(",") + "]";

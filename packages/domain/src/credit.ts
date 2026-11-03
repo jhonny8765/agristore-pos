@@ -1,11 +1,17 @@
 import {z} from 'zod';
+import {exactCentavos,type Centavos} from './money';
 
 export const creditTerms = [30,60,90] as const;
 export type CreditTerm = typeof creditTerms[number];
-export interface CreditClient {id:string;name:string;phone:string;address:string;tin:string;enabled:boolean;limit:number;terms:CreditTerm[];version:number;outstanding:number;overdue:number}
+export interface CreditClient {id:string;name:string;phone:string;address:string;tin:string;enabled:boolean;limit:number;terms:CreditTerm[];version:number;outstanding:number;overdue:number;outstandingExact?:string;overdueExact?:string}
 export interface CreditInvoice {id:string;clientId:string;clientName:string;reference:string;officialReference:string;issuedAt:string;dueOn:string|null;term:CreditTerm|null;source?:'sale'|'opening';sourceRow?:number;sourceNotes?:string;total:number;paid:number;credited:number;balance:number;payload:{items:{name:string;quantity:string;unitName:string;lineTotal:number;unitPrice?:number;discountBps?:number}[]};clientSnapshot:{name:string;address:string;tin:string};sellerName:string}
 export interface CreditEntry {id:string;invoiceId:string;kind:string;amount:number;cash:number;reference:string;reason:string;at:string;reverses?:string|null}
 export interface CreditBook {asOf:string;clients:CreditClient[];invoices:CreditInvoice[];entries:CreditEntry[];next?:number|null;totalInvoices:number;outstanding:number;overdue:number;cashCollected:number;creditSales:number;openingBalances?:number;aging:{unconfirmed?:number;notDue:number;days1to30:number;days31to60:number;days61to90:number;days91plus:number}}
+export type CreditTotalKey='outstanding'|'overdue'|'cashCollected'|'creditSales'|'openingBalances';
+export interface CreditBook {exactTotals?:Partial<Record<CreditTotalKey,string>>;agingExact?:Partial<Record<keyof CreditBook['aging'],string>>}
+export function creditTotalValue(book:CreditBook,key:CreditTotalKey):Centavos{return book.exactTotals?.[key]??book[key]??0;}
+export function clientCreditValue(client:CreditClient,key:'outstanding'|'overdue'):Centavos{return (key==='outstanding'?client.outstandingExact:client.overdueExact)??client[key];}
+export function availableCredit(client:CreditClient):number{const remaining=exactCentavos(client.limit)-exactCentavos(clientCreditValue(client,'outstanding'));return remaining>0n?Number(remaining):0;}
 export function manilaDay(now:Date|number=new Date()):string {return new Date(+now+8*3600000).toISOString().slice(0,10);}
 export function creditDueOn(issuedOn:string,term:CreditTerm):string {
  if(!/^\d{4}-\d{2}-\d{2}$/.test(issuedOn)||!creditTerms.includes(term))throw Error('Choose a valid issue date and 30, 60 or 90 days.');

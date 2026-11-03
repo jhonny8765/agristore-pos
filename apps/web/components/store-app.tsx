@@ -86,6 +86,7 @@ import {
   makeItem,
   lineAmounts,
   money,
+  moneyInput, cashQuickAmounts, exactCentavos,
   requireLease,
   total,
   type Branch,
@@ -125,7 +126,7 @@ import {
   supabase,
 } from "../lib/api";
 import { practiceBranch, startPractice } from "../lib/practice";
-import { draftLineTotal, hasCartErrors, useCart } from "../lib/cart";
+import { cartAmount, draftLineTotal, hasCartErrors, useCart } from "../lib/cart";
 import {
   onlineOperation,
   pendingOperations,
@@ -1249,14 +1250,15 @@ export function StoreApp() {
       (category === "All products" || p.category === category) &&
       `${p.name} ${p.sku}`.toLowerCase().includes(query.toLowerCase()),
   );
-  const grandTotal = total(
+  const checkedGrandTotal = cartAmount(
     cart.items.filter((item, index) =>
       draftLineTotal(item, cart.drafts[cart.lineIds[index]]) !== null,
     ),
   );
+  const grandTotal=checkedGrandTotal??0;
   const discountedItems=cart.items.filter((item,index)=>draftLineTotal(item,cart.drafts[cart.lineIds[index]])!==null);
-  const grossSubtotal=discountedItems.reduce((n,item)=>n+lineAmounts(item).gross,0);
-  const discountTotal=discountedItems.reduce((n,item)=>n+lineAmounts(item).discount,0);
+  const grossSubtotal=discountedItems.reduce((n,item)=>n+BigInt(lineAmounts(item).gross),0n);
+  const discountTotal=discountedItems.reduce((n,item)=>n+BigInt(lineAmounts(item).discount),0n);
   let change = 0;
   try {
     change = Math.max(0, cents(cash) - grandTotal);
@@ -1266,6 +1268,8 @@ export function StoreApp() {
   );
   const visibleQueue = sales.filter(s=>(`${s.id} ${s.receipt??""}`.toLowerCase().includes(syncQuery.toLowerCase()))&&(syncFilter==="all"||syncFilter==="synced"&&s.status==="synced"||syncFilter==="pending"&&(s.status==="pending"||s.status==="sending")||syncFilter==="attention"&&s.status!=="synced"&&s.status!=="pending"&&s.status!=="sending"));
   const summary = cloud.summary?.[0] ?? {};
+  const summaryExact=(summary.exactTotals??{}) as Row;
+  const branchCash=(id:string)=>{const row=branchTotals.find(t=>t.branchId===id);return (((row?.exactTotals??{}) as Row).total??row?.total??0) as number|string;};
   const branchTotals = (summary.branchTotals ?? []) as Row[];
   const titles: Record<View, string> = {
     credit: "Customers & credit",
@@ -1764,12 +1768,12 @@ export function StoreApp() {
                 {!(checkoutDone&&!cart.items.length)&&(cart.credit.enabled&&!practice?<CreditCheckout key={`${member.organizationId}:${branchId}:${member.userId}`} db={db} lease={lease} online={online} disabled={busy||installingUpdate||isStock} onWorking={working=>{committing.current=working;setBusy(working);}} onSaved={async()=>{const heldId=useCart.getState().heldDraftId;if(heldId&&lease){try{await removeHeldSale(db,lease,heldId);setHeldDraftCount(0);}catch{fail(new Error('Credit sale confirmed. A held copy remains; retry its original request to confirm, then remove it.'));}}cart.clear();setCash('');setCheckoutDone(undefined);setHistoryRevision(n=>n+1);notify('Credit sale confirmed. The original booklet invoice is linked. Open Customers & credit to print the credit record.');await sync();await refreshLocal();}}/>:<form className="payment-form" onSubmit={finishSale}>
                   <div className="subtotal">
                     <span>Subtotal</span>
-                    <span>{Number.isSafeInteger(grossSubtotal)?money(grossSubtotal):'Amount too large'}</span>
+                    <span>{money(grossSubtotal)}</span>
                   </div>
-                  {discountTotal>0&&<div className="subtotal discount-total"><span>Product discounts</span><span>−{Number.isSafeInteger(discountTotal)?money(discountTotal):'Amount too large'}</span></div>}
+                  {discountTotal>0&&<div className="subtotal discount-total"><span>Product discounts</span><span>−{money(discountTotal)}</span></div>}
                   <div className="amount-due">
                     <span>Amount due</span>
-                    <strong>{money(grandTotal)}</strong>
+                    <strong>{checkedGrandTotal===null?'Check sale total':money(grandTotal)}</strong>
                   </div>
                   <Field label="Cash received (₱)">
                     <input
@@ -1785,17 +1789,12 @@ export function StoreApp() {
                     />
                   </Field>
                   <div className="cash-shortcuts">
-                    {[
-                      grandTotal,
-                      Math.ceil(grandTotal / 10000) * 10000,
-                      Math.ceil(grandTotal / 50000) * 50000,
-                    ]
-                      .filter((v, i, a) => v > 0 && a.indexOf(v) === i)
+                    {cashQuickAmounts(grandTotal)
                       .map((v, i) => (
                         <button
                           type="button"
                           key={v}
-                          onClick={() => setCash((v / 100).toFixed(2))}
+                          onClick={() => setCash(moneyInput(v))}
                         >
                           {i === 0 ? "Exact" : money(v)}
                         </button>
@@ -1807,7 +1806,7 @@ export function StoreApp() {
                   </div>
                   {hasCartErrors(cart) && (
                     <p className="quantity-error" role="alert">
-                      Check quantities and confirm weighed amounts before
+                      Check quantities, discounts, sale totals and weighed amounts before
                       checkout.
                     </p>
                   )}
@@ -1841,7 +1840,7 @@ export function StoreApp() {
                     {cart.items.length}{" "}
                     {cart.items.length === 1 ? "item" : "items"} · Amount due
                   </span>
-                  <strong>{money(grandTotal)}</strong>
+                  <strong>{checkedGrandTotal===null?'Check sale total':money(grandTotal)}</strong>
                 </div>
                 <a className="button" href="#current-sale">
                   Review sale <ArrowRight size={17} />
@@ -1859,15 +1858,15 @@ export function StoreApp() {
               <div className="summary-strip">
                 <div>
                   <span>Recorded sales · {branchLocked ? selectedBranch?.name : "all branches"}</span>
-                  <strong>{money(Number(summary.grossSales ?? 0))}</strong>
+                  <strong>{money((summaryExact.grossSales ?? summary.grossSales ?? 0) as number|string)}</strong>
                   <small>
                     {Number(summary.transactions ?? 0)} completed transactions
                   </small>
                 </div>
                 <div>
                   <span>Net cash refunds</span>
-                  <strong>{money(Number(summary.netRefunds ?? summary.refunds ?? 0))}</strong>
-                  <small>Paid {money(Number(summary.refunds ?? 0))} · Recovered {money(Number(summary.refundRecoveries ?? 0))}</small>
+                  <strong>{money((summaryExact.netRefunds ?? summary.netRefunds ?? summary.refunds ?? 0) as number|string)}</strong>
+                  <small>Paid {money((summaryExact.refunds ?? summary.refunds ?? 0) as number|string)} · Recovered {money((summaryExact.refundRecoveries ?? summary.refundRecoveries ?? 0) as number|string)}</small>
                 </div>
                 <div>
                   <span>In-transit transfers</span>
@@ -1892,12 +1891,7 @@ export function StoreApp() {
                           <small>{b.code}</small>
                         </td>
                         <td>
-                          {money(
-                            Number(
-                              branchTotals.find((t) => t.branchId === b.id)
-                                ?.total ?? 0,
-                            ),
-                          )}
+                          {money(branchCash(b.id))}
                         </td>
                         <td>
                           {when(
@@ -1937,19 +1931,19 @@ export function StoreApp() {
                         <td>
                           {sh.expected_cash === null
                             ? "Awaiting close"
-                            : money(Number(sh.expected_cash))}
+                            : money((sh.expected_cash) as number|string)}
                         </td>
                         <td>
                           {sh.counted_cash === null
                             ? "Not counted"
-                            : money(Number(sh.counted_cash))}
+                            : money((sh.counted_cash) as number|string)}
                         </td>
                         <td>
                           {sh.counted_cash === null || sh.expected_cash === null
                             ? "Needs reconciliation"
                             : money(
-                                Number(sh.counted_cash) -
-                                  Number(sh.expected_cash),
+                                exactCentavos(sh.counted_cash as number|string) -
+                                  exactCentavos(sh.expected_cash as number|string),
                               )}
                         </td>
                       </tr>
@@ -2081,7 +2075,7 @@ export function StoreApp() {
 
                 </div>
               )}
-            {practice&&(inventoryTab==="expiry"||inventoryTab==="controls"||inventoryTab==="prices")&&<section className="panel"><h2>{inventoryTab==="expiry"?"Expiry reminders":inventoryTab==="controls"?"Stock controls":"Price history"}</h2><p>Practice checkout does not load business holds, investigations or historical price records. Sign in to inspect those records. This sample catalog and its local stock remain separate from your business.</p><Button variant="outline" onClick={()=>setInventoryTab("products")}>Return to products</Button></section>}{isOwner&&!practice&&inventoryTab==="prices"&&<PriceHistory key={`${member.organizationId}:${branchId}`} organizationId={member.organizationId} products={products} online={online} disabled={busy}/>}</>
+            {practice&&(inventoryTab==="expiry"||inventoryTab==="controls"||inventoryTab==="prices")&&<section className="panel"><h2>{inventoryTab==="expiry"?"Expiry reminders":inventoryTab==="controls"?"Stock controls":"Price history"}</h2><p>Practice checkout does not load business holds, investigations or historical price records. Sign in to inspect those records. This sample catalog and its local stock remain separate from your business.</p><Button variant="outline" onClick={()=>setInventoryTab("products")}>Return to products</Button></section>}{isOwner&&!practice&&inventoryTab==="prices"&&<PriceHistory key={`${member.organizationId}:${branchId}`} organizationId={member.organizationId} branchId={branchId} products={products} online={online} disabled={busy}/>}</>
           )}
 
           {view === "receiving" && (
@@ -2638,8 +2632,8 @@ export function StoreApp() {
                           <strong>{str(s, "receipt")}</strong>
                           <small>{str(s, "id").slice(0, 8)}</small>
                         </td>
-                        <td>{money(Number(s.total))}</td>
-                        <td>{money(Number(s.cash_received))}</td>
+                        <td>{money((s.total) as number|string)}</td>
+                        <td>{money((s.cash_received) as number|string)}</td>
                         <td>{when(s.occurred_at)}</td>
                         <td>
                           {s.payment_mode === "credit" ? <Button variant="outline" size="sm" onClick={()=>setView("credit")}>Open credit account</Button> : s.sale_reversals &&
@@ -2654,7 +2648,7 @@ export function StoreApp() {
                               <ApprovalForm
                                 action="Full refund"
                                 label="Refund reason"
-                                description={`Refund ${money(Number(s.total))} in cash. Record what physically returned for each line; only inspected saleable goods increase available stock. The original receipt is preserved.`}
+                                description={`Refund ${money((s.total) as number|string)} in cash. Record what physically returned for each line; only inspected saleable goods increase available stock. The original receipt is preserved.`}
                                 confirmLabel="Confirm full refund"
                                 disabled={
                                   !online || busy || !lease || !!pending.length
@@ -2899,7 +2893,7 @@ export function StoreApp() {
                             const result = await retryOperation(db, member.userId, op);
                             if (op.action === "close_shift") {
                               setLease(await setting<Lease>(db, "lease"));
-                              notify(`Original shift closing confirmed. Expected cash ${money(Number(result.expected_cash))}; counted ${money(Number(result.counted_cash))}.`);
+                              notify(`Original shift closing confirmed. Expected cash ${money((((result.exactTotals??{}) as Row).expected_cash??result.expected_cash) as number|string)}; counted ${money((((result.exactTotals??{}) as Row).counted_cash??result.counted_cash) as number|string)}.`);
                             } else notify("Original operation confirmed.");
                           })
                         }
@@ -2984,7 +2978,7 @@ export function StoreApp() {
                     });
                     setLease(await setting<Lease>(db, "lease"));
                     setClosingDraft(undefined);
-                    notify(`Shift closed. Expected cash ${money(Number(result.expected_cash))}; counted ${money(Number(result.counted_cash))}.`);
+                    notify(`Shift closed. Expected cash ${money((((result.exactTotals??{}) as Row).expected_cash??result.expected_cash) as number|string)}; counted ${money((((result.exactTotals??{}) as Row).counted_cash??result.counted_cash) as number|string)}.`);
                   });
                 }}>
                   <Field label="Cash counted in drawer (₱)"><input name="cash" type="number" inputMode="decimal" min="0" step="0.01" required placeholder="Enter counted cash" value={closingCash} onChange={event => setClosingDraft({shiftId: lease.shiftId, cash: event.target.value})} disabled={busy} aria-describedby="shift-close-help" /></Field>
