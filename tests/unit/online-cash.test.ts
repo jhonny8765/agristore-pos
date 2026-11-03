@@ -33,3 +33,7 @@ it('serializes competing cash and credit requests across windows before either r
  const results=await Promise.allSettled([confirmOnlineCash(d,lease(),payload),onlineOperation(d,payload.cashierId,'record_credit_sale',{organizationId:payload.organizationId,branchId:payload.branchId,requestId:crypto.randomUUID()},'requestId')]);
  expect(results.every(r=>r.status==='rejected')).toBe(true);expect(command).toHaveBeenCalledOnce();expect(await pendingOperations(d)).toHaveLength(1);expect(await d.sales.count()).toBe(0);
 });
+it('rejects malformed recovered online cash data before it can replace the local journal',async()=>{
+ const d=await db(),payload=sale();const file={version:1,sales:[],pendingOperations:[{action:'record_online_sale',actorId:payload.cashierId,data:{...payload,total:'not money'}}]};
+ await expect(importRecovery(d,file,[],{organizationId:payload.organizationId,branchId:payload.branchId,cashierId:payload.cashierId,role:'owner'})).rejects.toThrow('Invalid original online cash sale');expect(await pendingOperations(d)).toEqual([]);expect(await d.sales.count()).toBe(0);
+});

@@ -643,6 +643,10 @@ export async function importRecovery(db: PosDatabase, input: unknown, confirmedI
     if(['review_import_setup','review_product_price','confirm_import_stock'].includes(op.action)&&context.role!=='owner')
       throw new Error('Only the owner can restore product review requests');
     if(op.action==='configure_cashier_pcs'&&context.role!=='owner')throw new Error('Only the owner can restore cashier PC mode requests');
+    if(op.action==='record_online_sale'){
+      const cash=saleSchema.safeParse(op.data);
+      if(!cash.success||cash.data.cashierId!==op.actorId)throw new Error('Invalid original online cash sale. Keep the original recovery file for owner review.');
+    }
     const body = { ...op.data };
     // Approval/closure refer to an existing count; its ID remains part of the
     // request fingerprint. Generated transaction IDs are excluded, as at save.
