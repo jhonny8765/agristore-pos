@@ -1,0 +1,35 @@
+/* Keep content within 48 mm on the 58 mm roll, with 5 mm paper margins.
+   Keep the offscreen measurement and printed typography identical. */
+.receipt-print-hint,.checkout-success .receipt-print-hint,.reference-ui .receipt-detail>.receipt-print-hint{font-size:12px;line-height:1.5;color:var(--muted);text-align:center;margin:12px 0}
+.thermal-receipt{position:fixed;left:-10000px;top:0;display:block;visibility:hidden;pointer-events:none;width:48mm;box-sizing:border-box;background:#fff;color:#000;font-family:Arial,Helvetica,sans-serif;font-size:12px;line-height:1.3;font-variant-numeric:tabular-nums;text-align:left;overflow-wrap:anywhere}
+.thermal-receipt *{box-sizing:border-box;color:inherit;font-family:inherit}
+.thermal-receipt p,.thermal-receipt dl,.thermal-receipt dd{margin:0}
+.thermal-header{text-align:center;padding-bottom:3mm}
+.thermal-brand{display:block;font-size:20px;line-height:1.1;margin-bottom:1mm}
+.thermal-header>div{font-size:11px}
+.thermal-title{display:block;font-size:12px;margin-top:3mm}
+.thermal-practice{display:block;font-size:10px;margin-top:2mm}
+.thermal-reference{padding:2mm 0;border-top:1px dashed #000;border-bottom:1px dashed #000;font-size:10px;line-height:1.4}
+.thermal-id{font-size:9px;margin-top:1mm}
+.thermal-line{padding:2.5mm 0;break-inside:avoid}
+.thermal-line+.thermal-line{border-top:1px dotted #000}
+.thermal-product{display:block;font-size:12px;margin-bottom:1mm}
+.thermal-line-amount,.thermal-discount,.thermal-totals>div{display:flex;justify-content:space-between;align-items:baseline;gap:2mm}
+.thermal-line-amount>span{min-width:0;font-size:10px}
+.thermal-line-amount>strong,.thermal-discount>span:last-child,.thermal-totals dd{white-space:nowrap;flex-shrink:0}
+.thermal-discount{font-size:10px;margin-top:1mm}
+.thermal-totals{padding-top:2mm;border-top:1px dashed #000;break-inside:avoid}
+.thermal-totals>div{padding:0.8mm 0}
+.thermal-totals dt{min-width:0}
+.thermal-totals dd{font-weight:700}
+.thermal-totals>.thermal-total{font-size:15px;font-weight:700;padding:1.5mm 0}
+.thermal-footer{margin-top:3mm;padding-top:3mm;border-top:1px dashed #000;text-align:center;font-size:10px;break-inside:avoid}
+.thermal-footer>strong{display:block;font-size:11px;margin-bottom:2mm}
+.thermal-footer p+p{margin-top:1mm}
+@media print{
+ @page better-yield-receipt{size:58mm 200mm;margin:5mm}
+ html:has(body>.thermal-receipt),body:has(>.thermal-receipt){display:block!important;width:auto!important;height:auto!important;min-height:0!important;margin:0!important;padding:0!important;background:#fff!important;overflow:visible!important}
+ body:has(>.thermal-receipt)>:not(.thermal-receipt){display:none!important}
+ .thermal-receipt{page:better-yield-receipt;position:static!important;left:auto;top:auto;visibility:visible!important;width:48mm;max-width:100%;margin:0!important;padding:0!important;border:0!important;box-shadow:none!important;overflow:visible!important;print-color-adjust:exact}
+ .thermal-receipt *{visibility:visible!important}
+}

@@ -1,5 +1,6 @@
 @import "tailwindcss";
 @import "./reference-ui.css";
+@import "./receipt-print.css";
 
 .record-pages { min-width: 0; width: 100%; }
 .record-pagination { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: .75rem; padding: .85rem 0; color: var(--muted); font-size: .85rem; }
@@ -2409,9 +2410,6 @@ code {
     outline-color: Highlight;
   }
 }
-.receipt-print-details {
-  display: none;
-}
 .pending-operation {
   display: flex;
   align-items: center;
@@ -2539,43 +2537,6 @@ td small {
   }
   .checkout-layout {
     display: block;
-  }
-  .receipt-panel {
-    width: 80mm;
-    position: static;
-    border: 0;
-    margin: 0 auto;
-  }
-  .receipt-heading {
-    padding: 12px;
-  }
-  .checkout-success .button {
-    display: none;
-  }
-  .checkout-success small:after {
-    content: " · Sale record only — not a tax invoice";
-    display: block;
-    margin-top: 8px;
-  }
-  .checkout-success {
-    padding: 15px;
-  }
-  .receipt-print-details {
-    display: block;
-    margin: 20px 0;
-    text-align: left;
-  }
-  .receipt-print-details h3 {
-    font-size: 12px;
-    margin-bottom: 14px;
-  }
-  .receipt-print-details > div {
-    padding: 8px 0;
-    border-bottom: 1px dashed var(--line);
-  }
-  .receipt-print-details span {
-    display: block;
-    font-size: 11px;
   }
 }
 .blind-counts .button-row { display:flex; flex-wrap:wrap; gap:12px; margin-block:18px; }

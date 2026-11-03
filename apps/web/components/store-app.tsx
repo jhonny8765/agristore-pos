@@ -13,6 +13,7 @@ import { OverviewDashboard } from "./overview-dashboard";
 import { WorkspaceStat } from "./workspace-ui";
 import { OrderWorkspace } from "./order-workspace";
 import { ReceiptWorkspace } from "./receipt-workspace";
+import { SaleReceiptPrint } from "./sale-receipt-print";
 import { InventoryWorkspace } from "./inventory-workspace";
 import { SettingsWorkspace } from "./settings-workspace";
 import { WorkspaceTabs } from "./workspace-ui";
@@ -1724,21 +1725,7 @@ export function StoreApp() {
                       )}{" "}
                       change
                     </p>
-                    <div className="receipt-print-details">
-                      <h3>
-                        {member.organizationName} · {selectedBranch?.name}
-                      </h3>
-                      {checkoutDone.payload.items.map((item, i) => (
-                        <div key={i}>
-                          {item.name}
-                          <span>
-                            {item.quantity} {item.unitName} ·{" "}
-                            {money(item.lineTotal)}
-                            {(item.discountBps??0)>0&&<small>{item.discountBps!/100}% discount · −{money(lineAmounts(item).discount)}</small>}
-                          </span>
-                        </div>
-                      ))}
-                    </div>
+                    <SaleReceiptPrint {...checkoutDone.payload} id={checkoutDone.id} receipt={checkoutDone.receipt} branchName={selectedBranch?.name??"Magpet Branch"} practice={practice}/>
                     <small>
                       {practice
                         ? "Practice record"
@@ -1747,8 +1734,9 @@ export function StoreApp() {
                       · Saved on this PC
                     </small>
                     <Button variant="outline" onClick={() => window.print()}>
-                      Print sale record
+                      Print receipt
                     </Button>
+                    <p className="receipt-print-hint">58 mm roll · Portrait · Scale 100%<br/>Turn off headers and footers in print settings.</p>
                   </div>
                 ) : cart.items.length ? (
                   <div className="receipt-items">
