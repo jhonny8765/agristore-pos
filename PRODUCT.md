@@ -44,3 +44,9 @@ On November 3 the user approved adding customer credit with one selected Net 30,
 ## Stock follow-up workflow
 
 Connected Inventory worklists show recorded expiry and unresolved investigations with explicit snapshot times. Owners and branch managers assign an active authorized employee and due date; assignees can record progress. Assignments and progress leave cases open and stock unchanged. Only the owner resolves an investigation with evidence. Staff/hardware and real opening-data acceptance remain separate.
+
+## Approved workflow cleanup — November 3
+
+The deployed Magpet layout has six main areas, with stock counts inside Inventory and supplier bills inside Purchasing. Customers & credit tracks money owed to the store; supplier accounts track the store's own debts and verified payments outside the sales drawer. Their roles and transaction rules remain separate. Historical supplier amounts awaiting payment reconciliation are excluded from recorded payable totals.
+
+Owner Inventory → Needs review distinguishes missing units/prices/costs and unposted source balances. Structured, branch-scoped import evidence is separate from usable stock. Unit confirmation never posts a balance; a separately reviewed current target posts only its difference with stock/version checks and a durable request ID. Price/cost changes append versions and preserve original activity; blank cost remains unconfirmed. Source notes do not authorize guessing a measurement or applying old stock automatically. See docs/workflow-cleanup.md for the workflow, release gates and data-preservation evidence.
