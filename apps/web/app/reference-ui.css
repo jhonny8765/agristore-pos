@@ -41,3 +41,34 @@
 .reference-ui .queue-panel td:nth-child(3){font-weight:750;color:var(--ink)}.reference-ui .recovery-actions input[type=file]{position:absolute;clip-path:inset(50%);width:1px;height:1px;overflow:hidden}
 /* Scoped verdict5: phone follow-up copy keeps the full card width. */
 @media(max-width:650px){.reference-ui .workspace-followups>.button{display:grid;grid-template-columns:30px minmax(0,1fr);gap:10px 14px;align-items:center}.reference-ui .workspace-followups>.button>svg{grid-column:1;grid-row:1;align-self:center}.reference-ui .workspace-followups>.button>span:not(.followup-action){display:contents}.reference-ui .workspace-followups>.button>span:not(.followup-action)>strong{grid-column:2;grid-row:1}.reference-ui .workspace-followups>.button>span:not(.followup-action)>small{grid-column:1/-1;grid-row:2;margin:0}.reference-ui .workspace-followups>.button>.followup-action{grid-column:1/-1;grid-row:3;margin-left:0;justify-self:start}}
+/* Client-credit controls inherit the existing November 3 operational world. */
+.credit-columns{display:grid;grid-template-columns:minmax(280px,.8fr) minmax(0,1.4fr);gap:18px;align-items:start}
+.credit-workspace,.credit-detail,.credit-clients,.credit-invoice-detail{min-width:0}
+.credit-totals{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:20px;padding:22px;background:var(--white);border:1px solid var(--line);border-radius:16px}
+.credit-totals dt{color:var(--muted);font-size:15px}.credit-totals dd{margin:8px 0 0;font-weight:750;font-size:25px;font-variant-numeric:tabular-nums;overflow-wrap:anywhere}
+.credit-payment-choice{display:flex;flex-wrap:wrap;gap:10px;padding:16px 24px 0}
+.credit-checkout fieldset{min-width:0;border:0;padding:0;margin:0;display:grid;gap:14px}
+.credit-checkout legend{font-weight:700;margin-bottom:12px}.credit-checkout p{font-size:15px;margin:8px 0;overflow-wrap:anywhere}
+.credit-checkout .checkbox{align-items:start;line-height:1.5}.credit-checkout .checkbox input{width:20px;flex-shrink:0}
+.credit-tabs{margin-block:18px}.credit-workspace .button-row{display:flex;flex-wrap:wrap;gap:10px}
+.credit-profile,.credit-collection,.credit-returns,.credit-invoice-detail{margin-top:24px;padding-top:22px;border-top:1px solid var(--line)}
+.credit-profile>fieldset,.credit-collection>fieldset{display:grid;gap:14px;min-width:0;padding:16px;border:1px solid var(--line)}
+.credit-detail .field input,.credit-detail .field select{width:100%;min-width:0}.credit-detail small,.credit-clients small{display:block;overflow-wrap:anywhere}
+.credit-invoice-detail p,.credit-payment-record p{overflow-wrap:anywhere}.credit-invoice-detail h3{overflow-wrap:anywhere}.credit-invoice-detail>p>strong{font-variant-numeric:tabular-nums}
+.credit-payment-record{padding-block:12px;border-top:1px solid var(--line);overflow-wrap:anywhere}.credit-aging{margin-top:20px}
+.credit-aging dl{display:flex;flex-wrap:wrap;gap:20px 32px}.credit-aging dd{margin:5px 0 0;font-weight:750;font-variant-numeric:tabular-nums}
+.credit-workspace .table-wrap{max-width:100%;overflow:auto}.credit-workspace td{vertical-align:top}.credit-workspace .scope-note{font-size:14px}
+.credit-statement-print{display:none}
+@media(max-width:1200px){.credit-columns{grid-template-columns:1fr}.credit-totals{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media(max-width:650px){.credit-totals{grid-template-columns:1fr}.credit-payment-choice{padding-inline:16px}.credit-workspace .section-heading{align-items:start;flex-wrap:wrap}.credit-workspace .panel{padding:16px}.credit-workspace table{min-width:520px}.credit-workspace .credit-profile{max-width:100%}}
+@media print{
+ body:has(.credit-workspace) .sidebar,body:has(.credit-workspace) .topbar,body:has(.credit-workspace) .credit-clients,body:has(.credit-workspace) .credit-totals,body:has(.credit-workspace) .credit-aging,body:has(.credit-workspace) .page-heading,body:has(.credit-workspace) .notice{display:none!important}
+ body:has(.credit-workspace) .credit-columns{display:block}body:has(.credit-workspace) .credit-detail{border:0!important;box-shadow:none!important}
+ body:has(.credit-workspace) .credit-detail .button,body:has(.credit-workspace) .credit-detail form,body:has(.credit-workspace) .credit-detail .credit-tabs,body:has(.credit-workspace) .credit-returns{display:none!important}
+ body:has(.credit-workspace) .credit-detail table{min-width:0;width:100%;font-size:11px}body:has(.credit-workspace) .credit-detail .record-pagination{display:none!important}
+ body[data-credit-print="invoice"] .credit-detail>:not(#credit-document){display:none!important}
+ body[data-credit-print="payment"] .credit-detail>:not(#credit-document),body[data-credit-print="payment"] #credit-document>:not(.credit-payment-record),body[data-credit-print="payment"] .credit-payment-record:not([data-credit-payment="true"]){display:none!important}
+ body[data-credit-print="statement"] .credit-detail>:not(.credit-statement-print){display:none!important}
+ body[data-credit-print="statement"] .credit-statement-print{display:block!important}
+ body:has(.credit-workspace) .credit-detail .table-wrap{overflow:visible}
+}

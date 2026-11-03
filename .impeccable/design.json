@@ -1,6 +1,6 @@
 {
   "schemaVersion": 2,
-  "generatedAt": "2026-11-03T00:08:46.884Z",
+  "generatedAt": "2026-11-03T04:51:30.187Z",
   "title": "Design System: Better Yield POS (AgriStore)",
   "extensions": {
     "colorMeta": {
@@ -510,6 +510,13 @@
       "description": "Icon/copy/adjacent action; real recovery/download logic remains guarded.",
       "html": "<section class=\"ds-recovery\"><span class=\"ds-recovery-icon\"><svg width=\"24\" height=\"24\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.8\" aria-hidden=\"true\"><path d=\"M6 3h9l4 4v14H5V3h1Z M14 3v5h5 M8 12h8 M8 16h8\"/></svg></span><div class=\"ds-recovery-copy\"><h2>Recovery copy</h2><p>Save a copy of transactions from this PC.</p></div><button type=\"button\" class=\"ds-recovery-button\">Export copy</button></section>",
       "css": ".ds-recovery{display:grid;grid-template-columns:52px minmax(0,1fr) auto;align-items:center;gap:16px;min-height:125px;padding:18px 20px;border:1px solid #deded9;border-radius:16px;background:white;color:#080b09;font-family:\"Roboto Variable\",sans-serif;font-size:15px;line-height:1.4;box-shadow:0 2px 3px rgb(24 43 21 / 3%)}.ds-recovery-icon{display:grid;place-items:center;width:52px;height:56px;background:#edf6e2;border-radius:11px;color:#043c28}.ds-recovery-copy h2{margin:0;font-size:23px;font-weight:760;line-height:1.2}.ds-recovery-copy p{margin:6px 0 0;max-width:40ch;color:#535653}.ds-recovery-button{font-family:\"Roboto Variable\",sans-serif;font-size:16px;font-weight:650;line-height:1.3;min-height:42px;padding:8px 14px;border:1px solid #9da9a0;border-radius:9px;background:white;color:#043c28;cursor:pointer;transition:background .16s ease}.ds-recovery-button:hover{background:#edf5e4}.ds-recovery-button:focus-visible{outline:3px solid var(--focus,#507c39);outline-offset:3px;}@media(max-width:650px){.ds-recovery{grid-template-columns:44px minmax(0,1fr);gap:12px;padding:17px;min-height:0}.ds-recovery-icon{width:44px;height:50px}.ds-recovery-button{grid-column:1/-1;min-height:44px}}@media(prefers-reduced-motion:reduce){.ds-recovery-button{transition:none}}"
+    },
+    {
+      "name": "Credit Payment Acknowledgement",
+      "kind": "custom",
+      "description": "Per-payment internal evidence inside the linked credit record. Retain the booklet reference, permanent payment reference and explicit non-tax-invoice wording; the application print command isolates the selected event. Current local operating and release limits: docs/customer-credit.md.",
+      "html": "<section class=\"ds-credit-payment\" aria-label=\"Payment acknowledgement design preview\"><h3>Payment acknowledgement</h3><p>Official booklet invoice: linked manual reference</p><strong>Collection · original payment reference</strong><p>Cash received: recorded amount<br>Permanent reference: original payment ID</p><p>Internal acknowledgement linked to the original invoice; not a tax invoice.</p><button type=\"button\" class=\"ds-credit-print\">Print payment acknowledgement</button></section>",
+      "css": ".ds-credit-payment{padding-block:12px;border-top:1px solid var(--line,#deded8);color:var(--ink,#080b09);font-family:var(--font-sans,\"Roboto Variable\",sans-serif);font-size:18px;line-height:1.4;overflow-wrap:anywhere;min-width:0}.ds-credit-payment h3{font-size:22px;font-weight:750;line-height:1.25;letter-spacing:-.015em}.ds-credit-print{font:650 18px/1.3 var(--font-sans,\"Roboto Variable\",sans-serif);min-height:44px;padding:9px 17px;border:1px solid #9da9a0;border-radius:9px;background:var(--white,#fff);color:var(--forest,#043c28);cursor:pointer;transition:background .16s ease,color .16s ease}.ds-credit-print:hover{background:var(--soft,#edf5e4)}.ds-credit-print:focus-visible{outline:3px solid var(--focus,#507c39);outline-offset:3px}@media(prefers-reduced-motion:reduce){.ds-credit-print{transition:none}}"
     }
   ],
   "narrative": {

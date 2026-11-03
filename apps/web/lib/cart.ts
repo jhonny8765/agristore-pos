@@ -29,6 +29,8 @@ export function draftLineTotal(
 }
 
 interface Cart {
+  credit: {enabled:boolean;clientId:string;term:30|60|90;officialReference:string;cash:string};
+  creditAttempt?: Record<string,unknown>;
   heldDraftId: string | null;
   items: SaleItem[];
   lineIds: string[];
@@ -44,6 +46,8 @@ interface Cart {
   attempt: () => string;
 }
 export const useCart = create<Cart>((set, get) => ({
+  credit: {enabled:false,clientId:'',term:30,officialReference:'',cash:''},
+  creditAttempt: undefined,
   heldDraftId: null,
   items: [],
   lineIds: [],
@@ -125,6 +129,8 @@ export const useCart = create<Cart>((set, get) => ({
     }),
   clear: () =>
     set({
+      credit: {enabled:false,clientId:'',term:30,officialReference:'',cash:''},
+      creditAttempt: undefined,
       heldDraftId: null,
       items: [],
       lineIds: [],

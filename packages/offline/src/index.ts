@@ -94,6 +94,8 @@ export async function saveCheckout(
       if(retired?.sales.some(s=>s.id===sale.transactionId))throw new Error('This test checkout was archived. Start a new sale.');
       const lease = await setting<Lease>(db, "lease");
       requireLease(lease, now);
+      if(await setting(db,`operation:record_credit_sale:${sale.organizationId}:${sale.branchId}`)||await setting(db,`credit-stock-refresh:${sale.organizationId}:${sale.branchId}`))
+        throw new Error('Confirm the original credit sale in Sync center and refresh stock online before another cash sale. Keep this browser profile and basket.');
       if (await setting(db, `operation:close_shift:${lease.organizationId}:${lease.branchId}`))
         throw new Error("Shift closing is awaiting confirmation. Keep this basket and retry the original closing request in Sync center before selling.");
       if (
@@ -207,6 +209,11 @@ export async function applySnapshot(db: PosDatabase, snapshot: Snapshot, syncGua
       // closure. Never infer it from a first branch or an old stock download.
       if (snapshot.localScope) await setSetting(db, "snapshotScope", snapshot.localScope);
       else await db.settings.delete("snapshotScope");
+      if(snapshot.localScope&&snapshot.localRequestId){
+        const key=`credit-stock-refresh:${snapshot.localScope.organizationId}:${snapshot.localScope.branchId}`;
+        const fence=await setting<{previousRequestId:string|null}>(db,key);
+        if(fence&&snapshot.localRequestId!==fence.previousRequestId)await db.settings.delete(key);
+      }
       if (syncGuard) await setSetting(db,"lastSync",syncGuard.syncedAt);
     },
   );
@@ -439,6 +446,12 @@ export async function readLocalSales(db: PosDatabase, scope: RecoveryScope, limi
 }
 
 export const recoveryOperationIds: Record<string, string> = {
+  save_credit_client: 'requestId',
+  record_credit_sale: 'requestId',
+  collect_credit_payment: 'requestId',
+  reverse_credit_collection: 'requestId',
+  credit_refund: 'requestId',
+  set_credit_due_date: 'requestId',
   close_shift: "shiftId",
   receive_stock: "receiptId", dispatch_transfer: "transferId", receive_transfer: "receiptId",
   submit_count: "countId", refund_sale: "refundId", partial_refund_sale: "refundId", correct_refund: "correctionId", record_stock_issue: "issueId",

@@ -43,6 +43,12 @@ run(
   ["psql", "-U", "postgres", "-d", "postgres", "-v", "ON_ERROR_STOP=1"],
   seed,
 );
+// Retain historical source, a real collection and due-date evidence through restore.
+const openingSource=[{sourceRow:2,issuedOn:'2024-01-01',reference:'TEST-OPEN-RESTORE',name:'TEST opening farmer',group:'CUSTOMER',amountCentavos:90000,notes:'TEST source evidence'}];
+sql(`select app_private.import_opening_credit('${id(2)}','${id(3)}','${id(1)}','${'a'.repeat(64)}','${JSON.stringify(openingSource)}'::jsonb);`);
+const openingInvoice=command('credit_book',ctx()).invoices[0].id;
+const openingDue={...ctx(),requestId:id(201),saleId:openingInvoice,expectedDueOn:null,dueOn:'2024-02-01',reference:'TEST original agreement',reason:'TEST verified historical due date'};
+command('set_credit_due_date',openingDue);
 sql(`insert into public.branches(id,organization_id,name,code) values('${id(6)}','${id(2)}','TEST restore destination','RESTORE2');
 insert into public.product_units(id,organization_id,product_id,name,factor) values('${id(7)}','${id(2)}','${id(4)}','Kilo',1);
 insert into public.unit_prices(organization_id,unit_id,version,price,cost) values('${id(2)}','${id(7)}',1,3200,2400);`);
@@ -169,6 +175,11 @@ const restoredRejectedMistake={...ctx(140),issueId:id(152),productId:id(95),batc
 command('record_stock_issue',restoredPendingMistake);command('record_stock_issue',restoredRejectedMistake);
 const restoredRejection={...ctx(140),issueId:id(152),decisionId:id(153),reason:'TEST original owner checked this was a mistaken request'};command('reject_stock_issue',restoredRejection);
 // Compare retained content, not just row counts or one projected balance.
+command('register_device',{...ctx(),deviceId:id(202),name:'TEST opening collection drawer'});
+const openingShift=command('open_shift',{...ctx(),deviceId:id(202),openingCash:0});
+const openingPayment={...ctx(),requestId:id(203),saleId:openingInvoice,shiftId:openingShift.shiftId,amount:10000,reference:'TEST opening collection',reason:'TEST exact counted cash'};
+command('collect_credit_payment',openingPayment);
+command('close_shift',{...ctx(),shiftId:openingShift.shiftId,countedCash:10000});
 const fingerprints = target => lastJSON(sql(fingerprintSQL(id(2)),target));
 const original = fingerprints("postgres");
 const before = command("snapshot",{...ctx(),transactionIds:[id(9)]});
@@ -212,6 +223,10 @@ try {
     "/tmp/agristore-verified.dump",
   ]);
   assert.deepEqual(fingerprints(database),original,"Every retained fixture row must survive dump/restore unchanged");
+  assert.equal(command('credit_book',ctx(),database).outstanding,80000);
+  assert.equal(command('collect_credit_payment',openingPayment,database).duplicate,true);
+  assert.equal(command('set_credit_due_date',openingDue,database).duplicate,true);
+  assert.throws(()=>sql(`delete from public.credit_invoices where sale_id='${openingInvoice}';`,database),/History is immutable/);
   const restored = command("snapshot",{...ctx(),transactionIds:[id(9)]},database);
   assert.deepEqual(restored.stocks,before.stocks);
   assert.deepEqual(restored.confirmedIds,[id(9)]);

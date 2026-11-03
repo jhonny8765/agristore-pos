@@ -224,6 +224,7 @@ The rail narrows to (210px) at (1200px), an icon rail (76px) at (1000px), and (6
 - **Physical counts:** warning, three numbered stages/arrows, tabs, entry/checklist pair (1.35fr / 1fr), gap (16px), then open-count ledger. Pair stacks at (1000px), stages at (650px). Product photo, notes, true stage badges and original IDs stay readable; blind expected stock remains private.
 - **Sync center:** truthful summary plus three KPIs, tabbed/searchable queue, paired recovery cards with icon/copy/adjacent action. Desktop cards have (125px) minimum height; selected-file/download feedback expands beneath. At (1000px), summary stacks and recovery actions move below copy; phone recovery cards stack with full-width action. Queue rows retain inspectable/copyable full original IDs.
 - **Settings:** main/support columns (1.9fr / 1fr), gap (18px). Left branch/shift pair above staff; right recovery/registered-PC stack. At (1350px), main regions stack and support panels pair; on phones all panels stack. Unavailable cash, staff and PC details stay explicit.
+- **Clients & credit:** client register beside the selected account (minmax(280px, .8fr) / minmax(0, 1.4fr)), gap (18px), with four scoped totals above. At (1200px), account panels stack and totals use two columns; at (650px), totals stack. Client, invoice and Payments ledgers remain named focusable scroll regions; phone tables retain a (520px) minimum width inside the panel. Long booklet, original-sale and payment references wrap within their record.
 
 Records use ten-row pages. Footers show matching loaded count and page state for zero to ten records; larger lists expose controls above and below. Paging changes presentation only, preserving loaded search scope, totals, exports and pending-work checks. Type-to-search filters update immediately and product selectors support keyboard choices.
 
@@ -282,6 +283,14 @@ Use verified existing photography with contain fit, otherwise clear Photo not ve
 ### Ledgers / Recovery / States
 
 General headers are pale green; receipt register headers are white with stronger amounts. Footer count/page state describes loaded scope. Recovery retains icon/copy/action hierarchy, accessible file chooser, selected-file/download feedback, privacy disclosure and guarded logic. Saved-local is not synchronized; unavailable reconciliation is not a balanced drawer. Preserve original financial commands and authorization.
+
+### Clients & credit
+
+Extend the same forest/paper register and detail language. Invoices, Payments and Statement use wrapping command groups; selected records retain pale leaf emphasis. Checkout keeps the existing catalog/current-sale composition and exposes the client, approved calendar-day term, exact due date, cash paid now and remaining balance before completion.
+
+Keep Outstanding, Overdue, Original credit sales and Net cash collected distinct, with the account scope and Asia/Manila snapshot alongside them. Aging labels describe days past the due date separately from the payment term. Loaded-invoice counts and export/statement wording must preserve their actual scope.
+
+Credit records, payment acknowledgements and statements retain the linked authorized manual booklet number and explicit internal-document wording. Each payment has its own print command and permanent reference; payment printing isolates that event. Statement printing removes interactive chrome and renders all loaded invoices and events. Preserve long-reference wrapping in screen and print views. The local extension's current operating and release limits remain in [docs/customer-credit.md](docs/customer-credit.md).
 
 ## Do's and Don'ts
 

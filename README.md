@@ -4,6 +4,8 @@ Cash checkout and auditable inventory for a growing network of agricultural stor
 
 This is a development implementation. The real Windows restart test, an actual timed eight-hour outage, off-site production backups, and the one-branch operational pilot must be signed off before live store use. Simulated elapsed-time tests do not replace those checks.
 
+**November 3 local credit extension:** [Clients & credit](docs/customer-credit.md) adds owner-approved accounts, Net 30/60/90 checkout, manual invoice links, collections, debt/cash returns and statements. This extension is built locally and has not been applied to the hosted database or website. The owner confirmed VAT registration and authorized manual invoice booklets; internal printouts do not replace those official documents. See [verification and release limits](docs/customer-credit-verification.md).
+
 ## Open the application
 
 Published pre-pilot site: **https://better-yield-magpet-pos.pages.dev/**. The [published-site rehearsal](docs/cloudflare-published-verification.md) covers genuine labelled TEST sales, offline reload/synchronization, refunds/correction, stock restoration, weekly/monthly analytics and the actual deployment/update. Select **Try practice checkout** for a separate, local-only sample business; Practice transactions never upload to Supabase.

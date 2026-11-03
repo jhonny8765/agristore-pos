@@ -1,5 +1,7 @@
 "use client";
 import { StateBadge } from "./state-badge";
+import {CreditWorkspace} from './credit-workspace';
+import {CreditCheckout} from './credit-checkout';
 import { SearchableSelect } from "./search-select";
 import { RecordTable, RecordPages } from "./record-pages";
 import { HeldSaleControl } from "./held-sale";
@@ -58,6 +60,7 @@ import {
   Settings,
   ShieldCheck,
   ShoppingBasket,
+  Users,
   Sprout,
   Truck,
   Wifi,
@@ -141,6 +144,7 @@ import { preferredBatch, outstandingTransfer } from "../lib/stock-controls";
 import type { HistoryKind } from "../lib/history";
 
 type View =
+  | "credit"
   | "pos"
   | "overview"
   | "inventory"
@@ -160,8 +164,10 @@ const navigation = [
   { id: "transfers", label: "Transfers", icon: ArrowLeftRight },
   { id: "counts", label: "Stock counts", icon: ClipboardCheck },
   { id: "sales", label: "Sales & receipts", icon: FileText },
+  { id: "credit", label: "Clients & credit", icon: Users },
 ] as const;
 const viewTables: Record<View, string[]> = {
+  credit: [],
   pos: [],
   overview: ["audit_events", "cashier_shifts", "inventory_movements"],
   inventory: [],
@@ -839,6 +845,7 @@ export function StoreApp() {
     setBusy(true);
     setSavingSale(true);
     try {
+      if(cart.credit.enabled||cart.creditAttempt)throw new Error('Confirm the original credit sale before using cash checkout.');
       requireLease(lease);
       if (!cart.items.length)
         throw new Error("Add a product to the receipt first");
@@ -888,6 +895,7 @@ export function StoreApp() {
     entry: SaleEntry = "unit",
   ) {
     if (updateLock.current || committing.current || !lease || isStock) return;
+    if(useCart.getState().creditAttempt){fail(new Error('Confirm the original credit sale before changing this basket.'));return;}
     if(p.pricePending||p.setupPending||!p.active||!p.units.length){fail(new Error('The owner must confirm this product’s price and selling unit in Inventory.'));return;}
     try {
       const batch = preferredBatch(p,stock,new Date().toLocaleDateString("en-CA", { timeZone: "Asia/Manila" }));
@@ -1254,6 +1262,7 @@ export function StoreApp() {
   const summary = cloud.summary?.[0] ?? {};
   const branchTotals = (summary.branchTotals ?? []) as Row[];
   const titles: Record<View, string> = {
+    credit: "Clients & credit",
     pos: "Checkout",
     overview: "Overview",
     inventory: "Inventory",
@@ -1266,6 +1275,7 @@ export function StoreApp() {
     settings: "Store settings",
   };
   const descriptions: Record<View, string> = {
+    credit: "Track approved credit, due dates and customer payments.",
     pos: "Scan or search products, add to the sale, and complete payment.",
     overview: "Your store, at a glance.",
     inventory: "Know what’s on hand, down to the last kilo.",
@@ -1282,7 +1292,7 @@ export function StoreApp() {
             <div>
               <div className="title-line"><h1 ref={contentHeading} tabIndex={-1}>
                 {titles[view]}
-              </h1>{view==="sales"&&<span className="cash-mode-badge"><Wallet size={22}/>Cash sales only</span>}{lease&&view==="pos"&&<span className="shift-badge"><span/>Shift open</span>}</div>
+              </h1>{view==="sales"&&<span className="cash-mode-badge"><Wallet size={22}/>Sales records</span>}{lease&&view==="pos"&&<span className="shift-badge"><span/>Shift open</span>}</div>
               <p>{descriptions[view]}</p>
             </div>
             <div className="heading-actions">
@@ -1325,7 +1335,7 @@ export function StoreApp() {
           {navigation
             .filter(n => (!branchLocked && !practice) || n.id !== "transfers")
             .filter(
-              (n) => !isStock || !["pos", "overview", "sales"].includes(n.id),
+              (n) => !isStock || !["pos", "overview", "sales", "credit"].includes(n.id),
             )
             .map(({ id, label, icon: Icon }) => (
               <button
@@ -1691,11 +1701,10 @@ export function StoreApp() {
                     <h2>Current sale</h2>
                     <span>
                       {cart.items.length}{" "}
-                      {cart.items.length === 1 ? "item" : "items"} · Cash
-                      payment
+                      {cart.items.length === 1 ? "item" : "items"} · {cart.credit.enabled?'Credit':'Cash'} payment
                     </span>
                   </div>
-                  <span className="cash-mode-badge"><Wallet size={18}/>Cash payment</span>
+                  <span className="cash-mode-badge"><Wallet size={18}/>{cart.credit.enabled?'Credit':'Cash'} payment</span>
                 </div>
                 {checkoutDone && !cart.items.length ? (
                   <div className="checkout-success">
@@ -1745,7 +1754,7 @@ export function StoreApp() {
                         item={item}
                         product={products.find((p) => p.id === item.productId)!}
                         index={i}
-                        disabled={busy || installingUpdate}
+                        disabled={busy || installingUpdate || !!cart.creditAttempt}
                       />
                     ))}
                   </div>
@@ -1756,7 +1765,8 @@ export function StoreApp() {
                     <p>Select a product to start a sale.</p>
                   </div>
                 )}
-                <form className="payment-form" onSubmit={finishSale}>
+                {!practice&&<div className="credit-payment-choice" role="group" aria-label="Payment type"><Button type="button" variant={!cart.credit.enabled?'default':'outline'} disabled={busy||!!cart.creditAttempt} onClick={()=>useCart.setState({credit:{...cart.credit,enabled:false}})}>Cash</Button><Button type="button" variant={cart.credit.enabled?'default':'outline'} disabled={busy||!!cart.creditAttempt} onClick={()=>useCart.setState({credit:{...cart.credit,enabled:true}})}>Credit · 30/60/90 days</Button></div>}
+                {cart.credit.enabled&&!practice?<CreditCheckout key={`${member.organizationId}:${branchId}:${member.userId}`} db={db} lease={lease} online={online} disabled={busy||installingUpdate||isStock} onWorking={working=>{committing.current=working;setBusy(working);}} onSaved={async()=>{const heldId=useCart.getState().heldDraftId;if(heldId&&lease){try{await removeHeldSale(db,lease,heldId);setHeldDraftCount(0);}catch{fail(new Error('Credit sale confirmed. A held copy remains; retry its original request to confirm, then remove it.'));}}cart.clear();setCash('');setCheckoutDone(undefined);setHistoryRevision(n=>n+1);notify('Credit sale confirmed. The original booklet invoice is linked. Open Clients & credit to print the credit record.');await sync();await refreshLocal();}}/>:<form className="payment-form" onSubmit={finishSale}>
                   <div className="subtotal">
                     <span>Subtotal</span>
                     <span>{money(grandTotal)}</span>
@@ -1826,8 +1836,8 @@ export function StoreApp() {
                       ? "Practice sales never upload"
                       : "Saved on this PC before checkout completes"}
                   </span>
-                </form>
-                {lease&&<HeldSaleControl onWorking={working=>{committing.current=working;setBusy(working);}} db={db} lease={lease} cash={cash} onCash={setCash} disabled={busy||savingSale||installingUpdate||isStock} revision={checkoutDone?.id} onChange={()=>{setCheckoutDone(undefined);void setting<HeldSale>(db,heldSaleKey(lease)).then(value=>setHeldDraftCount(value?1:0)).catch(()=>setError("Could not check the held draft. Keep site data and retry."));}}/>}
+                </form>}
+                {lease&&<HeldSaleControl onWorking={working=>{committing.current=working;setBusy(working);}} db={db} lease={lease} cash={cash} onCash={setCash} disabled={busy||savingSale||installingUpdate||isStock} revision={checkoutDone?.id??String(historyRevision)} onChange={()=>{setCheckoutDone(undefined);void setting<HeldSale>(db,heldSaleKey(lease)).then(value=>setHeldDraftCount(value?1:0)).catch(()=>setError("Could not check the held draft. Keep site data and retry."));}}/>}
               </aside>
               <div className="mobile-basket">
                 <div>
@@ -1844,6 +1854,7 @@ export function StoreApp() {
             </div>
           )}
 
+          {view === "credit" && <CreditWorkspace key={`${member.organizationId}:${branchId}:${member.userId}`} db={db} organizationId={member.organizationId} branchId={branchId} actorId={member.userId} owner={isOwner} online={online} disabled={busy||savingSale||installingUpdate} lease={lease} practice={practice} revision={historyRevision} execute={fn=>run(fn,true,true)}/>}
           {view === "overview" && (
             <>{practice&&<OverviewDashboard figures={[money(sales.reduce((n,r)=>n+r.payload.total,0)),String(sales.length),money(sales.length?Math.round(sales.reduce((n,r)=>n+r.payload.total,0)/sales.length):0),money(sales.reduce((n,r)=>n+r.payload.total,0))]} trend={Object.entries(sales.reduce<Record<string,number>>((a,r)=>{const date=new Date(Date.parse(r.payload.occurredAt)+8*3600000).toISOString().slice(0,10);a[date]=(a[date]??0)+r.payload.total;return a;},{})).sort(([a],[b])=>a.localeCompare(b)).map(([date,grossSales])=>({date,grossSales:String(grossSales)}))} topProducts={products.flatMap(p=>{const items=sales.flatMap(r=>r.payload.items).filter(i=>i.productId===p.id);return items.length?[{id:p.id,name:p.name,product:p,quantity:items.reduce((n,i)=>n.plus(new Decimal(i.quantity).mul(i.factor)),new Decimal(0)).toFixed(),baseUnit:p.baseUnit,amount:money(items.reduce((n,i)=>n+i.lineTotal,0))}]:[];})} attention={<DashboardAttention practice products={products} stock={stock} pendingCounts={0} onInventory={pane=>{setInventoryTab(pane);setView("inventory");}} onCounts={()=>setView("counts")}/>} activity={<dl className="compact-ledger"><div><dt>Practice receipts saved</dt><dd>{sales.length}</dd></div><div><dt>Live uploads</dt><dd>None</dd></div><div><dt>Stock scope</dt><dd>Local practice</dd></div></dl>} cash={<><dl className="compact-ledger"><div><dt>Practice cash sales</dt><dd>{money(sales.reduce((n,r)=>n+r.payload.total,0))}</dd></div><div><dt>Drawer count</dt><dd>Not counted</dd></div></dl><p className="muted">Separate from business cash.</p></>} scope="Practice overview · Local-only sample sales. Your live business is separate."/>}
               {!practice && (isOwner || member.role === "manager") && <SalesAnalytics catalog={products} attention={<DashboardAttention products={products} stock={stock} pendingCounts={Number(summary.pendingCounts??0)} onInventory={pane=>{setInventoryTab(pane);setView("inventory");}} onCounts={()=>setView("counts")}/>} key={`sales-analytics:${member.organizationId}:${branchId}:${member.userId}`} organizationId={member.organizationId} branchId={branchId} branchName={selectedBranch?.name ?? "Selected branch"} online={online} disabled={busy} revision={historyRevision} />}
@@ -2688,7 +2699,7 @@ export function StoreApp() {
                         <td>{money(Number(s.cash_received))}</td>
                         <td>{when(s.occurred_at)}</td>
                         <td>
-                          {s.sale_reversals &&
+                          {s.payment_mode === "credit" ? <Button variant="outline" size="sm" onClick={()=>setView("credit")}>Open credit account</Button> : s.sale_reversals &&
                           (!Array.isArray(s.sale_reversals) ||
                             s.sale_reversals.length > 0) ? (
                             <><span className="status-tag">{Array.isArray(s.sale_refund_corrections)&&s.sale_refund_corrections.length>0?"Refund corrected · check details":"Refunded"}</span>{isOwner&&<Button size="sm" variant="outline" disabled={!online||busy} onClick={()=>setPartialRefundSaleId(String(s.id))}>Refund details</Button>}</>

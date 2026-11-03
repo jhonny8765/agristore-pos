@@ -32,13 +32,15 @@ export async function onlineOperation(
   idField?: string,
 ) {
   const key = `operation:${action}:${data.organizationId}:${data.branchId}`;
-  const fingerprint = stableJSON(data);
+  const identityFree = {...data};
+  if(idField)delete identityFree[idField];
+  const fingerprint = stableJSON(identityFree);
   // IndexedDB serializes this read/write transaction across browser windows.
   // Network activity must stay outside it so the durable request commits first.
   const pending = await db.transaction("rw", [db.settings, db.sales], async () => {
     const previous = await setting<PendingOperation>(db, key);
     if (previous) {
-      if (previous.fingerprint !== fingerprint || previous.actorId !== actorId)
+      if (previous.fingerprint !== fingerprint || previous.actorId !== actorId || (idField&&data[idField]!==undefined&&previous.data[idField]!==data[idField]))
         throw new Error(
           "An earlier operation needs confirmation. Retry its original request in the Sync center first.",
         );
@@ -56,7 +58,7 @@ export async function onlineOperation(
       await requireNoPendingClosure(db, data.organizationId, data.branchId);
     }
     const created: PendingOperation = {
-      key, action, data: idField ? { ...data, [idField]: crypto.randomUUID() } : { ...data },
+      key, action, data: idField ? { ...data, [idField]: data[idField]??crypto.randomUUID() } : { ...data },
       fingerprint, actorId,
     };
     await setSetting(db, key, created);
@@ -77,6 +79,9 @@ async function settleOperation(
     if (!current || current.actorId !== pending.actorId ||
       current.action !== pending.action || stableJSON(current.data) !== stableJSON(pending.data)) return;
     if (error === undefined) {
+      if(confirmed&&pending.action==='record_credit_sale'){
+        await setSetting(db,`credit-stock-refresh:${pending.data.organizationId}:${pending.data.branchId}`,{previousRequestId:await setting(db,'snapshotRequestId')??null});
+      }
       if (confirmed && pending.action === "close_shift") {
         const lease = await setting<Lease>(db, "lease");
         // A late close response must never clear a newer cashier's shift.
