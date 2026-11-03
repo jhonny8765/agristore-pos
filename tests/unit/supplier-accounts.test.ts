@@ -1,7 +1,8 @@
 import {describe,it,expect} from 'vitest';
-import {supplierAmountInput,supplierCents,supplierDueOn,supplierMoney,supplierStatus,supplierReminder,type SupplierBill} from '../../apps/web/lib/supplier-accounts';
+import {supplierAmountInput,supplierCents,supplierDueOn,supplierMoney,supplierStatus,supplierReminder,supplierPaymentStatus,type SupplierBill} from '../../apps/web/lib/supplier-accounts';
 const bill={id:'test',supplierId:'supplier',supplierName:'TEST supplier',reference:'TEST-001',issuedOn:'2026-01-01',dueOn:'2026-01-31',term:30,amount:100000,paid:0,credited:0,balance:100000,voided:false,version:1,description:'TEST goods',receiptId:null,replacesId:null,recordedAt:'2026-01-01T00:00:00Z'} satisfies SupplierBill;
 describe('supplier accounts',()=>{
+ it('retains part payment information alongside an overdue reminder',()=>{const partial={...bill,paid:40000,balance:60000};expect(supplierPaymentStatus(partial)).toBe('Part paid');expect(supplierReminder(partial,'2026-02-01')).toBe('1 day overdue');expect(supplierPaymentStatus({...bill,credited:100000,balance:0})).toBe('Settled with credit');});
  it.each(['','-1','1.234','1e3','Infinity','NaN','0','90071992547409.92'])('rejects invalid or unsafe amount %s',value=>expect(()=>supplierCents(value)).toThrow());
  it('preserves centavos without floating-point drift and formats aggregate balances beyond safe integers',()=>{expect(supplierCents('0.29')).toBe(29);expect(supplierCents('90071992547409.91')).toBe(Number.MAX_SAFE_INTEGER);expect(supplierMoney('18014398509481982')).toBe('₱180,143,985,094,819.82');});
  it('keeps every centavo when a very large voided invoice is prefilled for correction',()=>{expect(supplierAmountInput(9007199254740985)).toBe('90071992547409.85');expect(supplierCents(supplierAmountInput(9007199254740985))).toBe(9007199254740985);});

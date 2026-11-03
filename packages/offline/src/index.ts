@@ -447,6 +447,9 @@ export async function readLocalSales(db: PosDatabase, scope: RecoveryScope, limi
 }
 
 export const recoveryOperationIds: Record<string, string> = {
+  review_import_setup: 'requestId',
+  review_product_price: 'requestId',
+  confirm_import_stock: 'requestId',
   supplier_record_invoice: 'requestId',
   supplier_record_payment: 'requestId',
   supplier_credit_note: 'requestId',
@@ -633,6 +636,8 @@ export async function importRecovery(db: PosDatabase, input: unknown, confirmedI
       throw new Error("The owner must review another employee’s operation");
     if(op.action.startsWith('supplier_')&&context.role!=='owner')
       throw new Error('Only the owner can restore supplier account requests');
+    if(['review_import_setup','review_product_price','confirm_import_stock'].includes(op.action)&&context.role!=='owner')
+      throw new Error('Only the owner can restore product review requests');
     const body = { ...op.data };
     // Approval/closure refer to an existing count; its ID remains part of the
     // request fingerprint. Generated transaction IDs are excluded, as at save.

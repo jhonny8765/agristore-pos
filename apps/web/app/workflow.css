@@ -1,0 +1,20 @@
+.reference-ui .inventory-review-notice{display:flex;align-items:center;justify-content:space-between;gap:20px;padding:18px 0;margin-bottom:18px;border-block:1px solid var(--line)}
+.reference-ui .inventory-review-notice p{margin:5px 0 0}.reference-ui .inventory-add{display:flex;justify-content:flex-end;gap:10px;flex-wrap:wrap;margin-bottom:18px}
+.reference-ui .review-filters{display:flex;gap:10px;flex-wrap:wrap;margin-bottom:12px}.reference-ui .review-filters .button span{font-variant-numeric:tabular-nums;margin-left:6px}
+.reference-ui .review-columns{display:grid;grid-template-columns:minmax(300px,.9fr) minmax(340px,1.1fr);gap:22px;align-items:start}
+.reference-ui .review-columns>*{min-width:0}.reference-ui .review-register td{overflow-wrap:anywhere}.reference-ui .review-detail h3{font-size:24px;margin:16px 0 6px}
+.reference-ui .review-detail form{padding-top:22px;margin-top:22px;border-top:1px solid var(--line)}.reference-ui .review-detail fieldset{min-width:0;border:0;padding:0;margin:0}
+.reference-ui .review-detail legend{font-size:20px;font-weight:750;margin-bottom:18px}.reference-ui .review-detail .field{margin-bottom:16px}
+.reference-ui .review-detail .checkbox{display:flex;align-items:flex-start;gap:10px;margin:16px 0}.reference-ui .review-detail details{margin-top:20px;overflow-wrap:anywhere}
+.reference-ui .review-detail>.button:last-child{margin-top:20px}.reference-ui .source-evidence{padding-block:18px;border-block:1px solid var(--line);margin-top:20px}
+.reference-ui .source-evidence .compact-ledger{font-size:15px}.reference-ui .source-evidence dd{text-align:right;overflow-wrap:anywhere}.reference-ui .conversion-preview{padding:12px;background:var(--soft);border-radius:8px}
+.reference-ui .review-placeholder{min-height:220px;display:flex;flex-direction:column;justify-content:center}.reference-ui .review-placeholder p{max-width:40ch}
+.reference-ui .account-timing{display:block;font-size:13px;margin-top:6px;color:var(--muted)}.reference-ui .account-timing.overdue{color:var(--danger);font-weight:650}
+.reference-ui .overview-accounts{margin-top:26px;padding-top:22px;border-top:1px solid var(--line)}.reference-ui .account-overview-columns{display:grid;grid-template-columns:1fr 1fr;gap:28px}.reference-ui .account-overview-columns>section{min-width:0;padding-block:10px}.reference-ui .account-overview-columns>section>strong{display:block;font-size:28px;font-weight:800;overflow-wrap:anywhere}.reference-ui .account-overview-columns small{display:block}.reference-ui .account-overview-columns .button{margin-top:12px}
+.reference-ui .account-action{margin:18px 0}.reference-ui .account-back{margin-bottom:16px}.reference-ui .credit-detail>details{margin:20px 0}
+.reference-ui .receipt-item-top{align-items:start;gap:10px}.reference-ui .line-discount{flex-shrink:0}.reference-ui .line-discount input{min-width:54px;min-height:36px;max-width:72px}
+.reference-ui .checkout-success>.button{margin-top:12px}.reference-ui .checkout-success .receipt-print-hint{font-size:13px}.reference-ui .review-detail summary:focus-visible{outline:2px solid var(--focus);outline-offset:4px}
+@media(max-width:1100px){.reference-ui .review-columns{grid-template-columns:minmax(260px,.8fr) minmax(300px,1.2fr)}}
+@media(max-width:800px){.reference-ui .review-columns{display:block}.reference-ui .review-columns.review-selected>.review-register{display:none}.reference-ui .review-columns:not(.review-selected)>.review-placeholder{display:none}.reference-ui .credit-columns.detail-selected>.credit-clients{display:none}.reference-ui .credit-columns:not(.detail-selected)>.credit-detail{display:none}.reference-ui .supplier-accounts.detail-selected>.supplier-register{display:none}.reference-ui .inventory-review-notice{align-items:flex-start;flex-direction:column}.reference-ui .review-filters .button{font-size:14px;padding-inline:10px}.reference-ui .review-detail{padding:18px}}
+@media print{.reference-ui .account-action,.reference-ui .account-back{display:none!important}}
+@media(max-width:800px){.reference-ui .account-overview-columns{grid-template-columns:1fr;gap:14px}}

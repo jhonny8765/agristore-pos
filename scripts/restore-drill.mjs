@@ -200,6 +200,16 @@ command('supplier_record_invoice',supplierBill);
 const supplierPayment={...ctx(),requestId:id(241),billId:id(240),expectedVersion:1,expectedBalance:100001,amount:40001,method:'bank',paidOn:supplierDay,reference:'TEST-SUPPLIER-BANK-RESTORE',reason:'TEST verified external bank payment',confirmed:true};
 command('supplier_record_payment',supplierPayment);
 command('supplier_credit_note',{...supplierPayment,requestId:id(242),expectedVersion:2,expectedBalance:60000,amount:10000,method:null,reference:'TEST-SUPPLIER-CREDIT-RESTORE'});
+// Structured import evidence, unit confirmation and one stock posting survive
+// an encrypted restore and retain their original request identities.
+sql(`insert into public.branches(id,organization_id,name,code) values('${id(260)}','${id(2)}','TEST review restore','REVIEW');
+insert into public.products(id,organization_id,name,sku,base_unit,setup_pending,cost_pending,catalog_source,source_stock) values('${id(261)}','${id(2)}','TEST imported liquid','TEST-RESTORE-SOURCE','piece',true,true,'TEST.pdf',jsonb_build_object('branchId','${id(260)}','quantity','1000','pending',true,'sha256',repeat('c',64),'file','TEST.pdf','page',1,'asOf','2026-10-22'));
+insert into public.product_units(id,organization_id,product_id,name,factor) values('${id(262)}','${id(2)}','${id(261)}','Unconfirmed',1);
+insert into public.unit_prices(organization_id,unit_id,version,price,cost) values('${id(2)}','${id(262)}',1,140,0);`);
+const reviewedUnit={...ctx(260),productId:id(261),unitId:id(262),requestId:id(263),expectedPriceVersion:1,baseUnit:'liter',unitName:'Milliliter',factor:'0.001',price:140,cost:null,reason:'TEST original reviewed unit evidence',confirmed:true};
+command('review_import_setup',reviewedUnit);
+const reviewedStock={...ctx(260),productId:id(261),unitId:id(262),requestId:id(264),expectedPriceVersion:2,expectedStock:'0',expectedRevision:'0',quantity:'1000',sourceHash:'c'.repeat(64),reason:'TEST separately verified starting balance',confirmed:true};
+command('confirm_import_stock',reviewedStock);
 const original = fingerprints("postgres");
 const before = command("snapshot",{...ctx(),transactionIds:[id(9)]});
 assert.equal(before.stocks[0].quantity,"10.250000");
@@ -242,6 +252,11 @@ try {
     "/tmp/agristore-verified.dump",
   ]);
   assert.deepEqual(fingerprints(database),original,"Every retained fixture row must survive dump/restore unchanged");
+  assert.equal(command('review_import_setup',reviewedUnit,database).duplicate,true);
+  assert.equal(command('confirm_import_stock',reviewedStock,database).duplicate,true);
+  const restoredSource=command('product_review_state',{...ctx(260),productId:id(261)},database);assert.equal(Number(restoredSource.stock),1);assert.equal(restoredSource.sourceStock.quantity,'1000');assert.equal(restoredSource.sourceStock.pending,false);
+  command('review_product_price',{...reviewedUnit,requestId:id(265),expectedPriceVersion:2,price:145,reason:'TEST post-restore current price'},database);
+  assert.equal(Number(sql(`select count(*) from public.unit_prices where unit_id='${id(262)}';`,database).trim()),3);
     assert.equal(command('supplier_record_invoice',supplierBill,database).duplicate,true);assert.equal(command('supplier_record_payment',supplierPayment,database).duplicate,true);
     const restoredSupplier=command('supplier_invoice_history',{...ctx(),billId:id(240)},database);assert.equal(restoredSupplier.invoice.balance,50000);assert.equal(restoredSupplier.invoice.dueOn,supplierDue);assert.equal(restoredSupplier.entries.length,3);
   assert.equal(command('record_sale',discountSale,database).status,'duplicate');

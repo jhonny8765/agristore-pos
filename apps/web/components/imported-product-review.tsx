@@ -1,42 +1,38 @@
 "use client";
-import {useState} from 'react';
+import {useEffect,useRef,useState} from 'react';
 import Decimal from 'decimal.js';
 import type {Product} from '@agristore/domain';
-import {SearchableSelect} from "./search-select";
+import {command} from '../lib/api';
+import {reviewCents,reviewMatches,stockAwaitingConfirmation,stockPreview,type ReviewFilter} from '../lib/product-review';
+import {RecordTable} from './record-pages';
 import {Button} from './ui/button';
-
-export function ImportedProductReview({products,disabled,onSave}:{products:Product[];disabled:boolean;onSave:(data:Record<string,unknown>)=>Promise<void>}){
- const pending=products.filter(p=>p.active&&p.catalogSource&&(p.pricePending||p.setupPending||p.costPending));
- const [selected,setSelected]=useState<string|null>(null);
- const product=pending.find(p=>p.id===selected)??pending[0];
- const [error,setError]=useState('');
- if(!product)return null;
- const selectedValue=selected===null?product.id:selected;
- const canConfirm=selectedValue===product.id;
- return <section className="panel imported-review">
-  <h2>Confirm imported products</h2>
-  <p>All listed products are saved. Confirm the actual selling unit, current price and purchase cost before adding opening stock. The photos did not include stock counts or costs.</p>
-  <label className="field"><span>Product to confirm</span><SearchableSelect aria-label="Imported product to confirm" value={selectedValue} disabled={disabled} onValueChange={value=>{setSelected(value);setError('');}}>{pending.map(p=><option key={p.id} value={p.id}>{p.name} · {p.sku}</option>)}</SearchableSelect></label>
-  <p className="muted">{product.catalogSource}{product.originalCode?` · Original code ${product.originalCode}`:''}</p>
-  {product.catalogNote&&<p>{product.catalogNote}</p>}
-  <form key={product.id} hidden={!canConfirm} onSubmit={async e=>{
-   e.preventDefault();setError('');const f=new FormData(e.currentTarget);
-   try{
-    if(!canConfirm)throw new Error('Choose a matching product before confirming its setup.');
-    const price=new Decimal(String(f.get('price'))).mul(100),cost=new Decimal(String(f.get('cost'))).mul(100);
-    if(!price.isInteger()||!cost.isInteger()||!price.gt(0)||cost.lt(0)||price.gt(Number.MAX_SAFE_INTEGER)||cost.gt(Number.MAX_SAFE_INTEGER))throw new Error('Enter a positive price and actual cost, using up to two decimal places.');
-    await onSave({productId:product.id,baseUnit:f.get('baseUnit'),unitName:f.get('unitName'),factor:f.get('factor'),price:price.toNumber(),cost:cost.toNumber()});setSelected(null);
-   }catch(e){setError(e instanceof Error?e.message:'Could not confirm this product.');}
-  }}>
-   <fieldset disabled={disabled} className="imported-fields"><legend>Selling setup</legend>
-    <label className="field"><span>Stock measurement</span><select name="baseUnit" defaultValue={product.setupPending?'':product.baseUnit} required><option value="" disabled>Choose measurement</option><option value="piece">Whole sealed item / piece</option><option value="kg">Kilograms</option><option value="liter">Liters</option><option value="meter">Meters</option></select></label>
-    <label className="field"><span>Selling unit name</span><input name="unitName" maxLength={40} defaultValue={product.setupPending?'':product.units[0]?.name} placeholder="Bottle, Packet, Kilo or Sack" required/></label>
-    <label className="field"><span>Stock units per selling unit</span><input name="factor" type="number" min="0.000001" step="0.000001" defaultValue={product.setupPending?'':product.units[0]?.factor} required/></label>
-    <label className="field"><span>Current selling price (₱)</span><input name="price" type="number" min="0.01" step="0.01" defaultValue={product.pricePending?'':(product.units[0]?.price??0)/100} required/></label>
-    <label className="field"><span>Actual cost per selling unit (₱)</span><input name="cost" type="number" min="0" step="0.01" required/></label>
-   </fieldset>
-   {error&&<p role="alert">{error}</p>}
-   <Button disabled={disabled||!canConfirm}>Confirm this product</Button>
-  </form>
- </section>;
+type Save=(action:string,data:Record<string,unknown>)=>Promise<void>;
+interface ReviewState{stock:string;revision:string;asOf:string;shiftOpen:boolean;sourceStock:Product['sourceStock']}
+export function ImportedProductReview({products,disabled,organizationId,branchId,onSave}:{products:Product[];disabled:boolean;organizationId:string;branchId:string;onSave:Save}){
+ const [filter,setFilter]=useState<ReviewFilter>('all'),[query,setQuery]=useState(''),[selected,setSelected]=useState('');
+ const rows=products.filter(p=>reviewMatches(p,filter)&&`${p.name} ${p.sku} ${p.originalCode??''}`.toLowerCase().includes(query.toLowerCase()));
+ const product=products.find(p=>p.id===selected&&p.active);
+ const counts=(['all','unit','price','cost','stock'] as const).map(key=>({key,count:products.filter(p=>reviewMatches(p,key)).length,label:{all:'All reviews',unit:'Unit needed',price:'Price missing',cost:'Cost unconfirmed',stock:'Stock not posted'}[key]}));
+ return <div className="product-review-workspace"><div className="section-heading"><div><h2>Needs review</h2><p>Confirm the source and selling units before using imported stock.</p></div></div>
+ <div className="review-filters" role="group" aria-label="Product review filters">{counts.map(c=><Button key={c.key} variant={filter===c.key?'default':'outline'} onClick={()=>{setFilter(c.key);setSelected('');}}>{c.label} <span>{c.count}</span></Button>)}<Button variant={filter==='catalog'?'default':'outline'} onClick={()=>{setFilter('catalog');setSelected('');}}>Find any product</Button></div><p className="scope-note">All reviews counts each product once. A product can appear in several filters. Unknown cost remains unconfirmed until an actual cost is supplied.</p>
+ <div className={`review-columns ${product?'review-selected':''}`}><section className="panel review-register"><label className="field"><span>Find a product to review</span><input type="search" value={query} onChange={e=>setQuery(e.target.value)} placeholder="Product name or code"/></label><RecordTable key={`${filter}:${query}`}><thead><tr><th>Product</th><th>Review needed</th></tr></thead><tbody>{rows.map(p=><tr key={p.id} className={p.id===selected?'selected-record':''}><td><button className="record-link" onClick={()=>setSelected(p.id)}>{p.name}</button><small>{p.originalCode??p.sku}</small></td><td>{[p.setupPending?'Unit':null,p.pricePending?'Price':null,p.costPending?'Cost':null,stockAwaitingConfirmation(p)?'Stock not posted':null].filter(Boolean).join(' · ')}</td></tr>)}</tbody></RecordTable>{!rows.length&&<p>No products match this review filter.</p>}</section>
+ {product?<ProductReviewDetail key={`${branchId}:${product.id}`} product={product} disabled={disabled} organizationId={organizationId} branchId={branchId} onSave={onSave} onBack={()=>setSelected('')}/>:<section className="panel review-placeholder"><h3>Choose a product</h3><p>Review its source evidence, selling unit, price, and any unposted stock.</p></section>}</div></div>;
+}
+function ProductReviewDetail({product:p,disabled,organizationId,branchId,onSave,onBack}:{product:Product;disabled:boolean;organizationId:string;branchId:string;onSave:Save;onBack:()=>void}){
+ const [unitId,setUnitId]=useState(p.units[0]?.id??''),[base,setBase]=useState(p.setupPending?'':p.baseUnit),[factor,setFactor]=useState(p.setupPending?'':p.units[0]?.factor??'1');
+ const [state,setState]=useState<ReviewState>(),[error,setError]=useState(''),[message,setMessage]=useState(''),[working,setWorking]=useState(false),[reload,setReload]=useState(0),[quantity,setQuantity]=useState('');
+ const locking=useRef(false),u=p.units.find(u=>u.id===unitId)??p.units[0],blocked=disabled||working,versions=p.units.map(u=>`${u.id}:${u.priceVersion}`).join(',');
+ useEffect(()=>{let active=true;command<ReviewState>('product_review_state',{organizationId,branchId,productId:p.id}).then(s=>{if(active)setState(s);}).catch(e=>{if(active)setError(e.message);});return()=>{active=false;};},[organizationId,branchId,p.id,versions,reload]);
+ async function save(action:string,data:Record<string,unknown>,success:string){if(locking.current||disabled||!u)return;locking.current=true;setWorking(true);setError('');setMessage('');try{await onSave(action,{productId:p.id,unitId:u.id,expectedPriceVersion:u.priceVersion,...data});setMessage(success);setReload(n=>n+1);setQuantity('');}catch(e){setError(e instanceof Error?e.message:'Could not save the review. Refresh and retry.');}finally{locking.current=false;setWorking(false);}}
+ let preview:{target:string;difference:string}|undefined;try{if(state&&quantity&&u)preview=stockPreview(quantity,u.factor,state.stock,p.baseUnit);}catch{}
+ const source=state?.sourceStock??p.sourceStock;
+ return <section className="panel review-detail"><Button variant="ghost" onClick={onBack}>Back to review list</Button><h3>{p.name}</h3><p className="muted">Code {p.originalCode??p.sku}</p>{error&&<p className="notice error" role="alert">{error}</p>}{message&&<p className="notice" role="status">{message}</p>}
+ {source&&<div className="source-evidence"><strong>{source.pending?'Stock awaiting confirmation':'Imported stock evidence'}</strong><dl className="compact-ledger"><div><dt>Source quantity</dt><dd>{source.quantity} source units</dd></div><div><dt>Source date</dt><dd>{source.asOf}</dd></div><div><dt>File</dt><dd>{source.file} · page {source.page}</dd></div><div><dt>Current usable stock</dt><dd>{p.setupPending?'Unit not yet confirmed':state?`${state.stock} ${p.baseUnit}`:'Checking…'}</dd></div></dl>{source.pending&&<p>The source quantity has not been posted as usable stock. Confirm its units and review the intended current balance separately.</p>}</div>}
+ {p.catalogSource&&<details><summary>Source and import notes</summary><p>{p.catalogSource}</p><p>{p.catalogNote}</p></details>}
+ {!u?<p>No selling unit is configured. Contact the owner before selling this product.</p>:<><form key={`${u.id}:${u.priceVersion}:${p.setupPending}`} aria-label="Review product setup" onSubmit={e=>{e.preventDefault();const f=new FormData(e.currentTarget);try{const price=reviewCents(String(f.get('price'))),rawCost=String(f.get('cost')??'').trim();if(price<=0)throw Error('Enter a positive selling price.');if(p.setupPending)stockPreview('1',factor,'0',base);void save(p.setupPending?'review_import_setup':'review_product_price',{price,cost:rawCost===''?null:reviewCents(rawCost),...(p.setupPending?{baseUnit:base,unitName:String(f.get('unitName')),factor}:{}),reason:String(f.get('reason')),confirmed:f.get('confirmed')==='on'},p.setupPending?'Selling unit confirmed. Review any unposted stock separately.':'A new price version was saved. Past transactions retain their original prices.');}catch(e){setError(e instanceof Error?e.message:'Check the entered values.');}}}>
+ <fieldset disabled={blocked}><legend>{p.setupPending?'Confirm selling setup':'Update selling price or cost'}</legend>{p.units.length>1&&<label className="field"><span>Selling unit to review</span><select value={unitId} onChange={e=>setUnitId(e.target.value)}>{p.units.map(u=><option key={u.id} value={u.id}>{u.name}</option>)}</select></label>}
+ {p.setupPending?<><label className="field"><span>Stock measurement</span><select required value={base} onChange={e=>setBase(e.target.value)}><option value="" disabled>Choose stock measurement</option>{['piece','kg','liter','meter'].map(k=><option key={k} value={k}>{{piece:'Whole item / piece',kg:'Kilograms',liter:'Liters',meter:'Meters'}[k]}</option>)}</select></label><label className="field"><span>Selling unit name</span><input name="unitName" required maxLength={40} placeholder="Bottle, Packet, Kilogram or Milliliter"/></label><label className="field"><span>Stock units removed for each selling unit</span><input required value={factor} onChange={e=>setFactor(e.target.value)} inputMode="decimal"/></label><p className="conversion-preview">Selling 1 unit removes {factor||'—'} {base} from stock. Check this against the actual pack or measured sale.</p></>:<p>Configured unit: <strong>{u.name}</strong> · {u.factor} {p.baseUnit} per selling unit. Recorded activity keeps its original conversion.</p>}
+ <label className="field"><span>Selling price per unit (₱)</span><input name="price" required inputMode="decimal" defaultValue={p.pricePending?'':new Decimal(u.price).div(100).toFixed(2)}/></label><label className="field"><span>Actual cost per selling unit (₱, optional)</span><input name="cost" inputMode="decimal" defaultValue={p.costPending?'':new Decimal(u.cost).div(100).toFixed(2)} placeholder="Leave blank if not yet confirmed"/></label><label className="field"><span>Review reason</span><input name="reason" required minLength={3} maxLength={1000}/></label><label className="checkbox"><input name="confirmed" type="checkbox" required/>I checked these values against the actual product and source records.</label><Button>{working?'Saving review…':p.setupPending?'Confirm selling unit':'Save price / cost version'}</Button></fieldset></form>
+ {source?.pending&&p.setupPending&&<p className="scope-note">After confirming the selling unit, review the intended current stock balance separately.</p>}{source?.pending&&!p.setupPending&&<form aria-label="Review unposted stock" onSubmit={e=>{e.preventDefault();const f=new FormData(e.currentTarget);if(!state||!preview)return;void save('confirm_import_stock',{sourceHash:source.sha256,expectedStock:state.stock,expectedRevision:state.revision,quantity,reason:String(f.get('reason')),confirmed:f.get('confirmed')==='on'},'Reviewed starting balance posted once. The original source evidence remains available.');}}><fieldset disabled={blocked||p.setupPending||!state||state.shiftOpen}><legend>Review starting stock separately</legend><p>Enter the current balance you verified in {u.name}. The source is dated {source.asOf}; use the quantity you intend to hold now.</p><label className="field"><span>Reviewed current quantity ({u.name})</span><input required inputMode="decimal" value={quantity} onChange={e=>setQuantity(e.target.value)}/></label>{preview&&<dl className="compact-ledger"><div><dt>Current stock</dt><dd>{state?.stock} {p.baseUnit}</dd></div><div><dt>Proposed final balance</dt><dd>{preview.target} {p.baseUnit}</dd></div><div><dt>Stock adjustment</dt><dd>{preview.difference} {p.baseUnit}</dd></div></dl>}<label className="field"><span>Stock review reason</span><input name="reason" required minLength={3} maxLength={1000}/></label><label className="checkbox"><input name="confirmed" type="checkbox" required/>I verified the conversion and the proposed current stock balance.</label><Button disabled={!preview}>Post reviewed starting balance</Button></fieldset>{p.setupPending&&<p>Confirm the selling unit first.</p>}{state?.shiftOpen&&<p>Close and synchronize the branch shift before reviewing starting stock.</p>}</form>}</>}
+ <Button variant="outline" disabled={blocked} onClick={()=>{setState(undefined);setError('');setReload(n=>n+1);}}>Refresh selected product stock</Button></section>;
 }
