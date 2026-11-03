@@ -210,6 +210,8 @@ Deep agricultural forest anchors warm paper, white records and pale leaf selecti
 
 **The Intact Figure Rule.** Use tabular numerals and right-aligned numeric columns. Keep monetary values on one line; labels may wrap, digits may not.
 
+**Thermal-print exception:** dedicated sale receipts use black Arial, Helvetica, sans-serif on white, with (12px) body type, (20px) Better Yield identity and (15px) total. This intentional print-specific typography is outside the Roboto workspace identity; print measurement and output share the same styles.
+
 ## Layout
 
 At the (1536px) reference width the fixed forest rail is (256px), white branch bar (72px), and main padding (26px 20px 30px 26px), placing titles at x(282px). Main destinations sit above, Sync center / Settings below. Header retains branch identity, connection, direct close-shift access and account context. Magpet is the sole enabled business branch; practice context is labeled.
@@ -231,6 +233,8 @@ Records use ten-row pages. Footers show matching loaded count and page state for
 Wide ledgers remain named keyboard-focusable scroll regions with native table semantics and right-aligned quantities; phone hints explicitly announce sideways scrolling. Minimum widths at (1000px) and below: receipts/orders (700px), queue (980px), counts (1050px), inventory (1180px). The page itself must not overflow. Inherited stock-control approval records stack at (720px); inherited mobile basket access begins at (730px).
 
 Sign-in keeps its established two-column identity/form layout above (730px), form bounded to (365px), and compact form-led mobile identity below. Do not migrate this separate surface implicitly.
+
+Dedicated sale receipts use a (58mm) roll with (48mm) content and (5mm) paper margins. Page height follows measured content rather than a fixed blank roll length. Names and full transaction IDs wrap; monetary amounts stay intact. Line groups, totals and footer avoid internal breaks. This paper layout does not add a second screen layout.
 
 ## Elevation & Depth
 
@@ -279,6 +283,12 @@ White outlined surfaces use panel padding/radius and the tiny working shadow; ph
 ### Product / Receipt Identity
 
 Use verified existing photography with contain fit, otherwise clear Photo not verified fallback in the same media slot. Preserve name, selling unit, stock, intact price and configured weight/peso options. Existing catalog raster provenance remains adjacent to shipping assets, including the 62 catalog-photo sidecars; no generated or changed catalog raster belongs to this rebuild. Receipt/order/overview slots reuse truthful identity. Concise display IDs may lead, but full original IDs remain inspectable and wrap safely when opened.
+
+### Thermal sale receipts
+
+Use the dedicated receipt surface for completed-sale printing and history copies. The header retains **Better Yield / Agri Trading and Services** and the original branch context independently of a legacy organization label. **PRACTICE ONLY · NO REAL SALE** appears only for practice; history reprints carry **COPY** and the original sale status.
+
+Retain original item identity, quantity/unit/price, line discounts, net line amounts and full transaction ID. Show gross subtotal and discount reduction when present, then total, cash tender and change; credit records use cash paid and balance on credit. The footer includes the internal sale-record wording and one authorized manual VAT booklet note, without invented fiscal identity. Print contains no till controls or product photos. Its body-level portal mounts at `beforeprint` and is removed after `afterprint`, leaving ordinary screen composition intact.
 
 ### Product discounts
 
