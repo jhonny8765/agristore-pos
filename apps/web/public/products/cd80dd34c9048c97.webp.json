@@ -1,0 +1,15 @@
+{
+  "prompt": "Pre-existing sourced product reference photograph, not generated. B-MEG Expert range — manufacturer packaging reference. Source page: https://www.sanmiguelfoods.com/brands/protein-and-animal-nutrition. Original image: https://lirp.cdn-website.com/b3fbd289/dms3rep/multi/opt/WEB-BANNERS-B-MEG-EXPERT-9d8893be-1920w.jpg. Retrieved 2026-11-03. Third-party product photography and trademarks; no open-source license asserted.",
+  "origin": [
+    {
+      "imagePath": "/products/cd80dd34c9048c97.webp",
+      "sourceTitle": "B-MEG Expert range — manufacturer packaging reference",
+      "sourceUrl": "https://www.sanmiguelfoods.com/brands/protein-and-animal-nutrition",
+      "sourceImage": "https://lirp.cdn-website.com/b3fbd289/dms3rep/multi/opt/WEB-BANNERS-B-MEG-EXPERT-9d8893be-1920w.jpg",
+      "vendor": "San Miguel Foods",
+      "match": "product range reference",
+      "retrievedOn": "2026-11-03",
+      "rights": "Third-party product photography and trademarks; no open-source license asserted."
+    }
+  ]
+}

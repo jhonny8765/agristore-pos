@@ -1,0 +1,15 @@
+{
+  "prompt": "Pre-existing sourced product reference photograph, not generated. LIQUID CAL-BO-ZINC. Source page: https://www.sagrex.com/product/liquid-cal-bo-zinc/. Original image: https://www.sagrex.com/wp-content/uploads/2022/06/Calcium-12-min-1-1.jpg. Retrieved 2026-11-03. Third-party product photography and trademarks; no open-source license asserted.",
+  "origin": [
+    {
+      "imagePath": "/products/9612f62c467cb64b.webp",
+      "sourceTitle": "LIQUID CAL-BO-ZINC",
+      "sourceUrl": "https://www.sagrex.com/product/liquid-cal-bo-zinc/",
+      "sourceImage": "https://www.sagrex.com/wp-content/uploads/2022/06/Calcium-12-min-1-1.jpg",
+      "vendor": "www.sagrex.com",
+      "match": "product reference",
+      "retrievedOn": "2026-11-03",
+      "rights": "Third-party product photography and trademarks; no open-source license asserted."
+    }
+  ]
+}

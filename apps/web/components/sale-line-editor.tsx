@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useId, useRef } from "react";
-import { Minus, Plus, X } from "lucide-react";
+import { Minus, Plus, X, EllipsisVertical } from "lucide-react";
 import Decimal from "decimal.js";
 import {
   makeItem,
@@ -113,7 +113,7 @@ export function SaleLineEditor({
   } catch {}
 
   return (
-    <div className="receipt-item">
+    <div className="receipt-item" data-measured={loose||liquid||budgetMode}>
       <div className="receipt-item-photo"><ProductPhoto product={product}/></div>
       <div className="receipt-item-top">
         <strong>{item.name}</strong>
@@ -261,6 +261,7 @@ export function SaleLineEditor({
           g{budgetMode ? " · weight not confirmed" : ""}
         </p>
       )}
+      {kilo && !budgetMode && <details className="line-retail" open={loose}><summary aria-label={`Selling options for ${item.name}`} title="Loose selling options"><EllipsisVertical size={18}/><span>Loose selling options</span></summary>
       {kilo && !budgetMode && (
         <div
           className="weight-shortcuts"
@@ -325,6 +326,7 @@ export function SaleLineEditor({
           </button>
         </div>
       )}
+      </details>}
       {budgetMode && (
         <div className="peso-entry">
           <label htmlFor={errorId + "-budget"}>Customer budget (₱)</label>

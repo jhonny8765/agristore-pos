@@ -1,0 +1,15 @@
+{
+  "prompt": "Pre-existing sourced product reference photograph, not generated. Roundup  1 Gallon. Source page: https://agrify.ph/products/roundup-herbecide-1-gallon. Original image: https://cdn.shopify.com/s/files/1/0218/0130/4128/products/Photo_15-04-2019_4_06_18_PM.png?v=1574132845. Retrieved 2026-11-03. Third-party product photography and trademarks; no open-source license asserted.",
+  "origin": [
+    {
+      "imagePath": "/products/4fbce1849a23f9ee.webp",
+      "sourceTitle": "Roundup  1 Gallon",
+      "sourceUrl": "https://agrify.ph/products/roundup-herbecide-1-gallon",
+      "sourceImage": "https://cdn.shopify.com/s/files/1/0218/0130/4128/products/Photo_15-04-2019_4_06_18_PM.png?v=1574132845",
+      "vendor": "Monsanto",
+      "match": "product reference",
+      "retrievedOn": "2026-11-03",
+      "rights": "Third-party product photography and trademarks; no open-source license asserted."
+    }
+  ]
+}

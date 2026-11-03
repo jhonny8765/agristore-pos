@@ -4,8 +4,8 @@ import { Children, cloneElement, isValidElement, useId, useState, type Component
 import { Button } from "./ui/button";
 
 /** Pages affect presentation only. Callers retain every record for totals and exports. */
-export function RecordPages({ children, label = "Records", resetKey = "", className, render }: {
-  children: ReactNode; label?: string; resetKey?: string; className?: string;
+export function RecordPages({ children, label = "Records", resetKey = "", className, render,showSummary=true }: {
+  children: ReactNode; label?: string; resetKey?: string; className?: string;showSummary?:boolean;
   render?: (rows: ReactNode[]) => ReactNode;
 }) {
   const rows = Children.toArray(children);
@@ -15,12 +15,12 @@ export function RecordPages({ children, label = "Records", resetKey = "", classN
   const page = selection.identity === identity ? Math.min(selection.page, pages - 1) : 0;
   const contentId = useId();
   const change = (value: number) => setSelection({ identity, page: value });
-  const controls = (position: string) => rows.length > 10 && <nav className="record-pagination" aria-label={`${label} pages ${position}`}>
-    <span role="status">{page * 10 + 1}–{Math.min(rows.length, (page + 1) * 10)} of {rows.length} loaded · 10 per page</span>
+  const controls = (position: string) => (rows.length > 10 || position==='below'&&showSummary) && <nav className="record-pagination" aria-label={`${label} pages ${position}`}>
+    <span role="status">{rows.length?page * 10 + 1:0}–{Math.min(rows.length, (page + 1) * 10)} of {rows.length} loaded · 10 per page</span>
     <div className="record-page-buttons">
-      <Button type="button" size="sm" variant="outline" disabled={page === 0} aria-controls={contentId} onClick={() => change(page - 1)}>Previous</Button>
+      {pages>1&&<Button type="button" size="sm" variant="outline" disabled={page === 0} aria-controls={contentId} onClick={() => change(page - 1)}>Previous</Button>}
       <span>Page {page + 1} of {pages}</span>
-      <Button type="button" size="sm" variant="outline" disabled={page === pages - 1} aria-controls={contentId} onClick={() => change(page + 1)}>Next</Button>
+      {pages>1&&<Button type="button" size="sm" variant="outline" disabled={page === pages - 1} aria-controls={contentId} onClick={() => change(page + 1)}>Next</Button>}
       {pages > 2 && <Button type="button" size="sm" variant="ghost" disabled={page === 0} aria-controls={contentId} onClick={() => change(0)}>First</Button>}
       {pages > 2 && <Button type="button" size="sm" variant="ghost" disabled={page === pages - 1} aria-controls={contentId} onClick={() => change(pages - 1)}>Last loaded</Button>}
     </div>

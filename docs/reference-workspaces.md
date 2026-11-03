@@ -1,6 +1,24 @@
 # November 3 reference workspaces
 
-The supplied screen designs are applied to the existing Better Yield POS, retaining the real logo, Manrope/DM Sans typography, Magpet-only business scope and original financial commands. Demo figures and product units from the pictures are not business data.
+## Corrected reference copy
+
+The user rejected the first interpretation because it retained too much of the previous interface. The rebuilt workspaces follow the supplied screenshots directly: Roboto Variable typography, a 256 px forest sidebar, 72 px header, warm paper canvas, heavier headings, compact registers and top-aligned working/detail panels. The real Better Yield logo, Magpet-only scope and original financial commands remain. Sample figures and photographed goods from the references are not business data.
+
+Checkout now places the catalog beside the current sale, with stock and Add at the bottom of each product card. The default two-pack basket keeps Complete cash sale and Hold sale in the first 1024 px desktop viewport. Weight and peso entry remain available through labelled disclosures. Receipts have the reference search/filter/summary/register/detail arrangement, cash/status badges and original receipt actions. Sync keeps complete permanent IDs inspectable and uses the compact paired recovery panels. Settings uses branch/shift/staff alongside recovery/PC panels. Inventory, purchasing, stock counts and overview follow the corresponding supplied compositions, with truthful empty/unavailable states.
+
+Registers show ten loaded rows per page, including a count/page summary for short and empty lists. Search and keyboard product selection remain available. Pagination affects presentation only; original complete records still drive cash, stock, pending checks and exports. Desktop and phone layouts were captured for seven Practice workspaces and three isolated real-component business fixtures, twenty renders in total.
+
+The final independent scoped visual verdict is `ship`: all six requested correction groups were resolved, including a follow-up phone inventory action/copy collision. DESIGN.md and its sidecar describe this rebuilt world. No business transaction, refund, stock adjustment, catalog import, staff mutation or migration was submitted for this correction. The existing photo binaries are unchanged; 62 provenance sidecars document their recorded sources and permissions. The asset scan reports all 64 shipped rasters documented.
+
+Validation: 480 unit tests in 37 files, type checks, lint, Next production build and configured Cloudflare build passed. The final local browser regression passed all 43 selected cases. The initial broader run also passed the 200 retained-checkout and 100,000 retained-receipt capacity cases. Six initial UI/harness failures were corrected and passed targeted reruns. The configured archive passed its hosting check after the hosting test was made explicit about configured versus intentionally unconfigured builds. All 31 checks on the first rebuilt hosted preview passed; the final CSS-only phone correction passed the two complete capture suites and two focused final hosted-preview cases. The detector ran once for this correction and returned no findings. These are software checks; authenticated disposable-database mutation tests and physical hardware/staff acceptance are separate.
+
+Corrected release: **cf-mvzx3zdw**, SHA-256 `33b9747ec8022abae3642e584283c1daf282d6c4d4534045fbd23b1305902a98`, 189 files, 2,602,421 archive bytes. The exact same archive was deployed to **https://copy-reference.better-yield-magpet-pos.pages.dev/** and then **https://better-yield-magpet-pos.pages.dev/**. Both health responses report the expected release and `status: ok`. All **8 final production smoke cases passed**: both close-shift cases, receipt pagination with exact cash/stock, failed hold/cleanup protection, durable held drafts completing once, receipt/settings filters, desktop/phone accessibility and response headers. Captures of the published Practice checkout and receipts are saved privately as `copy-live-checkout.png` and `copy-live-receipts.png`. The previous cf-mvztt182 archive and checksum are preserved privately for rollback.
+
+An already-open installed POS can load this update through **Settings → Application & recovery → Check for app update**, after finishing the basket and checking unresolved records. The user's open cashier tabs were not reloaded or cleared. The earlier implementation and its evidence follow for historical context; its typography description does not govern the corrected release.
+
+## Earlier implementation
+
+The earlier release retained the real logo and Manrope/DM Sans typography, Magpet-only business scope and original financial commands.
 
 ## What changed
 

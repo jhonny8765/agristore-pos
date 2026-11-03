@@ -6,9 +6,7 @@ test("catalog weight and peso choices start at the right field without charging 
 }) => {
   await page.goto("/");
   await page.getByRole("button", { name: "Try practice checkout" }).click();
-  await page
-    .getByRole("button", { name: "Sell Grower feeds by weight", exact: true })
-    .click();
+  await sellLoose(page,"weight");
   const quantity = page.getByLabel(/^Quantity \(.+\) for Grower feeds$/);
   await expect(quantity).toHaveValue("");
   await expect(quantity).toHaveAccessibleName("Quantity (kg) for Grower feeds");
@@ -17,12 +15,7 @@ test("catalog weight and peso choices start at the right field without charging 
   await expect(complete(page)).toBeDisabled();
   await quantity.pressSequentially("0.5");
   await expect(page.locator(".amount-due")).toContainText("₱16.80");
-  await page
-    .getByRole("button", {
-      name: "Sell Grower feeds by peso amount",
-      exact: true,
-    })
-    .click();
+  await sellLoose(page,"peso amount");
   await expect(
     page.getByLabel("Customer budget (₱) for Grower feeds"),
   ).toBeFocused();
@@ -67,7 +60,7 @@ const complete = (page: Page) =>
 test("blank and cleared weights can switch units without reviving a previous charge", async ({ page, context }) => {
   await page.goto("/");
   await page.getByRole("button", { name: "Try practice checkout" }).click();
-  await page.getByRole("button", { name: "Sell Grower feeds by weight", exact: true }).click();
+  await sellLoose(page,"weight");
   const entry = page.getByLabel("Weight entry for Grower feeds");
   const weight = page.getByLabel(/^Quantity \(.+\) for Grower feeds$/);
   const due = page.locator(".amount-due strong");
@@ -127,7 +120,7 @@ test("a grams-first peso request still requires actual weight confirmation", asy
   await page.setViewportSize({ width: 390, height: 900 });
   await page.goto("/");
   await page.getByRole("button", { name: "Try practice checkout" }).click();
-  await page.getByRole("button", { name: "Sell Grower feeds by peso amount", exact: true }).click();
+  await sellLoose(page,"peso amount");
   await page.getByLabel("Customer budget (₱) for Grower feeds").fill("50");
   await page.getByLabel("Weight entry for Grower feeds").selectOption("g");
   const weight = page.getByLabel("Quantity (g) for Grower feeds", { exact: true });
@@ -185,9 +178,7 @@ test("peso estimates require measured confirmation across navigation, and grams 
     navigator.serviceWorker.ready.then(() => true),
   );
   await context.setOffline(true);
-  await page
-    .getByRole("button", { name: "By peso amount", exact: true })
-    .click();
+  await linePeso(page);
   await page.getByLabel("Customer budget (₱) for Grower feeds").fill("50");
   await page
     .getByRole("button", { name: "Estimate weight", exact: true })
@@ -228,15 +219,14 @@ test("shortcuts select the retail kilo price, cancel restores a sack, and duplic
 }) => {
   await practice(page);
   await page.getByLabel(/^Quantity \(.+\) for Grower feeds$/).fill("2");
-  await page
-    .getByRole("button", { name: "By peso amount", exact: true })
-    .click();
+  await linePeso(page);
   await page
     .getByRole("button", { name: "Cancel peso entry", exact: true })
     .click();
   await expect(page.getByLabel(/^Quantity \(.+\) for Grower feeds$/)).toHaveValue("2");
   await expect(page.getByLabel("Unit for Grower feeds")).toHaveValue(/.+/);
   await expect(page.locator(".receipt-item-bottom")).toContainText("₱3,160.00");
+  await page.locator(".receipt-item .line-retail > summary").click();
   await page.getByRole("button", { name: "¼ kg", exact: true }).click();
   await expect(page.locator(".line-rate")).toContainText("₱33.60 / Kilo");
   await page.getByLabel("Weight entry for Grower feeds").selectOption("g");
@@ -294,7 +284,7 @@ test("invalid edits hide stale prices while valid items and unconfirmed peso est
   await page.getByLabel("Cash received", { exact: true }).fill("400");
   await complete(page).click();
   await expect(page.getByText("₱93.20 change", { exact: true })).toBeVisible();
-  await page.getByRole("button", { name: "Sell Grower feeds by peso amount", exact: true }).click();
+  await sellLoose(page,"peso amount");
   await page.getByLabel("Customer budget (₱) for Grower feeds").fill("50");
   await page.getByRole("button", { name: "Estimate weight", exact: true }).click();
   await expect(due).toHaveText("₱50.00");
@@ -319,9 +309,7 @@ test("piece products cannot be sold as half a sealed packet; weighed controls re
   await expect(complete(page)).toBeEnabled();
   await page.getByRole("button", { name: "Remove Hybrid corn seeds" }).click();
   await page.getByRole("button", { name: "Add Grower feeds" }).click();
-  await page
-    .getByRole("button", { name: "By peso amount", exact: true })
-    .click();
+  await linePeso(page);
   for (const width of [1440, 390, 418, 320]) {
     await page.setViewportSize({ width, height: 900 });
     expect(
@@ -336,3 +324,7 @@ test("piece products cannot be sold as half a sealed packet; weighed controls re
     expect(result.violations).toEqual([]);
   }
 });
+
+async function sellLoose(page:Page,mode:"weight"|"peso amount"){const options=page.locator('.product').filter({has:page.getByRole('heading',{name:'Grower feeds',exact:true})}).locator('.catalog-retail');if(!await options.getAttribute('open')){if(await options.getAttribute('open')===null)await options.locator('summary').click();}await options.getByRole('button',{name:`Sell Grower feeds by ${mode}`,exact:true}).click();}
+
+async function linePeso(page:Page){const panel=page.locator(".receipt-item").first().locator(".line-retail");if(await panel.getAttribute("open")===null)await panel.locator("summary").click();await panel.getByRole("button",{name:"By peso amount",exact:true}).click();}

@@ -1,0 +1,15 @@
+{
+  "prompt": "Pre-existing sourced product reference photograph, not generated. Liquid Magnesium. Source page: https://www.sagrex.com/product/liquid-magnesium/. Original image: https://www.sagrex.com/wp-content/uploads/2022/07/Magnesium-min-min.png. Retrieved 2026-11-03. Third-party product photography and trademarks; no open-source license asserted.",
+  "origin": [
+    {
+      "imagePath": "/products/41ce6dfb87f90041.webp",
+      "sourceTitle": "Liquid Magnesium",
+      "sourceUrl": "https://www.sagrex.com/product/liquid-magnesium/",
+      "sourceImage": "https://www.sagrex.com/wp-content/uploads/2022/07/Magnesium-min-min.png",
+      "vendor": "www.sagrex.com",
+      "match": "product reference",
+      "retrievedOn": "2026-11-03",
+      "rights": "Third-party product photography and trademarks; no open-source license asserted."
+    }
+  ]
+}

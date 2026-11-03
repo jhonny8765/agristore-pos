@@ -1,0 +1,15 @@
+{
+  "prompt": "Pre-existing sourced product reference photograph, not generated. Suprema F1 250g East West Seeds. Source page: https://agrify.ph/products/suprema-f1-250g-east-west-seeds. Original image: https://cdn.shopify.com/s/files/1/0218/0130/4128/files/IMG_4389.jpg?v=1759826365. Retrieved 2026-11-03. Third-party product photography and trademarks; no open-source license asserted.",
+  "origin": [
+    {
+      "imagePath": "/products/a1fe5525ff0bf89e.webp",
+      "sourceTitle": "Suprema F1 250g East West Seeds",
+      "sourceUrl": "https://agrify.ph/products/suprema-f1-250g-east-west-seeds",
+      "sourceImage": "https://cdn.shopify.com/s/files/1/0218/0130/4128/files/IMG_4389.jpg?v=1759826365",
+      "vendor": "Agrify",
+      "match": "product reference",
+      "retrievedOn": "2026-11-03",
+      "rights": "Third-party product photography and trademarks; no open-source license asserted."
+    }
+  ]
+}

@@ -1,4 +1,5 @@
 "use client";
+import { StateBadge } from "./state-badge";
 import { SearchableSelect } from "./search-select";
 import { RecordTable, RecordPages } from "./record-pages";
 import { HeldSaleControl } from "./held-sale";
@@ -6,6 +7,9 @@ import { prepareHeldCheckout,removeHeldSale,heldSaleKey,type HeldSale } from "..
 import { DashboardAttention } from "./dashboard-attention";
 import { PriceHistory } from "./price-history";
 import { receiptActionCells } from "../lib/receipt-actions";
+import { OverviewDashboard } from "./overview-dashboard";
+import { WorkspaceStat } from "./workspace-ui";
+import { OrderWorkspace } from "./order-workspace";
 import { ReceiptWorkspace } from "./receipt-workspace";
 import { InventoryWorkspace } from "./inventory-workspace";
 import { SettingsWorkspace } from "./settings-workspace";
@@ -15,11 +19,11 @@ import { MeasuredQuantity } from "./measured-quantity";
 import { SalesAnalytics } from "./sales-analytics";
 import { PartialRefundControl } from "./partial-refund";
 
-/* WORLD: A cooperative store's orderly stock book: forest ink, warm paper, ruled tables, precise figures.
+/* WORLD: Reproduce the user-pinned November 3 screens: heavy sans, warm paper, forest rail, compact ledgers.
    STORY: Cashiers complete a cash sale; owners follow each stock change back to its source.
    FIRST VIEWPORT: A fixed narrow navigation rail, branch and connection bar, searchable product grid,
    and a persistent receipt at the right. The checkout action stays next to the amount due.
-   FORM: Cooperative stock book, candidate 4; seed ee1989fc. Product clarity outranks decorative motion.
+   FORM: The supplied eight-screen composition owns the design. Actual records, permissions and photos own content.
    FINISH: unreviewed and undocumented is unfinished; this build ends with the finish review, the verdict, DESIGN.md, and every shipping raster carrying its provenance */
 
 import {
@@ -32,6 +36,10 @@ import {
 } from "react";
 import {
   ArrowDownToLine,
+  FileUp,
+  FileDown,
+  Wallet,
+  Store as StoreFront,
   ArrowLeftRight,
   ArrowRight,
   BarChart3,
@@ -50,7 +58,6 @@ import {
   Settings,
   ShieldCheck,
   ShoppingBasket,
-  ShoppingCart,
   Sprout,
   Truck,
   Wifi,
@@ -235,6 +242,8 @@ export function StoreApp() {
   const [partialRefundSaleId,setPartialRefundSaleId]=useState<string>();
   const [localHistoryLimit, setLocalHistoryLimit] = useState(50);
   const [hasOlderLocal, setHasOlderLocal] = useState(false);
+  const recoveryFileInput=useRef<HTMLInputElement>(null);
+  const [recoverySelected,setRecoverySelected]=useState("");
   const [recoveryArchive, setRecoveryArchive] = useState<{ id: string; next: number; parts: number; scope: string }>();
   const [recoveryDownload, setRecoveryDownload] = useState<{ scope: string; filename: string; data: Awaited<ReturnType<typeof exportRecovery>> }>();
   const [allPendingCount, setAllPendingCount] = useState(0);
@@ -974,7 +983,7 @@ export function StoreApp() {
     if(view === "sales") {
       const actionCells=practice?new Map<string,React.ReactNode>():receiptActionCells(body);
       const receipts:ReceiptView[]=practice?sales.map(s=>({id:s.id,receipt:s.receipt??s.id.slice(0,8),occurredAt:s.payload.occurredAt,total:s.payload.total,cashReceived:s.payload.cashReceived,status:"local",payload:s.payload,original:s as unknown as Row})):branchSales.map(s=>({id:String(s.id),receipt:String(s.receipt??String(s.id).slice(0,8)),occurredAt:String(s.occurred_at),total:Number(s.total),cashReceived:Number(s.cash_received),status:Array.isArray(s.sale_refund_corrections)&&s.sale_refund_corrections.length?"corrected":s.sale_reversals&&(!Array.isArray(s.sale_reversals)||s.sale_reversals.length)?"refunded":Array.isArray(s.sale_partial_refunds)&&s.sale_partial_refunds.length?"partial":s.review_required===true?"review":"completed",payload:s.payload as Sale,original:s}));
-      return <ReceiptWorkspace key={`${member?.organizationId}:${branchId}:${practice}`} rows={receipts} products={products} branchName={selectedBranch?.name??"Selected branch"} practice={practice} actions={r=>actionCells.get(r.id)}/>;
+      return <ReceiptWorkspace header={pageHeading} key={`${member?.organizationId}:${branchId}:${practice}`} rows={receipts} products={products} branchName={selectedBranch?.name??"Selected branch"} practice={practice} actions={r=>actionCells.get(r.id)}/>;
     }
     return (<div
       className={kind ? "table-wrap history-table" : "table-wrap"}
@@ -1252,22 +1261,53 @@ export function StoreApp() {
     transfers: "Branch transfers",
     counts: "Physical stock counts",
     sales: "Sales & receipts",
-    sync: "Synchronization",
+    sync: "Sync center",
     "close-shift": "Close shift",
     settings: "Store settings",
   };
   const descriptions: Record<View, string> = {
-    pos: "A good day starts with a clear record.",
-    overview: "Follow sales, stock, and the things that need your attention.",
+    pos: "Scan or search products, add to the sale, and complete payment.",
+    overview: "Your store, at a glance.",
     inventory: "Know what’s on hand, down to the last kilo.",
-    receiving: "Record the goods that arrive at your branch.",
+    receiving: "Track orders and inspect every delivery.",
     transfers: "Follow stock from dispatch to arrival.",
-    counts: "Compare what’s on the shelf with what’s in the book.",
+    counts: "Count the shelf, then reconcile the record.",
     sales: "Every completed checkout, with its original record.",
-    sync: "Every saved sale has a place. Nothing disappears from the queue.",
+    sync: "Keep every saved record accounted for.",
     "close-shift": "Count the cash in your drawer, then finish your shift.",
-    settings: "Your people, your branches, and your cashier shift.",
+    settings: "Manage your people, branch and cashier PC.",
   };
+  const inventoryTabs = (<WorkspaceTabs label="Inventory sections" value={inventoryTab} onChange={setInventoryTab} tabs={[{id:"products",label:"Products"},{id:"expiry",label:"Expiry reminders"},{id:"controls",label:"Stock controls"},...(isOwner?[{id:"prices",label:"Price history"},{id:"setup",label:"Product setup"}]:[])]}/>);
+  const pageHeading = (<div className="page-heading">
+            <div>
+              <div className="title-line"><h1 ref={contentHeading} tabIndex={-1}>
+                {titles[view]}
+              </h1>{view==="sales"&&<span className="cash-mode-badge"><Wallet size={22}/>Cash sales only</span>}{lease&&view==="pos"&&<span className="shift-badge"><span/>Shift open</span>}</div>
+              <p>{descriptions[view]}</p>
+            </div>
+            <div className="heading-actions">
+
+
+              {!practice && view !== "pos" && view !== "sync" && view !== "overview" && (
+                <Button
+                  variant="outline"
+                  size="sm"
+                  disabled={!online || busy || practice}
+                  onClick={() =>
+                    void run(async () => {
+                      await refreshCloud(true);
+                      if (lease) await sync();
+                      setHistoryRevision((revision) => revision + 1);
+                      notify("Records refreshed.");
+                    }, false)
+                  }
+                >
+                  <RefreshCw size={15} />
+                  Refresh
+                </Button>
+              )}
+            </div>
+          </div>);
   return (
     <div className="app-shell reference-ui">
       <a href="#main" className="skip-link">
@@ -1283,7 +1323,7 @@ export function StoreApp() {
         </a>
         <nav aria-label="Main navigation">
           {navigation
-            .filter(n => !branchLocked || n.id !== "transfers")
+            .filter(n => (!branchLocked && !practice) || n.id !== "transfers")
             .filter(
               (n) => !isStock || !["pos", "overview", "sales"].includes(n.id),
             )
@@ -1356,7 +1396,7 @@ export function StoreApp() {
         <header className="topbar">
           <div className="branch-picker">
             <span className="branch-icon">
-              <Sprout size={18} />
+              <StoreFront size={23} />
             </span>
             {branchLocked ? <span><span className="sr-only">Current branch: </span><strong>{selectedBranch?.name ?? "Reconnect to load your branch"}</strong></span> : <><select
               aria-label="Current branch"
@@ -1415,76 +1455,21 @@ export function StoreApp() {
                     : "Offline · sales saved here"}
               </span>
             </span>
-            <span className="today">
-              {new Intl.DateTimeFormat("en-PH", {
-                month: "short",
-                day: "numeric",
-                year: "numeric",
-                timeZone: "Asia/Manila",
-              }).format(new Date())}
-            </span>
-          </div>
-        </header>
-        {practice && (
-          <div className="practice-banner">
-            <span>
-              <strong>Practice mode</strong> — sample products and local-only
-              sales. Your live stores are separate.
-            </span>
-            <button onClick={() => void logout()}>
-              Return to sign in
-              <ArrowRight size={14} />
-            </button>
-          </div>
-        )}
-        <main id="main" className="main-content" tabIndex={-1}>
-          <div className="page-heading">
-            <div>
-              <h1 ref={contentHeading} tabIndex={-1}>
-                {titles[view]}
-              </h1>
-              <p>{descriptions[view]}</p>
-            </div>
-            <div className="heading-actions">
-              {lease && (
-                <span className="shift-badge">
-                  <span />
-                  Shift open
-                </span>
-              )}
-              {lease && view !== "close-shift" && (
-                <Button className="close-shift-shortcut" variant="outline" size="sm" disabled={busy || savingSale || installingUpdate}
+            {lease && view!=="close-shift" && (<Button className="close-shift-shortcut" variant="outline" size="sm" disabled={busy || savingSale || installingUpdate}
                   onClick={() => setView("close-shift")}>
                   <LogOut size={15} /> Close shift
-                </Button>
-              )}
-              {view !== "pos" && (
-                <Button
-                  variant="outline"
-                  size="sm"
-                  disabled={!online || busy || practice}
-                  onClick={() =>
-                    void run(async () => {
-                      await refreshCloud(true);
-                      if (lease) await sync();
-                      setHistoryRevision((revision) => revision + 1);
-                      notify("Records refreshed.");
-                    }, false)
-                  }
-                >
-                  <RefreshCw size={15} />
-                  Refresh
-                </Button>
-              )}
-            </div>
+                </Button>)}<button className="account-chip" title={practice?"Leave practice mode":"Sign out"} aria-label={practice?"Return to sign in":"Sign out "+member.name} disabled={busy||syncing} onClick={()=>void logout()}>{practice?"Practice mode · Sample data":member.name+" · "+member.role.replaceAll("_"," ")}</button>
           </div>
-          {Notice}
+        </header>
+        <main data-view={view} id="main" className="main-content" tabIndex={-1}>
+          {view !== "pos" && view !== "sales" && pageHeading}
+          <div className="app-notices">{Notice}</div>
           {!practice && view === "overview" && (
-            <p className="muted">
+            <details className="overview-scope-note"><summary>Report scope</summary><p className="muted">
               Sales totals include all confirmed records. Flag, reconciliation
               and movement previews show up to the most recent 1,000 entries.
               The audit register below has its own branch and date filters.
-            </p>
+            </p></details>
           )}
           {!practice &&
             view !== "sales" &&
@@ -1524,7 +1509,7 @@ export function StoreApp() {
           )}
           {view === "pos" && (
             <div className="checkout-layout">
-              <section className="catalog">
+              <section className="catalog">{pageHeading}
                 <div className="catalog-tools">
                   <label className="search-box">
                     <Search size={19} />
@@ -1567,10 +1552,6 @@ export function StoreApp() {
                       {c}
                     </button>
                   ))}
-                </div>
-                <div className="catalog-meta">
-                  <span>{visible.length} products</span>
-                  <span>Prices in Philippine pesos</span>
                 </div>
                 {visible.length ? (
                   <><h2 className="sr-only">Products</h2><RecordPages className="product-grid" label="Products" resetKey={`${query}:${category}`}>
@@ -1628,7 +1609,7 @@ export function StoreApp() {
                             </span>
                             {(p.pricePending||p.setupPending)&&<p className="catalog-warning">{p.setupPending?'Confirm selling unit in Inventory.':'Confirm the printed price in Inventory.'}</p>}
                             {kilo && !p.pricePending && !p.setupPending && (
-                              <div
+                              <details className="catalog-retail"><summary>Loose selling options</summary><div
                                 className="product-selling"
                                 role="group"
                                 aria-label={`Loose selling options for ${p.name}`}
@@ -1665,7 +1646,7 @@ export function StoreApp() {
                                 >
                                   By peso amount
                                 </button>
-                              </div>
+                              </div></details>
                             )}
                           </div>
                         </article>
@@ -1686,6 +1667,10 @@ export function StoreApp() {
                     }
                   />
                 )}
+                <div className="catalog-meta">
+                  <span>{visible.length} products</span>
+                  <span>Prices in Philippine pesos</span>
+                </div>
                 <div className="catalog-foot">
                   <ShieldCheck size={15} />
                   <span>
@@ -1710,7 +1695,7 @@ export function StoreApp() {
                       payment
                     </span>
                   </div>
-                  <ShoppingCart size={21} />
+                  <span className="cash-mode-badge"><Wallet size={18}/>Cash payment</span>
                 </div>
                 {checkoutDone && !cart.items.length ? (
                   <div className="checkout-success">
@@ -1860,8 +1845,8 @@ export function StoreApp() {
           )}
 
           {view === "overview" && (
-            <>{practice&&<section className="panel"><h2>Practice overview</h2><p>Local practice records on this PC. These figures are separate from business sales.</p><div className="workspace-stats three"><div className="workspace-stat"><div><span>Practice sales</span><strong>{money(sales.reduce((n,s)=>n+s.payload.total,0))}</strong></div></div><div className="workspace-stat"><div><span>Practice receipts saved</span><strong>{sales.length}</strong></div></div><div className="workspace-stat"><div><span>Average practice sale</span><strong>{money(sales.length?Math.round(sales.reduce((n,s)=>n+s.payload.total,0)/sales.length):0)}</strong></div></div></div><DashboardAttention products={products} stock={stock} pendingCounts={0} onInventory={pane=>{setInventoryTab(pane);setView("inventory");}} onCounts={()=>setView("counts")}/></section>}
-              {!practice && (isOwner || member.role === "manager") && <SalesAnalytics attention={<DashboardAttention products={products} stock={stock} pendingCounts={Number(summary.pendingCounts??0)} onInventory={pane=>{setInventoryTab(pane);setView("inventory");}} onCounts={()=>setView("counts")}/>} key={`sales-analytics:${member.organizationId}:${branchId}:${member.userId}`} organizationId={member.organizationId} branchId={branchId} branchName={selectedBranch?.name ?? "Selected branch"} online={online} disabled={busy} revision={historyRevision} />}
+            <>{practice&&<OverviewDashboard figures={[money(sales.reduce((n,r)=>n+r.payload.total,0)),String(sales.length),money(sales.length?Math.round(sales.reduce((n,r)=>n+r.payload.total,0)/sales.length):0),money(sales.reduce((n,r)=>n+r.payload.total,0))]} trend={Object.entries(sales.reduce<Record<string,number>>((a,r)=>{const date=new Date(Date.parse(r.payload.occurredAt)+8*3600000).toISOString().slice(0,10);a[date]=(a[date]??0)+r.payload.total;return a;},{})).sort(([a],[b])=>a.localeCompare(b)).map(([date,grossSales])=>({date,grossSales:String(grossSales)}))} topProducts={products.flatMap(p=>{const items=sales.flatMap(r=>r.payload.items).filter(i=>i.productId===p.id);return items.length?[{id:p.id,name:p.name,product:p,quantity:items.reduce((n,i)=>n.plus(new Decimal(i.quantity).mul(i.factor)),new Decimal(0)).toFixed(),baseUnit:p.baseUnit,amount:money(items.reduce((n,i)=>n+i.lineTotal,0))}]:[];})} attention={<DashboardAttention practice products={products} stock={stock} pendingCounts={0} onInventory={pane=>{setInventoryTab(pane);setView("inventory");}} onCounts={()=>setView("counts")}/>} activity={<dl className="compact-ledger"><div><dt>Practice receipts saved</dt><dd>{sales.length}</dd></div><div><dt>Live uploads</dt><dd>None</dd></div><div><dt>Stock scope</dt><dd>Local practice</dd></div></dl>} cash={<><dl className="compact-ledger"><div><dt>Practice cash sales</dt><dd>{money(sales.reduce((n,r)=>n+r.payload.total,0))}</dd></div><div><dt>Drawer count</dt><dd>Not counted</dd></div></dl><p className="muted">Separate from business cash.</p></>} scope="Practice overview · Local-only sample sales. Your live business is separate."/>}
+              {!practice && (isOwner || member.role === "manager") && <SalesAnalytics catalog={products} attention={<DashboardAttention products={products} stock={stock} pendingCounts={Number(summary.pendingCounts??0)} onInventory={pane=>{setInventoryTab(pane);setView("inventory");}} onCounts={()=>setView("counts")}/>} key={`sales-analytics:${member.organizationId}:${branchId}:${member.userId}`} organizationId={member.organizationId} branchId={branchId} branchName={selectedBranch?.name ?? "Selected branch"} online={online} disabled={busy} revision={historyRevision} />}
               <details className="extra-registers"><summary>All-time totals, cash reconciliation & audit</summary><h2>All-time recorded totals</h2>
               <div className="summary-strip">
                 <div>
@@ -2054,8 +2039,8 @@ export function StoreApp() {
           )}
 
           {view === "inventory" && (
-            <><WorkspaceTabs label="Inventory sections" value={inventoryTab} onChange={setInventoryTab} tabs={[{id:"products",label:"Products"},{id:"expiry",label:"Expiry reminders"},{id:"controls",label:"Stock controls"},...(isOwner?[{id:"prices",label:"Price history"},{id:"setup",label:"Product setup"}]:[])]}/><div hidden={inventoryTab!=="products"}>
-              <InventoryWorkspace products={products} stock={stock} onControls={()=>setInventoryTab("controls")} onExpiry={()=>setInventoryTab("expiry")} onAdd={()=>setInventoryTab("setup")} canManage={isOwner}/></div>
+            <>{inventoryTab!=="products"&&inventoryTabs}<div hidden={inventoryTab!=="products"}>
+              <InventoryWorkspace tabs={inventoryTabs} products={products} stock={stock} onControls={()=>setInventoryTab("controls")} onExpiry={()=>setInventoryTab("expiry")} onAdd={()=>setInventoryTab("setup")} canManage={isOwner}/></div>
               {!practice && member.role !== "cashier" && <div hidden={inventoryTab!=="controls"&&inventoryTab!=="expiry"}><StockControls focus={inventoryTab==="expiry"?"expiry":"all"} key={`${member.organizationId}:${branchId}`} db={db} organizationId={member.organizationId} branchId={branchId} actorId={member.userId} products={products} owner={isOwner} canAssign={isOwner || member.role === "manager"} online={online} disabled={busy} revision={historyRevision} execute={fn => run(fn,true,true)} /></div>}
               {isOwner && (
                 <div className="two-column" hidden={inventoryTab!=="setup"}>
@@ -2147,7 +2132,7 @@ export function StoreApp() {
           )}
 
           {view === "receiving" && (
-            <><WorkspaceTabs label="Purchasing sections" value={purchasingTab} onChange={setPurchasingTab} tabs={[{id:"orders",label:"Purchase orders"},{id:"inspections",label:"Delivery inspections"},{id:"quick",label:"Quick receipt"},{id:"suppliers",label:"Suppliers"},{id:"history",label:"Receiving history"},...(isOwner?[{id:"opening",label:"Opening stock"}]:[])]}/>{practice&&purchasingTab==="orders"&&<section className="panel"><h2>Purchase orders</h2><p>Purchase orders and supplier inspections use signed-in business records. Practice checkout does not create business orders or stock.</p><Button variant="outline" onClick={()=>setPurchasingTab("quick")}>View quick receipt</Button></section>}
+            <><WorkspaceTabs label="Purchasing sections" value={purchasingTab} onChange={setPurchasingTab} tabs={[{id:"orders",label:"Purchase orders"},{id:"inspections",label:"Delivery inspections"},{id:"quick",label:"Quick receipt"},{id:"suppliers",label:"Suppliers"},{id:"history",label:"Receiving history"},...(isOwner?[{id:"opening",label:"Opening stock"}]:[])]}/>{practice&&purchasingTab==="orders"&&<div className="practice-purchasing"><Button className="practice-order-request" disabled title="Sign in to request a business purchase order"><Plus size={20}/>Request purchase order</Button><div className="workspace-stats three"><WorkspaceStat icon={ClipboardCheck} label="Awaiting approval" value="—"/><WorkspaceStat icon={Truck} label="Awaiting delivery" value="—"/><WorkspaceStat icon={Package} label="Supplier claims" value="—"/></div><OrderWorkspace orders={[]} products={products} disabled actions={()=>null} onInspect={()=>{}}/><p className="scope-note">Business purchasing requires signing in. Practice checkout does not create orders or stock.</p></div>}
               {!practice && member.role !== "cashier" && <PurchasingWorkspace pane={purchasingTab} onPaneChange={setPurchasingTab} key={`purchasing:${member.organizationId}:${branchId}`} db={db} organizationId={member.organizationId} branchId={branchId} branchName={selectedBranch?.name ?? "Selected branch"} actorId={member.userId} products={products} suppliers={(cloud.suppliers ?? []).map(s => ({ id: str(s,"id"), name: str(s,"name") }))} role={member.role} online={online} disabled={busy} revision={historyRevision} reversalBlocked={allPendingCount > 0 || syncing || !!lease || cart.items.length > 0} execute={fn => run(fn,true,true)} />}
               <div className="two-column">
                 <section className="panel" hidden={purchasingTab!=="quick"}>
@@ -2668,7 +2653,7 @@ export function StoreApp() {
                           {s.id.slice(0, 8)}
                           <small>Practice sale</small>
                         </td>
-                        <td>{money(s.payload.total)}</td>
+                        <td><strong>{money(s.payload.total)}</strong></td>
                         <td>{money(s.payload.cashReceived)}</td>
                         <td>
                           {money(s.payload.cashReceived - s.payload.total)}
@@ -2820,7 +2805,7 @@ export function StoreApp() {
 
           {view === "sync" && (
             <>
-              <div className="sync-summary">
+              <div className="sync-overview"><div className="sync-summary">
                 <div className="sync-illustration">
                   {online ? <RefreshCw size={32} /> : <CloudOff size={32} />}
                 </div>
@@ -2850,27 +2835,21 @@ export function StoreApp() {
                   <RefreshCw size={16} className={syncing ? "spinning" : ""} />
                   {syncing ? "Synchronizing…" : "Sync now"}
                 </Button>
-              </div>
-              <section className="panel">
-                <div className="workspace-stats three queue-stats"><div className="workspace-stat"><div><span>Branch unconfirmed sales</span><strong>{branchPendingCount}</strong></div></div><div className="workspace-stat"><div><span>Needs attention (visible)</span><strong>{sales.filter(s=>s.status!=="synced"&&s.status!=="pending"&&s.status!=="sending").length}</strong></div></div><div className="workspace-stat"><div><span>Confirmed records loaded</span><strong>{sales.filter(s=>s.status==="synced").length}</strong></div></div></div><h2>Saved transaction queue</h2>{sales.length>0&&!visibleQueue.length&&<div className="notice" role="status"><p>No transactions match these filters. Saved records remain on this PC.</p><Button variant="outline" onClick={()=>{setSyncQuery("");setSyncFilter("all");}}>Clear transaction filters</Button></div>}<div className="queue-filters"><WorkspaceTabs label="Saved transaction filters" value={syncFilter} onChange={setSyncFilter} tabs={[{id:"all",label:"All records"},{id:"pending",label:"Pending"},{id:"attention",label:"Needs attention"},{id:"synced",label:"Synced"}]}/><label className="field"><span className="sr-only">Search transaction</span><input type="search" aria-label="Search transaction" placeholder="Search transaction ID or receipt" value={syncQuery} onChange={e=>setSyncQuery(e.target.value)}/></label></div>
+              </div><div className="workspace-stats three queue-stats"><div className="workspace-stat"><div><span>Waiting to upload</span><strong>{branchPendingCount}</strong></div></div><div className="workspace-stat"><div><span>Needs attention</span><strong>{sales.filter(s=>s.status!=="synced"&&s.status!=="pending"&&s.status!=="sending").length}</strong></div></div><div className="workspace-stat"><div><span>Confirmed loaded</span><strong>{sales.filter(s=>s.status==="synced").length}</strong></div></div></div></div>
+              <section className="panel queue-panel">
+                <h2>Saved transaction queue</h2>{sales.length>0&&!visibleQueue.length&&<div className="notice" role="status"><p>No transactions match these filters. Saved records remain on this PC.</p><Button variant="outline" onClick={()=>{setSyncQuery("");setSyncFilter("all");}}>Clear transaction filters</Button></div>}<div className="queue-filters"><WorkspaceTabs label="Saved transaction filters" value={syncFilter} onChange={setSyncFilter} tabs={[{id:"all",label:"All records"},{id:"pending",label:"Pending"},{id:"attention",label:"Needs attention"},{id:"synced",label:"Synced"}]}/><label className="field"><span className="sr-only">Search transaction</span><input type="search" aria-label="Search transaction" placeholder="Search transaction ID or receipt" value={syncQuery} onChange={e=>setSyncQuery(e.target.value)}/></label></div>
                 {sales.length ? (
                   table(
-                    ["Transaction", "Amount", "Status", "Details", "Recovery"],
+                    ["Transaction", "Saved at", "Amount", "Status", "Details", "Recovery"],
                     visibleQueue.map((s) => (
                       <tr key={s.id}>
                         <td>
-                          {s.receipt ?? s.id.slice(0, 8)}
-                          <small>{when(s.payload.occurredAt)}</small>
+                          <details className="queue-identity"><summary>{s.receipt ?? s.id.slice(0, 8)}</summary><small>Original transaction ID</small><code>{s.id}</code></details>
+                        </td><td>{when(s.payload.occurredAt)}
                         </td>
                         <td>{money(s.payload.total)}</td>
                         <td>
-                          <span
-                            className={`status-tag ${s.status === "synced" ? "good" : s.status === "review_required" ? "warn" : ""}`}
-                          >
-                            {practice
-                              ? "Practice · local"
-                              : s.status.replaceAll("_", " ")}
-                          </span>
+                          <StateBadge kind={practice?"local":s.status==="synced"?"confirmed":s.status==="pending"||s.status==="sending"?"pending":s.status==="authentication_required"?"locked":"warning"}>{practice?"Practice · local":s.status.replaceAll("_"," ")}</StateBadge>
                         </td>
                         <td>
                           {s.error ?? s.flags?.join(", ") ?? "Saved locally"}
@@ -2936,13 +2915,13 @@ export function StoreApp() {
                     )),
                   )
                 ) : (
-                  <Empty
+                  <><Empty
                     icon={RefreshCw}
                     title={branchId ? "No local transactions yet" : "Saved branch is not identified"}
                     body={branchId ? "Every completed checkout remains listed here, including failed uploads." : "Reconnect to identify this account’s downloaded branch. Existing records are retained; this empty view does not mean the PC has no saved sales."}
-                  />
+                  /><RecordPages label="Saved transactions">{[]}</RecordPages></>
                 )}
-                <p className="muted">All unresolved sales and up to {localHistoryLimit} recent saved records are available in pages of 10. Earlier confirmed history remains retained.</p>
+                <details className="queue-scope"><summary>Loaded history scope</summary><p>All unresolved sales and up to {localHistoryLimit} recent saved records are available in pages of 10. Earlier confirmed history remains retained.</p></details>
                 {hasOlderLocal && localHistoryLimit < 10000 && <Button variant="outline" onClick={() => setLocalHistoryLimit(n => Math.min(10000,n + 50))}>Load older saved records</Button>}
               </section>
               {operations.length > 0 && (
@@ -2977,15 +2956,15 @@ export function StoreApp() {
                   ))}</RecordPages>
                 </section>
               )}
-              <div className="recovery-actions">
-                <Field label="Restore a recovery file">
-                  <input
+              <div className="recovery-actions"><section className="panel recovery-restore"><span className="recovery-icon"><FileUp size={30}/></span><div className="recovery-copy"><h2>Restore a recovery file</h2><p>Load a previously exported transaction file.</p></div><Button type="button" variant="outline" disabled={busy||!online} onClick={()=>recoveryFileInput.current?.click()}>Restore file</Button>
+                <label className="sr-only">Select recovery file<input tabIndex={-1} ref={recoveryFileInput}
                     type="file"
                     accept="application/json,.json"
                     disabled={busy || !online}
                     onChange={(e) => {
                       const file = e.target.files?.[0];
                       if (!file) return;
+                      setRecoverySelected(file.name);
                       void run(async () => {
                         if (file.size > 64 * 1024 * 1024) throw new Error("This file exceeds 64 MB. Use the bounded recovery parts from the original PC; keep this file for owner recovery.");
                         const input = JSON.parse(await file.text());
@@ -3008,22 +2987,21 @@ export function StoreApp() {
                       });
                     }}
                   />
-                </Field>
+                </label>{recoverySelected&&<p role="status" className="recovery-selected">Selected file: {recoverySelected}</p>}</section><section className="panel recovery-export"><span className="recovery-icon"><FileDown size={30}/></span><div className="recovery-copy"><h2>Export recovery file</h2><p>Create a file of saved transaction records for safekeeping.</p></div>
                 <Button
                   variant="outline"
                   disabled={busy}
                   onClick={() => void run(exportLocalRecovery, false)}
                 >
-                  <ArrowDownToLine size={16} />
-                  {currentRecoveryArchive ? `Export recovery part ${currentRecoveryArchive.next} of ${currentRecoveryArchive.parts}` : "Export recovery file"}
+                  <span className="sr-only">{currentRecoveryArchive ? `Export recovery part ${currentRecoveryArchive.next} of ${currentRecoveryArchive.parts}` : "Export recovery file"}</span><span aria-hidden="true">Export file</span>
                 </Button>
-                {recoveryDownloadNotice()}
-                <p>
+                {recoveryDownloadNotice()}</section>
+                <details className="recovery-privacy"><summary>Recovery files contain transaction records. Keep them private.</summary><p>
                   Contains transaction records. Keep this file private. Pending
                   sales are retained when you sign out. Operation-only files can
                   be restored while shifts stay closed. Sale files require an
                   authorized cashier shift.
-                </p>
+                </p></details>
               </div>
             </>
           )}
@@ -3069,7 +3047,7 @@ export function StoreApp() {
           )}
 
           {view === "settings" && (
-            <SettingsWorkspace branchName={selectedBranch?.name??"Selected branch"} branchCode={selectedBranch?.code??""} cashierName={lease?.name} shiftOpen={!!lease} cacheReady={!!registration?.active} onClose={()=>setView("close-shift")}><>
+            <SettingsWorkspace staff={(cloud.staff_memberships??[]).map(m=>({id:str(m,"id"),name:str(m,"name"),role:str(m,"role"),active:m.active===true}))} devices={(cloud.devices??[]).map(d=>({id:str(d,"id"),name:str(d,"name"),active:d.active===true}))} branchName={selectedBranch?.name??"Selected branch"} branchCode={selectedBranch?.code??""} cashierName={lease?.name} shiftOpen={!!lease} cacheReady={!!registration?.active} onClose={()=>setView("close-shift")}><>
               <div className="two-column">
                 <section className="panel">
                   <h2>Cashier shift</h2>

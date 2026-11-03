@@ -35,7 +35,7 @@ test("saved lists stay at ten, can page in both directions and clamp after refre
   await pager.getByRole("button", { name: "Next", exact: true }).click();
   await expect(area.locator("tbody tr").first()).toContainText("Receipt 31");
   await area.getByRole("button", { name: "Refresh with four records" }).click();
-  await expect(area.locator("tbody tr")).toHaveCount(4); await expect(area.getByRole("navigation")).toHaveCount(0);
+  await expect(area.locator("tbody tr")).toHaveCount(4); await expect(area.getByRole("navigation")).toHaveCount(1); await expect(area.getByRole("navigation")).toContainText("1–4 of 4 loaded"); await expect(area.getByRole("navigation")).toContainText("Page 1 of 1");
 });
 
 test("blind counts find name, code and batch without revealing expected stock", async ({ page }) => {

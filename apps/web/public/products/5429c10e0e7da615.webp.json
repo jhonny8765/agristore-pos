@@ -1,0 +1,15 @@
+{
+  "prompt": "Pre-existing sourced product reference photograph, not generated. Carbofuran 1kG. Source page: https://agrify.ph/products/carbofuran-1kg. Original image: https://cdn.shopify.com/s/files/1/0218/0130/4128/products/image.jpg?v=1563876424. Retrieved 2026-11-03. Third-party product photography and trademarks; no open-source license asserted.",
+  "origin": [
+    {
+      "imagePath": "/products/5429c10e0e7da615.webp",
+      "sourceTitle": "Carbofuran 1kG",
+      "sourceUrl": "https://agrify.ph/products/carbofuran-1kg",
+      "sourceImage": "https://cdn.shopify.com/s/files/1/0218/0130/4128/products/image.jpg?v=1563876424",
+      "vendor": "ICTC",
+      "match": "product reference",
+      "retrievedOn": "2026-11-03",
+      "rights": "Third-party product photography and trademarks; no open-source license asserted."
+    }
+  ]
+}

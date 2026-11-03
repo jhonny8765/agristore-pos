@@ -1,0 +1,15 @@
+{
+  "prompt": "Pre-existing sourced product reference photograph, not generated. Django F1 Seeds East-West 202. Source page: https://agrify.ph/products/django-f1-seeds-east-west-202. Original image: https://cdn.shopify.com/s/files/1/0218/0130/4128/products/Photo_25-03-2019_5_53_33_PM.png?v=1564559427. Retrieved 2026-11-03. Third-party product photography and trademarks; no open-source license asserted.",
+  "origin": [
+    {
+      "imagePath": "/products/ccf1aef41027d877.webp",
+      "sourceTitle": "Django F1 Seeds East-West 202",
+      "sourceUrl": "https://agrify.ph/products/django-f1-seeds-east-west-202",
+      "sourceImage": "https://cdn.shopify.com/s/files/1/0218/0130/4128/products/Photo_25-03-2019_5_53_33_PM.png?v=1564559427",
+      "vendor": "East-West",
+      "match": "product reference",
+      "retrievedOn": "2026-11-03",
+      "rights": "Third-party product photography and trademarks; no open-source license asserted."
+    }
+  ]
+}

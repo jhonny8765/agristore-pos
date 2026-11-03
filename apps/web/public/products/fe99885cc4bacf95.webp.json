@@ -1,0 +1,15 @@
+{
+  "prompt": "Pre-existing sourced product reference photograph, not generated. Philor ANAA Plant Growth Promoter - Alpha, Naphthalene Acetic Acid - 1 liter. Source page: https://www.pestcontrolphilippines.com/products/philor-anaa-plant-growth-regulator. Original image: https://cdn.shopify.com/s/files/1/0442/0308/1880/files/Anaa.jpg?v=1761715401. Retrieved 2026-11-03. Third-party product photography and trademarks; no open-source license asserted.",
+  "origin": [
+    {
+      "imagePath": "/products/fe99885cc4bacf95.webp",
+      "sourceTitle": "Philor ANAA Plant Growth Promoter - Alpha, Naphthalene Acetic Acid - 1 liter",
+      "sourceUrl": "https://www.pestcontrolphilippines.com/products/philor-anaa-plant-growth-regulator",
+      "sourceImage": "https://cdn.shopify.com/s/files/1/0442/0308/1880/files/Anaa.jpg?v=1761715401",
+      "vendor": "Pestcontrol Philippines",
+      "match": "product reference",
+      "retrievedOn": "2026-11-03",
+      "rights": "Third-party product photography and trademarks; no open-source license asserted."
+    }
+  ]
+}

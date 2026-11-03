@@ -1,0 +1,15 @@
+{
+  "prompt": "Pre-existing sourced product reference photograph, not generated. Grow More 20 – 20 – 20. Source page: https://www.sagrex.com/product/grow-more-20-20-20/. Original image: https://www.sagrex.com/wp-content/uploads/2022/07/20-20-20-B-min-250x300-1.png. Retrieved 2026-11-03. Third-party product photography and trademarks; no open-source license asserted.",
+  "origin": [
+    {
+      "imagePath": "/products/a49ece492dfd18b5.webp",
+      "sourceTitle": "Grow More 20 – 20 – 20",
+      "sourceUrl": "https://www.sagrex.com/product/grow-more-20-20-20/",
+      "sourceImage": "https://www.sagrex.com/wp-content/uploads/2022/07/20-20-20-B-min-250x300-1.png",
+      "vendor": "www.sagrex.com",
+      "match": "product reference",
+      "retrievedOn": "2026-11-03",
+      "rights": "Third-party product photography and trademarks; no open-source license asserted."
+    }
+  ]
+}

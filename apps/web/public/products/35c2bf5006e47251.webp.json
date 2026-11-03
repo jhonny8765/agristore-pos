@@ -1,0 +1,15 @@
+{
+  "prompt": "Pre-existing sourced product reference photograph, not generated. Success Naturalyte - Spinosad - 250ml. Source page: https://www.pestcontrolphilippines.com/products/success-naturalyte. Original image: https://cdn.shopify.com/s/files/1/0442/0308/1880/files/Success.jpg?v=1761712046. Retrieved 2026-11-03. Third-party product photography and trademarks; no open-source license asserted.",
+  "origin": [
+    {
+      "imagePath": "/products/35c2bf5006e47251.webp",
+      "sourceTitle": "Success Naturalyte - Spinosad - 250ml",
+      "sourceUrl": "https://www.pestcontrolphilippines.com/products/success-naturalyte",
+      "sourceImage": "https://cdn.shopify.com/s/files/1/0442/0308/1880/files/Success.jpg?v=1761712046",
+      "vendor": "Pestcontrol Philippines",
+      "match": "product reference",
+      "retrievedOn": "2026-11-03",
+      "rights": "Third-party product photography and trademarks; no open-source license asserted."
+    }
+  ]
+}

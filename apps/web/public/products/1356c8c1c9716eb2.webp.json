@@ -1,0 +1,15 @@
+{
+  "prompt": "Pre-existing sourced product reference photograph, not generated. Basagran  48SL  1Liter. Source page: https://agrify.ph/products/basagran-herbecide-1000ml. Original image: https://cdn.shopify.com/s/files/1/0218/0130/4128/products/Photo_25-03-2019_3_54_51_PM.png?v=1566911026. Retrieved 2026-11-03. Third-party product photography and trademarks; no open-source license asserted.",
+  "origin": [
+    {
+      "imagePath": "/products/1356c8c1c9716eb2.webp",
+      "sourceTitle": "Basagran  48SL  1Liter",
+      "sourceUrl": "https://agrify.ph/products/basagran-herbecide-1000ml",
+      "sourceImage": "https://cdn.shopify.com/s/files/1/0218/0130/4128/products/Photo_25-03-2019_3_54_51_PM.png?v=1566911026",
+      "vendor": "Bayer",
+      "match": "product reference",
+      "retrievedOn": "2026-11-03",
+      "rights": "Third-party product photography and trademarks; no open-source license asserted."
+    }
+  ]
+}

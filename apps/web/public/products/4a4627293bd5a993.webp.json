@@ -1,0 +1,15 @@
+{
+  "prompt": "Pre-existing sourced product reference photograph, not generated. Karate 2.5 EC 1000ml. Source page: https://agrify.ph/products/karate-2-5-ec-250ml. Original image: https://cdn.shopify.com/s/files/1/0218/0130/4128/products/Photo_25-03-2019_5_01_31_PM.png?v=1583402960. Retrieved 2026-11-03. Third-party product photography and trademarks; no open-source license asserted.",
+  "origin": [
+    {
+      "imagePath": "/products/4a4627293bd5a993.webp",
+      "sourceTitle": "Karate 2.5 EC 1000ml",
+      "sourceUrl": "https://agrify.ph/products/karate-2-5-ec-250ml",
+      "sourceImage": "https://cdn.shopify.com/s/files/1/0218/0130/4128/products/Photo_25-03-2019_5_01_31_PM.png?v=1583402960",
+      "vendor": "Waka Waka Direct Supplier",
+      "match": "product reference",
+      "retrievedOn": "2026-11-03",
+      "rights": "Third-party product photography and trademarks; no open-source license asserted."
+    }
+  ]
+}

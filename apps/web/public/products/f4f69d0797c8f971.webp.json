@@ -1,0 +1,15 @@
+{
+  "prompt": "Pre-existing sourced product reference photograph, not generated. Magnum 5EC 1Liter. Source page: https://agrify.ph/products/magnum-5e-1000ml. Original image: https://cdn.shopify.com/s/files/1/0218/0130/4128/products/Photo_25-03-2019_5_09_36_PM.png?v=1554273611. Retrieved 2026-11-03. Third-party product photography and trademarks; no open-source license asserted.",
+  "origin": [
+    {
+      "imagePath": "/products/f4f69d0797c8f971.webp",
+      "sourceTitle": "Magnum 5EC 1Liter",
+      "sourceUrl": "https://agrify.ph/products/magnum-5e-1000ml",
+      "sourceImage": "https://cdn.shopify.com/s/files/1/0218/0130/4128/products/Photo_25-03-2019_5_09_36_PM.png?v=1554273611",
+      "vendor": "Waka Waka Direct Supplier",
+      "match": "product reference",
+      "retrievedOn": "2026-11-03",
+      "rights": "Third-party product photography and trademarks; no open-source license asserted."
+    }
+  ]
+}

@@ -1,0 +1,15 @@
+{
+  "prompt": "Pre-existing sourced product reference photograph, not generated. ZZZZAscend 250ml. Source page: https://farmstation.ph/views/ProductsView. Original image: https://farmstation.ph/ems.farmstation.ph/mymktg/uploads/product/ASCE250.jpg. Retrieved 2026-11-03. Third-party product photography and trademarks; no open-source license asserted.",
+  "origin": [
+    {
+      "imagePath": "/products/867370807fa37892.webp",
+      "sourceTitle": "ZZZZAscend 250ml",
+      "sourceUrl": "https://farmstation.ph/views/ProductsView",
+      "sourceImage": "https://farmstation.ph/ems.farmstation.ph/mymktg/uploads/product/ASCE250.jpg",
+      "vendor": "Farmstation",
+      "match": "matching pack",
+      "retrievedOn": "2026-11-03",
+      "rights": "Third-party product photography and trademarks; no open-source license asserted."
+    }
+  ]
+}

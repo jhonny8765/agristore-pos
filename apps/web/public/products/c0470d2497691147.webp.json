@@ -1,0 +1,15 @@
+{
+  "prompt": "Pre-existing sourced product reference photograph, not generated. Roundup  1Liter. Source page: https://agrify.ph/products/roundup-herbecide-1liter. Original image: https://cdn.shopify.com/s/files/1/0218/0130/4128/products/Photo_04-04-2019_12_41_14_PM.png?v=1554449123. Retrieved 2026-11-03. Third-party product photography and trademarks; no open-source license asserted.",
+  "origin": [
+    {
+      "imagePath": "/products/c0470d2497691147.webp",
+      "sourceTitle": "Roundup  1Liter",
+      "sourceUrl": "https://agrify.ph/products/roundup-herbecide-1liter",
+      "sourceImage": "https://cdn.shopify.com/s/files/1/0218/0130/4128/products/Photo_04-04-2019_12_41_14_PM.png?v=1554449123",
+      "vendor": "Monsanto",
+      "match": "product reference",
+      "retrievedOn": "2026-11-03",
+      "rights": "Third-party product photography and trademarks; no open-source license asserted."
+    }
+  ]
+}
