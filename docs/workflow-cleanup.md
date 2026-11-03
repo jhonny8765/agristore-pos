@@ -12,6 +12,10 @@ Purchasing groups Orders & deliveries, Supplier bills, and Suppliers. Receiving 
 
 Inventory → Needs review filters Unit needed, Price missing, Cost unconfirmed, and Stock not posted. Each filter counts matching products; All reviews counts distinct products across the flags. Find any product also supports ordinary price/cost updates.
 
+Owner questions extend this workspace with the November 3 product review list. The owner can search product names/codes, filter the saved question categories, read the original uncertainty beside current values, save an answer with explicit confirmation, and advance through the pending products. Unresolved unit, price, cost and source-stock flags block completion; the existing guarded correction forms remain separate. The Owner reviewed filter retains completed answers. A change to the product name, unit, price version, pending flags or source-stock evidence reopens its review while retaining the previous answer and audit history. Current on-hand movements alone do not reopen a reviewed setup.
+
+Migration `20261103100000` adds only nullable question metadata and authorized review commands. `scripts/queue-owner-review.mjs` prepares a separate guarded transaction from the previously delivered 743-product Markdown list and its source snapshot. It validates identities and the original price versions, refuses unrelated existing questions, and adds only missing question metadata. Repeating the same import preserves owner answers. No financial balances or stock quantities are imported by this operation.
+
 Source stock is structured product metadata scoped to its original branch. It contains the file, page, source date, quantity, checksum, and posting state. Metadata alone never changes usable stock. An unresolved starting balance is distinguished from confirmed zero stock, and actual newly received usable stock remains visible independently.
 
 1. Confirm a missing selling unit, stock measurement and exact conversion. Enter a positive selling price. Actual cost is optional; blank means unconfirmed and retains the previous numeric cost and pending flag.

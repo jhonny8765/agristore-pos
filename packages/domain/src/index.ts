@@ -98,6 +98,7 @@ export interface Product {
   pricePending?: boolean;
   setupPending?: boolean;
   costPending?: boolean;
+  ownerReview?: {questions:string[];categories:string[];source:string;queuedAt:string;revision:string;complete:boolean;reviewedAt?:string;reviewedBy?:string;note?:string} | null;
   sourceStock?: {branchId:string;quantity:string;file:string;page:number;asOf:string;sha256:string;pending:boolean;postedAt?:string|null;postedRequestId?:string;reviewedTarget?:string} | null;
   imagePath?: string | null;
   imageSourceUrl?: string | null;

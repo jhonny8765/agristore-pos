@@ -3,6 +3,8 @@
 .reference-ui .review-filters{display:flex;gap:10px;flex-wrap:wrap;margin-bottom:12px}.reference-ui .review-filters .button span{font-variant-numeric:tabular-nums;margin-left:6px}
 .reference-ui .review-columns{display:grid;grid-template-columns:minmax(300px,.9fr) minmax(340px,1.1fr);gap:22px;align-items:start}
 .reference-ui .review-columns>*{min-width:0}.reference-ui .review-register td{overflow-wrap:anywhere}.reference-ui .review-detail h3{font-size:24px;margin:16px 0 6px}
+.reference-ui .review-register table{table-layout:fixed;width:100%;min-width:0}.reference-ui .review-register th,.reference-ui .review-register td{white-space:normal;overflow-wrap:anywhere}.reference-ui .review-register .record-link{white-space:normal;text-align:start}
+.reference-ui .owner-product-questions{margin-block:24px;padding-block:20px;border-block:1px solid var(--line)}.reference-ui .owner-product-questions h4{font-size:20px;margin:0 0 12px}.reference-ui .owner-product-questions li{margin-block:10px;overflow-wrap:anywhere}.reference-ui .owner-product-questions textarea{width:100%;resize:vertical;font:inherit;min-height:110px}.reference-ui .review-detail>.button{margin-block:10px;margin-inline-end:10px}
 .reference-ui .review-detail form{padding-top:22px;margin-top:22px;border-top:1px solid var(--line)}.reference-ui .review-detail fieldset{min-width:0;border:0;padding:0;margin:0}
 .reference-ui .review-detail legend{font-size:20px;font-weight:750;margin-bottom:18px}.reference-ui .review-detail .field{margin-bottom:16px}
 .reference-ui .review-detail .checkbox{display:flex;align-items:flex-start;gap:10px;margin:16px 0}.reference-ui .review-detail details{margin-top:20px;overflow-wrap:anywhere}
