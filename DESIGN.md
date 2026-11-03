@@ -290,6 +290,8 @@ Extend the same forest/paper register and detail language. Invoices, Payments an
 
 Keep Outstanding, Overdue, Original credit sales and Net cash collected distinct, with the account scope and Asia/Manila snapshot alongside them. Aging labels describe days past the due date separately from the payment term. Loaded-invoice counts and export/statement wording must preserve their actual scope.
 
+Historical opening records keep **Opening unpaid amount** and imported-balance context separate from original credit sales. Unknown dates remain **Unconfirmed**, with a separate **Due date unconfirmed** aging bucket; missing original terms remain **Term not supplied**. Disabled clients show **Not enabled / Terms not approved**, without suggesting an approved term. Owner date confirmation stays in an inline **Confirm historical due date** disclosure with the actual agreement date, evidence reference, reason and acknowledgement. Imported records without original goods expose no goods-return command.
+
 Credit records, payment acknowledgements and statements retain the linked authorized manual booklet number and explicit internal-document wording. Each payment has its own print command and permanent reference; payment printing isolates that event. Statement printing removes interactive chrome and renders all loaded invoices and events. Preserve long-reference wrapping in screen and print views. The local extension's current operating and release limits remain in [docs/customer-credit.md](docs/customer-credit.md).
 
 ## Do's and Don'ts

@@ -39,7 +39,17 @@ The linked credit record contains the original invoice ID and payment references
 
 Under **Owner: return goods / credit this invoice**, check original remaining quantities and the physical return. Preview splits debt reduction from any cash refund. Inspected saleable goods re-enter saleable stock; damaged or uninspected goods remain held. A credit against an unpaid amount does not invent cash paid back. The previous cash-only refund commands refuse credit invoices.
 
-Credit-note correction after subsequent activity, write-offs, limit/overdue overrides, due-date extensions, automatic fees, payment-provider integration and opening-debt import are not exposed in this first version. Preserve the originals for documented owner/accountant reconciliation; do not work around those limits with fake sales or stock adjustments.
+Credit-note correction after subsequent activity, write-offs, limit/overdue overrides, extensions of new-sale due dates, automatic fees and payment-provider integration are not exposed in this first version. Preserve the originals for documented owner/accountant reconciliation; do not work around those limits with fake sales or stock adjustments.
+
+## Opening unpaid balances
+
+The supplied CREDIT workbook's Amount was confirmed by the user as the **current unpaid balance**. The maintenance importer records customer rows as opening receivable documents, never product sales, past cash payments or stock movements. It preserves the original workbook hash, source rows, references, issue dates and notes. Branch-account rows remain in the private source batch and are excluded from customer debts. Zero-balance rows preserve the client without creating an invoice debt.
+
+Imported clients start with new credit disabled and a zero limit. The displayed term is **Terms not approved**. Original invoice terms and due dates remain unknown; their balances appear under **Due date unconfirmed**, not in a guessed overdue period. The owner can select an opening invoice, expand **Confirm historical due date**, and record the actual agreed date with an evidence reference and reason. Each confirmation retains its history. An unpaid opening invoice with an unknown due date blocks further credit purchases for that client even after a policy is approved.
+
+Actual new collections may be applied to opening invoices through the employee's own online shift and enter today's drawer exactly once. Imported opening balances never enter that drawer. Goods-return controls are unavailable for opening documents because the workbook supplied neither original goods nor earlier payment history. Preserve those originals for separate reconciliation.
+
+`scripts/prepare-credit-import.mjs` prepares private reviewable SQL from a read-only workbook extraction. The importer is inaccessible through public/authenticated API roles. Repeating the same original source is idempotent; a changed workbook cannot silently append or double the opening debt. Source files, customer rows and generated SQL must stay outside version control and public deployment assets.
 
 ## Reports and statements
 
@@ -55,7 +65,7 @@ Credit-note correction after subsequent activity, write-offs, limit/overdue over
 1. Approved customer list with names, contacts, billing details, credit limits and allowed terms.
 2. The actual booklet series/number format and a sample invoice layout, with confirmation of the accountant's VAT treatment and how existing selling prices are represented. Do not send account passwords or credentials.
 3. Which individual staff accounts may collect payments and who will perform owner approvals.
-4. Existing unpaid invoices, original amounts, payments already received, due dates and reconciled balances, if old debts need a separately designed opening import. Do not enter old debts as new product sales.
+4. Confirmed original due dates and supporting agreements for imported unpaid invoices. Earlier payment history and original goods remain separate records unless independently supplied and reconciled. Do not enter old debts as new product sales.
 5. The owner's documented way to capture acceptance of payment terms and goods handover.
 
 ## Verification and release gate

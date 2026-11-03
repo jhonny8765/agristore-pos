@@ -175,8 +175,7 @@ const restoredRejectedMistake={...ctx(140),issueId:id(152),productId:id(95),batc
 command('record_stock_issue',restoredPendingMistake);command('record_stock_issue',restoredRejectedMistake);
 const restoredRejection={...ctx(140),issueId:id(152),decisionId:id(153),reason:'TEST original owner checked this was a mistaken request'};command('reject_stock_issue',restoredRejection);
 // Compare retained content, not just row counts or one projected balance.
-command('register_device',{...ctx(),deviceId:id(202),name:'TEST opening collection drawer'});
-const openingShift=command('open_shift',{...ctx(),deviceId:id(202),openingCash:0});
+const openingShift=command('open_shift',{...ctx(),deviceId:id(8),openingCash:0});
 const openingPayment={...ctx(),requestId:id(203),saleId:openingInvoice,shiftId:openingShift.shiftId,amount:10000,reference:'TEST opening collection',reason:'TEST exact counted cash'};
 command('collect_credit_payment',openingPayment);
 command('close_shift',{...ctx(),shiftId:openingShift.shiftId,countedCash:10000});
