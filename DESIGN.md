@@ -160,6 +160,12 @@ components:
 
 # Design System: Better Yield POS (AgriStore)
 
+## November 4: simultaneous cashier PCs
+
+The existing Cashier PCs settings panel now contains Checkout mode, its current single/multiple-PC status and the existing owner reason/confirmation form. Keep this control inside the registered-PC section so settings-tab routing exposes it correctly. Its enabled state explains online confirmation and separate drawers. Checkout uses the incumbent notice, payment, receipt and Sync center components; an uncertain original cash request locks edits and payment-type switching, identifies its actual amount/tender and offers the original retry. Offline multiple-PC checkout is visibly disabled. Preserve the pinned forest/paper layout, typography and existing 58 mm receipt. No new raster assets are introduced.
+
+The narrow visual review covered 1440, 390 and 320 px synthetic settings/receipt captures, wrapping and overflow checks, with the real transaction flow exercised separately in disposable browser profiles. Physical printers and new store PCs still need acceptance checks.
+
 ## Overview
 
 **Creative North Star: "The Supplied Better Yield POS Screens"**

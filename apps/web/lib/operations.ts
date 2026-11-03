@@ -46,6 +46,10 @@ export async function onlineOperation(
         );
       return previous;
     }
+    if(action==='record_online_sale'||action==='record_credit_sale'){
+      const other=action==='record_online_sale'?'record_credit_sale':'record_online_sale';
+      if(await setting(db,`operation:${other}:${data.organizationId}:${data.branchId}`))throw new Error('Confirm the original cash or credit sale in Sync center before starting another checkout.');
+    }
     if (action === "close_shift") {
       const lease = await setting<Lease>(db, "lease");
       if (!lease || lease.organizationId !== data.organizationId || lease.branchId !== data.branchId ||

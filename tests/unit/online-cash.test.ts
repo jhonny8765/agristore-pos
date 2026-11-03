@@ -3,7 +3,7 @@ import {afterEach,expect,it,vi} from 'vitest';
 vi.mock('../../apps/web/lib/api',()=>({command:vi.fn()}));
 import {command} from '../../apps/web/lib/api';
 import {confirmOnlineCash} from '../../apps/web/lib/online-cash';
-import {pendingOperations,retryOperation} from '../../apps/web/lib/operations';
+import {pendingOperations,retryOperation,onlineOperation} from '../../apps/web/lib/operations';
 import {saveCheckout,setSetting,exportRecovery,importRecovery,type PosDatabase} from '@agristore/offline';
 import {lease,sale,setupDB} from './fixtures';
 const opened:PosDatabase[]=[];
@@ -27,4 +27,9 @@ it('preserves the request when a malformed response cannot prove a committed rec
 it('leaves no receipt after a confirmed stock rollback and permits a corrected new request',async()=>{
  const d=await db(),payload=sale();vi.mocked(command).mockRejectedValue({code:'P0001',message:'Not enough confirmed saleable stock'});await expect(confirmOnlineCash(d,lease(),payload)).rejects.toMatchObject({code:'P0001'});expect(await d.sales.count()).toBe(0);expect(await pendingOperations(d)).toEqual([]);
  vi.mocked(command).mockResolvedValue({status:'created',transactionId:payload.transactionId,receipt:'TEST-CORRECTED'});expect((await confirmOnlineCash(d,lease(),payload)).status).toBe('synced');
+});
+it('serializes competing cash and credit requests across windows before either response',async()=>{
+ const d=await db(),payload=sale();vi.mocked(command).mockRejectedValue(new Error('TEST interrupted response'));
+ const results=await Promise.allSettled([confirmOnlineCash(d,lease(),payload),onlineOperation(d,payload.cashierId,'record_credit_sale',{organizationId:payload.organizationId,branchId:payload.branchId,requestId:crypto.randomUUID()},'requestId')]);
+ expect(results.every(r=>r.status==='rejected')).toBe(true);expect(command).toHaveBeenCalledOnce();expect(await pendingOperations(d)).toHaveLength(1);expect(await d.sales.count()).toBe(0);
 });
