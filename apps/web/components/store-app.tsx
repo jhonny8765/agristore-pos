@@ -5,6 +5,7 @@ import {CreditCheckout} from './credit-checkout';
 import { SearchableSelect } from "./search-select";
 import { RecordTable, RecordPages } from "./record-pages";
 import { HeldSaleControl } from "./held-sale";
+import {confirmOnlineCash,onlineCashKey} from '../lib/online-cash';
 import { prepareHeldCheckout,removeHeldSale,heldSaleKey,type HeldSale } from "../lib/held-sale";
 import { DashboardAttention } from "./dashboard-attention";
 import { OverviewAccounts } from "./overview-accounts";
@@ -19,6 +20,7 @@ import { SaleReceiptPrint } from "./sale-receipt-print";
 import { SupplierAccounts } from "./supplier-accounts";
 import { InventoryWorkspace } from "./inventory-workspace";
 import { SettingsWorkspace } from "./settings-workspace";
+import {CashierPcMode} from './cashier-pc-mode';
 import { WorkspaceTabs } from "./workspace-ui";
 import type { ReceiptView } from "../lib/receipt-view";
 import { MeasuredQuantity } from "./measured-quantity";
@@ -344,6 +346,8 @@ export function StoreApp() {
     setMessage("");
   }, []);
   const selectedBranch = branchList.find((b) => b.id === branchId);
+  const onlineCashOnly=!practice&&(selectedBranch?.multiPc===true||lease?.onlineOnly===true);
+  const onlineCashPending=operations.find(op=>op.action==='record_online_sale');
   const branchLocked = branchList.some(b => b.managementLocked);
   const isOwner = member?.role === "owner";
   const recoveryScopeKey = member && branchId
@@ -852,13 +856,15 @@ export function StoreApp() {
     try {
       if(cart.credit.enabled||cart.creditAttempt)throw new Error('Confirm the original credit sale before using cash checkout.');
       requireLease(lease);
-      if (!cart.items.length)
+      if(onlineCashOnly&&!navigator.onLine)throw new Error('Multiple-PC checkout needs internet confirmation. Keep this basket and reconnect before taking payment or handing over goods.');
+      const original=onlineCashOnly?await setting<PendingOperation>(db,onlineCashKey(lease.organizationId,lease.branchId)):undefined;
+      if (!original&&!cart.items.length)
         throw new Error("Add a product to the receipt first");
-      if (hasCartErrors(useCart.getState()))
+      if (!original&&hasCartErrors(useCart.getState()))
         throw new Error(
           "Check quantities, discounts and confirmed weighed amounts before checkout.",
         );
-      const payload: Sale = {
+      const payload: Sale = original?original.data as unknown as Sale:{
         version: 1,
         transactionId: cart.attempt(),
         organizationId: lease.organizationId,
@@ -873,7 +879,7 @@ export function StoreApp() {
       };
       const heldId=useCart.getState().heldDraftId;
       if(heldId){const draft=useCart.getState();await prepareHeldCheckout(db,lease,heldId,payload,{lineIds:[...draft.lineIds],drafts:structuredClone(draft.drafts),quantityErrors:{...draft.quantityErrors},cash});}
-      const saved = await saveCheckout(db, payload);
+      const saved = onlineCashOnly?await confirmOnlineCash(db,lease,payload):await saveCheckout(db, payload);
       if(heldId){try{await removeHeldSale(db,lease,heldId);setHeldDraftCount(0);}catch{setError("Sale saved. A held-draft copy remains on this PC; it cannot be charged again. Remove it after checking the original receipt.");}}
       setCheckoutDone(saved);
       cart.clear();
@@ -882,7 +888,7 @@ export function StoreApp() {
       notify(
         practice
           ? "Practice sale saved on this PC."
-          : "Cash sale saved on this PC.",
+          : onlineCashOnly?"Cash sale confirmed online. Receipt saved on this PC.":"Cash sale saved on this PC.",
       );
       void sync();
     } catch (e) {
@@ -891,6 +897,7 @@ export function StoreApp() {
       committing.current = false;
       setBusy(false);
       setSavingSale(false);
+      await refreshLocal();
     }
   }
   function addProduct(
@@ -900,7 +907,7 @@ export function StoreApp() {
     entry: SaleEntry = "unit",
   ) {
     if (updateLock.current || committing.current || !lease || isStock) return;
-    if(useCart.getState().creditAttempt){fail(new Error('Confirm the original credit sale before changing this basket.'));return;}
+    if(useCart.getState().creditAttempt||onlineCashPending){fail(new Error('Confirm the original sale in Sync center before changing this basket.'));return;}
     if(p.pricePending||p.setupPending||!p.active||!p.units.length){fail(new Error('The owner must confirm this product’s price and selling unit in Inventory.'));return;}
     try {
       const batch = preferredBatch(p,stock,new Date().toLocaleDateString("en-CA", { timeZone: "Asia/Manila" }));
@@ -1662,7 +1669,7 @@ export function StoreApp() {
                         product={products.find((p) => p.id === item.productId)!}
                         index={i}
                         canDiscount={practice||member.role==='owner'||member.role==='cashier'}
-                        disabled={busy || installingUpdate || !!cart.creditAttempt}
+                        disabled={busy || installingUpdate || !!cart.creditAttempt || !!onlineCashPending}
                       />
                     ))}
                   </div>
@@ -1673,7 +1680,9 @@ export function StoreApp() {
                     <p>Add a product to set its quantity and peso discount.</p>
                   </div>
                 )}
-                {!(checkoutDone&&!cart.items.length)&&!practice&&<div className="credit-payment-choice" role="group" aria-label="Payment type"><Button type="button" variant={!cart.credit.enabled?'default':'outline'} disabled={busy||!!cart.creditAttempt} onClick={()=>useCart.setState({credit:{...cart.credit,enabled:false}})}>Cash</Button><Button type="button" variant={cart.credit.enabled?'default':'outline'} disabled={busy||!!cart.creditAttempt} onClick={()=>useCart.setState({credit:{...cart.credit,enabled:true}})}>Credit · 30/60/90 days</Button></div>}
+                {onlineCashOnly&&<p className="notice" role="status">Multiple cashier PCs · Every sale requires online confirmation. Each PC keeps its own drawer.</p>}
+                {onlineCashPending&&<p className="notice" role="status">Original cash sale awaiting confirmation · {money(Number(onlineCashPending.data.total))} · Cash tendered {money(Number(onlineCashPending.data.cashReceived))}. Retry this original sale or use Sync center. Do not collect payment again.</p>}
+                {!(checkoutDone&&!cart.items.length)&&!practice&&<div className="credit-payment-choice" role="group" aria-label="Payment type"><Button type="button" variant={!cart.credit.enabled?'default':'outline'} disabled={busy||!!cart.creditAttempt||!!onlineCashPending} onClick={()=>useCart.setState({credit:{...cart.credit,enabled:false}})}>Cash</Button><Button type="button" variant={cart.credit.enabled?'default':'outline'} disabled={busy||!!cart.creditAttempt||!!onlineCashPending} onClick={()=>useCart.setState({credit:{...cart.credit,enabled:true}})}>Credit · 30/60/90 days</Button></div>}
                 {!(checkoutDone&&!cart.items.length)&&(cart.credit.enabled&&!practice?<CreditCheckout key={`${member.organizationId}:${branchId}:${member.userId}`} db={db} organizationId={member.organizationId} branchId={branchId} lease={lease} online={online} disabled={busy||installingUpdate||isStock} onWorking={working=>{committing.current=working;setBusy(working);}} onSaved={async()=>{const heldId=useCart.getState().heldDraftId;if(heldId&&lease){try{await removeHeldSale(db,lease,heldId);setHeldDraftCount(0);}catch{fail(new Error('Credit sale confirmed. A held copy remains; retry its original request to confirm, then remove it.'));}}cart.clear();setCash('');setCheckoutDone(undefined);setHistoryRevision(n=>n+1);notify('Credit sale confirmed. The original booklet invoice is linked. Open Customers & credit to print the credit record.');await sync();await refreshLocal();}}/>:<form className="payment-form" onSubmit={finishSale}>
                   <div className="subtotal">
                     <span>Subtotal</span>
@@ -1694,7 +1703,8 @@ export function StoreApp() {
                       value={cash}
                       onChange={(e) => setCash(e.target.value)}
                       placeholder="0.00"
-                      required
+                      required={!onlineCashPending}
+                      disabled={!!onlineCashPending||busy}
                     />
                   </Field>
                   <div className="cash-shortcuts">
@@ -1703,6 +1713,7 @@ export function StoreApp() {
                         <button
                           type="button"
                           key={v}
+                          disabled={!!onlineCashPending||busy}
                           onClick={() => setCash(moneyInput(v))}
                         >
                           {i === 0 ? "Exact" : money(v)}
@@ -1725,23 +1736,24 @@ export function StoreApp() {
                       busy ||
                       installingUpdate ||
                       !lease ||
-                      !cart.items.length ||
-                      hasCartErrors(cart) ||
+                      (!onlineCashPending&&!cart.items.length) ||
+                      (!onlineCashPending&&hasCartErrors(cart)) ||
+                      (onlineCashOnly&&!online) ||
                       isStock
                     }
                     className="complete-sale"
                   >
-                    {savingSale ? "Saving sale…" : "Complete cash sale"}
+                    {savingSale ? "Saving sale…" : onlineCashPending?"Confirm original cash sale":"Complete cash sale"}
                     <ArrowRight size={18} />
                   </Button>
                   <span className="payment-note">
                     <ShieldCheck size={13} />
                     {practice
                       ? "Practice sales never upload"
-                      : "Saved on this PC before checkout completes"}
+                      : onlineCashOnly?"Wait for online confirmation before handing over goods":"Saved on this PC before checkout completes"}
                   </span>
                 </form>)}
-                {(!(checkoutDone&&!cart.items.length)||heldDraftCount>0)&&lease&&<HeldSaleControl onWorking={working=>{committing.current=working;setBusy(working);}} db={db} lease={lease} cash={cash} onCash={setCash} disabled={busy||savingSale||installingUpdate||isStock} revision={checkoutDone?.id??String(historyRevision)} onChange={()=>{setCheckoutDone(undefined);void setting<HeldSale>(db,heldSaleKey(lease)).then(value=>setHeldDraftCount(value?1:0)).catch(()=>setError("Could not check the held draft. Keep site data and retry."));}}/>}
+                {(!(checkoutDone&&!cart.items.length)||heldDraftCount>0)&&lease&&<HeldSaleControl onWorking={working=>{committing.current=working;setBusy(working);}} db={db} lease={lease} cash={cash} onCash={setCash} disabled={busy||savingSale||installingUpdate||isStock||!!onlineCashPending} revision={checkoutDone?.id??String(historyRevision)} onChange={()=>{setCheckoutDone(undefined);void setting<HeldSale>(db,heldSaleKey(lease)).then(value=>setHeldDraftCount(value?1:0)).catch(()=>setError("Could not check the held draft. Keep site data and retry."));}}/>}
               </aside>
               <div className="mobile-basket">
                 <div>
@@ -2803,6 +2815,11 @@ export function StoreApp() {
                             if (op.action === "close_shift") {
                               setLease(await setting<Lease>(db, "lease"));
                               notify(`Original shift closing confirmed. Expected cash ${money((((result.exactTotals??{}) as Row).expected_cash??result.expected_cash) as number|string)}; counted ${money((((result.exactTotals??{}) as Row).counted_cash??result.counted_cash) as number|string)}.`);
+                            } else if(op.action==='record_online_sale'){
+                              const saved=await db.sales.get(String(op.data.transactionId));
+                              if(!saved)throw new Error('Check the original receipt in Sales & receipts before starting another sale.');
+                              if(!useCart.getState().items.length||useCart.getState().attemptId===saved.id){cart.clear();setCash('');setCheckoutDone(saved);}
+                              notify('Original cash sale confirmed. Do not collect its payment again. Open Checkout to print the saved receipt.');
                             } else notify("Original operation confirmed.");
                           })
                         }
@@ -3183,6 +3200,7 @@ export function StoreApp() {
                       </Button>
                     </form>
                   </section>
+                  {isOwner&&<CashierPcMode enabled={selectedBranch?.multiPc===true} disabled={!online||busy||practice||!!lease||branchPendingCount>0||branchOperationCount>0||cart.items.length>0} onEnable={reason=>run(async()=>{await onlineOperation(db,member.userId,'configure_cashier_pcs',{...context(),enabled:true,reason});notify('Multiple cashier PCs enabled. Each sale now needs online confirmation.');},true,true)}/>}
                   <section className="panel">
                     <h2>Registered cashier PCs</h2>
                     {table(

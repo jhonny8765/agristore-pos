@@ -1,4 +1,4 @@
-import { stableJSON, type Lease } from "@agristore/domain";
+import { stableJSON, saleSchema, type Lease } from "@agristore/domain";
 import { PosDatabase, setting, setSetting, unresolvedStates } from "@agristore/offline";
 import { command } from "./api";
 import { isDatabaseRejection } from "./command-error";
@@ -71,14 +71,23 @@ async function settleOperation(
   pending: PendingOperation,
   error?: string,
   confirmed = false,
+  confirmedReceipt?: string,
 ) {
-  await db.transaction("rw", db.settings, async () => {
+  await db.transaction("rw", [db.settings,db.sales], async () => {
     const current = await setting<PendingOperation>(db, pending.key);
     // A different window may have confirmed this request and started another.
     // A late response must never replace, erase or resurrect either request.
     if (!current || current.actorId !== pending.actorId ||
       current.action !== pending.action || stableJSON(current.data) !== stableJSON(pending.data)) return;
     if (error === undefined) {
+      if(confirmed&&pending.action==='record_online_sale'){
+        const payload=saleSchema.parse(pending.data);
+        const existing=await db.sales.get(payload.transactionId);
+        if(existing&&existing.fingerprint!==stableJSON(payload))throw new Error('The saved sale reference contains different details. Preserve the original records.');
+        if(!confirmedReceipt)throw new Error('The server receipt is missing. Keep the original request for verification.');
+        await db.sales.put({id:payload.transactionId,payload,fingerprint:stableJSON(payload),status:'synced',attempts:existing?.attempts??1,nextAttempt:0,updatedAt:Date.now(),receipt:confirmedReceipt});
+        await setSetting(db,`credit-stock-refresh:${payload.organizationId}:${payload.branchId}`,{previousRequestId:await setting(db,'snapshotRequestId')??null});
+      }
       if(confirmed&&pending.action==='record_credit_sale'){
         await setSetting(db,`credit-stock-refresh:${pending.data.organizationId}:${pending.data.branchId}`,{previousRequestId:await setting(db,'snapshotRequestId')??null});
       }
@@ -107,7 +116,8 @@ export async function retryOperation(
     if (pending.action === "close_shift")
       await db.transaction("r", [db.sales, db.settings], () => requireClosureReady(db, pending.data, pending.key));
     const result = await command(pending.action, pending.data);
-    await settleOperation(db, pending, undefined, true);
+    if(pending.action==='record_online_sale'&&(!['created','duplicate'].includes(String(result.status))||result.transactionId!==pending.data.transactionId||typeof result.receipt!=='string'))throw new Error('The sale response could not be verified. Keep the original request in Sync center.');
+    await settleOperation(db, pending, undefined, true,typeof result.receipt==='string'?result.receipt:undefined);
     return result;
   } catch (e) {
     // A database rejection is an authoritative rollback. An interrupted response is ambiguous and retained.

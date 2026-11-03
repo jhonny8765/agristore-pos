@@ -1,0 +1,5 @@
+"use client";
+import {ApprovalForm} from './approval-form';
+export function CashierPcMode({enabled,disabled,onEnable}:{enabled:boolean;disabled:boolean;onEnable:(reason:string)=>Promise<Error|undefined>}){
+ return <section className="panel" aria-label="Cashier PC mode"><h2>Cashier PC mode</h2><p><strong>{enabled?'Multiple PCs · Online checkout':'One cashier PC · Offline cash available'}</strong></p><p>{enabled?'Each PC has its own shift and counted drawer. Every sale waits for server confirmation of shared stock. Stop checkout if the connection fails; retry the original request after reconnecting.':'Enable multiple PCs only after every shift is closed and every PC is synchronized. All new cash sales will then require internet confirmation.'}</p>{!enabled&&<ApprovalForm action="Enable multiple cashier PCs" label="Reason for multiple PCs" description="Confirm all branch PCs are synchronized and every shift is closed. The owner or manager registers each PC; each drawer must be counted separately." confirmLabel="Enable online checkout on multiple PCs" disabled={disabled} onConfirm={onEnable}/>}</section>;
+}

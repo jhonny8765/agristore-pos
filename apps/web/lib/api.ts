@@ -41,7 +41,7 @@ export async function command<T = Record<string, unknown>>(
     );
   const { data: result, error, status } = await supabase.rpc("agri_command", {
     action,
-    data,
+    data:action==='open_shift'||action==='renew_shift'?{...data,pcProtocol:1}:data,
   });
   if (error)
     throw commandError(error,status);
@@ -75,7 +75,7 @@ export async function memberships(): Promise<Membership[]> {
 export async function branches(org: string): Promise<Branch[]> {
   const { data, error } = await supabase
     .from("branches")
-    .select("id,name,code,managementLocked:management_locked")
+    .select("id,name,code,managementLocked:management_locked,multiPc:multi_pc")
     .eq("organization_id", org)
     .eq("active", true)
     .order("code");

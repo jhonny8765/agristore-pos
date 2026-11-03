@@ -15,6 +15,8 @@ Cashiers at agricultural supply stores in the Philippines; branch managers, stoc
 Replace handwritten records with cash checkout that survives brief network outages and an auditable stock movement journal across all branches.
 
 ## Operating Context
+November 4 decision: the user requires several simultaneous cashier PCs. An owner-enabled branch mode supports multiple registered PCs with a separate shift/drawer per PC and server-confirmed cash/credit checkout. Cash checkout pauses offline in that mode; durable original requests and confirmed receipts survive interrupted responses. The old single-PC offline policy below remains available only for branches that have not enabled multiple-PC mode. See docs/multiple-cashier-pcs.md.
+
 One Windows cashier PC per branch. PHP currency, Asia/Manila business time. Online login and shift opening; the same cashier may resume offline for up to 12 hours. Opening stock is imported and verified before live use.
 
 ## Capabilities and Constraints

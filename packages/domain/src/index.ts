@@ -109,6 +109,7 @@ export interface Branch {
   name: string;
   code: string;
   managementLocked?: boolean;
+  multiPc?: boolean;
 }
 export interface Membership {
   organizationId: string;
@@ -129,6 +130,7 @@ export interface Lease {
   name: string;
   role: Role;
   practice?: boolean;
+  onlineOnly?: boolean;
 }
 export interface Stock {
   key: string;

@@ -94,6 +94,7 @@ export async function saveCheckout(
       if(retired?.sales.some(s=>s.id===sale.transactionId))throw new Error('This test checkout was archived. Start a new sale.');
       const lease = await setting<Lease>(db, "lease");
       requireLease(lease, now);
+      if(lease.onlineOnly&&!lease.practice)throw new Error('Multiple-PC checkout requires online confirmation. Keep this basket and reconnect.');
       if(sale.items.some(i=>(i.discountAmount??0)>0||(i.discountBps??0)>0)&&!['owner','cashier'].includes(lease.role))throw new Error('Only the owner or cashier may apply a product discount.');
       if(await setting(db,`operation:record_credit_sale:${sale.organizationId}:${sale.branchId}`)||await setting(db,`credit-stock-refresh:${sale.organizationId}:${sale.branchId}`))
         throw new Error('Confirm the original credit sale in Sync center and refresh stock online before another cash sale. Keep this browser profile and basket.');
@@ -447,6 +448,8 @@ export async function readLocalSales(db: PosDatabase, scope: RecoveryScope, limi
 }
 
 export const recoveryOperationIds: Record<string, string> = {
+  record_online_sale: 'transactionId',
+  configure_cashier_pcs: 'branchId',
   review_import_setup: 'requestId',
   review_product_price: 'requestId',
   confirm_import_stock: 'requestId',
@@ -474,7 +477,7 @@ export const recoveryOperationIds: Record<string, string> = {
   inspect_delivery: "receiptId", record_delivery_claim: "claimEventId",
   reverse_delivery: "reversalId",
 };
-const referenceOperations = new Set(["approve_count", "cancel_blind_count", "close_shift"]);
+const referenceOperations = new Set(["approve_count", "cancel_blind_count", "close_shift", "configure_cashier_pcs"]);
 export type RecoveryActor = Pick<Lease, "organizationId" | "branchId" | "cashierId" | "role">;
 const RECOVERY_PART_SIZE = 1000;
 interface RecoveryArchive {
@@ -639,6 +642,7 @@ export async function importRecovery(db: PosDatabase, input: unknown, confirmedI
       throw new Error('Only the owner can restore supplier account requests');
     if(['review_import_setup','review_product_price','confirm_import_stock'].includes(op.action)&&context.role!=='owner')
       throw new Error('Only the owner can restore product review requests');
+    if(op.action==='configure_cashier_pcs'&&context.role!=='owner')throw new Error('Only the owner can restore cashier PC mode requests');
     const body = { ...op.data };
     // Approval/closure refer to an existing count; its ID remains part of the
     // request fingerprint. Generated transaction IDs are excluded, as at save.

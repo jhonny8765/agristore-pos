@@ -4,5 +4,5 @@ if(process.env.AGRISTORE_MAGPET_PILOT!=="1")throw new Error("Use the explicit di
 export default defineConfig({
  ...integration,
  outputDir:"test-results/magpet",
- testMatch:["product-review.spec.ts","supplier-accounts.spec.ts","customer-credit.spec.ts","magpet-load.spec.ts","sales-analytics.spec.ts","blind-counts.spec.ts","purchasing.spec.ts","delivery-reversals.spec.ts","partial-refunds.spec.ts","refund-corrections.spec.ts","measured-refund-corrections.spec.ts","measured-losses.spec.ts","stock-issue-rejection.spec.ts","stock-loss.spec.ts"],
+ testMatch:["multiple-pcs.spec.ts","product-review.spec.ts","supplier-accounts.spec.ts","customer-credit.spec.ts","magpet-load.spec.ts","sales-analytics.spec.ts","blind-counts.spec.ts","purchasing.spec.ts","delivery-reversals.spec.ts","partial-refunds.spec.ts","refund-corrections.spec.ts","measured-refund-corrections.spec.ts","measured-losses.spec.ts","stock-issue-rejection.spec.ts","stock-loss.spec.ts"],
 });
