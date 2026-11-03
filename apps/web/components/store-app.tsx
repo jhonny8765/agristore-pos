@@ -1512,6 +1512,7 @@ export function StoreApp() {
           )}
           {!practice &&
             view !== "sales" &&
+            view !== "records" &&
             Object.values(cloud).some((list) => list.length >= 1000) && (
               <p role="status" className="notice error">
                 Showing the most recent 1,000 entries in this view. Older
