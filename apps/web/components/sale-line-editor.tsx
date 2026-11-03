@@ -5,6 +5,9 @@ import { Minus, Plus, X, EllipsisVertical } from "lucide-react";
 import Decimal from "decimal.js";
 import {
   makeItem,
+  applyLineDiscount,
+  discountBasisPoints,
+  lineAmounts,
   money,
   type Product,
   type SaleItem,
@@ -28,15 +31,17 @@ export function SaleLineEditor({
   index,
   lineId,
   disabled,
+  canDiscount=true,
 }: {
   item: SaleItem;
   product: Product;
   index: number;
   lineId: string;
   disabled: boolean;
+  canDiscount?: boolean;
 }) {
   const cart = useCart();
-  const { draft, display, budgetMode, budget, budgetError, original, focus } =
+  const { draft, display, budgetMode, budget, budgetError, original, focus, discount, discountError } =
     cart.drafts[lineId];
   const setDraft = (draft: string) => cart.edit(lineId, { draft });
   const setDisplay = (display: "kg" | "g" | "liter" | "ml") => cart.edit(lineId, { display });
@@ -60,7 +65,13 @@ export function SaleLineEditor({
   const grams = (loose && display === "g") || (liquid && display === "ml");
   const quantityLabel = `Quantity (${loose ? (grams ? "g" : "kg") : liquid ? (grams ? "ml" : "liter") : item.unitName})`;
   const error = cart.quantityErrors[lineId];
-  const displayedAmount = draftLineTotal(item, { draft, display });
+  const displayedAmount = draftLineTotal(item, { draft, display, discountError });
+  const amounts=lineAmounts(item);
+  function setDiscount(value:string){
+    cart.edit(lineId,{discount:value});
+    try{const bps=value===''?0:discountBasisPoints(value);cart.discount(index,bps);cart.edit(lineId,{discountError:undefined});}
+    catch(e){cart.edit(lineId,{discountError:e instanceof Error?e.message:'Check the percentage discount.'});}
+  }
   const increment = loose || liquid ? (grams ? "250" : "0.25") : product.baseUnit === "meter" && new Decimal(item.factor).eq(1) ? "0.25" : "1";
 
   function report(error: unknown) {
@@ -81,7 +92,7 @@ export function SaleLineEditor({
     setDraft(raw);
     try {
       const quantity = quantityFromDisplay(raw, inGrams);
-      cart.replace(index, makeItem(product, unitId, quantity, batchId));
+      cart.replace(index, applyLineDiscount(makeItem(product, unitId, quantity, batchId),item.discountBps??0));
       cart.quantityError(lineId, needsConfirmation ? confirmation : undefined);
       return true;
     } catch (error) {
@@ -117,6 +128,7 @@ export function SaleLineEditor({
       <div className="receipt-item-photo"><ProductPhoto product={product}/></div>
       <div className="receipt-item-top">
         <strong>{item.name}</strong>
+        {canDiscount&&<label className="line-discount"><span>Discount %</span><input aria-label={`Discount (%) for ${item.name}`} inputMode="decimal" autoComplete="off" value={discount??(item.discountBps?String(item.discountBps/100):'')} placeholder="0" disabled={disabled} aria-invalid={!!discountError} aria-describedby={discountError?errorId+'-discount':undefined} onChange={event=>setDiscount(event.target.value)}/></label>}
         <button
           disabled={disabled}
           aria-label={`Remove ${item.name}`}
@@ -162,6 +174,8 @@ export function SaleLineEditor({
         {money(item.unitPrice)} / {item.unitName}
         {loose ? " · loose weight" : ""}
       </p>
+      {(item.discountBps??0)>0&&displayedAmount!==null&&<p className="line-discount-summary">Before discount {money(amounts.gross)} · {item.discountBps!/100}% off −{money(amounts.discount)}</p>}
+      {discountError&&<p className="quantity-error line-discount-error" id={errorId+'-discount'} role="alert">{discountError}</p>}
       <div className="receipt-item-bottom">
         <div className="quantity-entry">
           <label htmlFor={errorId + "-quantity"}>
@@ -245,7 +259,7 @@ export function SaleLineEditor({
         </div>
         <strong>
           {displayedAmount === null
-            ? loose ? "Enter weight" : "Enter quantity"
+            ? discountError ? "Check discount" : loose ? "Enter weight" : "Enter quantity"
             : money(displayedAmount)}
         </strong>
       </div>
@@ -426,7 +440,7 @@ export function SaleLineEditor({
                   cart.remove(index);
                   return;
                 }
-                const previous = original;
+                const previous = applyLineDiscount(original,item.discountBps??0);
                 cart.replace(index, previous);
                 setDraft(previous.quantity);
                 setDisplay("kg");

@@ -81,6 +81,7 @@ import { productStock } from "../lib/stock-display";
 import { historicalStock, stockHistoryColumns } from "../lib/stock-history";
 import {
   makeItem,
+  lineAmounts,
   money,
   requireLease,
   total,
@@ -121,7 +122,7 @@ import {
   supabase,
 } from "../lib/api";
 import { practiceBranch, startPractice } from "../lib/practice";
-import { draftLineTotal, useCart } from "../lib/cart";
+import { draftLineTotal, hasCartErrors, useCart } from "../lib/cart";
 import {
   onlineOperation,
   pendingOperations,
@@ -849,9 +850,9 @@ export function StoreApp() {
       requireLease(lease);
       if (!cart.items.length)
         throw new Error("Add a product to the receipt first");
-      if (Object.keys(useCart.getState().quantityErrors).length)
+      if (hasCartErrors(useCart.getState()))
         throw new Error(
-          "Check quantities and confirm weighed amounts before checkout.",
+          "Check quantities, discounts and confirmed weighed amounts before checkout.",
         );
       const payload: Sale = {
         version: 1,
@@ -1251,6 +1252,9 @@ export function StoreApp() {
       draftLineTotal(item, cart.drafts[cart.lineIds[index]]) !== null,
     ),
   );
+  const discountedItems=cart.items.filter((item,index)=>draftLineTotal(item,cart.drafts[cart.lineIds[index]])!==null);
+  const grossSubtotal=discountedItems.reduce((n,item)=>n+lineAmounts(item).gross,0);
+  const discountTotal=discountedItems.reduce((n,item)=>n+lineAmounts(item).discount,0);
   let change = 0;
   try {
     change = Math.max(0, cents(cash) - grandTotal);
@@ -1730,6 +1734,7 @@ export function StoreApp() {
                           <span>
                             {item.quantity} {item.unitName} ·{" "}
                             {money(item.lineTotal)}
+                            {(item.discountBps??0)>0&&<small>{item.discountBps!/100}% discount · −{money(lineAmounts(item).discount)}</small>}
                           </span>
                         </div>
                       ))}
@@ -1754,6 +1759,7 @@ export function StoreApp() {
                         item={item}
                         product={products.find((p) => p.id === item.productId)!}
                         index={i}
+                        canDiscount={practice||member.role==='owner'||member.role==='cashier'}
                         disabled={busy || installingUpdate || !!cart.creditAttempt}
                       />
                     ))}
@@ -1769,8 +1775,9 @@ export function StoreApp() {
                 {cart.credit.enabled&&!practice?<CreditCheckout key={`${member.organizationId}:${branchId}:${member.userId}`} db={db} lease={lease} online={online} disabled={busy||installingUpdate||isStock} onWorking={working=>{committing.current=working;setBusy(working);}} onSaved={async()=>{const heldId=useCart.getState().heldDraftId;if(heldId&&lease){try{await removeHeldSale(db,lease,heldId);setHeldDraftCount(0);}catch{fail(new Error('Credit sale confirmed. A held copy remains; retry its original request to confirm, then remove it.'));}}cart.clear();setCash('');setCheckoutDone(undefined);setHistoryRevision(n=>n+1);notify('Credit sale confirmed. The original booklet invoice is linked. Open Clients & credit to print the credit record.');await sync();await refreshLocal();}}/>:<form className="payment-form" onSubmit={finishSale}>
                   <div className="subtotal">
                     <span>Subtotal</span>
-                    <span>{money(grandTotal)}</span>
+                    <span>{Number.isSafeInteger(grossSubtotal)?money(grossSubtotal):'Amount too large'}</span>
                   </div>
+                  {discountTotal>0&&<div className="subtotal discount-total"><span>Product discounts</span><span>−{Number.isSafeInteger(discountTotal)?money(discountTotal):'Amount too large'}</span></div>}
                   <div className="amount-due">
                     <span>Amount due</span>
                     <strong>{money(grandTotal)}</strong>
@@ -1809,7 +1816,7 @@ export function StoreApp() {
                     <span>Change</span>
                     <strong>{money(change)}</strong>
                   </div>
-                  {Object.keys(cart.quantityErrors).length > 0 && (
+                  {hasCartErrors(cart) && (
                     <p className="quantity-error" role="alert">
                       Check quantities and confirm weighed amounts before
                       checkout.
@@ -1822,7 +1829,7 @@ export function StoreApp() {
                       installingUpdate ||
                       !lease ||
                       !cart.items.length ||
-                      Object.keys(cart.quantityErrors).length > 0 ||
+                      hasCartErrors(cart) ||
                       isStock
                     }
                     className="complete-sale"

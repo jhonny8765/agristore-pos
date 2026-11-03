@@ -3,6 +3,7 @@ import { z } from "zod";
 export * from './credit';
 
 export const OFFLINE_HOURS = 12;
+const ExactMoney=Decimal.clone({precision:80,rounding:Decimal.ROUND_HALF_UP});
 export const money = (centavos: number) =>
   new Intl.NumberFormat("en-PH", { style: "currency", currency: "PHP" }).format(
     centavos / 100,
@@ -24,6 +25,7 @@ export const saleItemSchema = z
     unitPrice: cents,
     unitCost: cents,
     priceVersion: z.number().int().positive(),
+    discountBps: z.number().int().min(0).max(10000).optional(),
     lineTotal: cents,
   })
   .strict();
@@ -45,7 +47,7 @@ export const saleSchema = z
   .superRefine((sale, ctx) => {
     let sum = new Decimal(0);
     for (const item of sale.items) {
-      const expected = lineTotal(item.quantity, item.unitPrice);
+      const expected = discountedLineTotal(item.quantity, item.unitPrice, item.discountBps);
       if (expected !== item.lineTotal)
         ctx.addIssue({
           code: "custom",
@@ -161,7 +163,7 @@ export interface SyncAck {
   reason?: string;
 }
 export function lineTotal(quantity: string, unitPrice: number): number {
-  const value = new Decimal(quantity)
+  const value = new ExactMoney(quantity)
     .mul(unitPrice)
     .toDecimalPlaces(0, Decimal.ROUND_HALF_UP);
   if (
@@ -179,6 +181,24 @@ export function canonicalQuantity(quantity: string, factor: string): string {
   if (result.decimalPlaces() > 6 || result.gte("1000000000000"))
     throw new Error("Quantity conversion exceeds supported precision");
   return result.toFixed();
+}
+/** Round the original line to centavos, then round its percentage reduction.
+ * Both server and browser subtract that exact reduction from the same gross. */
+export function lineAmounts(item:Pick<SaleItem,'quantity'|'unitPrice'|'discountBps'>){
+ const rate=item.discountBps??0;
+ if(!Number.isInteger(rate)||rate<0||rate>10000)throw Error('Choose a discount from 0 to 100%, with at most two decimal places.');
+ const gross=lineTotal(item.quantity,item.unitPrice);
+ const discount=new ExactMoney(gross).times(rate).div(10000).toDecimalPlaces(0,Decimal.ROUND_HALF_UP).toNumber();
+ return {gross,discount,total:gross-discount};
+}
+export function discountedLineTotal(quantity:string,unitPrice:number,discountBps=0){return lineAmounts({quantity,unitPrice,discountBps}).total;}
+export function discountBasisPoints(percent:string){
+ if(!/^\d{1,3}(?:\.\d{1,2})?$/.test(percent)||new Decimal(percent).gt(100))throw Error('Enter a discount from 0 to 100%, with at most two decimal places.');
+ return new Decimal(percent).times(100).toNumber();
+}
+export function applyLineDiscount(item:SaleItem,discountBps:number):SaleItem{
+ const clean={...item};delete clean.discountBps;
+ return {...clean,...(discountBps?{discountBps}:{}),lineTotal:discountedLineTotal(item.quantity,item.unitPrice,discountBps)};
 }
 export function total(items: Pick<SaleItem, "lineTotal">[]) {
   return items.reduce((sum, item) => sum + item.lineTotal, 0);

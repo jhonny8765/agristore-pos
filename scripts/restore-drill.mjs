@@ -183,6 +183,15 @@ command('close_shift',{...ctx(),shiftId:openingShift.shiftId,countedCash:10000})
 const archivedCash={...sale,transactionId:id(221)};
 sql(`insert into app_private.test_history_archives(id,organization_id,data,retired_ids) values('${id(220)}','${id(2)}','{"tables":{"public.cashier_shifts":[]}}',array['${id(221)}']);insert into app_private.archived_test_sales values('${id(221)}','${id(2)}','${id(3)}','${id(1)}','${id(220)}','${JSON.stringify(archivedCash)}'::jsonb,'TEST-ARCHIVE-RESTORE','${'a'.repeat(64)}');`);
 const fingerprints = target => lastJSON(sql(fingerprintSQL(id(2)),target));
+// Preserve the entered percentage, paid net amount and remaining refund basis.
+sql(`insert into public.branches(id,organization_id,name,code) values('${id(230)}','${id(2)}','TEST discount restore','RESTORE-DISCOUNT');`);
+command('register_device',{...ctx(230),deviceId:id(231),name:'TEST discount restore drawer'});
+command('receive_stock',{...ctx(230),receiptId:id(232),source:'purchase',reference:'TEST discount restore goods',items:[{productId:id(4),unitId:id(7),quantity:'2'}]});
+const discountShift=command('open_shift',{...ctx(230),deviceId:id(231),openingCash:10000});
+const discountSale={...sale,...ctx(230),transactionId:id(233),deviceId:id(231),shiftId:discountShift.shiftId,total:2880,cashReceived:3000,items:[{...sale.items[0],quantity:'1',discountBps:1000,lineTotal:2880}]};
+command('record_sale',discountSale);
+const discountRefund={...ctx(230),saleId:id(233),refundId:id(234),shiftId:discountShift.shiftId,expectedRefundVersion:0,expectedAmount:1440,reference:'TEST discounted half',reason:'TEST half of actual discounted cash',physicalConfirmed:true,items:[{lineIndex:0,quantity:'0.5',returnedQuantity:'0',disposition:'not_returned'}]};
+command('partial_refund_sale',discountRefund);command('close_shift',{...ctx(230),shiftId:discountShift.shiftId,countedCash:11440});
 const original = fingerprints("postgres");
 const before = command("snapshot",{...ctx(),transactionIds:[id(9)]});
 assert.equal(before.stocks[0].quantity,"10.250000");
@@ -225,6 +234,8 @@ try {
     "/tmp/agristore-verified.dump",
   ]);
   assert.deepEqual(fingerprints(database),original,"Every retained fixture row must survive dump/restore unchanged");
+  assert.equal(command('record_sale',discountSale,database).status,'duplicate');
+  const restoredDiscount=command('partial_refund_plan',{...ctx(230),saleId:id(233)},database);assert.equal(restoredDiscount.remainingCash,1440);assert.equal(restoredDiscount.lines[0].discountBps,1000);
   assert.equal(command('record_sale',archivedCash,database).status,'duplicate');
   assert.ok(command('snapshot',{...ctx(),transactionIds:[id(221)]},database).confirmedIds.includes(id(221)));
   assert.equal(command('credit_book',ctx(),database).outstanding,80000);

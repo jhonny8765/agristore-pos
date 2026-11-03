@@ -1,6 +1,6 @@
 import { create } from "zustand";
 import Decimal from "decimal.js";
-import type { SaleItem } from "@agristore/domain";
+import {applyLineDiscount,type SaleItem} from "@agristore/domain";
 import { quantityFromDisplay } from "./quantity-entry";
 export interface LineDraft {
   draft: string;
@@ -10,6 +10,8 @@ export interface LineDraft {
   budgetError: string;
   original: SaleItem | null;
   focus?: "quantity" | "budget" | null;
+  discount?: string;
+  discountError?: string;
 }
 export type SaleEntry = "unit" | "weight" | "budget";
 
@@ -17,9 +19,9 @@ export type SaleEntry = "unit" | "weight" | "budget";
  * Valid peso estimates still have an amount while awaiting weight confirmation. */
 export function draftLineTotal(
   item: SaleItem,
-  draft?: Pick<LineDraft, "draft" | "display">,
+  draft?: Pick<LineDraft, "draft" | "display" | "discountError">,
 ) {
-  if (!draft) return null;
+  if (!draft || draft.discountError) return null;
   try {
     const quantity = quantityFromDisplay(draft.draft, draft.display === "g" || draft.display === "ml");
     return new Decimal(quantity).eq(item.quantity) ? item.lineTotal : null;
@@ -41,10 +43,12 @@ interface Cart {
   attemptId: string | null;
   add: (item: SaleItem, entry?: SaleEntry) => void;
   replace: (index: number, item: SaleItem) => void;
+  discount: (index:number,bps:number) => void;
   remove: (index: number) => void;
   clear: () => void;
   attempt: () => string;
 }
+export function hasCartErrors(cart:Pick<Cart,'quantityErrors'|'drafts'>){return Object.keys(cart.quantityErrors).length>0||Object.values(cart.drafts).some(d=>!!d.discountError);}
 export const useCart = create<Cart>((set, get) => ({
   credit: {enabled:false,clientId:'',term:30,officialReference:'',cash:''},
   creditAttempt: undefined,
@@ -112,6 +116,7 @@ export const useCart = create<Cart>((set, get) => ({
         attemptId: null,
       };
     }),
+  discount:(index,bps)=>set(s=>({items:s.items.map((item,n)=>n===index?applyLineDiscount(item,bps):item),attemptId:null})),
   remove: (index) =>
     set((s) => {
       const quantityErrors = { ...s.quantityErrors };

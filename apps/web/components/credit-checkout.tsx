@@ -1,11 +1,11 @@
 "use client";
 import {useEffect,useRef,useState} from 'react';
-import {creditDueOn,creditSelectionSchema,manilaDay,money,requireLease,type CreditBook,type CreditClient,type Lease} from '@agristore/domain';
+import {creditDueOn,creditSelectionSchema,lineAmounts,manilaDay,money,requireLease,type CreditBook,type CreditClient,type Lease} from '@agristore/domain';
 import {setting,type PosDatabase} from '@agristore/offline';
 import {command} from '../lib/api';
 import {onlineOperation,pendingOperations} from '../lib/operations';
 import {isDatabaseRejection} from '../lib/command-error';
-import {useCart} from '../lib/cart';
+import {hasCartErrors,useCart} from '../lib/cart';
 import {heldSaleKey,type HeldSale} from '../lib/held-sale';
 import {Button} from './ui/button';
 
@@ -17,6 +17,7 @@ export function CreditCheckout({db,lease,online,disabled,onWorking,onSaved}:{db:
  const ctx=lease?{organizationId:lease.organizationId,branchId:lease.branchId}:undefined;
  useEffect(()=>{let active=true;if(!ctx||!online)return;setLoading(true);void command<CreditBook>('credit_book',ctx).then(b=>{if(active){setClients(b.clients);setError('');}}).catch(e=>{if(active)setError(e.message);}).finally(()=>{if(active)setLoading(false);});return()=>{active=false;};},[lease?.organizationId,lease?.branchId,online]); // eslint-disable-line react-hooks/exhaustive-deps
  const client=clients.find(c=>c.id===draft.clientId),total=cart.items.reduce((n,i)=>n+i.lineTotal,0),amount=Math.round(Number(draft.cash||0)*100),balance=total-amount;
+ const discountTotal=cart.items.reduce((n,i)=>n+lineAmounts(i).discount,0);
  const patch=(value:Partial<typeof draft>)=>{useCart.setState({credit:{...draft,...value}});setConfirmed(false);};
  async function save(){if(lock.current)return;lock.current=true;onWorking(true);setError('');try{
   requireLease(lease);if(!online)throw Error('Reconnect before completing a credit sale. No credit was approved offline.');
@@ -26,7 +27,7 @@ export function CreditCheckout({db,lease,online,disabled,onWorking,onSaved}:{db:
    const selection=creditSelectionSchema.parse({clientId:draft.clientId,term:draft.term,officialReference:draft.officialReference});
    if(!client?.enabled||!client.terms.includes(draft.term)||client.overdue>0)throw Error('Choose a client with approved credit and no overdue balance.');
    if(!Number.isSafeInteger(amount)||!/^\d+(\.\d{1,2})?$/.test(draft.cash||'0')||amount<0||amount>=total||balance>client.limit-client.outstanding)throw Error('Check cash paid now and the remaining approved credit limit.');
-   if(!confirmed||Object.keys(cart.quantityErrors).length)throw Error('Check quantities and confirm the manual invoice and due date.');
+   if(!confirmed||hasCartErrors(cart))throw Error('Check quantities, discounts and the manual invoice due date.');
    data={...ctx,version:2,requestId:cart.attempt(),deviceId:lease.deviceId,cashierId:lease.cashierId,shiftId:lease.shiftId,items:structuredClone(cart.items),total,cashReceived:amount,...selection,expectedDueOn:creditDueOn(manilaDay(),draft.term),manualInvoiceConfirmed:true};
    // A held draft must retain the complete original request before submission.
    if(cart.heldDraftId)await db.transaction('rw',db.settings,async()=>{const held=await setting<HeldSale>(db,heldSaleKey(lease));if(!held||held.id!==cart.heldDraftId)throw Error('The held draft changed. Keep this basket and review it.');await db.settings.put({key:heldSaleKey(lease),value:{...held,credit:draft,creditAttempt:data}});});
@@ -36,6 +37,7 @@ export function CreditCheckout({db,lease,online,disabled,onWorking,onSaved}:{db:
   await onSaved();
  }catch(e){setError(e instanceof Error?e.message:'Could not confirm the original credit sale. Keep this PC and check Sync center.');if(isDatabaseRejection(e))useCart.setState({creditAttempt:undefined});}finally{lock.current=false;onWorking(false);}}
  return <form className="payment-form credit-checkout" aria-label="Credit checkout" onSubmit={e=>{e.preventDefault();void save();}}>
+  {discountTotal>0&&<div className="subtotal discount-total"><span>Product discounts included</span><strong>−{money(discountTotal)}</strong></div>}
   <div className="amount-due"><span>Sale total</span><strong>{money(total)}</strong></div>
   {error&&<p className="notice error" role="alert">{error}</p>}
   {cart.creditAttempt?<p className="notice">An original credit sale needs confirmation. Retry this request or check Sync center before changing the basket.</p>:<fieldset disabled={disabled||loading||!online}>
@@ -49,7 +51,7 @@ export function CreditCheckout({db,lease,online,disabled,onWorking,onSaved}:{db:
    <label className="checkbox"><input required type="checkbox" checked={confirmed} onChange={e=>setConfirmed(e.target.checked)}/>I issued the authorized manual invoice and the client accepted this due date.</label>
   </fieldset>}
   <div className="change"><span>Balance due</span><strong>{money(Number.isSafeInteger(balance)&&balance>=0?balance:total)}</strong></div>
-  <Button className="complete-sale" disabled={disabled||!online||!lease||!cart.items.length||(!cart.creditAttempt&&(!client||!confirmed||Object.keys(cart.quantityErrors).length>0))}>{cart.creditAttempt?'Confirm original credit sale':'Complete credit sale'}</Button>
+  <Button className="complete-sale" disabled={disabled||!online||!lease||!cart.items.length||(!cart.creditAttempt&&(!client||!confirmed||hasCartErrors(cart)))}>{cart.creditAttempt?'Confirm original credit sale':'Complete credit sale'}</Button>
   <p className="muted">Online only. Cash paid now is the exact amount retained in the drawer. The authorized booklet is your official VAT invoice.</p>
  </form>;
 }
