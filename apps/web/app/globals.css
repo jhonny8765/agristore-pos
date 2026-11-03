@@ -2586,7 +2586,8 @@ td small {
 .recovery-download h3 { margin-block: 0 8px; }
 .recovery-filename { font-weight: 600; overflow-wrap: anywhere; }
 
-.report-filters { display: grid; grid-template-columns: repeat(auto-fit,minmax(min(100%,220px),1fr)); gap: 16px; align-items: end; margin-block-end: 16px; }
+.report-filters { display: grid; grid-template-columns: repeat(auto-fit,minmax(min(100%,180px),1fr)); gap: 16px; align-items: end; margin-block-end: 16px; }
+.report-filters .report-tools { grid-column: 1 / -1; margin-block: 0; }
 .report-filters .field, .report-filters input, .report-filters select { min-width: 0; width: 100%; }
 .report-tools { display: flex; flex-wrap: wrap; gap: 12px; align-items: center; margin-block: 14px; }
 .report-tools .button { max-width: 100%; white-space: normal; }

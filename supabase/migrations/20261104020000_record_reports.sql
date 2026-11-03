@@ -1,5 +1,6 @@
 -- Read-only owner registers. Export is one statement snapshot, never a download
 -- of whichever UI pages happen to be loaded. No transaction/history is moved.
+create index payments_credit_invoice_lookup on public.payments(organization_id,credit_invoice_id) where credit_invoice_id is not null;
 create function app_private.record_report(data jsonb) returns jsonb language plpgsql stable security definer set search_path='' as $$
 #variable_conflict use_variable
 declare org uuid:=(data->>'organizationId')::uuid;branch uuid:=(data->>'branchId')::uuid;kind text:=data->>'kind';q text:=btrim(coalesce(data->>'query',''));status text:=coalesce(data->>'status','all');from_day date;to_day date;offset_n integer:=coalesce((data->>'offset')::integer,0);exporting boolean:=coalesce((data->>'export')::boolean,false);result jsonb;entity uuid:=nullif(data->>'entityId','')::uuid;today date:=(statement_timestamp() at time zone 'Asia/Manila')::date;
@@ -15,7 +16,7 @@ begin
  if from_day>to_day then raise exception 'The ending date must be on or after the starting date';end if;
  if exporting and offset_n<>0 then raise exception 'Export the complete selection from its beginning';end if;
  if entity is not null and kind not in('credit_invoices','credit_payments','supplier_invoices','supplier_payments') then raise exception 'An account filter is only valid for customer or supplier records';end if;
- with source as materialized(
+ with source as(
   select s.id::text id,s.occurred_at at,jsonb_build_object('reference',s.receipt,'party',coalesce((select i.client_snapshot->>'name' from public.credit_invoices i where i.sale_id=s.id),''),'mode',s.payment_mode,'amount',s.total::text,'cash',case when s.payment_mode='cash' then s.total::text else s.cash_received::text end,'tender',case when s.payment_mode='cash' then s.cash_received::text else null end,'change',case when s.payment_mode='cash' then (s.cash_received-s.total)::text else null end,'status',case when exists(select 1 from public.sale_refund_corrections r where r.sale_id=s.id) then 'corrected' when exists(select 1 from public.sale_reversals r where r.sale_id=s.id) then 'refunded' when exists(select 1 from public.sale_partial_refunds r where r.sale_id=s.id) then 'partial' when cardinality(s.flags)>0 then 'review' else 'completed' end) doc
   from public.sales s where kind='receipts' and s.organization_id=org and s.branch_id=branch
   union all

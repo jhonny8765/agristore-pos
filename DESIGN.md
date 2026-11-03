@@ -356,6 +356,10 @@ Payment entry says **Record payment already made** and requires the actual bank 
 
 ## Do's and Don'ts
 
+### Records and exports
+
+Keep the owner’s full-history workspace under Overview with contextual links and a return to the originating register. Reuse the forest/paper shell, labelled search/date/status controls, one server-paged table and one CSV action. Invoice tables prioritize reference, customer/supplier, due date, current outstanding amount and status; full financial columns and original IDs belong in the CSV. Show applied scope, checked time, loading/offline/failure states and changed-filter notice. Export only after filters are applied; a complete selection is independent of the current page. Keep paid and older entries accessible through filters without deleting history. Use a contained horizontal table on narrow screens, with no whole-page overflow. Put detailed source/date/backup explanations in a disclosure.
+
 ### Do:
 
 - **Do** follow each supplied composition within the shared Roboto, forest and warm-paper shell.
