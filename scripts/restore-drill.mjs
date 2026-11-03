@@ -255,8 +255,6 @@ try {
   assert.equal(command('review_import_setup',reviewedUnit,database).duplicate,true);
   assert.equal(command('confirm_import_stock',reviewedStock,database).duplicate,true);
   const restoredSource=command('product_review_state',{...ctx(260),productId:id(261)},database);assert.equal(Number(restoredSource.stock),1);assert.equal(restoredSource.sourceStock.quantity,'1000');assert.equal(restoredSource.sourceStock.pending,false);
-  command('review_product_price',{...reviewedUnit,requestId:id(265),expectedPriceVersion:2,price:145,reason:'TEST post-restore current price'},database);
-  assert.equal(Number(sql(`select count(*) from public.unit_prices where unit_id='${id(262)}';`,database).trim()),3);
     assert.equal(command('supplier_record_invoice',supplierBill,database).duplicate,true);assert.equal(command('supplier_record_payment',supplierPayment,database).duplicate,true);
     const restoredSupplier=command('supplier_invoice_history',{...ctx(),billId:id(240)},database);assert.equal(restoredSupplier.invoice.balance,50000);assert.equal(restoredSupplier.invoice.dueOn,supplierDue);assert.equal(restoredSupplier.entries.length,3);
   assert.equal(command('record_sale',discountSale,database).status,'duplicate');
@@ -334,6 +332,8 @@ try {
   const retried = fingerprints(database);
   for (const table of tables.filter(t=>t!=="devices")) assert.deepEqual(retried[table],original[table],`Restored retry changed ${table}`);
   // Only after proving retries made no changes, exercise new post-restore work.
+  command('review_product_price',{...reviewedUnit,requestId:id(265),expectedPriceVersion:2,price:145,reason:'TEST post-restore current price'},database);
+  assert.equal(Number(sql(`select count(*) from public.unit_prices where unit_id='${id(262)}';`,database).trim()),3);
   command('supplier_reverse_entry',{...supplierPayment,requestId:id(243),entryId:id(242),expectedVersion:3,expectedBalance:50000,reference:'TEST-RESTORED-SUPPLIER-CREDIT-REVERSAL'},database);
   command('supplier_record_payment',{...supplierPayment,requestId:id(244),expectedVersion:4,expectedBalance:60000,amount:60000,reference:'TEST-RESTORED-SUPPLIER-REMAINDER'},database);
   assert.equal(command('supplier_invoice_history',{...ctx(),billId:id(240)},database).invoice.balance,0);
