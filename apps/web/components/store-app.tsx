@@ -2904,7 +2904,7 @@ export function StoreApp() {
           )}
 
           {view === "settings" && (
-            <SettingsWorkspace staff={(cloud.staff_memberships??[]).map(m=>({id:str(m,"id"),name:str(m,"name"),role:str(m,"role"),active:m.active===true}))} devices={(cloud.devices??[]).map(d=>({id:str(d,"id"),name:str(d,"name"),active:d.active===true}))} branchName={selectedBranch?.name??"Selected branch"} branchCode={selectedBranch?.code??""} cashierName={lease?.name} shiftOpen={!!lease} cacheReady={!!registration?.active} onClose={()=>setView("close-shift")}><>
+            <SettingsWorkspace creditEnabled={!practice} staff={(cloud.staff_memberships??[]).map(m=>({id:str(m,"id"),name:str(m,"name"),role:str(m,"role"),active:m.active===true}))} devices={(cloud.devices??[]).map(d=>({id:str(d,"id"),name:str(d,"name"),active:d.active===true}))} branchName={selectedBranch?.name??"Selected branch"} branchCode={selectedBranch?.code??""} cashierName={lease?.name} shiftOpen={!!lease} cacheReady={!!registration?.active} onClose={()=>setView("close-shift")}><>
               <div className="two-column">
                 <section className="panel">
                   <h2>Cashier shift</h2>

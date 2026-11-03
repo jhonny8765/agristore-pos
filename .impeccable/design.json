@@ -1,6 +1,6 @@
 {
   "schemaVersion": 2,
-  "generatedAt": "2026-11-03T14:09:17.344Z",
+  "generatedAt": "2026-11-03T14:18:16.468Z",
   "title": "Design System: Better Yield POS (AgriStore)",
   "extensions": {
     "colorMeta": {
@@ -451,6 +451,10 @@
       {
         "name": "updated-account-stack",
         "value": "1250px"
+      },
+      {
+        "name": "inline-period-filter",
+        "value": "730px"
       }
     ]
   },
