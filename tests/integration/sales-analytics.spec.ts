@@ -54,11 +54,11 @@ test("only owner and assigned manager see analytics; cashier and stock staff can
 });
 
 test("inconsistent and incomplete successful responses preserve the verified report and exports",async({page})=>{
- const a=await start(page),r=a.region,verified=await countCommand<SalesAnalytics>(a.owner,"sales_analytics",{...a.ctx,period:"month",interval:"day"});let response:unknown={...verified,totals:{...verified.totals,grossSales:"1"}};
+ const a=await start(page),r=a.region,verified=await countCommand<SalesAnalytics>(a.owner,"sales_analytics",{...a.ctx,period:"today",interval:"day"});let response:unknown={...verified,totals:{...verified.totals,grossSales:"1"}};
  await page.route("**/rest/v1/rpc/agri_command",async route=>{if(route.request().postDataJSON()?.action==="sales_analytics")await route.fulfill({status:200,contentType:"application/json",body:JSON.stringify(response)});else await route.continue();});
  for(const broken of [response,{...verified,trend:verified.trend.map(row=>({...row,grossSales:"0"}))},{version:1,branchId:a.ctx.branchId},null]){
   response=broken;await r.getByRole("button",{name:"Refresh",exact:true}).click();await expect(r.getByRole("alert")).toContainText("could not be verified");await expect(r.locator(".workspace-stats")).toContainText("₱1,539.50");await expect(r.getByRole("button",{name:"Refresh",exact:true})).toBeEnabled();
  }
  const download=page.waitForEvent("download");await r.getByRole("button",{name:"Export all product totals (CSV)",exact:true}).click();const csv=await readFile((await(await download).path())!,"utf8");expect(csv.split("\r\n")).toHaveLength(24);expect(csv).toContain('"1517.50"');
- response=await countCommand<SalesAnalytics>(a.owner,"sales_analytics",{...a.ctx,period:"month",interval:"day"});await r.getByRole("button",{name:"Refresh",exact:true}).click();await expect(r.getByRole("alert")).toHaveCount(0);await expect(r.locator(".workspace-stats")).toContainText("₱1,539.50");
+ response=await countCommand<SalesAnalytics>(a.owner,"sales_analytics",{...a.ctx,period:"today",interval:"day"});await r.getByRole("button",{name:"Refresh",exact:true}).click();await expect(r.getByRole("alert")).toHaveCount(0);await expect(r.locator(".workspace-stats")).toContainText("₱1,539.50");
 });
