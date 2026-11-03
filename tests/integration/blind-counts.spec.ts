@@ -52,7 +52,7 @@ test('blind first entry, independent recount and third-person owner approval com
   const exposed=await a.second.owner.from('stock_counts').select('*').eq('organization_id',a.organizationId);expect(exposed.data).toEqual([]);
   await login(recounter,a.second);await expect(recounter.locator('.count-comparison')).toHaveCount(0);
   await recounter.getByLabel('Independent recount quantity (kg)',{exact:true}).fill('10.25');await recounter.getByLabel('Independent recount notes',{exact:true}).fill('TEST second checked scale and tare independently');
-  await recounter.getByRole('button',{name:'Seal independent recount',exact:true}).click();await expect(recounter.getByText('Ready for owner review',{exact:true})).toBeVisible();
+  await recounter.getByRole('button',{name:'Seal independent recount',exact:true}).click();await expect(recounter.getByRole('region',{name:'Count worklist',exact:true}).getByText('Ready for owner review',{exact:true})).toBeVisible();
   await login(approver,a);await approver.getByRole('button',{name:'Review sealed counts',exact:true}).click();
   const record=approver.locator('.count-record');await expect(record).toContainText('10.5 kg');await expect(record).toContainText('10.25 kg');await expect(record).toContainText('-0.25 kg');
   await record.getByRole('button',{name:'Approve adjustment',exact:true}).click();await record.getByLabel('Approval evidence',{exact:true}).fill('TEST inspected both independent signed-in count records');
