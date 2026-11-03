@@ -50,6 +50,10 @@
 .credit-checkout fieldset{min-width:0;border:0;padding:0;margin:0;display:grid;gap:14px}
 .credit-checkout legend{font-weight:700;margin-bottom:12px}.credit-checkout p{font-size:15px;margin:8px 0;overflow-wrap:anywhere}
 .credit-checkout .checkbox{align-items:start;line-height:1.5}.credit-checkout .checkbox input{width:20px;flex-shrink:0}
+.credit-client-tools{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:10px;align-items:end}
+.credit-client-tools .field{min-width:0;margin:0}.credit-client-tools .button{min-height:44px}
+.credit-checkout input[type=search],.credit-checkout select{min-width:0;width:100%;max-width:100%}
+.credit-client-summary{min-width:0}.credit-client-summary strong{display:block;overflow-wrap:anywhere}
 .credit-tabs{margin-block:18px}.credit-workspace .button-row{display:flex;flex-wrap:wrap;gap:10px}
 .credit-profile,.credit-collection,.credit-returns,.credit-invoice-detail{margin-top:24px;padding-top:22px;border-top:1px solid var(--line)}
 .credit-profile>fieldset,.credit-collection>fieldset{display:grid;gap:14px;min-width:0;padding:16px;border:1px solid var(--line)}
