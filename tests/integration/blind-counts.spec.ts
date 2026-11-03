@@ -61,7 +61,7 @@ test('blind first entry, independent recount and third-person owner approval com
    const scan=await new AxeBuilder({page:approver}).include('.blind-counts').withTags(['wcag2a','wcag2aa','wcag21a','wcag21aa','wcag22aa']).analyze();expect(scan.violations).toEqual([]);
    await approver.screenshot({path:`test-results/blind-counts-review-${width}.png`,fullPage:true});
   }
-  await record.getByRole('button',{name:'Confirm adjustment',exact:true}).click();await expect(page.getByRole('region',{name:'Count worklist',exact:true}).getByText('Approved',{exact:true})).toBeVisible();
+  await record.getByRole('button',{name:'Confirm adjustment',exact:true}).click();await expect(approver.getByRole('region',{name:'Count worklist',exact:true}).getByText('Approved',{exact:true})).toBeVisible();
   const inventory=await a.owner.from('branch_inventory').select('quantity').eq('branch_id',a.branchId).eq('product_id',a.productId).single();expect(Number(inventory.data!.quantity)).toBe(10.25);
   const approvals=await a.owner.from('adjustment_approvals').select('approved_by,reason').eq('count_id',countId);expect(approvals.data).toHaveLength(1);
   const original={...ctx,countId,reason:'TEST inspected both independent signed-in count records'};
