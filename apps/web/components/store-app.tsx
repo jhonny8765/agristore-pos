@@ -8,6 +8,7 @@ import { HeldSaleControl } from "./held-sale";
 import { prepareHeldCheckout,removeHeldSale,heldSaleKey,type HeldSale } from "../lib/held-sale";
 import { DashboardAttention } from "./dashboard-attention";
 import { OverviewAccounts } from "./overview-accounts";
+import { AppUpdateNotice } from "./app-update-notice";
 import { PriceHistory } from "./price-history";
 import { receiptActionCells } from "../lib/receipt-actions";
 import { OverviewDashboard } from "./overview-dashboard";
@@ -74,9 +75,8 @@ import Decimal from "decimal.js";
 import Image from "next/image";
 import { StoreBrand } from "./store-brand";
 import { ProductSetupForm } from "./product-setup-form";
-import { ProductPhoto } from "./product-photo";
+import { CheckoutProduct } from "./checkout-product";
 import { ImportedProductReview } from "./imported-product-review";
-import { kiloUnit } from "../lib/quantity-entry";
 import { resumeBranch } from "../lib/resume-branch";
 import type { SaleEntry } from "../lib/cart";
 import { SaleLineEditor } from "./sale-line-editor";
@@ -308,6 +308,7 @@ export function StoreApp() {
   const [salesCursor, setSalesCursor] = useState<SalesCursor>();
   const [savingSale, setSavingSale] = useState(false);
   const [historyRevision, setHistoryRevision] = useState(0);
+  const [overviewUnconfirmed,setOverviewUnconfirmed]=useState(0);
   const [updateFeedback, setUpdateFeedback] = useState("");
   const [installingUpdate, setInstallingUpdate] = useState(false);
   const updateLock = useRef(false);
@@ -1286,7 +1287,7 @@ export function StoreApp() {
   };
   const descriptions: Record<View, string> = {
     credit: "Track customer invoices, due dates and payments.",
-    pos: "Scan or search products, add to the sale, and complete payment.",
+    pos: "Search, add items, then choose payment.",
     overview: "Your store, at a glance.",
     inventory: "Know what’s on hand, down to the last kilo.",
     receiving: "Track orders and inspect every delivery.",
@@ -1482,8 +1483,9 @@ export function StoreApp() {
           </div>
         </header>
         <main data-view={view} id="main" className="main-content" tabIndex={-1}>
-          {view !== "pos" && view !== "sales" && pageHeading}
+          {view !== "pos" && view !== "sales" && (view!=="credit"||practice) && pageHeading}
           <div className="app-notices">{Notice}</div>
+          {!practice&&<AppUpdateNotice registration={registration} onOpen={()=>setView("settings")}/>}
           {!practice && view === "overview" && (
             <details className="overview-scope-note"><summary>Report scope</summary><p className="muted">
               Sales totals include all confirmed records. Flag, reconciliation
@@ -1574,103 +1576,10 @@ export function StoreApp() {
                   ))}
                 </div>
                 {visible.length ? (
-                  <><h2 className="sr-only">Products</h2><RecordPages className="product-grid" label="Products" resetKey={`${query}:${category}`}>
+                  <><h2 className="sr-only">Products</h2><RecordPages className="product-grid" label="Products" pageSize={6} paginationPosition="bottom" resetKey={`${query}:${category}`}>
                     {visible.map((p) => {
                       const available = productStock(p, stock);
-                      const kilo = kiloUnit(p);
-                      const addLabel =
-                        p.baseUnit === "kg" &&
-                        new Decimal(p.units[0]?.factor ?? "1").eq(1)
-                          ? "Add 1 kg"
-                          : `Add ${p.units[0]?.name ?? "item"}`;
-                      return (
-                        <article
-                          className={
-                            !lease || isStock || installingUpdate
-                              ? "product product-unavailable"
-                              : "product"
-                          }
-                          key={p.id}
-                        >
-                          <ProductPhoto product={p}/>
-                          <div className="product-art">
-                            <span className="product-category">
-                              {p.category}
-                            </span>
-                          </div>
-                          <div className="product-details">
-                            <span className="product-sku">{p.sku}</span>
-                            <h3>{p.name}</h3>
-                            <span className="unit-label">
-                              {p.units[0]?.name}
-                            </span>
-                            <div className="product-footer">
-                              <strong>{p.pricePending?'Confirm price':money(p.units[0]?.price ?? 0)}</strong>
-                              <button
-                                className="add-product"
-                                onClick={() => addProduct(p)}
-                                disabled={
-                                  !lease || isStock || busy || installingUpdate || p.pricePending || p.setupPending || !p.units.length
-                                }
-                                aria-label={`Add ${p.name} — ${addLabel}`}
-                              >
-                                <Plus size={17} />
-                                <span>Add</span>
-                              </button>
-                            </div>
-                            <span
-                              className={
-                                new Decimal(available.quantity).lte(0)
-                                  ? "stock-label low"
-                                  : "stock-label"
-                              }
-                            >
-                              {available.quantity} {available.unit} on hand
-                            </span>
-                            {(p.pricePending||p.setupPending)&&<p className="catalog-warning">{p.setupPending?'Confirm selling unit in Inventory.':'Confirm the printed price in Inventory.'}</p>}
-                            {kilo && !p.pricePending && !p.setupPending && (
-                              <details className="catalog-retail"><summary>Loose selling options</summary><div
-                                className="product-selling"
-                                role="group"
-                                aria-label={`Loose selling options for ${p.name}`}
-                              >
-                                <span>{money(kilo.price)} / kg · loose</span>
-                                <button
-                                  type="button"
-                                  disabled={
-                                    !lease ||
-                                    isStock ||
-                                    busy ||
-                                    installingUpdate
-                                  }
-                                  aria-label={`Sell ${p.name} by weight`}
-                                  onClick={() =>
-                                    addProduct(p, kilo.id, undefined, "weight")
-                                  }
-                                >
-                                  By weight
-                                </button>
-                                <button
-                                  type="button"
-                                  disabled={
-                                    !lease ||
-                                    isStock ||
-                                    busy ||
-                                    installingUpdate ||
-                                    kilo.price <= 0
-                                  }
-                                  aria-label={`Sell ${p.name} by peso amount`}
-                                  onClick={() =>
-                                    addProduct(p, kilo.id, undefined, "budget")
-                                  }
-                                >
-                                  By peso amount
-                                </button>
-                              </div></details>
-                            )}
-                          </div>
-                        </article>
-                      );
+                      return <CheckoutProduct key={p.id} product={p} available={available} unavailable={!lease||isStock||installingUpdate} disabled={!lease||isStock||busy||installingUpdate} onAdd={(unitId,mode)=>addProduct(p,unitId,undefined,mode)}/>;
                     })}
                   </RecordPages></>
                 ) : (
@@ -1761,7 +1670,7 @@ export function StoreApp() {
                   <div className="receipt-empty">
                     <ShoppingBasket size={38} strokeWidth={1.2} />
                     <h3>Ready for the first item.</h3>
-                    <p>Select a product to start a sale.</p>
+                    <p>Add a product to set its quantity and peso discount.</p>
                   </div>
                 )}
                 {!(checkoutDone&&!cart.items.length)&&!practice&&<div className="credit-payment-choice" role="group" aria-label="Payment type"><Button type="button" variant={!cart.credit.enabled?'default':'outline'} disabled={busy||!!cart.creditAttempt} onClick={()=>useCart.setState({credit:{...cart.credit,enabled:false}})}>Cash</Button><Button type="button" variant={cart.credit.enabled?'default':'outline'} disabled={busy||!!cart.creditAttempt} onClick={()=>useCart.setState({credit:{...cart.credit,enabled:true}})}>Credit · 30/60/90 days</Button></div>}
@@ -1849,11 +1758,11 @@ export function StoreApp() {
             </div>
           )}
 
-          {view === "credit" && <CreditWorkspace key={`${member.organizationId}:${branchId}:${member.userId}`} db={db} organizationId={member.organizationId} branchId={branchId} actorId={member.userId} owner={isOwner} online={online} disabled={busy||savingSale||installingUpdate} lease={lease} practice={practice} revision={historyRevision} execute={fn=>run(fn,true,true)}/>}
+          {view === "credit" && <CreditWorkspace standaloneHeading key={`${member.organizationId}:${branchId}:${member.userId}`} db={db} organizationId={member.organizationId} branchId={branchId} actorId={member.userId} owner={isOwner} online={online} disabled={busy||savingSale||installingUpdate} lease={lease} practice={practice} revision={historyRevision} execute={fn=>run(fn,true,true)}/>}
           {view === "overview" && (
             <>{practice&&<OverviewDashboard figures={[money(sales.reduce((n,r)=>n+r.payload.total,0)),String(sales.length),money(sales.length?Math.round(sales.reduce((n,r)=>n+r.payload.total,0)/sales.length):0),money(sales.reduce((n,r)=>n+r.payload.total,0))]} trend={Object.entries(sales.reduce<Record<string,number>>((a,r)=>{const date=new Date(Date.parse(r.payload.occurredAt)+8*3600000).toISOString().slice(0,10);a[date]=(a[date]??0)+r.payload.total;return a;},{})).sort(([a],[b])=>a.localeCompare(b)).map(([date,grossSales])=>({date,grossSales:String(grossSales)}))} topProducts={products.flatMap(p=>{const items=sales.flatMap(r=>r.payload.items).filter(i=>i.productId===p.id);return items.length?[{id:p.id,name:p.name,product:p,quantity:items.reduce((n,i)=>n.plus(new Decimal(i.quantity).mul(i.factor)),new Decimal(0)).toFixed(),baseUnit:p.baseUnit,amount:money(items.reduce((n,i)=>n+i.lineTotal,0))}]:[];})} attention={<DashboardAttention practice products={products} stock={stock} pendingCounts={0} onInventory={pane=>{setInventoryTab(pane);setView("inventory");}} onCounts={()=>setView("counts")}/>} activity={<dl className="compact-ledger"><div><dt>Practice receipts saved</dt><dd>{sales.length}</dd></div><div><dt>Live uploads</dt><dd>None</dd></div><div><dt>Stock scope</dt><dd>Local practice</dd></div></dl>} cash={<><dl className="compact-ledger"><div><dt>Practice cash sales</dt><dd>{money(sales.reduce((n,r)=>n+r.payload.total,0))}</dd></div><div><dt>Drawer count</dt><dd>Not counted</dd></div></dl><p className="muted">Separate from business cash.</p></>} scope="Practice overview · Local-only sample sales. Your live business is separate."/>}
-              {!practice && (isOwner || member.role === "manager") && <SalesAnalytics catalog={products} attention={<DashboardAttention canReview={isOwner} products={products} stock={stock} pendingCounts={Number(summary.pendingCounts??0)} onInventory={pane=>{setInventoryTab(pane);setView("inventory");}} onCounts={()=>setView("counts")}/>} key={`sales-analytics:${member.organizationId}:${branchId}:${member.userId}`} organizationId={member.organizationId} branchId={branchId} branchName={selectedBranch?.name ?? "Selected branch"} online={online} disabled={busy} revision={historyRevision} />}
-              {!practice&&isOwner&&<OverviewAccounts key={`${member.organizationId}:${branchId}`} organizationId={member.organizationId} branchId={branchId} online={online} revision={historyRevision} onCustomers={()=>setView("credit")} onSuppliers={()=>{setPurchasingTab("accounts");setView("receiving");}}/>}
+              {!practice && (isOwner || member.role === "manager") && <SalesAnalytics accounts={isOwner?<OverviewAccounts key={`${member.organizationId}:${branchId}`} organizationId={member.organizationId} branchId={branchId} online={online} revision={historyRevision} onCustomers={()=>setView("credit")} onSuppliers={()=>{setPurchasingTab("accounts");setView("receiving");}}onUnconfirmed={setOverviewUnconfirmed}/>:undefined} catalog={products} attention={<DashboardAttention canReview={isOwner} unconfirmedDueCount={overviewUnconfirmed} onCustomers={()=>setView("credit")} products={products} stock={stock} pendingCounts={Number(summary.pendingCounts??0)} onInventory={pane=>{setInventoryTab(pane);setView("inventory");}} onCounts={()=>setView("counts")}/>} key={`sales-analytics:${member.organizationId}:${branchId}:${member.userId}`} organizationId={member.organizationId} branchId={branchId} branchName={selectedBranch?.name ?? "Selected branch"} online={online} disabled={busy} revision={historyRevision} />}
+
               <details className="extra-registers"><summary>All-time totals, cash reconciliation & audit</summary><h2>All-time recorded totals</h2>
               <div className="summary-strip">
                 <div>
@@ -3531,7 +3440,7 @@ export function StoreApp() {
           <span>
             {practice
               ? "Sample data · local practice"
-              : `${selectedBranch?.code ?? "Select a branch"} · Cash sales only`}
+              : `${selectedBranch?.name ?? "Select a branch"} · Cash and credit sales`}
             <span className="footer-dot">·</span>Not a tax invoice system
           </span>
         </footer>

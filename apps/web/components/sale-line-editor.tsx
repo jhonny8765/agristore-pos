@@ -128,7 +128,7 @@ export function SaleLineEditor({
       <div className="receipt-item-photo"><ProductPhoto product={product}/></div>
       <div className="receipt-item-top">
         <strong>{item.name}</strong>
-        {canDiscount&&<label className="line-discount"><span>Discount ₱</span><input aria-label={`Discount (₱) for ${item.name}`} inputMode="decimal" autoComplete="off" value={discountKind==='amount'?(discount??''):(amounts.discount?moneyInput(amounts.discount):'')} placeholder="0.00" maxLength={17} disabled={disabled} aria-invalid={!!discountError} aria-describedby={discountError?errorId+'-discount':undefined} onChange={event=>setDiscount(event.target.value)}/></label>}
+        {canDiscount&&<label className="line-discount"><span>Discount ₱</span><input aria-label={`Discount (₱) for ${item.name}`} title="Peso discount for this product line" inputMode="decimal" autoComplete="off" value={discountKind==='amount'?(discount??''):(amounts.discount?moneyInput(amounts.discount):'')} placeholder="0.00" maxLength={17} disabled={disabled} aria-invalid={!!discountError} aria-describedby={discountError?errorId+'-discount':errorId+'-discount-help'} onChange={event=>setDiscount(event.target.value)}/><small className="sr-only" id={errorId+'-discount-help'}>Amount off this entire line, not a percentage.</small></label>}
         <button
           disabled={disabled}
           aria-label={`Remove ${item.name}`}
