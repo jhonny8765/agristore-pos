@@ -192,6 +192,14 @@ const discountSale={...sale,...ctx(230),transactionId:id(233),deviceId:id(231),s
 command('record_sale',discountSale);
 const discountRefund={...ctx(230),saleId:id(233),refundId:id(234),shiftId:discountShift.shiftId,expectedRefundVersion:0,expectedAmount:1440,reference:'TEST discounted half',reason:'TEST half of actual discounted cash',physicalConfirmed:true,items:[{lineIndex:0,quantity:'0.5',returnedQuantity:'0',disposition:'not_returned'}]};
 command('partial_refund_sale',discountRefund);command('close_shift',{...ctx(230),shiftId:discountShift.shiftId,countedCash:11440});
+// Supplier debts and verified external payments survive without touching tills.
+const supplierAccount=command('create_supplier',{...ctx(),name:'TEST restored supplier account',contact:'TEST only'});
+const supplierDay=new Date(Date.now()+8*3600000).toISOString().slice(0,10),supplierDue=new Date(Date.parse(supplierDay+'T00:00:00Z')+60*86400000).toISOString().slice(0,10);
+const supplierBill={...ctx(),requestId:id(240),supplierId:supplierAccount.id,reference:'TEST-SUPPLIER-RESTORE',issuedOn:supplierDay,term:60,expectedDueOn:supplierDue,amount:100001,receiptId:null,replacesId:null,reason:'TEST original stock invoice outside till',confirmed:true};
+command('supplier_record_invoice',supplierBill);
+const supplierPayment={...ctx(),requestId:id(241),billId:id(240),expectedVersion:1,expectedBalance:100001,amount:40001,method:'bank',paidOn:supplierDay,reference:'TEST-SUPPLIER-BANK-RESTORE',reason:'TEST verified external bank payment',confirmed:true};
+command('supplier_record_payment',supplierPayment);
+command('supplier_credit_note',{...supplierPayment,requestId:id(242),expectedVersion:2,expectedBalance:60000,amount:10000,method:null,reference:'TEST-SUPPLIER-CREDIT-RESTORE'});
 const original = fingerprints("postgres");
 const before = command("snapshot",{...ctx(),transactionIds:[id(9)]});
 assert.equal(before.stocks[0].quantity,"10.250000");
@@ -234,6 +242,11 @@ try {
     "/tmp/agristore-verified.dump",
   ]);
   assert.deepEqual(fingerprints(database),original,"Every retained fixture row must survive dump/restore unchanged");
+    assert.equal(command('supplier_record_invoice',supplierBill,database).duplicate,true);assert.equal(command('supplier_record_payment',supplierPayment,database).duplicate,true);
+    const restoredSupplier=command('supplier_invoice_history',{...ctx(),billId:id(240)},database);assert.equal(restoredSupplier.invoice.balance,50000);assert.equal(restoredSupplier.invoice.dueOn,supplierDue);assert.equal(restoredSupplier.entries.length,3);
+    command('supplier_reverse_entry',{...supplierPayment,requestId:id(243),entryId:id(242),expectedVersion:3,expectedBalance:50000,reference:'TEST-RESTORED-SUPPLIER-CREDIT-REVERSAL'},database);
+    command('supplier_record_payment',{...supplierPayment,requestId:id(244),expectedVersion:4,expectedBalance:60000,amount:60000,reference:'TEST-RESTORED-SUPPLIER-REMAINDER'},database);
+    assert.equal(command('supplier_invoice_history',{...ctx(),billId:id(240)},database).invoice.balance,0);
   assert.equal(command('record_sale',discountSale,database).status,'duplicate');
   const restoredDiscount=command('partial_refund_plan',{...ctx(230),saleId:id(233)},database);assert.equal(restoredDiscount.remainingCash,1440);assert.equal(restoredDiscount.lines[0].discountBps,1000);
   assert.equal(command('record_sale',archivedCash,database).status,'duplicate');

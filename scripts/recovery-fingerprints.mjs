@@ -1,6 +1,7 @@
 export const retainedTables=[
  'app_private.test_history_archives','app_private.archived_test_sales',
  'credit_clients','credit_invoices','credit_entries','credit_due_history','app_private.credit_import_batches',
+ 'supplier_bills','supplier_bill_entries',
  'sale_refund_corrections','app_private.refund_correction_replacements',
  'sale_partial_refunds','app_private.partial_refund_lines','app_private.delivery_reversals',
  'suppliers','purchase_receipts','product_batches','app_private.purchase_orders','app_private.purchase_order_lines','app_private.purchase_order_events','app_private.delivery_inspections','app_private.delivery_inspection_lines','app_private.supplier_claim_events',

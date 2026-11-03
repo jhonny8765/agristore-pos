@@ -38,6 +38,12 @@ function deferred<T>() {
   return { promise, resolve, reject };
 }
 describe("online inventory operation recovery", () => {
+  it.each(['supplier_record_invoice','supplier_record_payment','supplier_credit_note','supplier_reverse_entry','supplier_void_invoice'])('restores the original owner-only %s request without replacing its identity',async action=>{
+    const source=await db(),target=await db(),data={organizationId:uuid(1),branchId:uuid(2),billId:uuid(9),amount:40001,expectedBalance:100001,expectedVersion:1,reference:'TEST supplier document',reason:'TEST actual external payment',confirmed:true};
+    vi.mocked(command).mockRejectedValueOnce(new Error('TEST response lost'));await expect(onlineOperation(source,uuid(4),action,data,'requestId')).rejects.toThrow();const original=(await pendingOperations(source))[0],file=await exportRecovery(source);
+    await expect(importRecovery(target,file,[],{organizationId:uuid(1),branchId:uuid(2),cashierId:uuid(4),role:'cashier'})).rejects.toThrow('Only the owner');
+    await target.settings.delete('lease');await importRecovery(target,file,[],{organizationId:uuid(1),branchId:uuid(2),cashierId:uuid(4),role:'owner'});const restored=(await pendingOperations(target))[0];expect(restored.data).toEqual(original.data);expect(restored.fingerprint).toBe(original.fingerprint);vi.mocked(command).mockResolvedValueOnce({duplicate:true});await retryOperation(target,uuid(4),restored);expect(vi.mocked(command).mock.calls.at(-1)).toEqual([action,original.data]);expect(await pendingOperations(target)).toHaveLength(0);
+  });
   it("round-trips a serialized pending sale with optional metadata and retains its permanent identity", async () => {
     const source = await db(), target = await db();
     const original = await saveCheckout(source, sale());

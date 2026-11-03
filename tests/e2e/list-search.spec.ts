@@ -18,7 +18,7 @@ test.beforeEach(async ({ page }) => {
   await page.goto('/');
   const links=await page.locator('link[rel="stylesheet"]').evaluateAll(nodes=>nodes.map(n=>(n as HTMLLinkElement).href));
   await page.route("**/__isolated-reference__",route=>route.fulfill({contentType:"text/html",body:`<html lang="en"><head><title>Isolated UI check</title>${links.map(href=>`<link rel="stylesheet" href="${href}">`).join('')}</head><body><div id="root"></div></body></html>`}));await page.goto("/__isolated-reference__");
-  await page.addStyleTag({ content: styles.replace('@import "./reference-ui.css";', '') }); await page.addScriptTag({ content: bundle });
+  await page.addStyleTag({ content: styles.replace(/@import\s+["']\.\/[^"']+["'];/g, '') }); await page.addScriptTag({ content: bundle });
 });
 
 test("saved lists stay at ten, can page in both directions and clamp after refresh", async ({ page }) => {
