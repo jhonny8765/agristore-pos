@@ -25,6 +25,10 @@ async function login(page:Page,account:{email:string;password:string}){
  await page.goto('/');await page.getByLabel('Email address',{exact:true}).fill(account.email);await page.getByLabel('Password',{exact:true}).fill(account.password);
  await page.getByRole('button',{name:'Sign in',exact:true}).click();await expect(page.getByRole('button',{name:'Stock counts',exact:true})).toBeVisible();
  await page.getByRole('button',{name:'Stock counts',exact:true}).click();await expect(page.getByRole('heading',{name:'Blind stock counts',exact:true})).toBeVisible();
+ if(await page.getByRole('form',{name:'Start a blind count',exact:true}).isVisible()){
+  await page.getByRole('combobox',{name:'Product / batch',exact:true}).fill('TEST blind feeds');
+  await page.getByRole('option',{name:'TEST blind feeds (kg)',exact:true}).click();
+ }
 }
 test('blind first entry, independent recount and third-person owner approval complete through separate signed-in browsers',async({page,browser})=>{
  const a=await fixture();const context2=await browser.newContext(),context3=await browser.newContext();
@@ -57,7 +61,7 @@ test('blind first entry, independent recount and third-person owner approval com
    const scan=await new AxeBuilder({page:approver}).include('.blind-counts').withTags(['wcag2a','wcag2aa','wcag21a','wcag21aa','wcag22aa']).analyze();expect(scan.violations).toEqual([]);
    await approver.screenshot({path:`test-results/blind-counts-review-${width}.png`,fullPage:true});
   }
-  await record.getByRole('button',{name:'Confirm adjustment',exact:true}).click();await expect(record.getByText('Approved',{exact:true})).toBeVisible();
+  await record.getByRole('button',{name:'Confirm adjustment',exact:true}).click();await expect(page.getByRole('region',{name:'Count worklist',exact:true}).getByText('Approved',{exact:true})).toBeVisible();
   const inventory=await a.owner.from('branch_inventory').select('quantity').eq('branch_id',a.branchId).eq('product_id',a.productId).single();expect(Number(inventory.data!.quantity)).toBe(10.25);
   const approvals=await a.owner.from('adjustment_approvals').select('approved_by,reason').eq('count_id',countId);expect(approvals.data).toHaveLength(1);
   const original={...ctx,countId,reason:'TEST inspected both independent signed-in count records'};

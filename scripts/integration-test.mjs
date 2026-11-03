@@ -32,7 +32,7 @@ const env = {
 // status fields, including local administrative credentials, stay unused.
 for (const [command, args] of [
   ["npm", ["run", process.env.AGRISTORE_HOSTING_TARGET === "cloudflare" ? "build:cloudflare" : "build"]],
-  ["npx", ["playwright", "test", "--config=playwright.integration.config.ts"]],
+  ["npx", ["playwright", "test", "--config=playwright.integration.config.ts",...(process.env.AGRISTORE_INTEGRATION_GREP?["--grep",process.env.AGRISTORE_INTEGRATION_GREP]:[])]],
 ]) {
   const result = spawnSync(command, args, { env, stdio: "inherit" });
   if (result.status !== 0) process.exit(result.status ?? 1);

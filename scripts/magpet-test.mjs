@@ -7,5 +7,5 @@ if(local.API_URL!=='http://127.0.0.1:55321'||!local.ANON_KEY)throw new Error('On
 // Reuse the same loopback app build produced by the preceding integration step.
 // No administrative API key or hosted project is passed to the app/browser.
 const env={...process.env,NEXT_PUBLIC_SUPABASE_URL:local.API_URL,NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY:local.ANON_KEY,AGRISTORE_LOCAL_INTEGRATION:'1',AGRISTORE_MAGPET_PILOT:'1'};
-const result=spawnSync('npx',['playwright','test','--config=playwright.magpet.config.ts'],{env,stdio:'inherit'});
+const result=spawnSync('npx',['playwright','test','--config=playwright.magpet.config.ts',...(process.env.AGRISTORE_INTEGRATION_GREP?['--grep',process.env.AGRISTORE_INTEGRATION_GREP]:[])],{env,stdio:'inherit'});
 process.exitCode=result.status??1;

@@ -7,9 +7,14 @@ on:
         type: choice
         options: [all, application, database]
         default: all
+      integration_grep:
+        description: Optional focused integration pattern (empty runs the full suite)
+        type: string
+        default: ''
 env:
   AGRISTORE_HOSTING_TARGET: cloudflare
   WRANGLER_SEND_METRICS: "false"
+  AGRISTORE_INTEGRATION_GREP: ${{ inputs.integration_grep }}
 permissions:
   contents: read
 jobs:
