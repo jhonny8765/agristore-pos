@@ -247,7 +247,9 @@ test("invalid edits hide stale prices while valid items and unconfirmed peso est
   await practice(page);
   await page.getByLabel("Unit for Grower feeds").selectOption({ label: "Kilo" });
   await page.getByLabel("Quantity (kg) for Grower feeds", { exact: true }).fill("0.5");
+  await page.getByRole("textbox",{name:"Search products",exact:true}).fill("Animal vitamin mix");
   await page.getByRole("button", { name: "Add Animal vitamin mix" }).click();
+  await page.getByRole("textbox",{name:"Search products",exact:true}).fill("");
   const feed = page.locator(".receipt-item").filter({ hasText: "Grower feeds" });
   const vitamin = page.locator(".receipt-item").filter({ hasText: "Animal vitamin mix" });
   const due = page.locator(".amount-due strong");

@@ -245,7 +245,9 @@ test("desktop and mobile inspection captures with no horizontal page overflow", 
   await page.getByRole("textbox", { name: "Search products" }).fill("sprayer");
   await expect(page.locator(".product")).toHaveCount(1);
   await page.getByRole("button", { name: "Reset search and filters" }).click();
-  await expect(page.locator(".product")).toHaveCount(8);
+  await expect(page.locator(".product")).toHaveCount(6);
+  await page.getByRole("navigation",{name:"Products pages below",exact:true}).getByRole("button",{name:"Next",exact:true}).click();
+  await expect(page.locator(".product")).toHaveCount(2);
 });
 test("200 browser checkouts persist through a simulated hour offline", async ({
   page,
