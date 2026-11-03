@@ -92,10 +92,10 @@ create function app_private.credit_command(action text,data jsonb) returns jsonb
 declare
  org uuid:=(data->>'organizationId')::uuid;branch uuid:=(data->>'branchId')::uuid;uid uuid:=auth.uid();
  m public.staff_memberships;client public.credit_clients;sh public.cashier_shifts;inv public.credit_invoices;s public.sales;prod public.products;un public.product_units;pr public.unit_prices;
- ident uuid;row_item jsonb;r jsonb;prior public.stock_control_events;entry public.credit_entries;original public.credit_entries;
+ ident uuid;row_item jsonb;r jsonb;prior public.stock_control_events;original public.credit_entries;
  amount bigint;paid bigint;balance bigint;outstanding bigint;overdue bigint;sum_total bigint:=0;q numeric;factor numeric;available numeric;b_id uuid;
  term integer;at_time timestamptz:=clock_timestamp();today date:=(now() at time zone 'Asia/Manila')::date;
- plan jsonb;quote jsonb;cash_refund bigint;debt_reduction bigint;result jsonb;ref text;v_clients jsonb;v_invoices jsonb;v_entries jsonb;offset_n integer:=coalesce((data->>'offset')::integer,0);client_filter uuid:=(data->>'clientId')::uuid;
+ plan jsonb;quote jsonb;cash_refund bigint;debt_reduction bigint;ref text;offset_n integer:=coalesce((data->>'offset')::integer,0);client_filter uuid:=(data->>'clientId')::uuid;
 begin
  if org is null or branch is null or not app_private.can_checkout(org,branch) or not exists(select 1 from public.branches b where b.id=branch and b.organization_id=org and b.active) then raise exception 'Only authorized sales staff can access client credit' using errcode='42501';end if;
  select * into m from public.staff_memberships where organization_id=org and user_id=uid and active and (role='owner' or branch_id=branch) order by (role='owner') desc limit 1 for share;
