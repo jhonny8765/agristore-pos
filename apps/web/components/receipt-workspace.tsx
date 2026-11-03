@@ -10,14 +10,14 @@ import {WorkspaceStat,useBusinessClock} from './workspace-ui';
 import {Button} from './ui/button';
 import {SaleReceiptPrint} from './sale-receipt-print';
 
-export function ReceiptWorkspace({rows,products,branchName,actions,practice,header}:{header?:ReactNode;rows:ReceiptView[];products:Product[];branchName:string;actions:(row:ReceiptView)=>ReactNode;practice:boolean}) {
+export function ReceiptWorkspace({rows,products,branchName,actions,practice,header,onRecords}:{onRecords?:()=>void;header?:ReactNode;rows:ReceiptView[];products:Product[];branchName:string;actions:(row:ReceiptView)=>ReactNode;practice:boolean}) {
  const now=useBusinessClock();
- const [query,setQuery]=useState(''),[period,setPeriod]=useState('all'),[status,setStatus]=useState('all'),[selectedId,setSelectedId]=useState('');
+ const [query,setQuery]=useState(''),[period,setPeriod]=useState('month'),[status,setStatus]=useState('all'),[selectedId,setSelectedId]=useState('');
  const filtered=rows.filter(r=>receiptMatches(r,query,period,status,now)).sort((a,b)=>b.occurredAt.localeCompare(a.occurredAt)||b.id.localeCompare(a.id));
  const selected=filtered.find(r=>r.id===selectedId)??filtered[0];
  const gross=filtered.reduce((n,r)=>n+r.total,0),affected=filtered.filter(r=>r.status==='partial'||r.status==='refunded').length;
  return <div className="receipt-workspace"><div className="receipt-register">{header}
-  <div className="register-filters"><label className="field search-field"><span className="sr-only">Search receipt number</span><Search size={19} aria-hidden="true"/><input type="search" placeholder="Search receipt number or transaction ID" value={query} onChange={e=>setQuery(e.target.value)}/></label>
+  {onRecords&&<div className="report-tools"><Button variant="outline" onClick={onRecords}>Search all receipts & export</Button><p className="scope-note">Daily view shows recent loaded receipts. Full history stays available.</p></div>}<div className="register-filters"><label className="field search-field"><span className="sr-only">Search receipt number</span><Search size={19} aria-hidden="true"/><input type="search" placeholder="Search receipt number or transaction ID" value={query} onChange={e=>setQuery(e.target.value)}/></label>
    <label className="field"><span className="sr-only">Receipt period</span><select aria-label="Receipt period" value={period} onChange={e=>setPeriod(e.target.value)}><option value="all">All dates</option><option value="today">Today</option><option value="week">This week</option><option value="month">This month</option></select></label>
    <label className="field"><span className="sr-only">Receipt status</span><select aria-label="Receipt status" value={status} onChange={e=>setStatus(e.target.value)}><option value="all">All statuses</option>{Object.entries(receiptStatus).map(([id,label])=><option key={id} value={id}>{label}</option>)}</select></label>
   </div>

@@ -1,4 +1,6 @@
 "use client";
+import {RecordReports} from "./record-reports";
+import type {RecordKind} from "../lib/record-reports";
 import { StateBadge } from "./state-badge";
 import {CreditWorkspace} from './credit-workspace';
 import {CreditCheckout} from './credit-checkout';
@@ -151,6 +153,7 @@ import { preferredBatch, outstandingTransfer } from "../lib/stock-controls";
 import type { HistoryKind } from "../lib/history";
 
 type View =
+  | "records"
   | "credit"
   | "pos"
   | "overview"
@@ -173,6 +176,7 @@ const navigation = [
   { id: "credit", label: "Customers & credit", icon: Users },
 ] as const;
 const viewTables: Record<View, string[]> = {
+  records: [],
   credit: [],
   pos: [],
   overview: ["audit_events", "cashier_shifts", "inventory_movements"],
@@ -323,6 +327,7 @@ export function StoreApp() {
     kind: "pending" | "success" | "error";
     text: string;
   }>();
+  const [recordTarget,setRecordTarget]=useState<{kind:RecordKind;entity?:{id:string;name:string};back:View}>({kind:"receipts",back:"overview"});
   const cart = useCart();
   const committing = useRef(false);
   const operationBusy = useRef(false);
@@ -350,6 +355,7 @@ export function StoreApp() {
   const onlineCashPending=operations.find(op=>op.action==='record_online_sale');
   const branchLocked = branchList.some(b => b.managementLocked);
   const isOwner = member?.role === "owner";
+  const openRecords=(kind:RecordKind="receipts",entity?:{id:string;name:string})=>{if(!isOwner||practice)return;setRecordTarget({kind,entity,back:view==="records"?recordTarget.back:view});setView("records");};
   const recoveryScopeKey = member && branchId
     ? JSON.stringify([member.organizationId, branchId, member.userId, member.role]) : undefined;
   const currentRecoveryArchive = recoveryArchive?.scope === recoveryScopeKey ? recoveryArchive : undefined;
@@ -1003,7 +1009,7 @@ export function StoreApp() {
     if(view === "sales") {
       const actionCells=practice?new Map<string,React.ReactNode>():receiptActionCells(body);
       const receipts:ReceiptView[]=practice?sales.map(s=>({id:s.id,receipt:s.receipt??s.id.slice(0,8),occurredAt:s.payload.occurredAt,total:s.payload.total,cashReceived:s.payload.cashReceived,status:"local",payload:s.payload,original:s as unknown as Row})):branchSales.map(s=>({id:String(s.id),receipt:String(s.receipt??String(s.id).slice(0,8)),occurredAt:String(s.occurred_at),total:Number(s.total),cashReceived:Number(s.cash_received),status:Array.isArray(s.sale_refund_corrections)&&s.sale_refund_corrections.length?"corrected":s.sale_reversals&&(!Array.isArray(s.sale_reversals)||s.sale_reversals.length)?"refunded":Array.isArray(s.sale_partial_refunds)&&s.sale_partial_refunds.length?"partial":s.review_required===true?"review":"completed",payload:s.payload as Sale,original:s}));
-      return <ReceiptWorkspace header={pageHeading} key={`${member?.organizationId}:${branchId}:${practice}`} rows={receipts} products={products} branchName={selectedBranch?.name??"Selected branch"} practice={practice} actions={r=>actionCells.get(r.id)}/>;
+      return <ReceiptWorkspace onRecords={!practice&&isOwner?()=>openRecords("receipts"):undefined} header={pageHeading} key={`${member?.organizationId}:${branchId}:${practice}`} rows={receipts} products={products} branchName={selectedBranch?.name??"Selected branch"} practice={practice} actions={r=>actionCells.get(r.id)}/>;
     }
     return (<div
       className={kind ? "table-wrap history-table" : "table-wrap"}
@@ -1280,6 +1286,7 @@ export function StoreApp() {
   const branchCash=(id:string)=>{const row=branchTotals.find(t=>t.branchId===id);return (((row?.exactTotals??{}) as Row).total??row?.total??0) as number|string;};
   const branchTotals = (summary.branchTotals ?? []) as Row[];
   const titles: Record<View, string> = {
+    records: "Records & exports",
     credit: "Customers & credit",
     pos: "Checkout",
     overview: "Overview",
@@ -1293,6 +1300,7 @@ export function StoreApp() {
     settings: "Store settings",
   };
   const descriptions: Record<View, string> = {
+    records: "Search full history and export the records you need.",
     credit: "Track customer invoices, due dates and payments.",
     pos: "Search, add items, then choose payment.",
     overview: "Your store, at a glance.",
@@ -1314,9 +1322,10 @@ export function StoreApp() {
               <p>{descriptions[view]}</p>
             </div>
             <div className="heading-actions">
+              {!practice&&isOwner&&["overview","inventory","counts","receiving"].includes(view)&&!(view==="receiving"&&purchasingTab==="accounts")&&<Button variant="outline" onClick={()=>openRecords(view==="receiving"?"purchases":view==="inventory"?"stock":view==="counts"?"audit":"receipts")}>Records & exports</Button>}
 
 
-              {!practice && view !== "pos" && view !== "sync" && view !== "overview" && view !== "credit" && !(view === "receiving" && purchasingTab === "accounts") && (
+              {!practice && view !== "pos" && view !== "sync" && view !== "overview" && view !== "credit" && view !== "records" && !(view === "receiving" && purchasingTab === "accounts") && (
                 <Button
                   variant="outline"
                   size="sm"
@@ -1360,8 +1369,8 @@ export function StoreApp() {
                 key={id}
                 title={label}
                 aria-label={id === "pos" ? `${label} POS` : label}
-                className={view === id || id === "inventory" && view === "counts" ? "nav-item active" : "nav-item"}
-                aria-current={view === id || id === "inventory" && view === "counts" ? "page" : undefined}
+                className={view === id || id === "inventory" && view === "counts" || id === "overview" && view === "records" ? "nav-item active" : "nav-item"}
+                aria-current={view === id || id === "inventory" && view === "counts" || id === "overview" && view === "records" ? "page" : undefined}
                 onClick={() => setView(id)}
               >
                 <Icon size={19} />
@@ -1492,6 +1501,7 @@ export function StoreApp() {
         <main data-view={view} id="main" className="main-content" tabIndex={-1}>
           {view !== "pos" && view !== "sales" && (view!=="credit"||practice) && pageHeading}
           <div className="app-notices">{Notice}</div>
+          {view==="records"&&!practice&&isOwner&&<><Button variant="ghost" onClick={()=>setView(recordTarget.back)}>Back to {titles[recordTarget.back]}</Button><RecordReports key={`${member.organizationId}:${branchId}:${recordTarget.kind}:${recordTarget.entity?.id??"all"}`} organizationId={member.organizationId} branchId={branchId} branchName={selectedBranch?.name??"Selected branch"} online={online} initialKind={recordTarget.kind} entity={recordTarget.entity}/></>}
           {!practice&&<AppUpdateNotice registration={registration} onOpen={()=>setView("settings")}/>}
           {!practice && view === "overview" && (
             <details className="overview-scope-note"><summary>Report scope</summary><p className="muted">
@@ -1770,7 +1780,7 @@ export function StoreApp() {
             </div>
           )}
 
-          {view === "credit" && <CreditWorkspace standaloneHeading key={`${member.organizationId}:${branchId}:${member.userId}`} db={db} organizationId={member.organizationId} branchId={branchId} actorId={member.userId} owner={isOwner} online={online} disabled={busy||savingSale||installingUpdate} lease={lease} practice={practice} revision={historyRevision} execute={fn=>run(fn,true,true)}/>}
+          {view === "credit" && <CreditWorkspace onRecords={isOwner?openRecords:undefined} standaloneHeading key={`${member.organizationId}:${branchId}:${member.userId}`} db={db} organizationId={member.organizationId} branchId={branchId} actorId={member.userId} owner={isOwner} online={online} disabled={busy||savingSale||installingUpdate} lease={lease} practice={practice} revision={historyRevision} execute={fn=>run(fn,true,true)}/>}
           {view === "overview" && (
             <>{practice&&<OverviewDashboard figures={[money(sales.reduce((n,r)=>n+r.payload.total,0)),String(sales.length),money(sales.length?Math.round(sales.reduce((n,r)=>n+r.payload.total,0)/sales.length):0),money(sales.reduce((n,r)=>n+r.payload.total,0))]} trend={Object.entries(sales.reduce<Record<string,number>>((a,r)=>{const date=new Date(Date.parse(r.payload.occurredAt)+8*3600000).toISOString().slice(0,10);a[date]=(a[date]??0)+r.payload.total;return a;},{})).sort(([a],[b])=>a.localeCompare(b)).map(([date,grossSales])=>({date,grossSales:String(grossSales)}))} topProducts={products.flatMap(p=>{const items=sales.flatMap(r=>r.payload.items).filter(i=>i.productId===p.id);return items.length?[{id:p.id,name:p.name,product:p,quantity:items.reduce((n,i)=>n.plus(new Decimal(i.quantity).mul(i.factor)),new Decimal(0)).toFixed(),baseUnit:p.baseUnit,amount:money(items.reduce((n,i)=>n+i.lineTotal,0))}]:[];})} attention={<DashboardAttention practice products={products} stock={stock} pendingCounts={0} onInventory={pane=>{setInventoryTab(pane);setView("inventory");}} onCounts={()=>setView("counts")}/>} activity={<dl className="compact-ledger"><div><dt>Practice receipts saved</dt><dd>{sales.length}</dd></div><div><dt>Live uploads</dt><dd>None</dd></div><div><dt>Stock scope</dt><dd>Local practice</dd></div></dl>} cash={<><dl className="compact-ledger"><div><dt>Practice cash sales</dt><dd>{money(sales.reduce((n,r)=>n+r.payload.total,0))}</dd></div><div><dt>Drawer count</dt><dd>Not counted</dd></div></dl><p className="muted">Separate from business cash.</p></>} scope="Practice overview · Local-only sample sales. Your live business is separate."/>}
               {!practice && (isOwner || member.role === "manager") && <SalesAnalytics accounts={isOwner?<OverviewAccounts key={`${member.organizationId}:${branchId}`} organizationId={member.organizationId} branchId={branchId} online={online} revision={historyRevision} onCustomers={()=>setView("credit")} onSuppliers={()=>{setPurchasingTab("accounts");setView("receiving");}}onUnconfirmed={setOverviewUnconfirmed}/>:undefined} catalog={products} attention={<DashboardAttention canReview={isOwner} unconfirmedDueCount={overviewUnconfirmed} onCustomers={()=>setView("credit")} products={products} stock={stock} pendingCounts={Number(summary.pendingCounts??0)} onInventory={pane=>{setInventoryTab(pane);setView("inventory");}} onCounts={()=>setView("counts")}/>} key={`sales-analytics:${member.organizationId}:${branchId}:${member.userId}`} organizationId={member.organizationId} branchId={branchId} branchName={selectedBranch?.name ?? "Selected branch"} online={online} disabled={busy} revision={historyRevision} />}
@@ -2000,7 +2010,7 @@ export function StoreApp() {
           )}
 
           {view === "receiving" && (
-            <><WorkspaceTabs label="Purchasing sections" value={["accounts","suppliers"].includes(purchasingTab)?purchasingTab:"deliveries"} onChange={id=>setPurchasingTab(id==="deliveries"?"orders":id)} tabs={[{id:"deliveries",label:"Orders & deliveries"},...(isOwner&&!practice?[{id:"accounts",label:"Supplier bills"}]:[]),{id:"suppliers",label:"Suppliers"}]}/>{!["accounts","suppliers"].includes(purchasingTab)&&<WorkspaceTabs label="Orders and receiving steps" value={purchasingTab} onChange={setPurchasingTab} tabs={[{id:"orders",label:"Orders"},{id:"inspections",label:"Inspect delivery"},{id:"quick",label:"Quick receipt"},{id:"history",label:"Receiving history"},...(isOwner?[{id:"opening",label:"Opening stock"}]:[])]}/>}{!practice&&isOwner&&purchasingTab==="accounts"&&<SupplierAccounts key={`supplier-accounts:${member.organizationId}:${branchId}`} db={db} organizationId={member.organizationId} branchId={branchId} actorId={member.userId} online={online} disabled={busy} execute={fn=>run(fn,true,true)}/>}{practice&&purchasingTab==="orders"&&<div className="practice-purchasing"><Button className="practice-order-request" disabled title="Sign in to request a business purchase order"><Plus size={20}/>Request purchase order</Button><div className="workspace-stats three"><WorkspaceStat icon={ClipboardCheck} label="Awaiting approval" value="—"/><WorkspaceStat icon={Truck} label="Awaiting delivery" value="—"/><WorkspaceStat icon={Package} label="Supplier claims" value="—"/></div><OrderWorkspace orders={[]} products={products} disabled actions={()=>null} onInspect={()=>{}}/><p className="scope-note">Business purchasing requires signing in. Practice checkout does not create orders or stock.</p></div>}
+            <><WorkspaceTabs label="Purchasing sections" value={["accounts","suppliers"].includes(purchasingTab)?purchasingTab:"deliveries"} onChange={id=>setPurchasingTab(id==="deliveries"?"orders":id)} tabs={[{id:"deliveries",label:"Orders & deliveries"},...(isOwner&&!practice?[{id:"accounts",label:"Supplier bills"}]:[]),{id:"suppliers",label:"Suppliers"}]}/>{!["accounts","suppliers"].includes(purchasingTab)&&<WorkspaceTabs label="Orders and receiving steps" value={purchasingTab} onChange={setPurchasingTab} tabs={[{id:"orders",label:"Orders"},{id:"inspections",label:"Inspect delivery"},{id:"quick",label:"Quick receipt"},{id:"history",label:"Receiving history"},...(isOwner?[{id:"opening",label:"Opening stock"}]:[])]}/>}{!practice&&isOwner&&purchasingTab==="accounts"&&<SupplierAccounts onRecords={openRecords} key={`supplier-accounts:${member.organizationId}:${branchId}`} db={db} organizationId={member.organizationId} branchId={branchId} actorId={member.userId} online={online} disabled={busy} execute={fn=>run(fn,true,true)}/>}{practice&&purchasingTab==="orders"&&<div className="practice-purchasing"><Button className="practice-order-request" disabled title="Sign in to request a business purchase order"><Plus size={20}/>Request purchase order</Button><div className="workspace-stats three"><WorkspaceStat icon={ClipboardCheck} label="Awaiting approval" value="—"/><WorkspaceStat icon={Truck} label="Awaiting delivery" value="—"/><WorkspaceStat icon={Package} label="Supplier claims" value="—"/></div><OrderWorkspace orders={[]} products={products} disabled actions={()=>null} onInspect={()=>{}}/><p className="scope-note">Business purchasing requires signing in. Practice checkout does not create orders or stock.</p></div>}
               {!practice && member.role !== "cashier" && purchasingTab!=="accounts" && <PurchasingWorkspace pane={purchasingTab} onPaneChange={setPurchasingTab} key={`purchasing:${member.organizationId}:${branchId}`} db={db} organizationId={member.organizationId} branchId={branchId} branchName={selectedBranch?.name ?? "Selected branch"} actorId={member.userId} products={products} suppliers={(cloud.suppliers ?? []).map(s => ({ id: str(s,"id"), name: str(s,"name") }))} role={member.role} online={online} disabled={busy} revision={historyRevision} reversalBlocked={allPendingCount > 0 || syncing || !!lease || cart.items.length > 0} execute={fn => run(fn,true,true)} />}
               <div className="two-column">
                 <section className="panel" hidden={purchasingTab!=="quick"}>

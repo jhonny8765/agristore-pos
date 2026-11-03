@@ -18,6 +18,7 @@ import {
   type HistoryRange,
   type HistoryRow,
 } from "../lib/history";
+import {defaultReport} from '../lib/record-reports';
 import { Button } from "./ui/button";
 
 export function HistoryRegister({
@@ -46,7 +47,7 @@ export function HistoryRegister({
   emptyTitle?: string;
 }) {
   const heading = useId();
-  const [range, setRange] = useState<HistoryRange>({ from: "", to: "" });
+  const [range, setRange] = useState<HistoryRange>(()=>{const dates=defaultReport('receipts');return {from:dates.from,to:dates.to};});
   const [draft, setDraft] = useState(range);
   const [rows, setRows] = useState<HistoryRow[]>([]);
   const [next, setNext] = useState<HistoryCursor>();
