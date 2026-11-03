@@ -1,6 +1,6 @@
 {
   "schemaVersion": 2,
-  "generatedAt": "2026-11-03T08:04:56.341Z",
+  "generatedAt": "2026-11-03T13:58:25.179Z",
   "title": "Design System: Better Yield POS (AgriStore)",
   "extensions": {
     "colorMeta": {
@@ -325,6 +325,20 @@
           "oklch(83.57% 0.0386 154.16)",
           "oklch(95.00% 0.0386 154.16)"
         ]
+      },
+      "forest-rail": {
+        "role": "primary",
+        "displayName": "Forest Rail",
+        "tonalRamp": [
+          "oklch(15.00% 0.0628 168.37)",
+          "oklch(26.43% 0.0628 168.37)",
+          "oklch(37.86% 0.0628 168.37)",
+          "oklch(49.29% 0.0628 168.37)",
+          "oklch(60.71% 0.0628 168.37)",
+          "oklch(72.14% 0.0628 168.37)",
+          "oklch(83.57% 0.0628 168.37)",
+          "oklch(95.00% 0.0628 168.37)"
+        ]
       }
     },
     "typographyMeta": {
@@ -359,6 +373,10 @@
       "metadata": {
         "displayName": "metadata",
         "purpose": "Supporting scope and disclosure context."
+      },
+      "updated-headline": {
+        "displayName": "Updated View Headline",
+        "purpose": "38px heavy Roboto page identity in the four updated operational views; 31px on phones."
       }
     },
     "shadows": [
@@ -429,6 +447,10 @@
       {
         "name": "phone",
         "value": "650px"
+      },
+      {
+        "name": "updated-account-stack",
+        "value": "1250px"
       }
     ]
   },
@@ -477,9 +499,9 @@
       "name": "Active Navigation",
       "kind": "nav",
       "refersTo": "nav-active",
-      "description": "Pale leaf destination on the observed forest rail gradient.",
+      "description": "Pale leaf destination on the updated solid forest rail; original logo remains in the application.",
       "html": "<nav class=\"ds-rail\" aria-label=\"Store navigation\"><a class=\"ds-nav\" href=\"#receipts\" aria-current=\"page\"><svg width=\"24\" height=\"24\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.8\" aria-hidden=\"true\"><path d=\"M6 3h9l4 4v14H5V3h1Z M14 3v5h5 M8 12h8 M8 16h8\"/></svg><span>Sales &amp; receipts</span></a></nav>",
-      "css": ".ds-rail{padding:16px;background:radial-gradient(ellipse at 0 40%,#073f30 0,transparent 70%),linear-gradient(130deg,#033326,#00372a);width:224px}.ds-nav{display:flex;align-items:center;gap:18px;min-height:51px;padding:11px 16px;border-radius:10px;background:linear-gradient(100deg,#eaf5d9,#dfefca);color:#05391f;font-family:\"Roboto Variable\",sans-serif;font-size:20px;font-weight:700;line-height:1.4;text-decoration:none}.ds-nav:hover{background:linear-gradient(100deg,#eaf5d9,#dfefca)}.ds-nav:focus-visible{outline:3px solid #e6f3d5;outline-offset:3px}"
+      "css": ".ds-rail{padding:16px;background:#033d2d;width:224px}.ds-nav{display:flex;align-items:center;gap:18px;min-height:51px;padding:11px 16px;border-radius:10px;background:#e6f3d5;color:#05391f;font-family:\"Roboto Variable\",sans-serif;font-size:20px;font-weight:700;line-height:1.4;text-decoration:none}.ds-nav:hover{background:#e6f3d5;outline-offset:3px}"
     },
     {
       "name": "State Badge",
@@ -514,16 +536,16 @@
     {
       "name": "Credit Payment Acknowledgement",
       "kind": "custom",
-      "description": "Per-payment internal evidence inside the linked credit record. Retain the booklet reference, permanent payment reference and explicit non-tax-invoice wording; the application print command isolates the selected event. Historical records distinguish Opening unpaid amount from original credit sales; unknown dates remain Unconfirmed with a separate Due date unconfirmed aging bucket. Disabled clients show Not enabled / Terms not approved. Owner confirmation of the actual historical date, evidence and reason stays in an inline disclosure; imported records lacking original goods expose no goods-return command. Current local operating and release limits: docs/customer-credit.md.",
+      "description": "Per-payment internal evidence retains the authorized manual booklet and permanent payment reference; printing isolates that event. The booklet remains the official VAT invoice. Every saved branch client may choose 30/60/90 calendar days per invoice without approval or a credit limit. Overdue utang warns and allows another sale. Historical unknown due dates remain Unconfirmed and excluded from overdue totals; actual owner evidence is required to confirm them. Opening unpaid amounts remain separate from new sales, and imported records without original goods expose no goods-return command. Existing online, shift/device, stock, original-request and unique-invoice controls remain enforced.",
       "html": "<section class=\"ds-credit-payment\" aria-label=\"Payment acknowledgement design preview\"><h3>Payment acknowledgement</h3><p>Official booklet invoice: linked manual reference</p><strong>Collection · original payment reference</strong><p>Cash received: recorded amount<br>Permanent reference: original payment ID</p><p>Internal acknowledgement linked to the original invoice; not a tax invoice.</p><button type=\"button\" class=\"ds-credit-print\">Print payment acknowledgement</button></section>",
       "css": ".ds-credit-payment{padding-block:12px;border-top:1px solid var(--line,#deded8);color:var(--ink,#080b09);font-family:var(--font-sans,\"Roboto Variable\",sans-serif);font-size:18px;line-height:1.4;overflow-wrap:anywhere;min-width:0}.ds-credit-payment h3{font-size:22px;font-weight:750;line-height:1.25;letter-spacing:-.015em}.ds-credit-print{font:650 18px/1.3 var(--font-sans,\"Roboto Variable\",sans-serif);min-height:44px;padding:9px 17px;border:1px solid #9da9a0;border-radius:9px;background:var(--white,#fff);color:var(--forest,#043c28);cursor:pointer;transition:background .16s ease,color .16s ease}.ds-credit-print:hover{background:var(--soft,#edf5e4)}.ds-credit-print:focus-visible{outline:3px solid var(--focus,#507c39);outline-offset:3px}@media(prefers-reduced-motion:reduce){.ds-credit-print{transition:none}}"
     },
     {
       "name": "Product Discount Field",
       "kind": "input",
-      "description": "Compact Discount % entry at the upper right of each owner/cashier sale line. Accept 0–100% with at most two decimal places; retain gross, reduction and net line amounts. Cash summary separates Subtotal, Product discounts and Amount due; credit summary labels Product discounts included. An associated inline error and invalid boundary accompany a rejected draft, blocking both completion paths until corrected.",
-      "html": "<label class=\"ds-line-discount\"><span>Discount %</span><input aria-label=\"Discount (%) for selected product\" inputmode=\"decimal\" autocomplete=\"off\" placeholder=\"0\" /></label>",
-      "css": ".ds-line-discount{display:flex;flex-direction:column;gap:4px;flex:0 0 80px;margin:0;color:var(--forest,#043c28);font-family:var(--font-sans,\"Roboto Variable\",sans-serif)}.ds-line-discount>span{font-size:12px;font-weight:600;white-space:nowrap}.ds-line-discount>input{min-width:0;width:80px;min-height:40px;padding:6px 8px;text-align:right;font:400 16px/1.4 var(--font-sans,\"Roboto Variable\",sans-serif);border:1px solid var(--line,#deded8);border-radius:7px;background:var(--white,#fff);color:var(--forest,#043c28)}.ds-line-discount>input:hover{border-color:var(--line,#deded8)}.ds-line-discount>input:focus-visible{outline:3px solid var(--focus,#507c39);outline-offset:3px}.ds-line-discount>input[aria-invalid=true]{border-color:#a42c1c}@media(max-width:650px){.ds-line-discount>input{min-height:44px}}"
+      "description": "Owner/cashier Discount ₱ entry is an exact peso reduction from the whole product line, not a percentage or a per-unit amount. Keep the product-specific label, before-discount amount, reduction and net total. Invalid drafts retain their inline error and block completion. Historical percentage discounts remain recorded evidence only.",
+      "html": "<label class=\"ds-line-discount\"><span>Discount ₱</span><input aria-label=\"Peso discount for this product line\" inputmode=\"decimal\" placeholder=\"0.00\" aria-describedby=\"ds-discount-help\"/><small id=\"ds-discount-help\">Amount off this entire line</small></label>",
+      "css": ".ds-line-discount{display:inline-flex;align-items:center;gap:4px;flex-wrap:wrap;background:#edf5e4;color:#043c28;padding:3px 5px;border-radius:7px;font-family:\"Roboto Variable\",sans-serif}.ds-line-discount>span{font-size:12px;font-weight:750}.ds-line-discount>input{width:60px;min-height:30px;padding:3px;font:15px \"Roboto Variable\",sans-serif;text-align:right;border:1px solid #7a8873;border-radius:7px;background:white;color:#080b09}.ds-line-discount>small{width:100%;font-size:11px}.ds-line-discount>input:hover{border-color:#043c28}.ds-line-discount>input:focus-visible{outline:3px solid #507c39;outline-offset:3px}.ds-line-discount>input[aria-invalid=true]{border-color:#a3312b}@media(max-width:650px){.ds-line-discount>input{width:73px;min-height:36px}}"
     },
     {
       "name": "58 mm Sale Receipt",
@@ -538,11 +560,33 @@
       "description": "Owner-only Purchasing account for the store's own supplier debt. Keep original supplier invoice/stock detail and optional existing receiving reference; terms are due now or one 30/60/90-day final date. All-time scoped totals remain distinct from full-history search/status/term filters. Preserve status/reminder words, intact amounts, and wrapping long invoice references. Payments already made require bank transfer, owner cash outside the till or cleared cheque. The timeline distinguishes original and recorded dates and retains permanent references, reversals and void/replacement links; stock receiving and sales drawer remain separate.",
       "html": "<section class=\"ds-supplier-history\" aria-label=\"Supplier invoice history design preview\"><h3>Original supplier invoice reference</h3><p>Supplier name · Due date and agreed term</p><p class=\"ds-supplier-description\">Stock purchased / original invoice note</p><h3>Invoice &amp; payment history</h3><p>Payment date is when money was actually paid. Recorded date shows when the owner saved the entry.</p><ol><li><div class=\"ds-supplier-event-title\"><strong>Payment made</strong><strong>Recorded amount</strong></div><p>Original payment reference · Bank transfer</p><small>Document / payment date · Recorded timestamp · Owner</small><details><summary>Permanent entry reference</summary><span class=\"ds-supplier-original-id\">Original permanent entry ID</span></details></li></ol></section>",
       "css": ".ds-supplier-history{min-width:0;color:var(--ink,#080b09);font:18px/1.4 var(--font-sans,\"Roboto Variable\",sans-serif)}.ds-supplier-history h3{margin-bottom:8px;font-size:22px;font-weight:750;line-height:1.25;overflow-wrap:anywhere}.ds-supplier-description{white-space:pre-wrap;overflow-wrap:anywhere}.ds-supplier-history ol{padding:0;list-style:none}.ds-supplier-history li{padding:20px 0;border-bottom:1px solid var(--line,#deded8);overflow-wrap:anywhere}.ds-supplier-event-title{display:flex;justify-content:space-between;gap:16px}.ds-supplier-event-title>strong:last-child{white-space:nowrap;font-variant-numeric:tabular-nums}.ds-supplier-history small{display:block;color:var(--muted,#535653);line-height:1.5}.ds-supplier-history details{margin-top:10px}.ds-supplier-history summary{cursor:pointer}.ds-supplier-history summary:hover{text-decoration:underline}.ds-supplier-history summary:focus-visible{outline:3px solid var(--focus,#507c39);outline-offset:3px}.ds-supplier-original-id{display:block;font-size:12px;overflow-wrap:anywhere}@media(max-width:650px){.ds-supplier-event-title{flex-wrap:wrap}}"
+    },
+    {
+      "name": "Updated Overview Balance Pair",
+      "kind": "custom",
+      "description": "Below chart/attention, this all-time customer/supplier snapshot is separate from period sales. Checked timestamps and unknown amounts remain explicit. Collections are not new sales; historical supplier balances awaiting reconciliation are excluded. Two columns stack below 1000px.",
+      "html": "<section class=\"ds-balance-panel\"><h2>Customer &amp; supplier balances</h2><p>All-time balances · Separate from the sales period above</p><div class=\"ds-balance-pair\"><section><header><h3>Customers owe the store</h3><strong>Not yet checked</strong></header><p>Due date unconfirmed stays separate from overdue.</p><button>Open customer accounts</button></section><section><header><h3>The store owes suppliers</h3><strong>Not yet checked</strong></header><p>Historical balances awaiting reconciliation are excluded.</p><button>Open supplier bills</button></section></div></section>",
+      "css": ".ds-balance-panel{font-family:\"Roboto Variable\",sans-serif;background:white;color:#080b09;border:1px solid #deded8;border-radius:11px;padding:10px 14px;box-shadow:0 2px 3px rgb(24 43 21 / 3%)}.ds-balance-panel h2{font-size:24px;margin:0 0 7px}.ds-balance-panel>p{font-size:12px;color:#535653}.ds-balance-pair{display:grid;grid-template-columns:1fr 1fr;gap:14px}.ds-balance-pair>section{border:1px solid #deded8;border-radius:8px;overflow:hidden}.ds-balance-pair header{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;background:#e6f3d5;padding:7px 12px}.ds-balance-pair h3{font-size:17px;margin:0}.ds-balance-pair strong{font-size:23px}.ds-balance-pair p{font-size:11px;color:#535653;padding:0 12px}.ds-balance-pair button{font:15px \"Roboto Variable\",sans-serif;color:#043c28;border:0;background:transparent;text-decoration:underline;padding:3px 12px;min-height:25px;cursor:pointer}.ds-balance-pair button:hover{background:#edf5e4}.ds-balance-pair button:focus-visible{outline:3px solid #507c39;outline-offset:-3px}@media(max-width:1000px){.ds-balance-pair{grid-template-columns:1fr}}",
+      "refersTo": "updated-panel"
+    },
+    {
+      "name": "Updated Customer Section Tabs",
+      "kind": "nav",
+      "description": "The full-width Customers & credit register uses four joined icon tabs, up to 900px wide, with pale leaf active state. Phone tabs scroll within their bounded strip; actual application tabs retain keyboard navigation.",
+      "html": "<div class=\"ds-customer-tabs\" role=\"tablist\" aria-label=\"Customer sections\"><button role=\"tab\" aria-selected=\"true\"><svg viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\"><path d=\"M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2m20 0v-2a4 4 0 0 0-3-3.87M16 3a4 4 0 0 1 0 8\"/><circle cx=\"9\" cy=\"7\" r=\"4\"/></svg>Customers</button><button role=\"tab\" aria-selected=\"false\"><svg viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\"><path d=\"M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8Z M14 2v6h6 M8 13h8 M8 17h8\"/></svg>All invoices</button><button role=\"tab\" aria-selected=\"false\"><svg viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\"><path d=\"M20 8V5a2 2 0 0 0-2-2H5a3 3 0 0 0 0 6h15v12H5a3 3 0 0 1-3-3V6m18 6h-4v5h4\"/></svg>Payments</button><button role=\"tab\" aria-selected=\"false\"><svg viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\"><path d=\"M8 2v4m8-4v4M3 10h18M3 8V6a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2v6M3 10v10a2 2 0 0 0 2 2h6m7-8v4l2 1\"/><circle cx=\"18\" cy=\"18\" r=\"4\"/></svg>Statements</button></div>",
+      "css": ".ds-customer-tabs{display:flex;width:min(100%,900px);border:1px solid #7a8873;border-radius:10px;overflow:hidden;font-family:\"Roboto Variable\",sans-serif}.ds-customer-tabs button{display:flex;align-items:center;justify-content:center;gap:8px;flex:1;min-height:48px;padding:10px 20px;border:0;border-right:1px solid #deded8;background:white;color:#080b09;font:18px \"Roboto Variable\",sans-serif;cursor:pointer}.ds-customer-tabs button:last-child{border-right:0}.ds-customer-tabs button[aria-selected=true]{background:#e6f3d5;color:#043c28;font-weight:750}.ds-customer-tabs svg{width:19px;height:19px;flex-shrink:0}.ds-customer-tabs button:hover{background:#edf5e4}.ds-customer-tabs button:focus-visible{outline:3px solid #507c39;outline-offset:-3px}@media(max-width:650px){.ds-customer-tabs{overflow-x:auto}.ds-customer-tabs button{flex:none;font-size:15px;min-width:120px;padding:10px 12px}}"
+    },
+    {
+      "name": "Updated Credit Account Summary",
+      "kind": "custom",
+      "description": "Focused customer account: breadcrumb/identity, one divided four-part strip, Invoices/Payments/Statement controls and unknown-date warning. The invoice/detail grid is 1.15fr/1fr with 16px gap, stacking below 1250px. Invoice rows retain 630px minimum width inside a named scroll region; activity is 500px. Summary becomes two-by-two below 1000px. Preview contains no business data.",
+      "html": "<section class=\"ds-account-summary\" aria-label=\"Account summary\"><div><span>Outstanding</span><strong>Not checked</strong></div><div><span>Overdue</span><strong>Not checked</strong></div><div><span>Due date unconfirmed</span><strong>Not checked</strong></div><div><span>Terms per invoice</span><strong>30 / 60 / 90</strong><small>calendar days</small></div></section>",
+      "css": ".ds-account-summary{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:0;background:white;color:#080b09;border:1px solid #deded8;border-radius:10px;padding:12px 0;font-family:\"Roboto Variable\",sans-serif}.ds-account-summary>div{min-width:0;padding:0 20px;border-right:1px solid #deded8}.ds-account-summary>div:last-child{border-right:0}.ds-account-summary span{display:block;font-size:16px}.ds-account-summary strong{display:block;font-size:clamp(22px,2.1vw,31px);font-weight:800;font-variant-numeric:tabular-nums;white-space:nowrap;margin-top:4px}.ds-account-summary small{display:block;font-size:12px;color:#535653}@media(max-width:1000px){.ds-account-summary{grid-template-columns:repeat(2,minmax(0,1fr))}.ds-account-summary>div{padding:10px 14px}.ds-account-summary>div:nth-child(2){border-right:0}}@media(max-width:650px){.ds-account-summary{padding:0}.ds-account-summary span{font-size:13px}.ds-account-summary strong{font-size:21px}}"
     }
   ],
   "narrative": {
     "northStar": "The Supplied Better Yield POS Screens",
-    "overview": "The supplied November 3, 2026 screenshots are the visual authority: reproduce their heavy Roboto hierarchy, forest navigation, warm paper, pale green selections, strong figures and specific register/detail compositions. The eight distinct supplied compositions replace the former Manrope/DM Sans operational interpretation; they do not invite a new concept or generic dashboard treatment.\n\nThis is a readable working counter: product identity and prices, original cash receipts, stock ledgers and actual workflow stages remain visible in a stable shell. Actual Better Yield artwork and verified photographs occupy the reference media slots. Unverified-photo fallbacks, unavailable information, Practice and TEST labels remain explicit.\n\nBetter Yield POS is the customer-facing identity; AgriStore remains the repository identity. Original logo, business photograph and tagline provenance remain in [docs/brand-assets.md](docs/brand-assets.md). Sign-in retains its existing Manrope Variable headings and DM Sans Variable body; those font imports are intentional.",
+    "overview": "The supplied November 3, 2026 screenshots are the visual authority: reproduce their heavy Roboto hierarchy, forest navigation, warm paper, pale green selections, strong figures and specific register/detail compositions. The eight distinct supplied compositions replace the former Manrope/DM Sans operational interpretation; they do not invite a new concept or generic dashboard treatment.\n\nThe later four approved November 3 comps update **Overview, Checkout, Customers & credit, and the selected credit account** within this established world. Their shipped authority is `apps/web/app/updated-ui.css` and the `pinned-20261103-updated` contract in `apps/web/app/layout.tsx`; the specific adaptations below supersede earlier geometry for these four views. This is supplied-comp preservation, so no concept roll or invented seed applies. The original real logo and catalog assets remain intact. Mockup names, amounts and photographs are composition references, never business records; captured TEST screens use labelled synthetic data only.\n\nThis is a readable working counter: product identity and prices, original cash receipts, stock ledgers and actual workflow stages remain visible in a stable shell. Actual Better Yield artwork and verified photographs occupy the reference media slots. Unverified-photo fallbacks, unavailable information, Practice and TEST labels remain explicit.\n\nBetter Yield POS is the customer-facing identity; AgriStore remains the repository identity. Original logo, business photograph and tagline provenance remain in [docs/brand-assets.md](docs/brand-assets.md). Sign-in retains its existing Manrope Variable headings and DM Sans Variable body; those font imports are intentional.",
     "keyCharacteristics": [
       "Fixed forest rail and white branch bar on warm paper.",
       "Heavy Roboto headings, dark figures and quiet metadata.",
@@ -570,6 +614,11 @@
         "name": "The Quiet Depth Rule",
         "body": "Use small soft shadows and tonal boundaries for working surfaces. Reserve stronger depth for notices and popovers.",
         "section": "shadow vocabulary"
+      },
+      {
+        "name": "The Separate Scope Rule",
+        "body": "Period sales, all-time account balances, loaded invoice history and drawer cash keep their own labels and checked times. Collections reduce customer balances without becoming new sales; unknown historical due dates never become overdue by inference.",
+        "section": "layout"
       }
     ],
     "dos": [

@@ -4,6 +4,7 @@ description: "The user-pinned Roboto, forest-rail and warm-paper operational wor
 colors:
   forest: "#043c28"
   forest-dark: "#033326"
+  forest-rail: "#033d2d"
   green: "#176333"
   lime: "#e6f3d5"
   paper: "#f8f5ef"
@@ -69,6 +70,12 @@ typography:
     fontSize: "13px"
     fontWeight: 400
     lineHeight: 1.4
+  updated-headline:
+    fontFamily: "\"Roboto Variable\", sans-serif"
+    fontSize: "38px"
+    fontWeight: 800
+    lineHeight: 1.16
+    letterSpacing: "-0.02em"
 rounded:
   category: "6px"
   badge: "8px"
@@ -78,6 +85,7 @@ rounded:
   inventory: "14px"
   strip: "15px"
   panel: "16px"
+  updated-panel: "11px"
 spacing:
   tight: "8px"
   small: "12px"
@@ -144,6 +152,10 @@ components:
     rounded: "{rounded.tab}"
     padding: "11px 16px"
     height: "51px"
+  updated-panel:
+    backgroundColor: "{colors.white}"
+    textColor: "{colors.ink}"
+    rounded: "{rounded.updated-panel}"
 ---
 
 # Design System: Better Yield POS (AgriStore)
@@ -153,6 +165,8 @@ components:
 **Creative North Star: "The Supplied Better Yield POS Screens"**
 
 The supplied November 3, 2026 screenshots are the visual authority: reproduce their heavy Roboto hierarchy, forest navigation, warm paper, pale green selections, strong figures and specific register/detail compositions. The eight distinct supplied compositions replace the former Manrope/DM Sans operational interpretation; they do not invite a new concept or generic dashboard treatment.
+
+The later four approved November 3 comps update **Overview, Checkout, Customers & credit, and the selected credit account** within this established world. Their shipped authority is `apps/web/app/updated-ui.css` and the `pinned-20261103-updated` contract in `apps/web/app/layout.tsx`; the specific adaptations below supersede earlier geometry for these four views. This is supplied-comp preservation, so no concept roll or invented seed applies. The original real logo and catalog assets remain intact. Mockup names, amounts and photographs are composition references, never business records; captured TEST screens use labelled synthetic data only.
 
 This is a readable working counter: product identity and prices, original cash receipts, stock ledgers and actual workflow stages remain visible in a stable shell. Actual Better Yield artwork and verified photographs occupy the reference media slots. Unverified-photo fallbacks, unavailable information, Practice and TEST labels remain explicit.
 
@@ -170,11 +184,12 @@ Better Yield POS is the customer-facing identity; AgriStore remains the reposito
 
 ## Colors
 
-Deep agricultural forest anchors warm paper, white records and pale leaf selections. Frontmatter owns reused primitives; the sidecar preserves full gradients and depth that the compact schema cannot express. Primary and active-nav background tokens are portable solid fallbacks; their complete implemented gradients are in the sidecar snippets.
+Deep agricultural forest anchors warm paper, white records and pale leaf selections. Frontmatter owns reused primitives; the sidecar preserves full gradients and depth that the compact schema cannot express. Primary action tokens retain their portable solid fallbacks and implemented gradient snippets. Updated active navigation uses solid Pale Leaf on the solid Forest Rail.
 
 ### Primary
 
 - **Forest / Deep Forest:** navigation, primary actions, financial and price emphasis.
+- **Forest Rail:** the updated workspace rail uses this solid forest; primary action gradients remain inherited.
 - **Working Green:** supporting action emphasis.
 - **Pale Leaf / Soft Leaf:** navigation selection, helper surfaces and secondary-action hover.
 
@@ -208,26 +223,36 @@ Deep agricultural forest anchors warm paper, white records and pale leaf selecti
 - **Metadata:** frontmatter supporting scope role; important state labels remain (15–18px).
 - **Product identity:** catalog names use (20px, weight 750, line-height 1.2), reducing to (18px); prices use (25px, weight 800), reducing to (23px).
 
+The four updated views use the updated-headline role, reducing to (31px) below (650px). Their catalog identity is more compact: names (18px), unit labels (14px), prices (22px), with phone names (16px) and prices (23px). Overview figures use (28px), or (24px) for wide values; phone figures use (23px). Customer register body rows use (17px), names (18px), headings (16px); invoice register rows use (15px). Secondary help, timestamps and scope remain smaller than operational identity and amounts.
+
 **The Intact Figure Rule.** Use tabular numerals and right-aligned numeric columns. Keep monetary values on one line; labels may wrap, digits may not.
 
 **Thermal-print exception:** dedicated sale receipts use black Arial, Helvetica, sans-serif on white, with (12px) body type, (20px) Better Yield identity and (15px) total. This intentional print-specific typography is outside the Roboto workspace identity; print measurement and output share the same styles.
 
 ## Layout
 
-At the (1536px) reference width the fixed forest rail is (256px), white branch bar (72px), and main padding (26px 20px 30px 26px), placing titles at x(282px). Main destinations sit above, Sync center / Settings below. Header retains branch identity, connection, direct close-shift access and account context. Magpet is the sole enabled business branch; practice context is labeled.
+At the (1536px) reference width the fixed forest rail is (256px), white branch bar (64px), and main padding (22px 20px 30px 26px), placing titles at x(282px). Main destinations sit above, Sync center / Settings below. Header retains branch identity, connection, direct close-shift access and account context. Magpet is the sole enabled business branch; practice context is labeled.
 
 The rail narrows to (210px) at (1200px), an icon rail (76px) at (1000px), and (61px) at (650px). Phone main padding is (20px 14px); branch bar, headings and actions wrap. Accessible destination names remain when labels are visually hidden.
 
-- **Checkout:** searchable catalog and top-aligned sale (454px), gap (24px); three product columns with gaps (18px vertically, 14px horizontally). At (1001–1350px), sale is (390px) and catalog two columns; at (1000px), sale is (340px). At (650px), catalog is one column and sale follows it. Cards are at least (277px) desktop / (230px) phone; contain-fit media (166px) / (145px). Ordinary pack lines stay compact; configured weight/peso options expand when needed. Preserve fixed phone Review sale access.
 - **Sales & receipts:** register/detail columns (minmax(0, 1.48fr) / minmax(380px, 1fr)), gap (14px). Detail is top-aligned and sticky at (20px). At (1200px), columns become (1.4fr / minmax(330px, 1fr)); at (1000px) they stack. Preserve selected-receipt access, original-ID disclosure, media rows, cash/change and Print.
 - **Inventory:** shallow four-part strip, wrapping tabs, filters, then one media/product ledger with separate selling-unit and price columns. Phone summary stays two-by-two; ledger scrolls inside its region. Follow-ups stack: icon/title first row, full-width description second, View details third.
-- **Overview / analytics:** four KPIs, chart/attention pair (1.45fr / 1fr), gap (20px), then lower panels (1.25fr / .87fr / 1fr). At (1350px), lower row uses two columns with first spanning; at (1000px), chart/lower panels stack and KPIs use two columns; phone KPIs stack. Preserve real trend dates, product/media rows and scope caption; unavailable reconciliation stays explicit.
 - **Purchasing / orders:** tabs and three KPIs before separate list/detail panels (1.25fr / 1fr), gap (16px), stacking at (1000px). Each product retains its own accepted, held, rejected and unreceived quantities. Four quantity tiles become two columns on phones; actual required decisions may lengthen the detail beyond the sample.
 - **Supplier accounts:** within Purchasing, four scoped totals precede a full-width filtered invoice register and selected-invoice detail/history below. At (1000px), totals and filters become two columns; at (650px), totals remain paired while filters and two-column forms stack. Invoice references, descriptions and original IDs wrap within their region; amounts stay intact. Event title/amount rows may wrap on phones without compressing monetary figures.
 - **Physical counts:** warning, three numbered stages/arrows, tabs, entry/checklist pair (1.35fr / 1fr), gap (16px), then open-count ledger. Pair stacks at (1000px), stages at (650px). Product photo, notes, true stage badges and original IDs stay readable; blind expected stock remains private.
 - **Sync center:** truthful summary plus three KPIs, tabbed/searchable queue, paired recovery cards with icon/copy/adjacent action. Desktop cards have (125px) minimum height; selected-file/download feedback expands beneath. At (1000px), summary stacks and recovery actions move below copy; phone recovery cards stack with full-width action. Queue rows retain inspectable/copyable full original IDs.
 - **Settings:** main/support columns (1.9fr / 1fr), gap (18px). Left branch/shift pair above staff; right recovery/registered-PC stack. At (1350px), main regions stack and support panels pair; on phones all panels stack. Unavailable cash, staff and PC details stay explicit.
-- **Clients & credit:** client register beside the selected account (minmax(280px, .8fr) / minmax(0, 1.4fr)), gap (18px), with four scoped totals above. At (1200px), account panels stack and totals use two columns; at (650px), totals stack. Client, invoice and Payments ledgers remain named focusable scroll regions; phone tables retain a (520px) minimum width inside the panel. Long booklet, original-sale and payment references wrap within their record.
+
+### Four-view update — November 3
+
+The current update keeps the (256px) reference rail and inherited responsive rail widths, with a (64px) branch bar and main top padding (22px), reducing to (18px) on phones. The remaining workflow layouts retain their established guidance.
+
+- **Overview:** compact vertical sequence, gap (12px): period/snapshot scope, four KPIs, chart beside attention, customer/supplier balance pair, three top-product rows, then the expandable cash reconciliation/audit area. The chart/attention grid uses (1.45fr / minmax(330px, 1fr)), gap (16px); it becomes equal columns below (1250px) and stacks below (1000px). The period controls sit at the upper right from (1350px), with heading clearance (460px); below that they return to document flow. The chart resizes to its actual container and labels real report dates; its SVG is (220px) high on desktop and (210px) below (1000px). Customer/supplier balances are a separate all-time snapshot, with independent checked timestamps; they do not follow the sales-period filter. Their pair stacks below (1000px). KPIs remain two-by-two on phones. Top-products has its own (420px) minimum-width ledger on phones.
+- **Checkout:** catalog/current-sale grid (minmax(0, 1.55fr) / minmax(430px, 1fr)), gap (18px), with three product columns and (14px) gaps. From (1001–1250px), the sale is (420px) and catalog two columns; below (1000px) the sale follows the catalog, which keeps three columns until the phone breakpoint. Below (650px), catalog cards form one column. Cards use a left media slot (32%, phone 30%), separate identity/unit/price rows, a wrapping full-width stock row and a separate Add row; minimum height is (250px), with rows expanding for actual content. This deliberate expansion preserves variable real names and units. The sale is sticky (12px) on desktop; its item region scrolls up to (380px). Below (1000px), it returns to normal flow; on phones items are not height-clipped. Preserve fixed Review sale access. Desktop credit entry pairs cash paid and booklet reference while client search, selected client, terms, due date and acknowledgements span the sale width; phone fields stack.
+- **Customers & credit:** broad full-width register rather than a persistent client/detail split. Four icon-led customer totals sit beneath the joined Customers / All invoices / Payments / Statements tabs. Tabs carry line icons, pale leaf selection and a shared bounded strip (up to 900px); on phones they scroll horizontally within their own strip. Search and balance-status filter precede the (820px) minimum-width ledger, with two explanatory panels below. Totals become two-by-two below (1000px); phone filters and explanatory panels stack. Account navigation opens a focused screen rather than squeezing both views together.
+- **Credit account:** breadcrumb and real client identity precede one divided four-part summary strip, then Invoices / Payments / Statement controls and any unconfirmed-date warning. The Invoices workspace uses register/detail columns (1.15fr / 1fr), gap (16px), stacking below (1250px). The invoice register keeps a (630px) minimum width inside its named scroll region; account activity below has a (500px) minimum width. Summary cells become two-by-two below (1000px), including phones. Preserve the selected invoice, pale leaf balance row, collection disclosure, linked booklet number, permanent record IDs, history and print commands.
+
+**The Separate Scope Rule.** Period sales, all-time account balances, loaded invoice history and drawer cash keep their own labels and checked times. Collections reduce customer balances without becoming new sales; unknown historical due dates never become overdue by inference.
 
 Records use ten-row pages. Footers show matching loaded count and page state for zero to ten records; larger lists expose controls above and below. Paging changes presentation only, preserving loaded search scope, totals, exports and pending-work checks. Type-to-search filters update immediately and product selectors support keyboard choices.
 
@@ -257,6 +282,8 @@ Buttons transition background/color (160ms, ease); product borders/shadows (180m
 
 Soft rectangular surfaces dominate. Frontmatter distinguishes category chips, badges, controls, tabs and larger panels. Panels/products use the panel radius; phone panels use the smaller phone-panel radius. Inventory retains its rounded ledger and shallow divided strip. Count-stage and sync circles convey workflow/status. Contain-fit media preserves package silhouettes.
 
+The four updated views use the updated-panel radius for panels, product cards and the sale; customer summary cells, the divided account strip and joined customer-tab container use (10px). These compact rectangles preserve the same soft forest/paper language.
+
 Fine rules separate records; fields and outlined commands use stronger boundaries. Selected ledger cells form one pale green band with rounded end cells. Selected destinations use broad pale leaf rectangles.
 
 ## Components
@@ -271,7 +298,7 @@ White bounded fields use the control radius and (44px) minimum default height. C
 
 ### Navigation / Tabs
 
-Desktop destinations use (20px) labels, (27px) line icons, (51px) rows. Active nav has pale green gradient, dark text and stronger weight. Responsive icon-only destinations retain accessible names. Workspace tabs wrap, active forest/white, and support Arrow Left/Right plus Home/End; category filters retain compact horizontal scrolling.
+Desktop destinations use (20px) labels, (27px) line icons, (51px) rows. Active nav has solid pale green, dark text and stronger weight in the updated shell. Responsive icon-only destinations retain accessible names. Workspace tabs wrap, active forest/white, and support Arrow Left/Right plus Home/End; category filters retain compact horizontal scrolling.
 
 ### Status Chips
 
@@ -293,9 +320,9 @@ Retain original item identity, quantity/unit/price, line discounts, net line amo
 
 ### Product discounts
 
-Owner/cashier sale lines place a compact **Discount %** field at the upper right beside product identity. Keep the decimal entry right-aligned (80px wide), with a visible label and product-specific accessible name. It accepts (0–100%) with at most two decimal places. Fields retain (40px) minimum height, increasing to (44px) on phones; product names wrap alongside them without widening the sale panel.
+Owner/cashier sale lines place a compact **Discount ₱** field beside product identity. It is a peso amount off the **entire product line**, with up to two decimal places, not a percentage or a per-unit reduction. Preserve the visible currency label, product-specific accessible name, right-aligned decimal entry and associated help/error. The compact desktop field is (60px) wide with (30px) minimum height; on phones it is (73px) with (36px) minimum height. Product names wrap beside it without widening the sale panel.
 
-For a discounted line, retain **Before discount**, the percentage and reduction, and the net line total. Cash checkout separates **Subtotal**, **Product discounts** and **Amount due**; credit checkout identifies **Product discounts included** before its net sale total. Invalid percentages retain the entered draft, expose an associated inline error and invalid field boundary, and block cash and credit completion until corrected. Preserve the forest/paper hierarchy and intact monetary figures.
+For a discounted line, retain **Before discount**, **Line discount** and the net line total. Cash checkout separates **Subtotal**, **Product discounts** and **Amount due**; credit checkout identifies **Product discounts included** before its net sale total. Invalid amounts retain the entered draft, expose an associated inline error and invalid field boundary, and block cash and credit completion until corrected. Keep exact-money arithmetic and the original price/quantity evidence. Historical percentage discounts remain historical evidence; they do not define new entry controls.
 
 ### Ledgers / Recovery / States
 
@@ -303,13 +330,15 @@ General headers are pale green; receipt register headers are white with stronger
 
 ### Clients & credit
 
-Extend the same forest/paper register and detail language. Invoices, Payments and Statement use wrapping command groups; selected records retain pale leaf emphasis. Checkout keeps the existing catalog/current-sale composition and exposes the client, approved calendar-day term, exact due date, cash paid now and remaining balance before completion.
+Extend the same forest/paper register and detail language. Invoices, Payments and Statement use wrapping command groups; selected records retain pale leaf emphasis. Checkout keeps the catalog/current-sale composition and exposes the saved branch client, one selected (30/60/90-calendar-day) term per invoice, exact due date, cash paid now, new credit balance and account balance after sale before completion. Every saved branch client can use these terms without a separate approval or credit limit. Overdue utang displays a warning and permits another credit sale; it is not a disabled client state. Owners maintain contact details, without approval or limit controls.
 
 Keep Outstanding, Overdue, Original credit sales and Net cash collected distinct, with the account scope and Asia/Manila snapshot alongside them. Aging labels describe days past the due date separately from the payment term. Loaded-invoice counts and export/statement wording must preserve their actual scope.
 
-Historical opening records keep **Opening unpaid amount** and imported-balance context separate from original credit sales. Unknown dates remain **Unconfirmed**, with a separate **Due date unconfirmed** aging bucket; missing original terms remain **Term not supplied**. Disabled clients show **Not enabled / Terms not approved**, without suggesting an approved term. Owner date confirmation stays in an inline **Confirm historical due date** disclosure with the actual agreement date, evidence reference, reason and acknowledgement. Imported records without original goods expose no goods-return command.
+Historical opening records keep **Opening unpaid amount** and imported-balance context separate from original credit sales. Unknown dates remain **Unconfirmed**, with a separate **Due date unconfirmed** aging bucket excluded from overdue totals; missing original terms remain **Term not supplied**. Checkout warns about unconfirmed historical dates while each new invoice retains its own selected due date. Owner date confirmation stays in an inline **Confirm historical due date** disclosure with the actual agreement date, evidence reference, reason and acknowledgement. Imported records without original goods expose no goods-return command.
 
 Credit records, payment acknowledgements and statements retain the linked authorized manual booklet number and explicit internal-document wording. Each payment has its own print command and permanent reference; payment printing isolates that event. Statement printing removes interactive chrome and renders all loaded invoices and events. Preserve long-reference wrapping in screen and print views. The local extension's current operating and release limits remain in [docs/customer-credit.md](docs/customer-credit.md).
+
+The authorized manual booklet remains the official VAT invoice. Credit sales and collections remain online operations with the original sales permissions, branch/device/shift checks, confirmed stock, unique invoice references and original-request retry identity enforced. Warning-only overdue policy changes none of those controls, balances or historical dates.
 
 ### Supplier accounts
 
