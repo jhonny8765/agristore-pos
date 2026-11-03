@@ -4,9 +4,9 @@
 
 Clients & credit and the online credit checkout extension were deployed to the existing Magpet website on November 3, 2026. Opening customer receivables were reconciled and imported separately from product sales, cash and stock. See [release evidence and limits](customer-credit-verification.md). The owner confirmed **VAT registration** and **authorized printed/manual invoice booklets** on November 3, 2026. The website links each credit purchase to the actual booklet series/number; internal credit records and statements are explicitly not tax invoices. VAT breakdowns and official issuance remain on the existing authorized manual document.
 
-The first version supports owner-approved clients and limits; approved 30/60/90-calendar-day terms; one final due date per invoice; partial cash paid at sale; per-invoice later cash collections; retained collection reversals; inspected credit returns with separate debt/cash effects; current balances, aging, loaded-row CSVs and complete loaded statements. Holding a draft preserves its credit selection and any original attempted request.
+The current version uses saved clients without a credit limit or separate approval. The cashier chooses 30/60/90 calendar days and one final due date per invoice. Existing overdue debts and unknown historical due dates are warnings and do not prevent a new sale, as requested by the owner. Partial cash paid at sale, per-invoice collections, retained collection reversals, inspected credit returns, current balances, aging, exports and complete loaded statements remain available. Holding a draft preserves its selection and any original attempted request.
 
-Credit operations require an online authorized session. Collections/refunds require the employee's own current open shift; the owner manages credit policies and approves returns/reversals. Stock staff cannot access customer credit records. Existing version-1 cash checkout and offline sales remain intact.
+Credit operations require an online authorized session. Sales/collections/refunds require the employee's own current open shift; the owner manages client details and approves returns/reversals. Stock staff cannot access customer credit records. Existing version-1 cash checkout and offline sales remain intact.
 
 An unresolved credit-sale request blocks another cash checkout on that PC. After confirmation, a newer online stock snapshot is required before cash checkout resumes, so a pre-credit download cannot clear the stock-refresh safeguard. Original saved cash retries remain available.
 
@@ -14,22 +14,21 @@ An unresolved credit-sale request blocks another cash checkout on that PC. After
 
 1. Open **Clients & credit → Add client** with an owner account.
 2. Enter the actual name, phone, billing address and appropriate invoice TIN details.
-3. Set the credit limit and approved terms. New forms default to 30 days; enable 60/90 only as agreed.
-4. Enter an approval reason, confirm owner approval and save.
-5. Use **Edit credit policy** to change a policy later. Versions prevent overwriting a newer owner's edit. Suspending new credit still allows existing debts to be collected.
+3. Select **Save client**. No limit, permitted-terms selection or credit approval is required.
+4. Use **Edit client** to update contact details later. Versions prevent overwriting a newer owner's edit. Stored legacy policy values remain available to original saved requests but no longer determine checkout eligibility.
 
 ## Credit checkout
 
 1. Open your own shift online. Finish synchronization of original pending cash sales and requests.
 2. Build the basket normally, using the configured product units and actual measured quantities.
 3. Choose **Credit · 30/60/90 days** in Current sale.
-4. Select the client and one of their approved terms. Review the exact due date, available credit and balance after any down payment.
+4. Search/select the saved client and choose 30, 60 or 90 days. Review the exact due date, current unpaid debt, any overdue/unconfirmed-date warnings and balance after a down payment.
 5. Enter the exact cash retained under **Cash paid now**. Give any required change separately; if the full sale is paid, use Cash checkout.
 6. Issue the authorized manual VAT invoice using the existing booklet process. Enter its series and invoice number. The same normalized number cannot be reused for another credit sale.
 7. Confirm the manual invoice and the client's agreement to the due date; select **Complete credit sale** once.
 8. Wait for confirmation before handing over goods. For a lost response, use **Confirm original credit sale** or retry its original request in Sync center. Do not create another invoice or basket to force confirmation.
 
-The server checks the current client limit, overdue balance, role/shift/device, prices, units, batches and confirmed available stock. It adds the selected calendar days to the issue date in Asia/Manila. A midnight date change requires re-review. Stock posts once at the sale; unpaid amounts do not become drawer cash.
+The server checks that the saved client belongs to this branch, the selected term is 30/60/90, and the role/shift/device, exact prices, units, batches and confirmed available stock are valid. It adds the selected calendar days to the issue date in Asia/Manila. A midnight date change requires re-review. Stock posts once at the sale; unpaid amounts do not become drawer cash. Existing debts and unknown historical due dates retain their original amounts and dates; a new invoice never restarts their clock.
 
 ## Collections and returns
 

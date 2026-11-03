@@ -47,6 +47,10 @@ Connected Inventory worklists show recorded expiry and unresolved investigations
 
 ## Approved workflow cleanup — November 3
 
+### Later checkout decision — November 3
+
+The owner requested credit checkout without limits or separate client approval. Any saved branch client can use 30, 60 or 90 calendar days, chosen per invoice. The owner explicitly chose a warning with continued sales for overdue utang. Historical unconfirmed due dates remain unknown and show a warning. These decisions supersede the earlier approval/limit and overdue-block descriptions. No existing balances, dates, client policy values or financial history are rewritten. Owners add/edit contact details; existing sales staff permissions, shift/device checks, authoritative totals, confirmed stock, invoice uniqueness and original-request retries remain enforced.
+
 The deployed Magpet layout has six main areas, with stock counts inside Inventory and supplier bills inside Purchasing. Customers & credit tracks money owed to the store; supplier accounts track the store's own debts and verified payments outside the sales drawer. Their roles and transaction rules remain separate. Historical supplier amounts awaiting payment reconciliation are excluded from recorded payable totals.
 
 Owner Inventory → Needs review distinguishes missing units/prices/costs and unposted source balances. Structured, branch-scoped import evidence is separate from usable stock. Unit confirmation never posts a balance; a separately reviewed current target posts only its difference with stock/version checks and a durable request ID. Price/cost changes append versions and preserve original activity; blank cost remains unconfirmed. Source notes do not authorize guessing a measurement or applying old stock automatically. See docs/workflow-cleanup.md for the workflow, release gates and data-preservation evidence.

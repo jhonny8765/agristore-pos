@@ -216,6 +216,8 @@ insert into public.unit_prices(organization_id,unit_id,version,price,cost) value
 const ownerReviewBefore=command('snapshot',ctx(260)).products.find(p=>p.id===id(266)).ownerReview;
 const ownerReviewAnswer={...ctx(260),productId:id(266),requestId:id(268),expectedReviewRevision:ownerReviewBefore.revision,note:'TEST owner verified packet and invoice',confirmed:true};
 command('complete_product_review',ownerReviewAnswer);
+const contactForRestore={...ctx(),clientId:id(269),requestId:id(270),name:'TEST no-limit client restored',phone:'TEST phone',expectedVersion:0};
+command('save_credit_contact',contactForRestore);
 const original = fingerprints("postgres");
 const before = command("snapshot",{...ctx(),transactionIds:[id(9)]});
 assert.equal(before.stocks[0].quantity,"10.250000");
@@ -261,6 +263,8 @@ try {
   assert.equal(command('review_import_setup',reviewedUnit,database).duplicate,true);
   assert.equal(command('confirm_import_stock',reviewedStock,database).duplicate,true);
   assert.equal(command('complete_product_review',ownerReviewAnswer,database).duplicate,true);
+  assert.equal(command('save_credit_contact',contactForRestore,database).duplicate,true);
+  const restoredContact=command('credit_book',ctx(),database).clients.find(c=>c.id===id(269));assert.equal(restoredContact.name,contactForRestore.name);assert.equal(restoredContact.limit,0);assert.equal(restoredContact.enabled,false);
   const restoredOwnerReview=command('snapshot',ctx(260),database).products.find(p=>p.id===id(266)).ownerReview;assert.equal(restoredOwnerReview.complete,true);assert.equal(restoredOwnerReview.note,ownerReviewAnswer.note);
   const restoredSource=command('product_review_state',{...ctx(260),productId:id(261)},database);assert.equal(Number(restoredSource.stock),1);assert.equal(restoredSource.sourceStock.quantity,'1000');assert.equal(restoredSource.sourceStock.pending,false);
     assert.equal(command('supplier_record_invoice',supplierBill,database).duplicate,true);assert.equal(command('supplier_record_payment',supplierPayment,database).duplicate,true);

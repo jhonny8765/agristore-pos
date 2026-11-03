@@ -1285,7 +1285,7 @@ export function StoreApp() {
     settings: "Store settings",
   };
   const descriptions: Record<View, string> = {
-    credit: "Track approved credit, due dates and customer payments.",
+    credit: "Track customer invoices, due dates and payments.",
     pos: "Scan or search products, add to the sale, and complete payment.",
     overview: "Your store, at a glance.",
     inventory: "Know what’s on hand, down to the last kilo.",

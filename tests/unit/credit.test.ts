@@ -26,7 +26,7 @@ describe('credit operation recovery',()=>{
   await applySnapshot(db,{...snapshot,localRequestId:'old-request'});await expect(saveCheckout(db,sale())).rejects.toThrow('refresh stock online');
   await setSetting(db,'snapshotRequestId','new-request');await applySnapshot(db,{...snapshot,localRequestId:'new-request'});await expect(saveCheckout(db,sale())).resolves.toBeDefined();
  });
- it.each(['record_credit_sale','collect_credit_payment','reverse_credit_collection','credit_refund','save_credit_client'])('restores and retries the exact original %s request',async action=>{
+ it.each(['record_credit_sale','collect_credit_payment','reverse_credit_collection','credit_refund','save_credit_client','save_credit_contact'])('restores and retries the exact original %s request',async action=>{
   const source=await setupDB(),target=await setupDB();databases.push(source,target);
   const data={organizationId:uuid(1),branchId:uuid(2),requestId:uuid(91),saleId:uuid(90),amount:12345};
   vi.mocked(command).mockRejectedValueOnce(new Error('TEST committed response lost'));

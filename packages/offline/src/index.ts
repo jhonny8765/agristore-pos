@@ -456,6 +456,7 @@ export const recoveryOperationIds: Record<string, string> = {
   supplier_reverse_entry: 'requestId',
   supplier_void_invoice: 'requestId',
   save_credit_client: 'requestId',
+  save_credit_contact: 'requestId',
   record_credit_sale: 'requestId',
   collect_credit_payment: 'requestId',
   reverse_credit_collection: 'requestId',
