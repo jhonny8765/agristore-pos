@@ -2078,7 +2078,7 @@ export function StoreApp() {
                       }
                     />
                   </section>
-                  
+
                 </div>
               )}
             {practice&&(inventoryTab==="expiry"||inventoryTab==="controls"||inventoryTab==="prices")&&<section className="panel"><h2>{inventoryTab==="expiry"?"Expiry reminders":inventoryTab==="controls"?"Stock controls":"Price history"}</h2><p>Practice checkout does not load business holds, investigations or historical price records. Sign in to inspect those records. This sample catalog and its local stock remain separate from your business.</p><Button variant="outline" onClick={()=>setInventoryTab("products")}>Return to products</Button></section>}{isOwner&&!practice&&inventoryTab==="prices"&&<PriceHistory key={`${member.organizationId}:${branchId}`} organizationId={member.organizationId} products={products} online={online} disabled={busy}/>}</>
