@@ -1,6 +1,6 @@
 {
   "schemaVersion": 2,
-  "generatedAt": "2026-11-03T05:16:18.858Z",
+  "generatedAt": "2026-11-03T06:44:07.649Z",
   "title": "Design System: Better Yield POS (AgriStore)",
   "extensions": {
     "colorMeta": {
@@ -517,6 +517,13 @@
       "description": "Per-payment internal evidence inside the linked credit record. Retain the booklet reference, permanent payment reference and explicit non-tax-invoice wording; the application print command isolates the selected event. Historical records distinguish Opening unpaid amount from original credit sales; unknown dates remain Unconfirmed with a separate Due date unconfirmed aging bucket. Disabled clients show Not enabled / Terms not approved. Owner confirmation of the actual historical date, evidence and reason stays in an inline disclosure; imported records lacking original goods expose no goods-return command. Current local operating and release limits: docs/customer-credit.md.",
       "html": "<section class=\"ds-credit-payment\" aria-label=\"Payment acknowledgement design preview\"><h3>Payment acknowledgement</h3><p>Official booklet invoice: linked manual reference</p><strong>Collection · original payment reference</strong><p>Cash received: recorded amount<br>Permanent reference: original payment ID</p><p>Internal acknowledgement linked to the original invoice; not a tax invoice.</p><button type=\"button\" class=\"ds-credit-print\">Print payment acknowledgement</button></section>",
       "css": ".ds-credit-payment{padding-block:12px;border-top:1px solid var(--line,#deded8);color:var(--ink,#080b09);font-family:var(--font-sans,\"Roboto Variable\",sans-serif);font-size:18px;line-height:1.4;overflow-wrap:anywhere;min-width:0}.ds-credit-payment h3{font-size:22px;font-weight:750;line-height:1.25;letter-spacing:-.015em}.ds-credit-print{font:650 18px/1.3 var(--font-sans,\"Roboto Variable\",sans-serif);min-height:44px;padding:9px 17px;border:1px solid #9da9a0;border-radius:9px;background:var(--white,#fff);color:var(--forest,#043c28);cursor:pointer;transition:background .16s ease,color .16s ease}.ds-credit-print:hover{background:var(--soft,#edf5e4)}.ds-credit-print:focus-visible{outline:3px solid var(--focus,#507c39);outline-offset:3px}@media(prefers-reduced-motion:reduce){.ds-credit-print{transition:none}}"
+    },
+    {
+      "name": "Product Discount Field",
+      "kind": "input",
+      "description": "Compact Discount % entry at the upper right of each owner/cashier sale line. Accept 0–100% with at most two decimal places; retain gross, reduction and net line amounts. Cash summary separates Subtotal, Product discounts and Amount due; credit summary labels Product discounts included. An associated inline error and invalid boundary accompany a rejected draft, blocking both completion paths until corrected.",
+      "html": "<label class=\"ds-line-discount\"><span>Discount %</span><input aria-label=\"Discount (%) for selected product\" inputmode=\"decimal\" autocomplete=\"off\" placeholder=\"0\" /></label>",
+      "css": ".ds-line-discount{display:flex;flex-direction:column;gap:4px;flex:0 0 80px;margin:0;color:var(--forest,#043c28);font-family:var(--font-sans,\"Roboto Variable\",sans-serif)}.ds-line-discount>span{font-size:12px;font-weight:600;white-space:nowrap}.ds-line-discount>input{min-width:0;width:80px;min-height:40px;padding:6px 8px;text-align:right;font:400 16px/1.4 var(--font-sans,\"Roboto Variable\",sans-serif);border:1px solid var(--line,#deded8);border-radius:7px;background:var(--white,#fff);color:var(--forest,#043c28)}.ds-line-discount>input:hover{border-color:var(--line,#deded8)}.ds-line-discount>input:focus-visible{outline:3px solid var(--focus,#507c39);outline-offset:3px}.ds-line-discount>input[aria-invalid=true]{border-color:#a42c1c}@media(max-width:650px){.ds-line-discount>input{min-height:44px}}"
     }
   ],
   "narrative": {

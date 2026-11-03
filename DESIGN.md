@@ -280,6 +280,12 @@ White outlined surfaces use panel padding/radius and the tiny working shadow; ph
 
 Use verified existing photography with contain fit, otherwise clear Photo not verified fallback in the same media slot. Preserve name, selling unit, stock, intact price and configured weight/peso options. Existing catalog raster provenance remains adjacent to shipping assets, including the 62 catalog-photo sidecars; no generated or changed catalog raster belongs to this rebuild. Receipt/order/overview slots reuse truthful identity. Concise display IDs may lead, but full original IDs remain inspectable and wrap safely when opened.
 
+### Product discounts
+
+Owner/cashier sale lines place a compact **Discount %** field at the upper right beside product identity. Keep the decimal entry right-aligned (80px wide), with a visible label and product-specific accessible name. It accepts (0–100%) with at most two decimal places. Fields retain (40px) minimum height, increasing to (44px) on phones; product names wrap alongside them without widening the sale panel.
+
+For a discounted line, retain **Before discount**, the percentage and reduction, and the net line total. Cash checkout separates **Subtotal**, **Product discounts** and **Amount due**; credit checkout identifies **Product discounts included** before its net sale total. Invalid percentages retain the entered draft, expose an associated inline error and invalid field boundary, and block cash and credit completion until corrected. Preserve the forest/paper hierarchy and intact monetary figures.
+
 ### Ledgers / Recovery / States
 
 General headers are pale green; receipt register headers are white with stronger amounts. Footer count/page state describes loaded scope. Recovery retains icon/copy/action hierarchy, accessible file chooser, selected-file/download feedback, privacy disclosure and guarded logic. Saved-local is not synchronized; unavailable reconciliation is not a balanced drawer. Preserve original financial commands and authorization.
