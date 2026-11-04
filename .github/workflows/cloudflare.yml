@@ -1,5 +1,13 @@
 name: Verify Cloudflare hosting
 on:
+  workflow_call:
+    inputs:
+      scope:
+        type: string
+        default: all
+      integration_grep:
+        type: string
+        default: ''
   workflow_dispatch:
     inputs:
       scope:

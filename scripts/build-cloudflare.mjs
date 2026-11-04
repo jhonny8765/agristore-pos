@@ -1,7 +1,7 @@
 import {cp,mkdir,mkdtemp,readdir,readFile,writeFile,rm,realpath,stat} from "node:fs/promises";
 import {resolve,relative,join,basename,dirname,sep} from "node:path";
 import {fileURLToPath,pathToFileURL} from "node:url";
-import {spawn} from "node:child_process";
+import {spawn,execFileSync} from "node:child_process";
 import {createHash} from "node:crypto";
 import {build} from "esbuild";
 import {zipSync} from "fflate";
@@ -65,6 +65,9 @@ try {
   await writeFile(join(site,"_headers"),pagesHeaders(backend.url));
   await writeFile(join(site,"_routes.json"),JSON.stringify({version:1,include:["/api/health","/_worker.js","/_headers","/_routes.json"],exclude:[]}));
   const assets={};
+  const sourceCommit=execFileSync('git',['rev-parse','HEAD'],{cwd:root,encoding:'utf8'}).trim();
+  const databaseMigration=(await readdir(join(root,'supabase/migrations'))).filter(f=>/^\d{14}.*\.sql$/.test(f)).sort().at(-1).slice(0,14);
+  await writeFile(join(site,'release.json'),JSON.stringify({release,sourceCommit,databaseMigration,backend:backend.url??null}));
   for(const file of await files(site)) {
     const rel=relative(site,file).split(sep).join("/");
     if(/(^|\/)(\.env[^/]*|node_modules|\.git)(\/|$)|\.map$|\.(ts|tsx)$/.test(rel)) throw new Error(`Forbidden deployment asset: ${rel}`);
@@ -74,7 +77,7 @@ try {
   if(Object.keys(assets).length>1000) throw new Error("Artifact exceeds the conservative dashboard upload limit; review before deployment.");
   for(const required of ["index.html","404.html","sw.js","manifest.webmanifest","_worker.js","_headers","_routes.json"]) if(!assets[required]) throw new Error(`Missing deployment asset: ${required}`);
   const zip=zipSync(assets,{level:6});
-  const report={release,configured:!!backend.url,createdAt:new Date().toISOString(),fileCount:Object.keys(assets).length,zipBytes:zip.length,sha256:createHash("sha256").update(zip).digest("hex"),health:"/api/health",physicalEndurancePassed:false};
+  const report={release,sourceCommit,databaseMigration,backend:backend.url??null,configured:!!backend.url,createdAt:new Date().toISOString(),fileCount:Object.keys(assets).length,zipBytes:zip.length,sha256:createHash("sha256").update(zip).digest("hex"),health:"/api/health",physicalEndurancePassed:false};
   try { await stat(output); await safeRemove(output,"cloudflare-output"); } catch(error) {if(error.code!=="ENOENT") throw error;}
   await mkdir(output);await writeFile(join(output,".generated-by-agristore"),marker);
   await cp(site,join(output,"site"),{recursive:true});
