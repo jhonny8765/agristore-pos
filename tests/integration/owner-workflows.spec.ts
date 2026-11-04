@@ -1,3 +1,4 @@
+import {expectPagedRows} from "../helpers/record-pages";
 import { selectChoice } from "../helpers/search-choice";
 import {sealedCount} from "./blind-count-fixtures";
 import { randomUUID } from "node:crypto";
@@ -1351,7 +1352,7 @@ test("branch history pages beyond 1000, filters Manila days, recovers a failed p
     name: "Receiving history",
     exact: true,
   });
-  await expect(register.locator("tbody tr")).toHaveCount(50);
+  await expectPagedRows(register,50);
   let failPage = true;
   await page.route("**/rest/v1/purchase_receipts?*", async (route) => {
     if (failPage) {
@@ -1362,12 +1363,12 @@ test("branch history pages beyond 1000, filters Manila days, recovers a failed p
     .getByRole("button", { name: "Load older records", exact: true })
     .click();
   await expect(register.getByRole("alert")).toBeVisible();
-  await expect(register.locator("tbody tr")).toHaveCount(50);
+  await expectPagedRows(register,50);
   failPage = false;
   await register
     .getByRole("button", { name: "Retry history", exact: true })
     .click();
-  await expect(register.locator("tbody tr")).toHaveCount(100);
+  await expectPagedRows(register,100);
   const downloadPromise = page.waitForEvent("download");
   await register
     .getByRole("button", { name: "Export loaded rows (CSV)", exact: true })
@@ -1381,9 +1382,9 @@ test("branch history pages beyond 1000, filters Manila days, recovers a failed p
   await expect(
     register.getByRole("button", { name: "Apply dates", exact: true }),
   ).toBeDisabled();
-  await expect(register.locator("tbody tr")).toHaveCount(100);
+  await expectPagedRows(register,100);
   await context.setOffline(false);
-  await expect(register.locator("tbody tr")).toHaveCount(50);
+  await expectPagedRows(register,50);
   await register.getByLabel("From date", { exact: true }).fill("2099-01-01");
   await register.getByLabel("Through date", { exact: true }).fill("2099-01-01");
   await register
@@ -1412,7 +1413,7 @@ test("branch history pages beyond 1000, filters Manila days, recovers a failed p
   await register
     .getByRole("button", { name: "Clear dates", exact: true })
     .click();
-  await expect(register.locator("tbody tr")).toHaveCount(50);
+  await expectPagedRows(register,50);
   for (const width of [1440, 390, 418]) {
     await page.setViewportSize({ width, height: 900 });
     expect(
@@ -1515,11 +1516,11 @@ test("receipt history crosses 1000 rows without losing equal-microsecond timesta
   await page
     .getByRole("button", { name: "Sales & receipts", exact: true })
     .click();
-  await expect(page.locator("tbody tr")).toHaveCount(50);
+  await expectPagedRows(page.getByRole("region",{name:"Receipt list",exact:true}),50);
   await page
     .getByRole("button", { name: "Load older receipts", exact: true })
     .click();
-  await expect(page.locator("tbody tr")).toHaveCount(100);
+  await expectPagedRows(page.getByRole("region",{name:"Receipt list",exact:true}),100);
   const actual = new Set<string>();
   let before;
   do {
