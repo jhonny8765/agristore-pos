@@ -6,6 +6,7 @@ export async function selectChoice(control: Locator, choice: string | { label?: 
   if (await control.evaluate(node => node.tagName) !== "INPUT") return control.selectOption(choice, options);
   const term = typeof choice === "string" ? choice : choice.label ?? choice.value ?? "";
   await control.fill(term);
+  await control.click();
   const popup = control.locator("..").getByRole("option");
   await expect(popup).toHaveCount(1);
   await popup.click();
