@@ -185,7 +185,12 @@ test("confirmed deliveries and opening imports stay saved when the following sto
   await page.getByLabel("Quantity received", { exact: true }).fill("2");
   await page.getByRole("button", { name: "Receive stock", exact: true }).click();
   await expect(page.locator(".notice[role=alert]")).toContainText("Your action completed");
-  await expect(page.locator(".notice[role=status]")).toContainText("Delivery recorded.");
+  // Temporary notices expire after three seconds; the confirmed-write warning
+  // remains available so a failed refresh never invites a second delivery.
+  const retainedWarning=page.getByText("Review the last action message",{exact:true});
+  await expect(retainedWarning).toBeVisible();await retainedWarning.click();
+  await expect(page.locator(".action-issue")).toContainText("Do not submit it again");
+  await expect(page.locator(".notice[role=status]")).toHaveCount(0);
   await expect(page.getByLabel("Delivery / invoice reference", { exact: true })).toHaveValue("");
   await expect(page.getByLabel("Quantity received", { exact: true })).toHaveValue("");
   // A second click now meets native required-field validation, not another write.

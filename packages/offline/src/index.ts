@@ -453,6 +453,8 @@ export const recoveryOperationIds: Record<string, string> = {
   review_import_setup: 'requestId',
   review_product_price: 'requestId',
   confirm_import_stock: 'requestId',
+  supplier_create_order: 'requestId',
+  supplier_receive_purchase: 'requestId',
   supplier_record_invoice: 'requestId',
   supplier_record_payment: 'requestId',
   supplier_credit_note: 'requestId',

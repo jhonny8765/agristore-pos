@@ -1,3 +1,4 @@
+import {verifyPurchasingAcknowledgement} from "./purchasing-confirmation";
 import { stableJSON, saleSchema, type Lease } from "@agristore/domain";
 import { PosDatabase, setting, setSetting, unresolvedStates } from "@agristore/offline";
 import { command } from "./api";
@@ -123,6 +124,7 @@ export async function retryOperation(
     const result = await command(pending.action, pending.data);
     if(pending.action==='record_online_sale'&&(!['created','duplicate'].includes(String(result.status))||result.transactionId!==pending.data.transactionId||typeof result.receipt!=='string'))throw new Error('The sale response could not be verified. Keep the original request in Sync center.');
     if(pending.action==='record_credit_sale')verifyCreditAcknowledgement(pending.data,result);
+    verifyPurchasingAcknowledgement(pending.action,pending.data,result);
     await settleOperation(db, pending, undefined, true,typeof result.receipt==='string'?result.receipt:undefined);
     return result;
   } catch (e) {

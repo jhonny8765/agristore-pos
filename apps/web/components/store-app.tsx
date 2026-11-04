@@ -1,4 +1,5 @@
 "use client";
+import {useTransientMessage} from "../lib/transient-message";
 import {RecordReports} from "./record-reports";
 import type {RecordKind} from "../lib/record-reports";
 import { StateBadge } from "./state-badge";
@@ -21,6 +22,7 @@ import { WorkspaceStat } from "./workspace-ui";
 import { OrderWorkspace } from "./order-workspace";
 import { ReceiptWorkspace } from "./receipt-workspace";
 import { SaleReceiptPrint } from "./sale-receipt-print";
+import {SupplierPurchaseFields,purchaseInvoice} from "./supplier-purchase-fields";
 import { SupplierAccounts } from "./supplier-accounts";
 import { InventoryWorkspace } from "./inventory-workspace";
 import { SettingsWorkspace } from "./settings-workspace";
@@ -258,6 +260,7 @@ export function StoreApp() {
   const appInstall = useAppInstall();
   const [dispatchStock,setDispatchStock]=useState("");
   const [quickUnit,setQuickUnit]=useState("");
+  const [quickSupplier,setQuickSupplier]=useState(""),[supplierBillTarget,setSupplierBillTarget]=useState("");
   const [partialRefundSaleId,setPartialRefundSaleId]=useState<string>();
   const [localHistoryLimit, setLocalHistoryLimit] = useState(50);
   const [hasOlderLocal, setHasOlderLocal] = useState(false);
@@ -295,8 +298,8 @@ export function StoreApp() {
   const [cloud, setCloud] = useState<Record<string, Row[]>>({}),
     [lastSync, setLastSync] = useState<string>(),
     [snapshotAt, setSnapshotAt] = useState<string>();
-  const [message, setMessage] = useState(""),
-    [error, setError] = useState(""),
+  const [message, setMessage] = useTransientMessage(),
+    [error, setError] = useTransientMessage(),
     [busy, setBusy] = useState(false),
     [syncing, setSyncing] = useState(false),
     [registration, setRegistration] = useState<ServiceWorkerRegistration>();
@@ -340,23 +343,27 @@ export function StoreApp() {
   const syncingRef = useRef(false);
   const contextGeneration = useRef(0);
   const cloudRequest = useRef(0);
+  const [actionIssue,setActionIssue]=useState("");
   const notify = useCallback((text: string) => {
     setMessage(text);
-    setError("");
-  }, []);
+    setError("");setActionIssue("");
+  }, [setMessage,setError]);
   const fail = useCallback((e: unknown) => {
-    setError(
+    const issue=
       e instanceof Error && "issues" in e
         ? (e as Error & { issues: { message: string }[] }).issues
             .map((i) => i.message)
             .join(". ")
         : e instanceof Error
           ? e.message
-          : "Something went wrong. Your completed sales are still saved.",
-    );
+          : "Something went wrong. Your completed sales are still saved.";
+    setActionIssue(issue);setError(issue);
     setMessage("");
-  }, []);
+  }, [setMessage,setError]);
+  useEffect(()=>{setSupplierBillTarget("");setQuickSupplier("");},[branchId,member?.organizationId,member?.userId]);
   const checkoutScopeGeneration=contextGeneration.current;
+  const openSupplierBill=(id:string)=>{if(checkoutScopeGeneration!==contextGeneration.current)return;setSupplierBillTarget(id);setPurchasingTab("accounts");};
+
   const selectedBranch = branchList.find((b) => b.id === branchId);
   const onlineCashOnly=!practice&&(selectedBranch?.multiPc===true||lease?.onlineOnly===true);
   const onlineCashPending=operations.find(op=>op.action==='record_online_sale');
@@ -487,6 +494,7 @@ export function StoreApp() {
   }, [db, lease, practice, refreshLocal, fail]);
   useEffect(() => {
     const generation = ++contextGeneration.current;
+    setActionIssue("");
     let alive = true;
     const current = () => alive && generation === contextGeneration.current;
     (async () => {
@@ -700,9 +708,7 @@ export function StoreApp() {
       if (completed) {
         // The write is confirmed. A failed read must not turn it into a failed
         // submission or invite a second stock movement/product/supplier.
-        setError(
-          "Your action completed, but the latest records could not be refreshed. Do not submit it again. Reconnect and select Refresh.",
-        );
+        fail(new Error("Your action completed, but the latest records could not be refreshed. Do not submit it again. Reconnect and select Refresh."));
         return;
       }
       fail(e);
@@ -895,7 +901,7 @@ export function StoreApp() {
       const heldId=useCart.getState().heldDraftId;
       if(heldId){const draft=useCart.getState();await prepareHeldCheckout(db,lease,heldId,payload,{lineIds:[...draft.lineIds],drafts:structuredClone(draft.drafts),quantityErrors:{...draft.quantityErrors},cash});}
       const saved = onlineCashOnly?await confirmOnlineCash(db,lease,payload):await saveCheckout(db, payload);
-      if(heldId){try{await removeHeldSale(db,lease,heldId);setHeldDraftCount(0);}catch{setError("Sale saved. A held-draft copy remains on this PC; it cannot be charged again. Remove it after checking the original receipt.");}}
+      if(heldId){try{await removeHeldSale(db,lease,heldId);setHeldDraftCount(0);}catch{fail(new Error("Sale saved. A held-draft copy remains on this PC; it cannot be charged again. Remove it after checking the original receipt."));}}
       setCheckoutDone(saved);
       cart.clear();
       setCash("");
@@ -1063,6 +1069,7 @@ export function StoreApp() {
           </button>
         </div>
       )}
+      {!error&&actionIssue&&<details className="action-issue"><summary>Review the last action message</summary><p>{actionIssue}</p><Button variant="ghost" onClick={()=>setActionIssue("")}>Dismiss reviewed message</Button></details>}
       {message && (
         <div role="status" className="notice success">
           <Check size={17} />
@@ -1521,15 +1528,6 @@ export function StoreApp() {
               The audit register below has its own branch and date filters.
             </p></details>
           )}
-          {!practice &&
-            view !== "sales" &&
-            view !== "records" &&
-            Object.values(cloud).some((list) => list.length >= 1000) && (
-              <p role="status" className="notice error">
-                Showing the most recent 1,000 entries in this view. Older
-                records remain stored.
-              </p>
-            )}
           {!lease && !isStock && view === "pos" && (
             <section className="start-shift">
               <div>
@@ -1775,7 +1773,7 @@ export function StoreApp() {
                       : onlineCashOnly?"Wait for online confirmation before handing over goods":"Saved on this PC before checkout completes"}
                   </span>
                 </form>)}
-                {(!((checkoutDone||creditDone)&&!cart.items.length)||heldDraftCount>0)&&lease&&<HeldSaleControl onWorking={working=>{committing.current=working;setBusy(working);}} db={db} lease={lease} cash={cash} onCash={setCash} disabled={busy||savingSale||installingUpdate||isStock||!!onlineCashPending} revision={checkoutDone?.id??String(historyRevision)} onChange={()=>{setCheckoutDone(undefined);setCreditDone(undefined);void setting<HeldSale>(db,heldSaleKey(lease)).then(value=>setHeldDraftCount(value?1:0)).catch(()=>setError("Could not check the held draft. Keep site data and retry."));}}/>}
+                {(!((checkoutDone||creditDone)&&!cart.items.length)||heldDraftCount>0)&&lease&&<HeldSaleControl onWorking={working=>{committing.current=working;setBusy(working);}} db={db} lease={lease} cash={cash} onCash={setCash} disabled={busy||savingSale||installingUpdate||isStock||!!onlineCashPending} revision={checkoutDone?.id??String(historyRevision)} onChange={()=>{setCheckoutDone(undefined);setCreditDone(undefined);void setting<HeldSale>(db,heldSaleKey(lease)).then(value=>setHeldDraftCount(value?1:0)).catch(()=>fail(new Error("Could not check the held draft. Keep site data and retry.")));}}/>}
               </aside>
               <div className="mobile-basket">
                 <div>
@@ -2022,8 +2020,8 @@ export function StoreApp() {
           )}
 
           {view === "receiving" && (
-            <><WorkspaceTabs label="Purchasing sections" value={["accounts","suppliers"].includes(purchasingTab)?purchasingTab:"deliveries"} onChange={id=>setPurchasingTab(id==="deliveries"?"orders":id)} tabs={[{id:"deliveries",label:"Orders & deliveries"},...(isOwner&&!practice?[{id:"accounts",label:"Supplier bills"}]:[]),{id:"suppliers",label:"Suppliers"}]}/>{!["accounts","suppliers"].includes(purchasingTab)&&<WorkspaceTabs label="Orders and receiving steps" value={purchasingTab} onChange={setPurchasingTab} tabs={[{id:"orders",label:"Orders"},{id:"inspections",label:"Inspect delivery"},{id:"quick",label:"Quick receipt"},{id:"history",label:"Receiving history"},...(isOwner?[{id:"opening",label:"Opening stock"}]:[])]}/>}{!practice&&isOwner&&purchasingTab==="accounts"&&<SupplierAccounts onRecords={openRecords} key={`supplier-accounts:${member.organizationId}:${branchId}`} db={db} organizationId={member.organizationId} branchId={branchId} actorId={member.userId} online={online} disabled={busy} execute={fn=>run(fn,true,true)}/>}{practice&&purchasingTab==="orders"&&<div className="practice-purchasing"><Button className="practice-order-request" disabled title="Sign in to request a business purchase order"><Plus size={20}/>Request purchase order</Button><div className="workspace-stats three"><WorkspaceStat icon={ClipboardCheck} label="Awaiting approval" value="—"/><WorkspaceStat icon={Truck} label="Awaiting delivery" value="—"/><WorkspaceStat icon={Package} label="Supplier claims" value="—"/></div><OrderWorkspace orders={[]} products={products} disabled actions={()=>null} onInspect={()=>{}}/><p className="scope-note">Business purchasing requires signing in. Practice checkout does not create orders or stock.</p></div>}
-              {!practice && member.role !== "cashier" && purchasingTab!=="accounts" && <PurchasingWorkspace pane={purchasingTab} onPaneChange={setPurchasingTab} key={`purchasing:${member.organizationId}:${branchId}`} db={db} organizationId={member.organizationId} branchId={branchId} branchName={selectedBranch?.name ?? "Selected branch"} actorId={member.userId} products={products} suppliers={(cloud.suppliers ?? []).map(s => ({ id: str(s,"id"), name: str(s,"name") }))} role={member.role} online={online} disabled={busy} revision={historyRevision} reversalBlocked={allPendingCount > 0 || syncing || !!lease || cart.items.length > 0} execute={fn => run(fn,true,true)} />}
+            <><WorkspaceTabs label="Purchasing sections" value={["accounts","suppliers"].includes(purchasingTab)?purchasingTab:"deliveries"} onChange={id=>setPurchasingTab(id==="deliveries"?"orders":id)} tabs={[{id:"deliveries",label:"Orders & deliveries"},...(isOwner&&!practice?[{id:"accounts",label:"Supplier bills"}]:[]),{id:"suppliers",label:"Suppliers"}]}/>{!["accounts","suppliers"].includes(purchasingTab)&&<WorkspaceTabs label="Orders and receiving steps" value={purchasingTab} onChange={setPurchasingTab} tabs={[{id:"orders",label:"Orders"},{id:"inspections",label:"Inspect delivery"},{id:"quick",label:"Quick receipt"},{id:"history",label:"Receiving history"},...(isOwner?[{id:"opening",label:"Opening stock"}]:[])]}/>}{!practice&&isOwner&&purchasingTab==="accounts"&&<SupplierAccounts initialBillId={supplierBillTarget} onRecords={openRecords} key={`supplier-accounts:${member.organizationId}:${branchId}`} db={db} organizationId={member.organizationId} branchId={branchId} actorId={member.userId} online={online} disabled={busy} execute={fn=>run(fn,true,true)}/>}{practice&&purchasingTab==="orders"&&<div className="practice-purchasing"><Button className="practice-order-request" disabled title="Sign in to request a business purchase order"><Plus size={20}/>Request purchase order</Button><div className="workspace-stats three"><WorkspaceStat icon={ClipboardCheck} label="Awaiting approval" value="—"/><WorkspaceStat icon={Truck} label="Awaiting delivery" value="—"/><WorkspaceStat icon={Package} label="Supplier claims" value="—"/></div><OrderWorkspace orders={[]} products={products} disabled actions={()=>null} onInspect={()=>{}}/><p className="scope-note">Business purchasing requires signing in. Practice checkout does not create orders or stock.</p></div>}
+              {!practice && member.role !== "cashier" && purchasingTab!=="accounts" && <PurchasingWorkspace onBillSaved={openSupplierBill} pane={purchasingTab} onPaneChange={setPurchasingTab} key={`purchasing:${member.organizationId}:${branchId}`} db={db} organizationId={member.organizationId} branchId={branchId} branchName={selectedBranch?.name ?? "Selected branch"} actorId={member.userId} products={products} suppliers={(cloud.suppliers ?? []).map(s => ({ id: str(s,"id"), name: str(s,"name") }))} role={member.role} online={online} disabled={busy} revision={historyRevision} reversalBlocked={allPendingCount > 0 || syncing || !!lease || cart.items.length > 0} execute={fn => run(fn,true,true)} />}
               <div className="two-column">
                 <section className="panel" hidden={purchasingTab!=="quick"}>
                   <h2>Quick receipt · saleable goods only</h2>
@@ -2040,11 +2038,7 @@ export function StoreApp() {
                           p.units.some((u) => u.id === inputValue(f, "unit")),
                         );
                         if (!p) throw new Error("Select a product");
-                        await onlineOperation(
-                          db,
-                          member.userId,
-                          "receive_stock",
-                          {
+                        const delivery={
                             ...context(),
                             reference: inputValue(f, "reference"),
                             source: "purchase",
@@ -2060,16 +2054,18 @@ export function StoreApp() {
                                 expiresOn: inputValue(f, "expires") || null,
                               },
                             ],
-                          },
-                          "receiptId",
-                        );
-                        form.reset();setQuickUnit("");
+                          };
+                        const invoice=isOwner&&!practice?purchaseInvoice(f):null;
+                        const result=await onlineOperation(db,member.userId,invoice?"supplier_receive_purchase":"receive_stock",invoice?{...context(),receiptAction:"receive_stock",delivery:{...delivery,receiptId:crypto.randomUUID()},invoice}:delivery,invoice?"requestId":"receiptId");
+                        if(checkoutScopeGeneration!==contextGeneration.current)return;
+                        if(invoice&&typeof result.billId==="string")openSupplierBill(result.billId);
+                        form.reset();setQuickUnit("");setQuickSupplier("");
                         notify("Delivery recorded.");
                       }, true, true);
                     }}
                   >
                     <Field label="Supplier">
-                      <SearchableSelect name="supplier" aria-label="Supplier">
+                      <SearchableSelect name="supplier" aria-label="Supplier" value={quickSupplier} onValueChange={setQuickSupplier}>
                         <option value="">No supplier selected</option>
                         {(cloud.suppliers ?? []).map((r) => (
                           <option key={str(r, "id")} value={str(r, "id")}>
@@ -2105,6 +2101,7 @@ export function StoreApp() {
                         <input name="expires" type="date" />
                       </Field>
                     </div>
+                    {isOwner&&!practice&&<SupplierPurchaseFields key={`${branchId}:${quickSupplier}:${historyRevision}`} organizationId={member.organizationId} branchId={branchId} supplierId={quickSupplier} disabled={busy||!online}/>}
                     <Button
                       disabled={
                         busy || !online || practice || !["owner", "manager"].includes(member.role)
@@ -2587,7 +2584,7 @@ export function StoreApp() {
                           ) : (
                             <>
                             {Array.isArray(s.sale_partial_refunds)&&s.sale_partial_refunds.length>0&&<p className="status-tag">Refund recorded · check details</p>}
-                            {isOwner&&<Button size="sm" variant="outline" disabled={!online||busy} onClick={()=>setPartialRefundSaleId(String(s.id))}>Partial refund</Button>}
+                            {isOwner&&<Button size="sm" variant="outline" disabled={!online||busy} onClick={()=>setPartialRefundSaleId(String(s.id))}>Return / refund items</Button>}{isOwner&&(!lease||allPendingCount>0||operations.length>0||syncing||cart.items.length>0)&&<p className="refund-entry-help">{!lease?'Open your own cashier shift before confirming a return.':'Finish the basket and confirm pending records before returning items.'}{!lease&&<Button variant="ghost" size="sm" onClick={()=>setView('pos')}>Open cashier shift</Button>}</p>}
                             {isOwner && (!Array.isArray(s.sale_partial_refunds)||s.sale_partial_refunds.length===0) && (!Array.isArray(s.sale_refund_corrections)||s.sale_refund_corrections.length===0) && (
                               <ApprovalForm
                                 action="Full refund"
@@ -2595,7 +2592,7 @@ export function StoreApp() {
                                 description={`Refund ${money((s.total) as number|string)} in cash. Record what physically returned for each line; only inspected saleable goods increase available stock. The original receipt is preserved.`}
                                 confirmLabel="Confirm full refund"
                                 disabled={
-                                  !online || busy || !lease || !!pending.length
+                                  !online || busy || !lease || allPendingCount>0 || operations.length>0 || syncing || cart.items.length>0
                                 }
                                 onConfirm={(reason,f) =>
                                   run(async () => {

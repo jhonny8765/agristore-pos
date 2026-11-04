@@ -115,3 +115,19 @@
 @media print {
   .reference-ui .navigation-toggle, .reference-ui .navigation-backdrop { display: none; }
 }
+
+/* Customer and purchasing follow-up: preserve full amounts and ordinary flow. */
+.reference-ui .record-row { cursor: pointer; }
+.reference-ui .record-row:hover, .reference-ui .record-row:focus-within { background: var(--soft); }
+.reference-ui .customer-register .register-filters { grid-template-columns: minmax(0,1.2fr) minmax(180px,.8fr) minmax(180px,.8fr); }
+.reference-ui .customer-summary dd { white-space: nowrap; font-size: clamp(20px,1.6vw,30px); }
+.reference-ui .purchase-orders-pane > .button, .reference-ui .purchase-orders-pane > p { order: 2; }
+.reference-ui .purchase-process, .reference-ui .purchase-scope { order: 3; }
+.reference-ui .purchase-request { align-self: stretch; }
+.reference-ui .refund-entry-help { margin: 12px 0; line-height: 1.5; }
+@media(max-width:1100px) {
+ .reference-ui .customer-summary { display: grid; grid-template-columns: repeat(3,minmax(0,1fr)); }
+ .reference-ui .customer-summary > div:nth-child(2) { grid-column: 1/-1; order: -1; }
+ .reference-ui .customer-workspace .customer-summary > div:nth-child(2) dd { font-size: 28px; }
+}
+@media(max-width:800px) { .reference-ui .customer-register .register-filters { grid-template-columns: minmax(0,1fr); } }
