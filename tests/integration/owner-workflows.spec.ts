@@ -661,6 +661,7 @@ test("offline mixed sacks, quarters, halves and peso-weight sales synchronize ex
   await login(page, a, name);
   await page.getByRole("button", { name: "Open shift", exact: true }).click();
   const add = page.getByRole("button", { name: `Add ${name}` });
+  const lines=page.locator(".receipt-items>.receipt-item");
   await expect(add).toBeEnabled();
   await context.setOffline(true);
   await add.click();
@@ -668,30 +669,29 @@ test("offline mixed sacks, quarters, halves and peso-weight sales synchronize ex
     .getByLabel(`Unit for ${name}`)
     .selectOption({ label: "Sack (50 kg)" });
   await add.click();
-  await page.getByLabel(`Loose selling options for ${name}`,{exact:true}).nth(1).click();
-  await page.getByRole("button", { name: "¼ kg", exact: true }).last().click();
+  await lines.nth(1).getByLabel(`Loose selling options for ${name}`,{exact:true}).click();
+  await lines.nth(1).getByRole("button", { name: "¼ kg", exact: true }).click();
   await add.click();
-  await page.getByLabel(`Loose selling options for ${name}`,{exact:true}).nth(2).click();
-  await page.getByRole("button", { name: "½ kg", exact: true }).last().click();
+  await lines.nth(2).getByLabel(`Loose selling options for ${name}`,{exact:true}).click();
+  await lines.nth(2).getByRole("button", { name: "½ kg", exact: true }).click();
   await add.click();
-  await page.getByLabel(`Loose selling options for ${name}`,{exact:true}).nth(3).click();
-  await page.getByRole("button",{name:"By peso amount",exact:true}).last().click();
-  await page.getByLabel(`Customer budget (₱) for ${name}`).fill("50");
-  await page
+  await lines.nth(3).getByLabel(`Loose selling options for ${name}`,{exact:true}).click();
+  await lines.nth(3).getByRole("button",{name:"By peso amount",exact:true}).click();
+  await lines.nth(3).getByLabel(`Customer budget (₱) for ${name}`).fill("50");
+  await lines.nth(3)
     .getByRole("button", { name: "Estimate weight", exact: true })
     .click();
   await expect(
-    page.getByLabel(new RegExp(`^Quantity [(].+[)] for ${name}$`)).nth(3),
+    lines.nth(3).getByLabel(new RegExp(`^Quantity [(].+[)] for ${name}$`)),
   ).toHaveValue("1.428");
   await expect(
     page.getByRole("button", { name: "Complete cash sale" }),
   ).toBeDisabled();
-  await page.getByLabel(`Weight entry for ${name}`).nth(2).selectOption("g");
-  await page
+  await lines.nth(3).getByLabel(`Weight entry for ${name}`).selectOption("g");
+  await lines.nth(3)
     .getByLabel(new RegExp(`^Quantity [(].+[)] for ${name}$`))
-    .nth(3)
     .fill("1430");
-  await page
+  await lines.nth(3)
     .getByRole("button", { name: "Confirm weighed amount", exact: true })
     .click();
   await page.getByLabel("Cash received", { exact: true }).fill("2000");
@@ -1053,6 +1053,7 @@ test("owner approvals work without browser dialogs, stock refreshes without a sh
     .eq("active", true)
     .single();
   expect(firstPC.error).toBeNull();
+  await page.getByRole("button",{name:"Settings",exact:true}).click();await page.getByRole("tab",{name:"Cashier PCs",exact:true}).click();
   await page.getByRole("button", { name: "Retire PC", exact: true }).click();
   await page
     .getByLabel("PC retirement reason", { exact: true })
