@@ -657,6 +657,7 @@ export function StoreApp() {
   useEffect(() => {
     if (
       process.env.NODE_ENV !== "production" ||
+      !online ||
       !("serviceWorker" in navigator)
     )
       return;
@@ -670,7 +671,7 @@ export function StoreApp() {
     return () => {
       alive = false;
     };
-  }, [fail]);
+  }, [fail, online]);
   const run = async (fn: () => Promise<void>, refresh = true, forceStock = false) => {
     if (operationBusy.current)
       return new Error(
@@ -1495,7 +1496,7 @@ export function StoreApp() {
             {lease && view!=="close-shift" && (<Button className="close-shift-shortcut" variant="outline" size="sm" disabled={busy || savingSale || installingUpdate}
                   onClick={() => setView("close-shift")}>
                   <LogOut size={15} /> Close shift
-                </Button>)}<button className="account-chip" title={practice?"Leave practice mode":"Sign out"} aria-label={practice?"Return to sign in":"Sign out "+member.name} disabled={busy||syncing} onClick={()=>void logout()}>{practice?"Practice mode · Sample data":member.name+" · "+member.role.replaceAll("_"," ")}</button>
+                </Button>)}<button className="account-chip" title={practice?"Leave practice mode":"Sign out"} aria-label={practice?"Practice mode · Sample data. Return to sign in":"Sign out "+member.name+" · "+member.role.replaceAll("_"," ")} disabled={busy||syncing} onClick={()=>void logout()}>{practice?"Practice mode · Sample data":member.name+" · "+member.role.replaceAll("_"," ")}</button>
           </div>
         </header>
         <main data-view={view} id="main" className="main-content" tabIndex={-1}>

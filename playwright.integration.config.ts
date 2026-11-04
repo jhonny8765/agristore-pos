@@ -14,7 +14,7 @@ export default defineConfig({
   workers: 1,
   fullyParallel: false,
   // Stop an already failed release check promptly; successful runs still execute every case.
-  maxFailures: 5,
+  maxFailures: 10,
   timeout: 180_000,
   expect: { timeout: 20_000 },
   reporter: "list",

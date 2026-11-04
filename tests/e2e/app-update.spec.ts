@@ -8,6 +8,7 @@ import path from "node:path";
 // loopback. No hosted data, deployment aliases or source files are modified.
 async function versionedApp() {
   let version = "one";
+  let failWorker = false, failedWorkers = 0;
   const server = createServer(async (req, res) => {
     try {
       if (req.method !== "GET" && req.method !== "HEAD") {
@@ -15,6 +16,7 @@ async function versionedApp() {
         return;
       }
       const url = new URL(req.url ?? "/", "http://127.0.0.1");
+      if(url.pathname === "/sw.js" && failWorker){failWorker=false;failedWorkers++;res.writeHead(503).end("TEST interrupted first worker request");return;}
       const upstream = await fetch(
         `http://127.0.0.1:3100${url.pathname}${url.search}`,
       );
@@ -55,6 +57,8 @@ async function versionedApp() {
     throw new Error("Local upgrade server did not start.");
   return {
     origin: `http://127.0.0.1:${address.port}`,
+    interruptNextWorker:()=>{failWorker=true;},
+    failedWorkers:()=>failedWorkers,
     publish: (next = "two") => {
       version = next;
     },
@@ -266,4 +270,21 @@ test("republishing an earlier shell revision preserves pending receipts across o
   if(path.dirname(resolved)!==path.resolve(tmpdir())||!path.basename(resolved).startsWith("agri-rollback-"))throw new Error("Refusing cleanup outside the created rollback test profile.");
   await rm(resolved,{recursive:true,force:true});
  }
+});
+
+
+test("a failed first offline-file installation retries on reconnection without clearing this browser",async({page,context})=>{
+ const app=await versionedApp();app.interruptNextWorker();
+ try{
+  await page.goto(app.origin);
+  await expect.poll(app.failedWorkers).toBe(1);
+  await context.setOffline(true);
+  await expect.poll(()=>page.evaluate(()=>navigator.onLine)).toBe(false);
+  await context.setOffline(false);
+  await page.waitForFunction(()=>navigator.serviceWorker.ready.then(()=>true));
+  await page.reload();
+  await expect.poll(()=>page.evaluate(()=>!!navigator.serviceWorker.controller)).toBe(true);
+  await context.setOffline(true);await page.reload();
+  await expect(page.getByRole("button",{name:"Try practice checkout",exact:true})).toBeVisible();
+ }finally{await context.setOffline(false);await app.close();}
 });

@@ -922,7 +922,7 @@ test("owner accessibility covers keyboard navigation, narrow reflow and forced c
     if (
       ["Overview", "Purchasing", "Transfers", "Stock counts"].includes(screen)
     )
-      await expect(page.locator(".history-register")).toContainText(/loaded ·/);
+      await expect(page.locator(".history-register:visible").first()).toContainText(/loaded ·/);
     if (screen === "Settings"){await page.getByRole("tab",{name:"Staff access",exact:true}).click();
       await expect(
         page.getByRole("cell", { name: "Test audit owner", exact: true }),
