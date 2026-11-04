@@ -708,9 +708,7 @@ export function StoreApp() {
       if (completed) {
         // The write is confirmed. A failed read must not turn it into a failed
         // submission or invite a second stock movement/product/supplier.
-        setError(
-          "Your action completed, but the latest records could not be refreshed. Do not submit it again. Reconnect and select Refresh.",
-        );
+        fail(new Error("Your action completed, but the latest records could not be refreshed. Do not submit it again. Reconnect and select Refresh."));
         return;
       }
       fail(e);
@@ -903,7 +901,7 @@ export function StoreApp() {
       const heldId=useCart.getState().heldDraftId;
       if(heldId){const draft=useCart.getState();await prepareHeldCheckout(db,lease,heldId,payload,{lineIds:[...draft.lineIds],drafts:structuredClone(draft.drafts),quantityErrors:{...draft.quantityErrors},cash});}
       const saved = onlineCashOnly?await confirmOnlineCash(db,lease,payload):await saveCheckout(db, payload);
-      if(heldId){try{await removeHeldSale(db,lease,heldId);setHeldDraftCount(0);}catch{setError("Sale saved. A held-draft copy remains on this PC; it cannot be charged again. Remove it after checking the original receipt.");}}
+      if(heldId){try{await removeHeldSale(db,lease,heldId);setHeldDraftCount(0);}catch{fail(new Error("Sale saved. A held-draft copy remains on this PC; it cannot be charged again. Remove it after checking the original receipt."));}}
       setCheckoutDone(saved);
       cart.clear();
       setCash("");
@@ -1775,7 +1773,7 @@ export function StoreApp() {
                       : onlineCashOnly?"Wait for online confirmation before handing over goods":"Saved on this PC before checkout completes"}
                   </span>
                 </form>)}
-                {(!((checkoutDone||creditDone)&&!cart.items.length)||heldDraftCount>0)&&lease&&<HeldSaleControl onWorking={working=>{committing.current=working;setBusy(working);}} db={db} lease={lease} cash={cash} onCash={setCash} disabled={busy||savingSale||installingUpdate||isStock||!!onlineCashPending} revision={checkoutDone?.id??String(historyRevision)} onChange={()=>{setCheckoutDone(undefined);setCreditDone(undefined);void setting<HeldSale>(db,heldSaleKey(lease)).then(value=>setHeldDraftCount(value?1:0)).catch(()=>setError("Could not check the held draft. Keep site data and retry."));}}/>}
+                {(!((checkoutDone||creditDone)&&!cart.items.length)||heldDraftCount>0)&&lease&&<HeldSaleControl onWorking={working=>{committing.current=working;setBusy(working);}} db={db} lease={lease} cash={cash} onCash={setCash} disabled={busy||savingSale||installingUpdate||isStock||!!onlineCashPending} revision={checkoutDone?.id??String(historyRevision)} onChange={()=>{setCheckoutDone(undefined);setCreditDone(undefined);void setting<HeldSale>(db,heldSaleKey(lease)).then(value=>setHeldDraftCount(value?1:0)).catch(()=>fail(new Error("Could not check the held draft. Keep site data and retry.")));}}/>}
               </aside>
               <div className="mobile-basket">
                 <div>
