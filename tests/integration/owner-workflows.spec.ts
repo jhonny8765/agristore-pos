@@ -1061,7 +1061,7 @@ test("owner approvals work without browser dialogs, stock refreshes without a sh
   await page
     .getByRole("button", { name: "Confirm PC retirement", exact: true })
     .click();
-  await expect(page.getByText("Retired", { exact: true })).toBeVisible();
+  await expect(page.locator(`tr[data-device-id="${firstPC.data!.id}"]`).getByText("Retired", { exact: true })).toBeVisible();
   await page.getByRole("button", { name: /^Checkout/ }).click();
   await page.getByRole("button", { name: "Open shift", exact: true }).click();
   await expect(
@@ -1197,6 +1197,7 @@ test("owner approvals work without browser dialogs, stock refreshes without a sh
     page.getByRole("region",{name:"Inventory products",exact:true}).getByRole("row").filter({ hasText: "Audit feeds" }),
   ).toContainText("19 kg");
   await page.getByRole("button", { name: "Transfers", exact: true }).click();
+  await selectChoice(page.getByLabel("Product / batch",{exact:true}),`${a.productId}:none`);
   await page
     .getByRole("combobox", { name: "Destination branch", exact: true })
     .selectOption(a.branchId);
@@ -1233,6 +1234,7 @@ test("owner approvals work without browser dialogs, stock refreshes without a sh
     page.getByRole("button", { name: "Add Audit feeds" }),
   ).toHaveCount(0);
   await page.getByRole("button", { name: "Transfers", exact: true }).click();
+  await page.getByRole("region",{name:"Transfer register",exact:true}).getByRole("button",{name:"Clear dates",exact:true}).click();
   await expect(
     page.getByRole("heading", { name: "No transfers yet", exact: true }),
   ).toBeVisible();
