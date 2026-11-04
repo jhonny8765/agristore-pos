@@ -22,6 +22,7 @@ try{
  mine=(await project()).canonical_deployment;
  if(publish.status!==0)throw Error('Cloudflare upload did not finish successfully.');
  if(mine?.deployment_trigger?.metadata?.commit_hash!==sha||mine.latest_stage?.status!=='success')throw Error('Production deployment identity or status did not match.');
+ if(main()!==sha)throw Error('Main advanced while uploading; restoring the previous release.');
  const local=await fs.readFile('cloudflare-output/site/index.html'),hash=b=>createHash('sha256').update(b).digest('hex');
  let checked=false,last;
  for(let attempt=0;attempt<6;attempt++){

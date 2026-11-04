@@ -41,6 +41,9 @@ Production environment secret:
   It must not grant DNS, billing or unrelated account administration. Pages publishing
   permissions are account-scoped, so protect this secret accordingly.
 
+The initial publishing token expires November 4, 2027 (00:00 UTC). Rotate it before
+that date; its value is stored only in the production environment secret.
+
 Each package includes public `release.json`: Git commit, package release, required migration
 and public backend URL. No secret or business rows belong in it.
 
