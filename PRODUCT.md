@@ -59,4 +59,12 @@ The owner requested credit checkout without limits or separate client approval. 
 
 The deployed Magpet layout has six main areas, with stock counts inside Inventory and supplier bills inside Purchasing. Customers & credit tracks money owed to the store; supplier accounts track the store's own debts and verified payments outside the sales drawer. Their roles and transaction rules remain separate. Historical supplier amounts awaiting payment reconciliation are excluded from recorded payable totals.
 
+## Owner and cashier usability follow-up — November 4
+
+The user approved all five priorities from the owner/usability review. Keep the established visual identity. Multiple-PC outage and shift labels explicitly state that checkout pauses offline. Inventory Needs review prioritizes selling-unit/price blockers, then stock, cost and owner questions; recorded stock breaks ties without certifying expiry or saleability. A selected product names its next check. This view does not confirm any business values automatically.
+
+Credit checkout retains a confirmed-sale summary with the original invoice amounts, due date and booklet reference, direct 58 mm printing and New sale. The printed record is internal and does not replace the authorized manual VAT invoice. Matching original acknowledgements are required before pending credit requests settle; late callbacks are fenced from another account or basket. Confirmed balance means the balance at that checkout, with later payments in customer accounts.
+
+Eligible catalog products expose weight and peso entry directly, with explicit Add-unit labels. Phone navigation has a labeled expandable menu, larger sale controls, and urgent owner attention before monetary summaries/chart. Real product measurements, costs, starting stock, historical due dates, individual staff onboarding and physical equipment acceptance still need verified owner/staff inputs.
+
 Owner Inventory → Needs review distinguishes missing units/prices/costs and unposted source balances. Structured, branch-scoped import evidence is separate from usable stock. Unit confirmation never posts a balance; a separately reviewed current target posts only its difference with stock/version checks and a durable request ID. Price/cost changes append versions and preserve original activity; blank cost remains unconfirmed. Source notes do not authorize guessing a measurement or applying old stock automatically. See docs/workflow-cleanup.md for the workflow, release gates and data-preservation evidence.

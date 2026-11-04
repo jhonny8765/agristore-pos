@@ -4,6 +4,7 @@
 @import "./supplier-accounts.css";
 @import "./workflow.css";
 @import "./updated-ui.css";
+@import "./usability.css";
 
 .record-pages { min-width: 0; width: 100%; }
 .record-pagination { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: .75rem; padding: .85rem 0; color: var(--muted); font-size: .85rem; }

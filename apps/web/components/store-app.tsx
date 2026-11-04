@@ -4,6 +4,8 @@ import type {RecordKind} from "../lib/record-reports";
 import { StateBadge } from "./state-badge";
 import {CreditWorkspace} from './credit-workspace';
 import {CreditCheckout} from './credit-checkout';
+import {CreditSaleConfirmation} from './credit-sale-confirmation';
+import type {ConfirmedCreditSale} from '../lib/credit-confirmation';
 import { SearchableSelect } from "./search-select";
 import { RecordTable, RecordPages } from "./record-pages";
 import { HeldSaleControl } from "./held-sale";
@@ -60,6 +62,7 @@ import {
   CloudOff,
   FileText,
   Leaf,
+  Menu,
   LogOut,
   Package,
   Plus,
@@ -301,6 +304,9 @@ export function StoreApp() {
     [category, setCategory] = useState("All products"),
     [cash, setCash] = useState(""),
     [checkoutDone, setCheckoutDone] = useState<LocalSale>();
+  const [creditDone,setCreditDone]=useState<ConfirmedCreditSale>();
+  const [navigationOpen,setNavigationOpen]=useState(false);
+  const navigationToggle=useRef<HTMLButtonElement>(null);
   const [heldDraftCount,setHeldDraftCount]=useState(0);
   useEffect(()=>{let active=true;if(lease)void setting<HeldSale>(db,heldSaleKey(lease)).then(value=>{if(active)setHeldDraftCount(value?1:0);});else setHeldDraftCount(0);return()=>{active=false;};},[db,lease]);
   const [closingDraft, setClosingDraft] = useState<{shiftId: string; cash: string}>();
@@ -350,6 +356,7 @@ export function StoreApp() {
     );
     setMessage("");
   }, []);
+  const checkoutScopeGeneration=contextGeneration.current;
   const selectedBranch = branchList.find((b) => b.id === branchId);
   const onlineCashOnly=!practice&&(selectedBranch?.multiPc===true||lease?.onlineOnly===true);
   const onlineCashPending=operations.find(op=>op.action==='record_online_sale');
@@ -597,6 +604,7 @@ export function StoreApp() {
       // Auth broadcasts across windows. Clear this window immediately as well
       // as fencing any outstanding downloads; immutable sales remain intact.
       contextGeneration.current++;
+      committing.current=false;setBusy(false);setSavingSale(false);setNavigationOpen(false);
       setRecoveryArchive(undefined);
       setRecoveryDownload(undefined);
       cloudRequest.current++;
@@ -613,7 +621,7 @@ export function StoreApp() {
       setSales([]);
       setOperations([]);
       setSalesCursor(undefined);
-      setCheckoutDone(undefined);
+      setCheckoutDone(undefined);setCreditDone(undefined);
       setSnapshotAt(undefined);
       setLastSync(undefined);
       setOpeningImport(undefined);
@@ -927,7 +935,7 @@ export function StoreApp() {
         ),
         entry,
       );
-      setCheckoutDone(undefined);
+      setCheckoutDone(undefined);setCreditDone(undefined);
     setMessage("");
     } catch (e) {
       fail(e);
@@ -949,7 +957,7 @@ export function StoreApp() {
       }
       if (!navigator.onLine)
         throw new Error(
-          "Reconnect before signing out. Your current shift can continue offline.",
+          "Reconnect before signing out. Keep this PC and its saved records.",
         );
       if (syncingRef.current)
         throw new Error(
@@ -971,7 +979,7 @@ export function StoreApp() {
       setSnapshotAt(undefined);
       setLastSync(undefined);
       setSalesCursor(undefined);
-      setCheckoutDone(undefined);
+      setCheckoutDone(undefined);setCreditDone(undefined);
       setBranchFeedback(undefined);
       setOpeningImport(undefined);
       setUpdateFeedback("");
@@ -1351,7 +1359,9 @@ export function StoreApp() {
       <a href="#main" className="skip-link">
         Skip to main content
       </a>
-      <aside className="sidebar">
+      {navigationOpen&&<button className="navigation-backdrop" tabIndex={-1} aria-label="Close navigation" onClick={()=>{setNavigationOpen(false);navigationToggle.current?.focus();}}/>}
+      <aside onBlur={e=>{if(navigationOpen&&!e.currentTarget.contains(e.relatedTarget as Node|null))setNavigationOpen(false);}} className={`sidebar${navigationOpen?' navigation-open':''}`} onKeyDown={e=>{if(e.key==='Escape'){setNavigationOpen(false);navigationToggle.current?.focus();}}}>
+        <button ref={navigationToggle} type="button" className="navigation-toggle" aria-expanded={navigationOpen} aria-controls="store-navigation" onClick={()=>setNavigationOpen(open=>!open)}>{navigationOpen?<X size={22}/>:<Menu size={22}/>}<span>{navigationOpen?'Close menu':'Menu'}</span></button>
         <a
           href="#main"
           className="wordmark"
@@ -1359,7 +1369,7 @@ export function StoreApp() {
         >
           <StoreBrand />
         </a>
-        <nav aria-label="Main navigation">
+        <nav id="store-navigation" aria-label="Main navigation">
           {navigation
             .filter(n => (!branchLocked && !practice) || n.id !== "transfers")
             .filter(
@@ -1372,7 +1382,7 @@ export function StoreApp() {
                 aria-label={id === "pos" ? `${label} POS` : label}
                 className={view === id || id === "inventory" && view === "counts" || id === "overview" && view === "records" ? "nav-item active" : "nav-item"}
                 aria-current={view === id || id === "inventory" && view === "counts" || id === "overview" && view === "records" ? "page" : undefined}
-                onClick={() => setView(id)}
+                onClick={() => {setView(id);setNavigationOpen(false);}}
               >
                 <Icon size={19} />
                 {label}
@@ -1389,7 +1399,7 @@ export function StoreApp() {
           <button
             className={view === "sync" ? "nav-item active" : "nav-item"}
             aria-current={view === "sync" ? "page" : undefined}
-            onClick={() => setView("sync")}
+            onClick={() => {setView("sync");setNavigationOpen(false);}}
           >
             <RefreshCw size={18} />
             Sync center
@@ -1400,7 +1410,7 @@ export function StoreApp() {
           <button
             className={view === "settings" ? "nav-item active" : "nav-item"}
             aria-current={view === "settings" ? "page" : undefined}
-            onClick={() => setView("settings")}
+            onClick={() => {setView("settings");setNavigationOpen(false);}}
           >
             <Settings size={18} />
             Settings
@@ -1460,7 +1470,7 @@ export function StoreApp() {
                   const nextStock = await localStock(db);
                   // Change the displayed branch and its stock together. Failed
                   // downloads leave the previously loaded branch selected.
-                  setBranchId(nextBranchId);
+                  setBranchId(nextBranchId);setCreditDone(undefined);setCheckoutDone(undefined);setNavigationOpen(false);
                   setOpeningImport(undefined);
                   setCloud({});
                   setSalesCursor(undefined);
@@ -1490,7 +1500,7 @@ export function StoreApp() {
                   ? "Practice data"
                   : online
                     ? "Connected"
-                    : "Offline · sales saved here"}
+                    : onlineCashOnly ? "Offline · checkout paused" : "Offline · sales saved here"}
               </span>
             </span>
             {lease && view!=="close-shift" && (<Button className="close-shift-shortcut" variant="outline" size="sm" disabled={busy || savingSale || installingUpdate}
@@ -1639,12 +1649,12 @@ export function StoreApp() {
                     <h2>Current sale</h2>
                     <span>
                       {cart.items.length}{" "}
-                      {cart.items.length === 1 ? "item" : "items"} · {cart.credit.enabled?'Credit':'Cash'} payment
+                      {cart.items.length === 1 ? "item" : "items"} · {cart.credit.enabled||creditDone&&!cart.items.length?'Credit':'Cash'} payment
                     </span>
                   </div>
-                  <span className="cash-mode-badge"><Wallet size={18}/>{cart.credit.enabled?'Credit':'Cash'} payment</span>
+                  <span className="cash-mode-badge"><Wallet size={18}/>{cart.credit.enabled||creditDone&&!cart.items.length?'Credit':'Cash'} payment</span>
                 </div>
-                {checkoutDone && !cart.items.length ? (
+                {creditDone && !cart.items.length ? <CreditSaleConfirmation sale={creditDone} branchName={selectedBranch?.name??"Magpet Branch"} onNewSale={()=>{setCreditDone(undefined);setCash('');}} onAccounts={()=>setView("credit")}/> : checkoutDone && !cart.items.length ? (
                   <div className="checkout-success">
                     <div className="sale-success-mark">
                       <CheckCheck size={30} />
@@ -1668,7 +1678,7 @@ export function StoreApp() {
                     </small>
                     <Button variant="outline" onClick={() => window.print()}>
                       Print 58 mm receipt
-                    </Button><Button onClick={()=>{setCheckoutDone(undefined);setCash('');}}>New sale</Button><Button variant="ghost" onClick={()=>setView("sales")}>View saved receipts</Button>
+                    </Button><Button onClick={()=>{setCheckoutDone(undefined);setCreditDone(undefined);setCash('');}}>New sale</Button><Button variant="ghost" onClick={()=>setView("sales")}>View saved receipts</Button>
                     <p className="receipt-print-hint">58 mm roll · Portrait · Scale 100%<br/>Turn off headers and footers in print settings.</p>
                   </div>
                 ) : cart.items.length ? (
@@ -1694,8 +1704,8 @@ export function StoreApp() {
                 )}
                 {onlineCashOnly&&<p className="notice" role="status">Multiple cashier PCs · Every sale requires online confirmation. Each PC keeps its own drawer.</p>}
                 {onlineCashPending&&<p className="notice" role="status">Original cash sale awaiting confirmation · {money(Number(onlineCashPending.data.total))} · Cash tendered {money(Number(onlineCashPending.data.cashReceived))}. Retry this original sale or use Sync center. Do not collect payment again.</p>}
-                {!(checkoutDone&&!cart.items.length)&&!practice&&<div className="credit-payment-choice" role="group" aria-label="Payment type"><Button type="button" variant={!cart.credit.enabled?'default':'outline'} disabled={busy||!!cart.creditAttempt||!!onlineCashPending} onClick={()=>useCart.setState({credit:{...cart.credit,enabled:false}})}>Cash</Button><Button type="button" variant={cart.credit.enabled?'default':'outline'} disabled={busy||!!cart.creditAttempt||!!onlineCashPending} onClick={()=>useCart.setState({credit:{...cart.credit,enabled:true}})}>Credit · 30/60/90 days</Button></div>}
-                {!(checkoutDone&&!cart.items.length)&&(cart.credit.enabled&&!practice?<CreditCheckout key={`${member.organizationId}:${branchId}:${member.userId}`} db={db} organizationId={member.organizationId} branchId={branchId} lease={lease} online={online} disabled={busy||installingUpdate||isStock} onWorking={working=>{committing.current=working;setBusy(working);}} onSaved={async()=>{const heldId=useCart.getState().heldDraftId;if(heldId&&lease){try{await removeHeldSale(db,lease,heldId);setHeldDraftCount(0);}catch{fail(new Error('Credit sale confirmed. A held copy remains; retry its original request to confirm, then remove it.'));}}cart.clear();setCash('');setCheckoutDone(undefined);setHistoryRevision(n=>n+1);notify('Credit sale confirmed. The original booklet invoice is linked. Open Customers & credit to print the credit record.');await sync();await refreshLocal();}}/>:<form className="payment-form" onSubmit={finishSale}>
+                {!((checkoutDone||creditDone)&&!cart.items.length)&&!practice&&<div className="credit-payment-choice" role="group" aria-label="Payment type"><Button type="button" variant={!cart.credit.enabled?'default':'outline'} disabled={busy||!!cart.creditAttempt||!!onlineCashPending} onClick={()=>useCart.setState({credit:{...cart.credit,enabled:false}})}>Cash</Button><Button type="button" variant={cart.credit.enabled?'default':'outline'} disabled={busy||!!cart.creditAttempt||!!onlineCashPending} onClick={()=>useCart.setState({credit:{...cart.credit,enabled:true}})}>Credit · 30/60/90 days</Button></div>}
+                {!((checkoutDone||creditDone)&&!cart.items.length)&&(cart.credit.enabled&&!practice?<CreditCheckout key={`${member.organizationId}:${branchId}:${member.userId}`} db={db} organizationId={member.organizationId} branchId={branchId} lease={lease} online={online} disabled={busy||installingUpdate||isStock} onWorking={working=>{if(checkoutScopeGeneration!==contextGeneration.current)return;committing.current=working;setBusy(working);}} onSaved={async saved=>{if(checkoutScopeGeneration!==contextGeneration.current)return;const heldId=useCart.getState().heldDraftId;if(heldId&&lease){try{await removeHeldSale(db,lease,heldId);if(checkoutScopeGeneration!==contextGeneration.current)return;setHeldDraftCount(0);}catch{if(checkoutScopeGeneration!==contextGeneration.current)return;fail(new Error('Credit sale confirmed. A held copy remains; retry its original request to confirm, then remove it.'));}}if(checkoutScopeGeneration!==contextGeneration.current)return;cart.clear();setCash('');setCheckoutDone(undefined);setCreditDone(saved);setHistoryRevision(n=>n+1);notify('Credit sale confirmed. Print the linked credit record or start a new sale.');await sync();if(checkoutScopeGeneration!==contextGeneration.current)return;await refreshLocal();}}/>:<form className="payment-form" onSubmit={finishSale}>
                   <div className="subtotal">
                     <span>Subtotal</span>
                     <span>{money(grossSubtotal)}</span>
@@ -1765,7 +1775,7 @@ export function StoreApp() {
                       : onlineCashOnly?"Wait for online confirmation before handing over goods":"Saved on this PC before checkout completes"}
                   </span>
                 </form>)}
-                {(!(checkoutDone&&!cart.items.length)||heldDraftCount>0)&&lease&&<HeldSaleControl onWorking={working=>{committing.current=working;setBusy(working);}} db={db} lease={lease} cash={cash} onCash={setCash} disabled={busy||savingSale||installingUpdate||isStock||!!onlineCashPending} revision={checkoutDone?.id??String(historyRevision)} onChange={()=>{setCheckoutDone(undefined);void setting<HeldSale>(db,heldSaleKey(lease)).then(value=>setHeldDraftCount(value?1:0)).catch(()=>setError("Could not check the held draft. Keep site data and retry."));}}/>}
+                {(!((checkoutDone||creditDone)&&!cart.items.length)||heldDraftCount>0)&&lease&&<HeldSaleControl onWorking={working=>{committing.current=working;setBusy(working);}} db={db} lease={lease} cash={cash} onCash={setCash} disabled={busy||savingSale||installingUpdate||isStock||!!onlineCashPending} revision={checkoutDone?.id??String(historyRevision)} onChange={()=>{setCheckoutDone(undefined);setCreditDone(undefined);void setting<HeldSale>(db,heldSaleKey(lease)).then(value=>setHeldDraftCount(value?1:0)).catch(()=>setError("Could not check the held draft. Keep site data and retry."));}}/>}
               </aside>
               <div className="mobile-basket">
                 <div>
@@ -1979,7 +1989,7 @@ export function StoreApp() {
               {!practice && member.role !== "cashier" && <div hidden={inventoryTab!=="controls"&&inventoryTab!=="expiry"}><StockControls focus={inventoryTab==="expiry"?"expiry":"all"} key={`${member.organizationId}:${branchId}`} db={db} organizationId={member.organizationId} branchId={branchId} actorId={member.userId} products={products} owner={isOwner} canAssign={isOwner || member.role === "manager"} online={online} disabled={busy} revision={historyRevision} execute={fn => run(fn,true,true)} /></div>}
               {isOwner && (
                 <div hidden={inventoryTab!=="setup"&&inventoryTab!=="review"}>
-                  {!practice&&<div hidden={inventoryTab!=="review"}><ImportedProductReview products={products} organizationId={member.organizationId} branchId={branchId} disabled={busy||!online} onSave={async (action,data)=>{const problem=await run(async()=>{await onlineOperation(db,member.userId,action,{...context(),...data},"requestId");},true,true);if(problem)throw problem;}}/></div>}
+                  {!practice&&<div hidden={inventoryTab!=="review"}><ImportedProductReview stock={stock} products={products} organizationId={member.organizationId} branchId={branchId} disabled={busy||!online} onSave={async (action,data)=>{const problem=await run(async()=>{await onlineOperation(db,member.userId,action,{...context(),...data},"requestId");},true,true);if(problem)throw problem;}}/></div>}
                   <section className="panel" hidden={inventoryTab!=="setup"}>
                     <Button variant="ghost" onClick={()=>setInventoryTab("products")}>Back to products</Button><h2>Add a product</h2>
                     <p className="muted">
@@ -2900,7 +2910,7 @@ export function StoreApp() {
                 <ol className="shift-close-steps">
                   <li><strong>Finish saved work</strong>
                     {heldDraftCount>0&&<p className="notice">A held draft remains on this PC. Return to Checkout to resume or remove it before closing.</p>}{cart.items.length > 0 ? <><p>Your basket has {cart.items.length} unfinished {cart.items.length === 1 ? "item" : "items"}. Finish the sale or remove the items first.</p><Button variant="outline" onClick={() => setView("pos")}>Return to basket</Button></> : <p>Your basket is empty.</p>}
-                    {branchPendingCount > 0 || branchOperationCount > 0 ? <><p>{branchPendingCount} unconfirmed {branchPendingCount === 1 ? "sale" : "sales"}{branchOperationCount > 0 ? ` and ${branchOperationCount} saved requests` : ""}. Confirm them before closing.</p><Button variant="outline" onClick={() => setView("sync")}>Open Sync center</Button></> : <p>All saved sales and requests are confirmed.</p>}
+                    {branchPendingCount > 0 || branchOperationCount > 0 ? <><p>{branchPendingCount} unconfirmed {branchPendingCount === 1 ? "sale" : "sales"}{branchOperationCount > 0 ? ` and ${branchOperationCount} saved requests` : ""}. Confirm them before closing.</p><Button variant="outline" onClick={() => {setView("sync");setNavigationOpen(false);}}>Open Sync center</Button></> : <p>All saved sales and requests are confirmed.</p>}
                   </li>
                   <li><strong>Count your drawer</strong><p>Include the opening cash. Enter the money actually in the drawer; do not copy your sales total.</p></li>
                 </ol>
@@ -2950,7 +2960,7 @@ export function StoreApp() {
                           <dd>{selectedBranch?.name}</dd>
                         </div>
                         <div>
-                          <dt>Offline authorization until</dt>
+                          <dt>{onlineCashOnly?"Shift authorization until":"Offline authorization until"}</dt>
                           <dd>
                             {when(new Date(lease.expiresAt).toISOString())}
                           </dd>
@@ -2972,11 +2982,11 @@ export function StoreApp() {
                             });
                             await setSetting(db, "lease", next);
                             setLease(next);
-                            notify("Shift authorization renewed for 12 hours.");
+                            notify(onlineCashOnly?"Shift authorization renewed. Checkout still requires internet.":"Shift authorization renewed for 12 hours.");
                           })
                         }
                       >
-                        Renew offline authorization
+                        {onlineCashOnly?"Renew shift authorization":"Renew offline authorization"}
                       </Button>
                       <Button variant="outline" disabled={busy || savingSale || installingUpdate} onClick={() => setView("close-shift")}>Count cash & close shift</Button>
                       <p>Use Close shift at the top of any screen to finish your day.</p>

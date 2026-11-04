@@ -632,7 +632,6 @@ test("owner product setup creates only enabled selling units with independent re
     "TEST duplicate SKU",
   );
   await page.getByRole("button", { name: "Checkout POS", exact: true }).click();
-  await page.locator("article").filter({has:page.getByRole("heading",{name:"TEST 25 kg feeds",exact:true})}).getByText("Loose selling options",{exact:true}).click();
   await expect(
     page.getByRole("button", {
       name: "Sell TEST 25 kg feeds by weight",

@@ -19,23 +19,23 @@ describe('credit operation recovery',()=>{
  it('blocks cash after an uncertain credit sale, including until a causally newer stock refresh',async()=>{
   const db=await setupDB();databases.push(db);await setSetting(db,'snapshotRequestId','old-request');
   vi.mocked(command).mockRejectedValueOnce(new Error('TEST lost credit response'));
-  await expect(onlineOperation(db,uuid(4),'record_credit_sale',{organizationId:uuid(1),branchId:uuid(2)},'requestId')).rejects.toThrow();
+  await expect(onlineOperation(db,uuid(4),'record_credit_sale',{organizationId:uuid(1),branchId:uuid(2),total:100000,cashReceived:20000,expectedDueOn:'2026-12-04'},'requestId')).rejects.toThrow();
   await expect(saveCheckout(db,sale())).rejects.toThrow('Confirm the original credit sale');
-  vi.mocked(command).mockResolvedValueOnce({duplicate:true});await retryOperation(db,uuid(4),(await pendingOperations(db))[0]);
+  const original=(await pendingOperations(db))[0];vi.mocked(command).mockResolvedValueOnce({id:original.data.requestId,sourceId:original.data.requestId,duplicate:true});await retryOperation(db,uuid(4),original);
   const snapshot={products:[],catalogUnchanged:true,stocks:[],confirmedIds:[],asOf:new Date().toISOString(),localScope:{organizationId:uuid(1),branchId:uuid(2)}};
   await applySnapshot(db,{...snapshot,localRequestId:'old-request'});await expect(saveCheckout(db,sale())).rejects.toThrow('refresh stock online');
   await setSetting(db,'snapshotRequestId','new-request');await applySnapshot(db,{...snapshot,localRequestId:'new-request'});await expect(saveCheckout(db,sale())).resolves.toBeDefined();
  });
  it.each(['record_credit_sale','collect_credit_payment','reverse_credit_collection','credit_refund','save_credit_client','save_credit_contact'])('restores and retries the exact original %s request',async action=>{
   const source=await setupDB(),target=await setupDB();databases.push(source,target);
-  const data={organizationId:uuid(1),branchId:uuid(2),requestId:uuid(91),saleId:uuid(90),amount:12345};
+  const data={organizationId:uuid(1),branchId:uuid(2),requestId:uuid(91),saleId:uuid(90),amount:12345,...(action==='record_credit_sale'?{total:100000,cashReceived:20000,expectedDueOn:'2026-12-04'}:{})};
   vi.mocked(command).mockRejectedValueOnce(new Error('TEST committed response lost'));
   await expect(onlineOperation(source,uuid(4),action,data,'requestId')).rejects.toThrow('response lost');
   const original=(await pendingOperations(source))[0];
   const file=JSON.parse(JSON.stringify(await exportRecovery(source,{organizationId:uuid(1),branchId:uuid(2),cashierId:uuid(4)})));
   await importRecovery(target,file);await importRecovery(target,file);
   expect(await pendingOperations(target)).toEqual([original]);
-  vi.mocked(command).mockResolvedValueOnce({duplicate:true});
+  vi.mocked(command).mockResolvedValueOnce({id:data.requestId,sourceId:data.requestId,duplicate:true});
   await retryOperation(target,uuid(4),original);
   expect(vi.mocked(command).mock.calls.at(-1)).toEqual([action,data]);expect(await pendingOperations(target)).toHaveLength(0);
  });
