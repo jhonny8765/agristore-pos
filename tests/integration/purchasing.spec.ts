@@ -22,6 +22,7 @@ async function login(page:Page,a:{email:string;password:string}){
   await page.goto("/");await page.getByLabel("Email address",{exact:true}).fill(a.email);await page.getByLabel("Password",{exact:true}).fill(a.password);await page.getByRole("button",{name:"Sign in",exact:true}).click();await page.getByRole("button",{name:"Purchasing",exact:true}).click();await expect(page.getByRole("heading",{name:"Purchase orders",exact:true})).toBeVisible();
 }
 async function fillDelivery(page:Page,orderId:string,reference:string,accepted="0",held="0",rejected="10"){
+  await page.getByRole("tab",{name:"Inspect delivery",exact:true}).click();
   await selectChoice(page.getByLabel("Delivery purchase order",{exact:true}), orderId);
   await page.getByLabel("Supplier inspection document reference",{exact:true}).fill(reference);
   await page.getByLabel("Delivery inspection explanation",{exact:true}).fill("TEST actual delivery counted and inspected");
@@ -32,12 +33,12 @@ test("owner-approved order supports fully rejected and mixed deliveries, held re
   await page.getByText("Request a purchase order",{exact:true}).click();
   await selectChoice(page.getByLabel("Order supplier",{exact:true}), a.supplierId);await page.getByLabel("Purchase order reference",{exact:true}).fill("TEST-PO-001");await page.getByLabel("Order explanation",{exact:true}).fill("TEST order ten sacks");await selectChoice(page.getByLabel("Ordered product / unit 1",{exact:true}), a.unitId);await page.getByLabel("Ordered quantity 1",{exact:true}).fill("10");
   await page.getByRole("button",{name:"Save order request",exact:true}).click();
-  const orders=page.getByRole("region",{name:"Purchase order register",exact:true});await expect(orders).toContainText("Awaiting owner approval");
+  const orders=page.locator(".order-workspace");await expect(orders).toContainText("Awaiting owner approval");
   await orders.getByRole("button",{name:"Approve purchase order",exact:true}).click();await page.getByLabel("Order approval / closure evidence",{exact:true}).fill("TEST supplier and quantity verified by owner");await page.getByRole("button",{name:"Approve order",exact:true}).click();await expect(orders).toContainText("Approved / open");
   const workspace=await countCommand<PurchasingWorkspace>(a.owner,"purchasing_workspace",a.ctx),orderId=workspace.orders[0].id;
   const staff=await testCountStaff(a,a.branchId,"TEST delivery inspector"),context=await browser.newContext();
   try{
-    const employee=await context.newPage();await login(employee,staff);await expect(employee.getByRole("button",{name:"Approve purchase order",exact:true})).toHaveCount(0);await expect(employee.getByRole("button",{name:"Receive stock",exact:true})).toBeDisabled();
+    const employee=await context.newPage();await login(employee,staff);await expect(employee.getByRole("button",{name:"Approve purchase order",exact:true})).toHaveCount(0);await employee.getByRole("tab",{name:"Quick receipt",exact:true}).click();await expect(employee.getByRole("button",{name:"Receive stock",exact:true})).toBeDisabled();
     await fillDelivery(employee,orderId,"TEST-REJECTED-001");await employee.getByRole("button",{name:"Save delivery inspection",exact:true}).click();
     await expect(employee.getByRole("region",{name:"Inspected delivery register",exact:true})).toContainText("TEST-REJECTED-001");
     const stock=await a.owner.from("branch_inventory").select("quantity").eq("product_id",a.productId).eq("branch_id",a.branchId);expect(stock.error).toBeNull();expect(stock.data).toHaveLength(0);
@@ -51,9 +52,9 @@ test("owner-approved order supports fully rejected and mixed deliveries, held re
   await page.getByRole("button",{name:"Save delivery inspection",exact:true}).click();
   const deliveries=page.getByRole("region",{name:"Inspected delivery register",exact:true});await expect(deliveries).toContainText("TEST-MIXED-002");await expect(deliveries).toContainText("Physical total: 9");
   const stock=await a.owner.from("branch_inventory").select("quantity").eq("product_id",a.productId).eq("branch_id",a.branchId);expect(Number(stock.data![0].quantity)).toBe(300);
-  await page.getByRole("button",{name:"Inventory",exact:true}).click();await page.getByRole("button",{name:"Record held-goods outcome",exact:true}).click();
+  await page.getByRole("button",{name:"Inventory",exact:true}).click();await page.getByRole("tab",{name:"Stock activity",exact:true}).click();await page.getByRole("button",{name:"Record held-goods outcome",exact:true}).click();
   await page.getByLabel("Quantity from held stock (base units)",{exact:true}).fill("50");await page.getByLabel("Held-goods outcome",{exact:true}).selectOption("supplier_return");await page.getByLabel("Inspection / disposition reason",{exact:true}).fill("TEST supplier signed return of held sack");await page.getByRole("button",{name:"Record outcome",exact:true}).click();await expect(page.getByText("No held goods loaded.",{exact:true})).toBeVisible();
-  await page.getByRole("button",{name:"Purchasing",exact:true}).click();
+  await page.getByRole("button",{name:"Purchasing",exact:true}).click();await page.getByRole("tab",{name:"Inspect delivery",exact:true}).click();
   const mixed=page.getByRole("region",{name:"Inspected delivery register",exact:true}).getByRole("row").filter({hasText:"TEST-MIXED-002"});await mixed.getByRole("button",{name:"Record supplier-claim evidence",exact:true}).click();
   await mixed.getByLabel("Supplier-claim outcome",{exact:true}).selectOption("credit");await mixed.getByLabel("Supplier claim / credit / return reference",{exact:true}).fill("TEST-CREDIT-002");await mixed.getByLabel("Supplier-claim evidence and outcome",{exact:true}).fill("TEST owner checked supplier credit and signed returned sack");await mixed.getByRole("button",{name:"Save supplier-claim evidence",exact:true}).click();await expect(mixed).toContainText("Resolved supplier claim");
   await mixed.getByRole("button",{name:"View supplier-claim history",exact:true}).click();await expect(mixed).toContainText("TEST-CREDIT-002");

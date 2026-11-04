@@ -18,6 +18,7 @@ export default defineConfig({
   reporter: "list",
   use: {
     baseURL: "http://127.0.0.1:3100",
+    actionTimeout: 20_000,
     // Auth requests carry disposable credentials. Do not upload traces or HARs.
     trace: "off",
     screenshot: "only-on-failure",

@@ -23,11 +23,11 @@ async function fixture(){
 }
 async function login(page:Page,account:{email:string;password:string}){
  await page.goto('/');await page.getByLabel('Email address',{exact:true}).fill(account.email);await page.getByLabel('Password',{exact:true}).fill(account.password);
- await page.getByRole('button',{name:'Sign in',exact:true}).click();await expect(page.getByRole('button',{name:'Stock counts',exact:true})).toBeVisible();
+ await page.getByRole('button',{name:'Sign in',exact:true}).click();await expect(page.getByRole('button',{name:'Inventory',exact:true})).toBeVisible();
  // Decide whether to start a count only after the existing worklist has loaded.
  // Its initial empty render also shows the start form, which disappears for a recounter.
  const loaded=page.waitForResponse(response=>response.url().endsWith('/rest/v1/rpc/agri_command')&&response.request().postDataJSON()?.action==='count_workspace');
- await page.getByRole('button',{name:'Stock counts',exact:true}).click();await loaded;await expect(page.locator('.count-records')).toHaveAttribute('aria-busy','false');await expect(page.getByRole('heading',{name:'Physical stock counts',exact:true})).toBeVisible();
+ await page.getByRole("button",{name:"Inventory",exact:true}).click();await page.getByRole("tab",{name:"Stock counts",exact:true}).click();await loaded;await expect(page.locator('.count-records')).toHaveAttribute('aria-busy','false');await expect(page.getByRole('heading',{name:'Blind stock counts',exact:true})).toBeVisible();
  if(await page.getByRole('form',{name:'Start a blind count',exact:true}).isVisible()){
   await page.getByRole('combobox',{name:'Product / batch',exact:true}).fill('TEST blind feeds');
   await page.getByRole('option',{name:'TEST blind feeds (kg)',exact:true}).click();
@@ -104,7 +104,7 @@ test('operation-only recovery moves a lost count response to a fresh signed-in b
   let retriedId='';await restored.route('**/rest/v1/rpc/agri_command',async route=>{if(route.request().postDataJSON().action==='record_blind_count')retriedId=route.request().postDataJSON().data.observationId;await route.continue();});
   await restored.getByRole('button',{name:'Retry original request',exact:true}).click();
   await expect(restored.getByRole('button',{name:'Retry original request',exact:true})).toHaveCount(0);expect(retriedId).toBe(observationId);
-  await restored.getByRole('button',{name:'Stock counts',exact:true}).click();await expect(restored.locator('.count-record')).toContainText('Independent recount needed');
+  await restored.getByRole("button",{name:"Inventory",exact:true}).click();await restored.getByRole("tab",{name:"Stock counts",exact:true}).click();await expect(restored.locator('.count-record')).toContainText('Independent recount needed');
   for(const [width,height] of [[1440,1000],[390,844]]){
    await restored.setViewportSize({width,height});await restored.getByRole('button',{name:/^Sync center(?:\s+\d+)?$/}).click();
    expect(await restored.evaluate(()=>document.documentElement.scrollWidth<=innerWidth)).toBe(true);
@@ -127,7 +127,7 @@ test('lost sealed-count response recovers its original observation without a sec
  await page.getByRole('button',{name:'Seal first count',exact:true}).click();await expect.poll(()=>committed).toBe(true);
  await page.getByRole('button',{name:/Sync center/}).click();await expect(page.getByRole('button',{name:'Retry original request',exact:true})).toBeVisible();
  await page.getByRole('button',{name:'Retry original request',exact:true}).click();await expect(page.getByRole('button',{name:'Retry original request',exact:true})).toHaveCount(0);
- await page.reload();await page.getByRole('button',{name:'Stock counts',exact:true}).click();await expect(page.locator('.count-record')).toContainText('Independent recount needed');
+ await page.reload();await page.getByRole("button",{name:"Inventory",exact:true}).click();await page.getByRole("tab",{name:"Stock counts",exact:true}).click();await expect(page.locator('.count-record')).toContainText('Independent recount needed');
  const result=await countCommand<{rows:BlindCount[]}>(a.second.owner,'count_workspace',ctx);expect(result.rows).toHaveLength(1);expect(result.rows[0].counted).toBeNull();
  const history=await a.owner.from('audit_events').select('id').eq('source_id',countId).eq('action','record_blind_count');expect(history.data).toHaveLength(1);
 });

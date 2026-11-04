@@ -162,6 +162,7 @@ test("confirmed deliveries and opening imports stay saved when the following sto
   await page.goto("/");
   await login(page, a);
   await page.getByRole("button", { name: "Purchasing", exact: true }).click();
+  await page.getByRole("tab",{name:"Quick receipt",exact:true}).click();
   await expect(page.getByLabel("Delivery / invoice reference", { exact: true })).toBeVisible();
   let blockSnapshots = false;
   const sent: string[] = [];
@@ -207,6 +208,7 @@ test("confirmed deliveries and opening imports stay saved when the following sto
   await page.getByRole("combobox", { name: "Current branch", exact: true }).selectOption(destination);
   await expect(page.getByText("Branch stock loaded.", { exact: true })).toBeVisible();
   await page.getByRole("button", { name: "Purchasing", exact: true }).click();
+  await page.getByRole("tab",{name:"Opening stock",exact:true}).click();
   await expect(page.getByLabel("Opening stock CSV",{exact:true})).toBeEnabled();
   await page.getByLabel("Opening stock CSV", { exact: true }).setInputFiles({
     name: "TEST-confirmed-opening.csv", mimeType: "text/csv",
@@ -229,6 +231,7 @@ test("confirmed deliveries and opening imports stay saved when the following sto
 
   // The shared completion path must also let the product form reset after a
   // confirmed create, even though downloading the resulting catalog fails.
+  await page.getByRole("button",{name:"Add product",exact:true}).click();
   const setup = page.getByRole("form", { name: "Add a product", exact: true });
   await setup.getByLabel("Product name", { exact: true }).fill("TEST confirmed packet");
   await setup.getByLabel("SKU / barcode", { exact: true }).fill("TEST-CONFIRMED-PACKET");
@@ -314,8 +317,9 @@ test("transfers and count approvals identify separate lots, base quantities and 
   await transferB.getByLabel("Receiving notes", {exact:true}).fill("TEST actual counted delivery");
   await transferB.getByRole("button", {name:"Record actual receipt",exact:true}).click();
   await expect(transferB.getByRole("cell", { name: "received", exact: true })).toBeVisible();
-  await page.getByRole("button", { name: "Stock counts", exact: true }).click();
+  await page.getByRole("button",{name:"Inventory",exact:true}).click();await page.getByRole("tab",{name:"Stock counts",exact:true}).click();
   await page.getByRole("button", { name: "Review sealed counts", exact: true }).click();
+  await page.getByRole("button",{name:"History",exact:true}).click();
   for (const lot of lots) {
     const batchId = batches.data!.find((batch) => batch.lot === lot.lot)!.id;
     await sealedCount(a,{organizationId:a.organizationId,branchId:destination,productId,batchId,countId:randomUUID(),counted:lot.counted,reason:`TEST simulated discrepancy for ${lot.lot}`});
@@ -342,10 +346,12 @@ test("transfers and count approvals identify separate lots, base quantities and 
     expect(scan.violations).toEqual([]);
     await page.screenshot({ path: `test-results/stock-history-${width}.png` });
   }
-  const approvalA=page.locator(".count-record").filter({hasText:"Lot TEST-LOT-A"});
+  await page.getByRole("region",{name:"Count worklist",exact:true}).getByRole("row").filter({hasText:"TEST-LOT-A"}).getByRole("button",{name:"Continue",exact:true}).click();
+  const approvalA=page.locator(".count-record").filter({hasText:"TEST-LOT-A"});
   await approvalA.getByRole("button", { name: "Approve adjustment", exact: true }).click();
   await approvalA.getByLabel("Approval evidence",{exact:true}).fill("TEST checked independently");
   await approvalA.getByRole("button",{name:"Confirm adjustment",exact:true}).click();
+  await page.getByRole("button",{name:"History",exact:true}).click();
   await expect(countA.getByRole("cell", { name: "approved", exact: true })).toBeVisible();
   await expect(countB.getByRole("cell", { name: "pending", exact: true })).toBeVisible();
   const confirmed = await a.owner.from("branch_inventory").select("batch_id,quantity")
@@ -389,8 +395,9 @@ test("exact report quantities survive the real database, JSON, discrepancy displ
   await login(page, a);
   await page.getByRole("combobox", { name: "Current branch", exact: true }).selectOption(destination);
   await expect(page.getByText("Branch stock loaded.", { exact: true })).toBeVisible();
-  await page.getByRole("button", { name: "Stock counts", exact: true }).click();
+  await page.getByRole("button",{name:"Inventory",exact:true}).click();await page.getByRole("tab",{name:"Stock counts",exact:true}).click();
   await page.getByRole("button", { name: "Review sealed counts", exact: true }).click();
+  await page.getByRole("button",{name:"History",exact:true}).click();
   await expect(page.getByRole("cell", { name: "9999999999.000001 kg", exact: true })).toBeVisible();
   await expect(page.getByRole("cell", { name: "-0.000001 kg", exact: true })).toBeVisible();
   const downloadPromise = page.waitForEvent("download");
@@ -468,8 +475,8 @@ test("staff cannot bypass stock controls, escalate access or read unrelated bran
   const cashier = staff[0];
   await login(page, cashier);
   await expect(page.getByRole("combobox", { name: "Current branch", exact: true }).locator("option")).toHaveCount(1);
-  await page.getByRole("button", { name: "Stock counts", exact: true }).click();
-  await expect(page.getByText("Stock counts require a stock-staff, manager or owner account. Cashiers cannot submit or approve adjustments.",{exact:true})).toBeVisible();
+  await page.getByRole("button",{name:"Inventory",exact:true}).click();
+  await expect(page.getByRole("tab",{name:"Stock counts",exact:true})).toHaveCount(0);
   await page.getByRole("button", { name: "Transfers", exact: true }).click();
   await expect(page.getByRole("button", { name: "Dispatch stock", exact: true })).toBeDisabled();
   const incoming = page.locator('.history-table[data-kind="transfers"] tbody tr');
@@ -525,6 +532,7 @@ test("owner product setup creates only enabled selling units with independent re
   await page.goto("/");
   await login(page, a);
   await page.getByRole("button", { name: "Inventory", exact: true }).click();
+  await page.getByRole("button",{name:"Add product",exact:true}).click();
   const form = page.getByRole("form", { name: "Add a product", exact: true });
   await form
     .getByLabel("Product name", { exact: true })
@@ -1069,7 +1077,7 @@ test("owner approvals work without browser dialogs, stock refreshes without a sh
     reason: "TEST remote retirement with retained browser setup",
     countedCash: 0,
   });
-  await page.getByRole("button", { name: "Settings", exact: true }).click();
+  await page.getByRole("button", { name: "Settings", exact: true }).click();await page.getByRole("tab",{name:"Cashier PCs",exact:true}).click();
   await page.getByRole("button", { name: "Refresh", exact: true }).click();
   const retiredRows = page.locator("tr").filter({
     has: page.getByRole("button", {
@@ -1088,7 +1096,7 @@ test("owner approvals work without browser dialogs, stock refreshes without a sh
   await page
     .getByRole("button", { name: "Remove Audit feeds", exact: true })
     .click();
-  await page.getByRole("button", { name: "Settings", exact: true }).click();
+  await page.getByRole("button", { name: "Settings", exact: true }).click();await page.getByRole("tab",{name:"Cashier PCs",exact:true}).click();
   await page
     .locator(`tr[data-device-id="${firstPC.data!.id}"]`)
     .getByRole("button", { name: "Release retired setup", exact: true })
@@ -1133,6 +1141,7 @@ test("owner approvals work without browser dialogs, stock refreshes without a sh
     .getByRole("combobox", { name: "Current branch", exact: true })
     .selectOption(a.branches[1].id);
   await page.getByRole("button", { name: "Purchasing", exact: true }).click();
+  await page.getByRole("tab",{name:"Opening stock",exact:true}).click();
   await expect(page.getByLabel("Opening stock CSV",{exact:true})).toBeEnabled();
   await page.getByLabel("Opening stock CSV", { exact: true }).setInputFiles({
     name: "test-opening.csv",
@@ -1155,7 +1164,7 @@ test("owner approvals work without browser dialogs, stock refreshes without a sh
   await expect(
     page.getByRole("region",{name:/Product, Category$/}).getByRole("row").filter({ hasText: "Audit feeds" }),
   ).toContainText("20 kg");
-  await page.getByRole("button", { name: "Stock counts", exact: true }).click();
+  await page.getByRole("button",{name:"Inventory",exact:true}).click();await page.getByRole("tab",{name:"Stock counts",exact:true}).click();
   await page.getByRole("button", { name: "Review sealed counts", exact: true }).click();
   await sealedCount(a,{organizationId:a.organizationId,branchId:a.branches[1].id,productId:a.productId,batchId:null,countId:randomUUID(),counted:"19",reason:"TEST verify approved discrepancy"});
   await page.getByRole("button",{name:"Refresh counts",exact:true}).click();
@@ -1172,6 +1181,7 @@ test("owner approvals work without browser dialogs, stock refreshes without a sh
   await page.getByRole("button",{name:"Approve adjustment",exact:true}).click();
   await page.getByLabel("Approval evidence",{exact:true}).fill("TEST checked independently");
   await page.getByRole("button",{name:"Confirm adjustment",exact:true}).click();
+  await page.getByRole("button",{name:"History",exact:true}).click();
   await expect(page.getByRole("cell", { name: "approved", exact: true })).toBeVisible();
   await page.getByRole("button", { name: "Inventory", exact: true }).click();
   await expect(
@@ -1336,6 +1346,7 @@ test("branch history pages beyond 1000, filters Manila days, recovers a failed p
   await page.goto("/");
   await login(page, a);
   await page.getByRole("button", { name: "Purchasing", exact: true }).click();
+  await page.getByRole("tab",{name:"Receiving history",exact:true}).click();
   const register = page.getByRole("region", {
     name: "Receiving history",
     exact: true,

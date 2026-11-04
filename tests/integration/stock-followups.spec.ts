@@ -38,7 +38,7 @@ async function login(page: Page, account: { email: string; password: string }) {
   await page.goto("/"); await page.getByLabel("Email address", { exact: true }).fill(account.email); await page.getByLabel("Password", { exact: true }).fill(account.password);
   await page.getByRole("button", { name: "Sign in", exact: true }).click();
   await expect(page.getByRole("button", { name: "Inventory", exact: true })).toBeVisible();
-  await page.getByRole("button", { name: "Inventory", exact: true }).click();
+  await page.getByRole("button", { name: "Inventory", exact: true }).click();await page.getByRole("tab",{name:"Stock activity",exact:true}).click();
   await expect(page.getByRole("heading", { name: "Expiry reminders", exact: true })).toBeVisible();
 }
 test("expiry reminders, responsible staff progress and owner resolution survive independent sign-ins", async ({ page, browser }) => {

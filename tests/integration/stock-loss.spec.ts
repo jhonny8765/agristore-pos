@@ -28,7 +28,7 @@ async function fixture() {
 async function login(page: Page, account: { email: string; password: string }) {
   await page.goto("/"); await page.getByLabel("Email address", { exact: true }).fill(account.email); await page.getByLabel("Password", { exact: true }).fill(account.password);
   await page.getByRole("button", { name: "Sign in", exact: true }).click();
-  await page.getByRole("button", { name: "Overview", exact: true }).click();
+  await page.getByRole("button", { name: "Overview", exact: true }).click();await page.getByText("All-time totals, cash reconciliation & audit",{exact:true}).click();
   await expect(page.getByRole("heading", { name: "Stock loss at purchase cost", exact: true })).toBeVisible();
   await expect(page.getByText("Loading stock-loss report…", { exact: true })).toHaveCount(0);
 }
@@ -128,7 +128,7 @@ test("stock worklists load beyond fifty and approve or dispose the exact selecte
   const issueId=randomUUID();await countCommand(a.owner,"record_stock_issue",{...a.ctx,issueId,productId:a.productId,batchId:null,quantity:"0.001",category:"damage",disposition:"hold",reason:`TEST held worklist ${n}`});await countCommand(a.owner,"approve_stock_issue",{...a.ctx,issueId,reason:"TEST owner checked held worklist goods"});
   const id=randomUUID();pending.push(id);await countCommand(a.owner,"record_stock_issue",{...a.ctx,issueId:id,productId:a.productId,batchId:null,quantity:"0.002",category:"damage",disposition:"write_off",reason:`TEST pending worklist ${n}`});
  }
- await login(page,a);await page.getByRole("button",{name:"Inventory",exact:true}).click();
+ await login(page,a);await page.getByRole("button",{name:"Inventory",exact:true}).click();await page.getByRole("tab",{name:"Stock activity",exact:true}).click();
  const held=page.getByRole("region",{name:"Held stock",exact:true}),issues=page.getByRole("region",{name:"Stock issues awaiting approval",exact:true});await expect(held.getByRole("row")).toHaveCount(51);await expect(issues.getByRole("row")).toHaveCount(51);
  await expect(page.getByText(/50 of 51 open held-goods records loaded/)).toBeVisible();await page.getByRole("button",{name:"Load more held goods",exact:true}).click();await expect(held.getByRole("row")).toHaveCount(52);await expect(issues.getByRole("row")).toHaveCount(51);await expect(page.getByRole("button",{name:"Load more held goods",exact:true})).toBeDisabled();
  let lost=false;await page.route("**/rest/v1/rpc/agri_command",async route=>{const r=route.request().postDataJSON();if(r.action==="stock_controls"&&r.data.issueCursor&&!lost){lost=true;await route.abort("failed");}else await route.continue();});

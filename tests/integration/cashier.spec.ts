@@ -185,6 +185,7 @@ test("registered cashier recovers real offline sales after a lost acknowledgment
   // Exercise the manager's real PC registration, shift closure, and user switch.
   await login(page, ownerEmail, password);
   await page.getByRole("button", { name: "Settings", exact: true }).click();
+  await page.getByRole("button", { name: "View branch details", exact: true }).click();
   const branchPanel = page.locator(".panel").filter({
     has: page.getByRole("heading", { name: "Branches", exact: true }),
   });
