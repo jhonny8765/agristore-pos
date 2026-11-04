@@ -57,3 +57,23 @@ to bypass a failing release.
 Retain the previous healthy Cloudflare deployment. Deployment evidence is saved as a GitHub
 Actions artifact for 30 days. App rollback does not undo database changes or erase browser
 queues. Keep cashier browser storage intact.
+
+## November 4 verification
+
+The first full verification passed 600 unit tests, 72 application browser tests,
+1,521 database assertions, an isolated restore rehearsal, 69 ordinary workflow tests
+and 44 fixed-Magpet workflow tests. The latter includes 300 distinct offline sales,
+lost-response recovery and an exact closed drawer without duplicate payments or stock.
+These are synthetic Linux checks, not physical Windows/printer endurance certification.
+
+Supabase MCP applied `20261104080035_fixed_branch_exact_totals` and
+`20261104080047_inactive_branch_original_retry`. Source files retain those actual
+server migration versions. The fixes rebuild exact report strings after branch scoping
+and acknowledge only an original cashier's exact saved sale before the active-branch
+check. Original handlers still validate access and payload; new inactive-branch sales
+remain rejected. Nine business-table checksums covering 4,137 rows matched before and
+after both fixes, and function ownership/permissions stayed unchanged.
+
+Original function definitions and verification evidence remain in the private local
+`tmp/github-cloudflare-release` folder outside this repository. No database administrative
+credential belongs in the workflow. The current confirmed migration is `20261104080047`.
