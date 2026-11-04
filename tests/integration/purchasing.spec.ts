@@ -43,7 +43,7 @@ test("owner-approved order supports fully rejected and mixed deliveries, held re
     await expect(employee.getByRole("region",{name:"Inspected delivery register",exact:true})).toContainText("TEST-REJECTED-001");
     const stock=await a.owner.from("branch_inventory").select("quantity").eq("product_id",a.productId).eq("branch_id",a.branchId);expect(stock.error).toBeNull();expect(stock.data).toHaveLength(0);
   }finally{await context.close();}
-  await page.getByRole("button",{name:"Refresh purchasing records",exact:true}).click();await fillDelivery(page,orderId,"TEST-MIXED-002","6","1","2");
+  await page.getByRole("button",{name:"Refresh",exact:true}).click();await fillDelivery(page,orderId,"TEST-MIXED-002","6","1","2");
   for(const width of [1440,390,320]){
     await page.setViewportSize({width,height:1000});expect(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth)).toBe(true);
     expect((await new AxeBuilder({page}).include(".purchasing-workspace").withTags(["wcag2a","wcag2aa","wcag21a","wcag21aa","wcag22aa"]).analyze()).violations).toEqual([]);
@@ -71,7 +71,7 @@ test("a server-confirmed fully rejected delivery recovers its original request w
   await page.getByRole("button",{name:/^Sync center(?:\s+\d+)?$/}).click();await expect(page.getByRole("button",{name:"Retry original request",exact:true})).toBeVisible();
   const download=page.waitForEvent("download");await page.getByRole("button",{name:"Export recovery file",exact:true}).click();const bytes=await readFile((await(await download).path())!);const archive=JSON.parse(bytes.toString());expect(archive.pendingOperations).toHaveLength(1);const receiptId=archive.pendingOperations[0].data.receiptId;
   const context=await browser.newContext();try{
-    const restored=await context.newPage();await login(restored,a);await restored.getByRole("button",{name:/^Sync center(?:\s+\d+)?$/}).click();const input=restored.getByLabel("Restore a recovery file",{exact:true});await expect(input).toBeEnabled();await input.setInputFiles({name:"TEST-rejected-delivery-recovery.json",mimeType:"application/json",buffer:bytes});
+    const restored=await context.newPage();await login(restored,a);await restored.getByRole("button",{name:/^Sync center(?:\s+\d+)?$/}).click();const input=restored.getByLabel("Select recovery file",{exact:true});await expect(input).toBeEnabled();await input.setInputFiles({name:"TEST-rejected-delivery-recovery.json",mimeType:"application/json",buffer:bytes});
     await expect(restored.getByText("0 sale records checked and restored. Original transaction IDs and online requests are retained. Review the Sync center before retrying.",{exact:true})).toBeVisible();await restored.getByRole("button",{name:"Retry original request",exact:true}).click();await expect(restored.getByRole("button",{name:"Retry original request",exact:true})).toHaveCount(0);
   }finally{await context.close();}
   const records=await a.owner.from("purchase_receipts").select("id").eq("organization_id",a.organizationId);expect(records.error).toBeNull();expect(records.data).toEqual([{id:receiptId}]);

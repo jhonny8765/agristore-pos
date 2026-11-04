@@ -108,7 +108,7 @@ test("a lost assignment response is recovered with the original request and one 
   const context = await browser.newContext();
   try {
     const restored = await context.newPage(); await login(restored, a); await restored.getByRole("button", { name: /^Sync center(?:\s+\d+)?$/ }).click();
-    const input = restored.getByLabel("Restore a recovery file", { exact: true }); await expect(input).toBeEnabled();
+    const input = restored.getByLabel("Select recovery file", { exact: true }); await expect(input).toBeEnabled();
     await input.setInputFiles({ name: "TEST-assignment-recovery.json", mimeType: "application/json", buffer: bytes });
     await expect(restored.getByText("0 sale records checked and restored. Original transaction IDs and online requests are retained. Review the Sync center before retrying.", { exact: true })).toBeVisible();
     await expect(restored.getByRole("button", { name: "Retry original request", exact: true })).toBeVisible();

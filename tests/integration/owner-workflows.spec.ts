@@ -146,7 +146,7 @@ test("sign-out in a second window clears the first window and rejects its late p
  });
  try{
   await page.getByRole('button',{name:'Inventory',exact:true}).click();await captured;
-  await other.getByTitle('Sign out',{exact:true}).click();
+  await other.getByRole("banner").getByRole("button",{name:/^Sign out /}).click();
   await expect(other.getByLabel('Email address',{exact:true})).toBeVisible();
   await expect(page.getByLabel('Email address',{exact:true})).toBeVisible();
   release();
@@ -203,7 +203,7 @@ test("confirmed deliveries and opening imports stay saved when the following sto
   await page.getByRole("button", { name: "Refresh", exact: true }).click();
   await expect(page.locator(".notice[role=alert]")).toHaveCount(0);
   await page.getByRole("button", { name: "Inventory", exact: true }).click();
-  await expect(page.getByRole("region",{name:/Product, Category$/}).getByRole("row").filter({ hasText: "Audit feeds" })).toContainText("10002 kg");
+  await expect(page.getByRole("region",{name:"Inventory products",exact:true}).getByRole("row").filter({ hasText: "Audit feeds" })).toContainText("10002 kg");
 
   const destination = a.branches[1].id as string;
   await page.getByRole("combobox", { name: "Current branch", exact: true }).selectOption(destination);
@@ -228,7 +228,7 @@ test("confirmed deliveries and opening imports stay saved when the following sto
   blockSnapshots = false;
   await page.getByRole("button", { name: "Refresh", exact: true }).click();
   await page.getByRole("button", { name: "Inventory", exact: true }).click();
-  await expect(page.getByRole("region",{name:/Product, Category$/}).getByRole("row").filter({ hasText: "Audit feeds" })).toContainText("3 kg");
+  await expect(page.getByRole("region",{name:"Inventory products",exact:true}).getByRole("row").filter({ hasText: "Audit feeds" })).toContainText("3 kg");
 
   // The shared completion path must also let the product form reset after a
   // confirmed create, even though downloading the resulting catalog fails.
@@ -324,7 +324,7 @@ test("transfers and count approvals identify separate lots, base quantities and 
   for (const lot of lots) {
     const batchId = batches.data!.find((batch) => batch.lot === lot.lot)!.id;
     await sealedCount(a,{organizationId:a.organizationId,branchId:destination,productId,batchId,countId:randomUUID(),counted:lot.counted,reason:`TEST simulated discrepancy for ${lot.lot}`});
-    await page.getByRole("button",{name:"Refresh counts",exact:true}).click();
+    await page.getByRole("button",{name:"Refresh",exact:true}).click();
     const row = page.locator('.history-table[data-kind="counts"] tbody tr').filter({ hasText: `Lot ${lot.lot}` });
     await expect(row).toContainText(`Expiry: ${lot.expiresOn}`);
     await expect(row).toContainText(`Reason: TEST simulated discrepancy for ${lot.lot}`);
@@ -630,6 +630,7 @@ test("owner product setup creates only enabled selling units with independent re
     "TEST duplicate SKU",
   );
   await page.getByRole("button", { name: "Checkout POS", exact: true }).click();
+  await page.locator("article").filter({has:page.getByRole("heading",{name:"TEST 25 kg feeds",exact:true})}).getByText("Loose selling options",{exact:true}).click();
   await expect(
     page.getByRole("button", {
       name: "Sell TEST 25 kg feeds by weight",
@@ -669,10 +670,8 @@ test("offline mixed sacks, quarters, halves and peso-weight sales synchronize ex
   await add.click();
   await page.getByRole("button", { name: "½ kg", exact: true }).nth(2).click();
   await add.click();
-  await page
-    .getByRole("button", { name: "By peso amount", exact: true })
-    .nth(3)
-    .click();
+  await page.getByLabel(`Selling options for ${name}`,{exact:true}).nth(3).click();
+  await page.getByRole("button",{name:"By peso amount",exact:true}).last().click();
   await page.getByLabel(`Customer budget (₱) for ${name}`).fill("50");
   await page
     .getByRole("button", { name: "Estimate weight", exact: true })
@@ -908,7 +907,7 @@ test("owner accessibility covers keyboard navigation, narrow reflow and forced c
     "Settings",
   ];
   for (const screen of screens) {
-    const navigationName = screen === "Checkout" ? "Checkout POS" : screen;
+    const navigationName = screen === "Checkout" ? "Checkout POS" : screen === "Stock counts" ? "Inventory" : screen;
     await page.setViewportSize({ width: 1440, height: 1000 });
     await page
       .getByRole("button", { name: navigationName, exact: true })
@@ -917,16 +916,17 @@ test("owner accessibility covers keyboard navigation, narrow reflow and forced c
       page.getByRole("button", { name: navigationName, exact: true }),
     ).toHaveAttribute("aria-current", "page");
     await expect(page.locator("#main h1")).toBeFocused();
-    if (screen === "Stock counts")
-      await page.getByRole("button", {name:"Review sealed counts",exact:true}).click();
+    if (screen === "Stock counts"){await page.getByRole("tab",{name:"Stock counts",exact:true}).click();await page.getByRole("button", {name:"Review sealed counts",exact:true}).click();await page.getByRole("button",{name:"History",exact:true}).click();}
+    if(screen === "Overview")await page.getByText("All-time totals, cash reconciliation & audit",{exact:true}).click();
+    if(screen === "Purchasing")await page.getByRole("tab",{name:"Receiving history",exact:true}).click();
     if (
       ["Overview", "Purchasing", "Transfers", "Stock counts"].includes(screen)
     )
       await expect(page.locator(".history-register")).toContainText(/loaded ·/);
-    if (screen === "Settings")
+    if (screen === "Settings"){await page.getByRole("tab",{name:"Staff access",exact:true}).click();
       await expect(
         page.getByRole("cell", { name: "Test audit owner", exact: true }),
-      ).toBeVisible();
+      ).toBeVisible();}
     await scan(screen, "desktop");
     const unnamed = await page
       .locator(".table-wrap")
@@ -1024,7 +1024,7 @@ test("owner approvals work without browser dialogs, stock refreshes without a sh
     await refund.getByLabel("Refund reason", { exact: true }).focus();
     const fits = await refund.evaluate((form) => {
       const field = form.querySelector("input")!.getBoundingClientRect();
-      const area = form.closest(".table-wrap")!.getBoundingClientRect();
+      const area = form.closest(".receipt-detail")!.getBoundingClientRect();
       return field.left - 6 >= area.left && field.right + 6 <= area.right;
     });
     expect(fits).toBe(true);
@@ -1163,12 +1163,12 @@ test("owner approvals work without browser dialogs, stock refreshes without a sh
   await expect(opening).not.toBeVisible();
   await page.getByRole("button", { name: "Inventory", exact: true }).click();
   await expect(
-    page.getByRole("region",{name:/Product, Category$/}).getByRole("row").filter({ hasText: "Audit feeds" }),
+    page.getByRole("region",{name:"Inventory products",exact:true}).getByRole("row").filter({ hasText: "Audit feeds" }),
   ).toContainText("20 kg");
   await page.getByRole("button",{name:"Inventory",exact:true}).click();await page.getByRole("tab",{name:"Stock counts",exact:true}).click();
   await page.getByRole("button", { name: "Review sealed counts", exact: true }).click();
   await sealedCount(a,{organizationId:a.organizationId,branchId:a.branches[1].id,productId:a.productId,batchId:null,countId:randomUUID(),counted:"19",reason:"TEST verify approved discrepancy"});
-  await page.getByRole("button",{name:"Refresh counts",exact:true}).click();
+  await page.getByRole("button",{name:"Refresh",exact:true}).click();
   try {
     await expect(page.getByRole("button",{name:"Approve adjustment",exact:true})).toBeVisible();
   } catch (failure) {
@@ -1186,7 +1186,7 @@ test("owner approvals work without browser dialogs, stock refreshes without a sh
   await expect(page.getByRole("cell", { name: "approved", exact: true })).toBeVisible();
   await page.getByRole("button", { name: "Inventory", exact: true }).click();
   await expect(
-    page.getByRole("region",{name:/Product, Category$/}).getByRole("row").filter({ hasText: "Audit feeds" }),
+    page.getByRole("region",{name:"Inventory products",exact:true}).getByRole("row").filter({ hasText: "Audit feeds" }),
   ).toContainText("19 kg");
   await page.getByRole("button", { name: "Transfers", exact: true }).click();
   await page
@@ -1212,11 +1212,11 @@ test("owner approvals work without browser dialogs, stock refreshes without a sh
   await expect(page.getByText("received", { exact: true })).toBeVisible();
   await page.getByRole("button", { name: "Inventory", exact: true }).click();
   await expect(
-    page.getByRole("region",{name:/Product, Category$/}).getByRole("row").filter({ hasText: "Audit feeds" }),
+    page.getByRole("region",{name:"Inventory products",exact:true}).getByRole("row").filter({ hasText: "Audit feeds" }),
   ).toContainText("10001 kg");
 
   const b = await business("Other business product");
-  await page.getByTitle("Sign out", { exact: true }).click();
+  await page.getByRole("banner").getByRole("button",{name:/^Sign out /}).click();
   await expect(
     page.getByRole("button", { name: "Sign in", exact: true }),
   ).toBeVisible();
@@ -1562,7 +1562,7 @@ test("partial transfers, held goods and stock issues reconcile through the owner
   await row.getByLabel("Receiving notes",{exact:true}).fill("TEST counted eight sound, one damaged, one missing");
   await row.getByRole("button",{name:"Record actual receipt",exact:true}).click();
   await expect(row).toContainText("Outstanding: 1");
-  await page.getByRole("button",{name:"Inventory",exact:true}).click();
+  await page.getByRole("button",{name:"Inventory",exact:true}).click();await page.getByRole("tab",{name:"Stock activity",exact:true}).click();
   await expect(page.getByRole("region",{name:"Held stock",exact:true})).toContainText("1");
   await page.getByRole("button",{name:"Resolve investigation",exact:true}).click();
   const resolve=page.getByRole("form",{name:"Resolve investigation",exact:true});
@@ -1575,7 +1575,7 @@ test("partial transfers, held goods and stock issues reconcile through the owner
   await row.getByLabel("Investigation evidence / loss reason",{exact:true}).fill("TEST owner checked dispatch and delivery, missing one kilogram");
   await row.getByRole("button",{name:"Record transfer loss",exact:true}).click();
   await expect(row).toContainText("closed short");
-  await page.getByRole("button",{name:"Inventory",exact:true}).click();
+  await page.getByRole("button",{name:"Inventory",exact:true}).click();await page.getByRole("tab",{name:"Stock activity",exact:true}).click();
   const held=page.getByRole("region",{name:"Held stock",exact:true});
   await held.getByRole("button",{name:"Record held-goods outcome",exact:true}).click();
   await held.getByLabel("Quantity from held stock (base units)").fill("0.25");

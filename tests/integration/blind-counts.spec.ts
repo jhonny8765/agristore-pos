@@ -27,7 +27,7 @@ async function login(page:Page,account:{email:string;password:string}){
  // Decide whether to start a count only after the existing worklist has loaded.
  // Its initial empty render also shows the start form, which disappears for a recounter.
  const loaded=page.waitForResponse(response=>response.url().endsWith('/rest/v1/rpc/agri_command')&&response.request().postDataJSON()?.action==='count_workspace');
- await page.getByRole("button",{name:"Inventory",exact:true}).click();await page.getByRole("tab",{name:"Stock counts",exact:true}).click();await loaded;await expect(page.locator('.count-records')).toHaveAttribute('aria-busy','false');await expect(page.getByRole('heading',{name:'Blind stock counts',exact:true})).toBeVisible();
+ await page.getByRole("button",{name:"Inventory",exact:true}).click();await page.getByRole("tab",{name:"Stock counts",exact:true}).click();await loaded;await expect(page.locator('.count-records')).toHaveAttribute('aria-busy','false');await expect(page.getByRole('region',{name:'Blind stock counts',exact:true})).toBeVisible();
  if(await page.getByRole('form',{name:'Start a blind count',exact:true}).isVisible()){
   await page.getByRole('combobox',{name:'Product / batch',exact:true}).fill('TEST blind feeds');
   await page.getByRole('option',{name:'TEST blind feeds (kg)',exact:true}).click();
@@ -93,12 +93,12 @@ test('operation-only recovery moves a lost count response to a fresh signed-in b
  const wrongContext=await browser.newContext(),restoredContext=await browser.newContext();
  try{
   const wrong=await wrongContext.newPage();await login(wrong,a.second);await wrong.getByRole('button',{name:/^Sync center(?:\s+\d+)?$/}).click();
-  const wrongInput=wrong.getByLabel('Restore a recovery file',{exact:true});await expect(wrongInput).toBeEnabled();
+  const wrongInput=wrong.getByLabel('Select recovery file',{exact:true});await expect(wrongInput).toBeEnabled();
   await wrongInput.setInputFiles({name:'TEST-original-count.json',mimeType:'application/json',buffer:content});
   await expect(wrong.locator('.notice.error')).toContainText('owner must review another employee');
   await expect(wrong.getByRole('button',{name:'Retry original request',exact:true})).toHaveCount(0);
   const restored=await restoredContext.newPage();await login(restored,a.first);await restored.getByRole('button',{name:/^Sync center(?:\s+\d+)?$/}).click();
-  await restored.getByLabel('Restore a recovery file',{exact:true}).setInputFiles({name:'TEST-original-count.json',mimeType:'application/json',buffer:content});
+  await restored.getByLabel('Select recovery file',{exact:true}).setInputFiles({name:'TEST-original-count.json',mimeType:'application/json',buffer:content});
   await expect(restored.getByRole('button',{name:'Retry original request',exact:true})).toBeVisible();await restored.reload();
   await restored.getByRole('button',{name:/^Sync center(?:\s+\d+)?$/}).click();
   let retriedId='';await restored.route('**/rest/v1/rpc/agri_command',async route=>{if(route.request().postDataJSON().action==='record_blind_count')retriedId=route.request().postDataJSON().data.observationId;await route.continue();});

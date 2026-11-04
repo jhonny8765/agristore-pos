@@ -279,7 +279,7 @@ test("registered cashier recovers real offline sales after a lost acknowledgment
       exact: true,
     }),
   ).toBeVisible();
-  await page.getByTitle("Sign out", { exact: true }).click();
+  await page.getByRole("banner").getByRole("button",{name:/^Sign out /}).click();
   await expect(
     page.getByRole("button", { name: "Sign in", exact: true }),
   ).toBeVisible();
