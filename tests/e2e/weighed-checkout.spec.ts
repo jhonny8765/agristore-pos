@@ -327,6 +327,6 @@ test("piece products cannot be sold as half a sealed packet; weighed controls re
   }
 });
 
-async function sellLoose(page:Page,mode:"weight"|"peso amount"){const options=page.locator('.product').filter({has:page.getByRole('heading',{name:'Grower feeds',exact:true})}).locator('.catalog-retail');if(!await options.getAttribute('open')){if(await options.getAttribute('open')===null)await options.locator('summary').click();}await options.getByRole('button',{name:`Sell Grower feeds by ${mode}`,exact:true}).click();}
+async function sellLoose(page:Page,mode:"weight"|"peso amount"){const options=page.locator('.product').filter({has:page.getByRole('heading',{name:'Grower feeds',exact:true})}).locator('.catalog-retail');await options.getByRole('button',{name:`Sell Grower feeds by ${mode}`,exact:true}).click();}
 
 async function linePeso(page:Page){const panel=page.locator(".receipt-item").first().locator(".line-retail");if(await panel.getAttribute("open")===null)await panel.locator("summary").click();await panel.getByRole("button",{name:"By peso amount",exact:true}).click();}

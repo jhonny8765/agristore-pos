@@ -1,0 +1,117 @@
+/* Focused refinements to the established Better Yield workspace. */
+.reference-ui .navigation-toggle,
+.reference-ui .navigation-backdrop { display: none; }
+
+.reference-ui .product-grid .product {
+  grid-template-rows: minmax(23px, auto) minmax(40px, auto) minmax(22px, auto) 34px auto auto;
+}
+.reference-ui .product-grid .add-product {
+  grid-column: 1 / -1;
+  justify-self: stretch;
+  justify-content: center;
+  min-height: 44px;
+  white-space: normal;
+  overflow-wrap: anywhere;
+}
+.reference-ui .catalog-retail { grid-row: 7; }
+.reference-ui .product-selling { display: grid; grid-template-columns: 1fr 1fr; margin-top: 4px; gap: 6px; }
+.reference-ui .product-selling > span { grid-column: 1 / -1; }
+.reference-ui .product-selling button { min-height: 44px; padding: 6px; white-space: normal; }
+
+.reference-ui .review-start { display: flex; align-items: center; gap: 20px; justify-content: space-between; margin-block: 16px; }
+.reference-ui .review-start p { max-width: 65ch; margin: 6px 0; color: var(--muted); }
+.reference-ui .review-start > .button { flex-shrink: 0; }
+.reference-ui .review-filter-options { margin-block: 16px; }
+.reference-ui .review-filter-options > summary { cursor: pointer; padding-block: 12px; font-weight: 650; }
+.reference-ui .review-filter-options .review-filters { margin-top: 12px; }
+.reference-ui .review-next-label { display: block; margin-bottom: 5px; }
+.reference-ui .review-next-step { padding-block: 16px; margin-block: 16px; border-block: 1px solid var(--line); }
+.reference-ui .review-next-step p { margin: 8px 0; }
+.reference-ui .review-detail form { scroll-margin-top: 20px; }
+.reference-ui .review-next-step a { display: inline-flex; align-items: center; min-height: 44px; text-underline-offset: 4px; }
+
+.reference-ui .receipt-panel:has(.credit-checkout) { position: static; }
+.reference-ui .credit-checkout { padding: 16px; }
+.reference-ui .credit-checkout > fieldset { grid-template-columns: minmax(0, 1fr); gap: 12px; }
+.reference-ui .credit-checkout .field,
+.reference-ui .credit-checkout .credit-cash-field,
+.reference-ui .credit-checkout .credit-invoice-field { grid-column: 1 / -1; }
+.reference-ui .credit-checkout .credit-client-field { display: flex; flex-direction: column; align-items: stretch; }
+.reference-ui .credit-checkout .field > span { font-size: 16px; white-space: normal; }
+.reference-ui .credit-checkout .credit-client-tools { grid-template-columns: minmax(0, 1fr); }
+.reference-ui .credit-checkout .credit-client-tools .field > span,
+.reference-ui .credit-checkout .credit-client-summary > strong,
+.reference-ui .credit-checkout > fieldset > legend {
+  position: static; width: auto; height: auto; overflow: visible; clip-path: none;
+}
+.reference-ui .credit-checkout input:not([type=checkbox]):not([type=radio]),
+.reference-ui .credit-checkout select,
+.reference-ui .credit-checkout .credit-client-tools .button,
+.reference-ui .credit-checkout .complete-sale { min-height: 44px; font-size: 16px; padding: 9px 10px; }
+.reference-ui .credit-checkout .credit-client-summary > strong { display: block; font-size: 18px; overflow-wrap: anywhere; }
+.reference-ui .credit-checkout .credit-client-summary .notice { font-size: 16px; line-height: 1.45; padding: 10px; }
+.reference-ui .credit-checkout .scope-note,
+.reference-ui .credit-checkout > p.muted { font-size: 14px; line-height: 1.5; }
+.reference-ui .credit-checkout .checkbox { min-height: 44px; gap: 10px; font-size: 16px; line-height: 1.5; margin-block: 10px; }
+.reference-ui .credit-checkout .checkbox input { width: 22px; height: 22px; margin-top: 2px; }
+.reference-ui .credit-checkout .credit-term-choices label { min-height: 44px; align-items: center; padding: 10px; }
+.reference-ui .credit-checkout .credit-term-choices input { width: 18px; height: 18px; }
+.reference-ui .credit-sale-success { text-align: start; padding: 20px; }
+.reference-ui .credit-sale-success > h3 { text-align: center; }
+.reference-ui .credit-confirmed-record h2 { font-size: 22px; margin-block: 16px; }
+.reference-ui .credit-confirmed-record p { overflow-wrap: anywhere; }
+.reference-ui .credit-confirmed-record .compact-ledger { text-align: start; }
+.reference-ui .credit-confirmed-record dd { margin: 0; text-align: end; font-weight: 700; }
+.reference-ui .credit-confirmed-record dd small { display: block; font-size: 13px; font-weight: 400; }
+.reference-ui .credit-confirmed-items { margin-block: 16px; }
+.reference-ui .credit-confirmed-items summary { min-height: 44px; cursor: pointer; }
+.reference-ui .credit-confirmed-items ul { padding-inline-start: 20px; }
+.reference-ui .credit-confirmed-items li { margin-block: 12px; overflow-wrap: anywhere; }
+.reference-ui .credit-confirmed-items li strong { display: block; }
+.reference-ui .credit-sale-success > .button { display: flex; width: 100%; justify-content: center; min-height: 44px; white-space: normal; }
+.reference-ui .overview-dashboard .overview-chart { grid-column: 1; grid-row: 1; }
+.reference-ui .overview-dashboard .dashboard-attention { grid-column: 2; grid-row: 1; }
+
+@media (max-width: 1000px) {
+  .reference-ui .navigation-toggle {
+    display: flex; flex-direction: column; align-items: center; justify-content: center;
+    gap: 2px; min-height: 44px; width: 100%; margin-bottom: 16px;
+    border: 1px solid currentColor; border-radius: 8px; background: transparent; color: white;
+  }
+  .reference-ui .navigation-toggle span { font-size: 11px; }
+  .reference-ui .sidebar.navigation-open { width: min(288px, calc(100vw - 24px)); z-index: 60; overflow-y: auto; }
+  .reference-ui .navigation-open .navigation-toggle { flex-direction: row; gap: 12px; }
+  .reference-ui .navigation-open .navigation-toggle span { font-size: 16px; }
+  .reference-ui .navigation-open .nav-item,
+  .reference-ui .navigation-open .sidebar-bottom > .nav-item { font-size: 17px; gap: 12px; justify-content: flex-start; padding-inline: 12px; height: auto; min-height: 48px; }
+  .reference-ui .navigation-open .nav-item svg { flex-shrink: 0; }
+  .reference-ui .navigation-open .sidebar-bottom { margin-top: auto; }
+  .reference-ui .navigation-backdrop { display: block; position: fixed; inset: 0; z-index: 55; background: rgb(3 51 38 / 35%); border: 0; }
+  .reference-ui .receipt-item-top > button { width: 44px; min-width: 44px; height: 44px; min-height: 44px; }
+  .reference-ui .receipt-item-config select { min-height: 44px; padding-block: 8px; font-size: 16px; }
+  .reference-ui .receipt-item .quantity-control,
+  .reference-ui .receipt-item .quantity-control input,
+  .reference-ui .receipt-item .quantity-control button { height: 44px; min-height: 44px; }
+  .reference-ui .receipt-item .quantity-control button { width: 44px; min-width: 44px; }
+  .reference-ui .receipt-item .line-discount input { min-height: 44px; font-size: 16px; }
+  .reference-ui .cash-shortcuts button { min-height: 44px; font-size: 14px; }
+  .reference-ui .overview-dashboard .analytics-workspace-grid { grid-template-columns: minmax(0, 1fr); }
+  .reference-ui .overview-dashboard .dashboard-attention { grid-column: 1; grid-row: 1; }
+  .reference-ui .overview-dashboard .overview-chart { grid-column: 1; grid-row: 2; }
+}
+@media (max-width: 800px) {
+  .reference-ui .review-start { align-items: stretch; flex-direction: column; gap: 8px; }
+  .reference-ui .review-start > .button { align-self: flex-start; }
+}
+@media (max-width: 650px) {
+  .reference-ui .overview-dashboard { display: flex; flex-direction: column; }
+  .reference-ui .overview-dashboard > .analytics-toolbar { order: -4; }
+  .reference-ui .overview-dashboard > .overview-sales-scope { order: -3; }
+  .reference-ui .overview-dashboard > .analytics-workspace-grid { display: contents; }
+  .reference-ui .overview-dashboard .dashboard-attention { order: -2; margin-bottom: 16px; }
+  .reference-ui .overview-dashboard > .workspace-stats { order: -1; }
+  .reference-ui .credit-confirmed-record .compact-ledger > div { gap: 10px; flex-wrap: wrap; }
+}
+@media print {
+  .reference-ui .navigation-toggle, .reference-ui .navigation-backdrop { display: none; }
+}

@@ -364,6 +364,14 @@ Keep the owner’s full-history workspace under Overview with contextual links a
 
 At phone widths of 420 px or less, Overview monetary summaries use one column so complete amounts remain visible beside the navigation rail.
 
+### Owner and cashier usability
+
+Keep catalog Add buttons explicit about their selling unit, with direct By weight / By peso amount actions for configured loose-kilo products. Retain the scale-confirmation requirement. Inventory review names one next check per product; optional overlapping review filters sit in a disclosure. Selling blockers come first, with recorded stock used only as a tie-breaker, never a statement of saleability.
+
+Use the branch's actual checkout mode in global outage and shift-authorization wording. Multiple-PC mode says checkout is paused offline. Credit fields and confirmations keep readable client identity, amounts and terms; important input/choice controls are at least 44 px high. A confirmed credit sale retains print/new-sale actions, and prints through the existing body-level thermal receipt portal independently of screen disclosures.
+
+At narrow widths the forest rail offers a labeled Menu control. Expanded navigation displays destination labels, closes after selection or leaving focus, and returns focus on Escape. Frequently used sale controls have at least 44 px interaction areas. Needs attention precedes Overview summaries and the chart on phones; monetary figures remain complete.
+
 ### Do:
 
 - **Do** follow each supplied composition within the shared Roboto, forest and warm-paper shell.

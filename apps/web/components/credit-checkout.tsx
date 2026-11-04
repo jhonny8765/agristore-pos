@@ -8,13 +8,15 @@ import {isDatabaseRejection} from '../lib/command-error';
 import {hasCartErrors,useCart,cartAmount} from '../lib/cart';
 import {heldSaleKey,type HeldSale} from '../lib/held-sale';
 import {Button} from './ui/button';
+import {creditConfirmation,type ConfirmedCreditSale} from '../lib/credit-confirmation';
 import {matchesCreditClient} from '../lib/credit-client-search';
 
 /** Inherit the November 3 catalog/current-sale layout. Credit names the client,
  * the real due date and debt before completion; the booklet remains official.
  * Original online requests survive uncertainty and held-draft reloads. */
-export function CreditCheckout({db,organizationId,branchId,lease,online,disabled,onWorking,onSaved}:{db:PosDatabase;organizationId:string;branchId:string;lease?:Lease;online:boolean;disabled:boolean;onWorking:(working:boolean)=>void;onSaved:()=>Promise<void>}){
+export function CreditCheckout({db,organizationId,branchId,lease,online,disabled,onWorking,onSaved}:{db:PosDatabase;organizationId:string;branchId:string;lease?:Lease;online:boolean;disabled:boolean;onWorking:(working:boolean)=>void;onSaved:(sale:ConfirmedCreditSale)=>Promise<void>}){
  const cart=useCart(),draft=cart.credit,[clients,setClients]=useState<CreditClient[]>([]),[error,setError]=useState(''),[loadError,setLoadError]=useState(''),[loading,setLoading]=useState(false),[confirmed,setConfirmed]=useState(false),[query,setQuery]=useState(''),[refresh,setRefresh]=useState(0),[checkedAt,setCheckedAt]=useState('');const lock=useRef(false);
+ const active=useRef(true);useEffect(()=>{active.current=true;return()=>{active.current=false;};},[]);
  const ctx={organizationId,branchId};
  const termName=useId();
  useEffect(()=>{let active=true;if(!online||!organizationId||!branchId)return;setLoading(true);setLoadError('');setConfirmed(false);void command<CreditBook>('credit_book',{organizationId,branchId}).then(b=>{if(!Array.isArray(b.clients)||!Number.isFinite(Date.parse(b.asOf)))throw Error('The saved client list could not be verified.');if(active){setClients(b.clients);setCheckedAt(b.asOf);}}).catch(e=>{if(active)setLoadError(e.message);}).finally(()=>{if(active)setLoading(false);});return()=>{active=false;};},[organizationId,branchId,online,refresh]);
@@ -25,13 +27,14 @@ export function CreditCheckout({db,organizationId,branchId,lease,online,disabled
  const balanceAllowed=balance!==null&&balance>0&&!!client;
  const clientStatus=(c:CreditClient)=>c.overdue>0?'Has overdue balance':(c.unconfirmedInvoices??0)>0?'Historical due dates unconfirmed':'';
  const patch=(value:Partial<typeof draft>)=>{useCart.setState({credit:{...draft,...value}});setConfirmed(false);};
- async function save(){if(lock.current)return;lock.current=true;onWorking(true);setError('');try{
+ async function save(){if(lock.current||!active.current)return;lock.current=true;onWorking(true);setError('');try{
   requireLease(lease);if(!online)throw Error('Reconnect before completing a credit sale. No credit was approved offline.');
   if(lease.organizationId!==organizationId||lease.branchId!==branchId)throw Error('Open your shift for this branch before making a credit sale.');
   let data=useCart.getState().creditAttempt;
   if(!data){
    if(loading||loadError||!checkedAt)throw Error('Refresh saved clients before making a new credit sale.');
    if((await pendingOperations(db)).length||await db.sales.where('status').anyOf(['pending','sending','retry','review_required']).count())throw Error('Confirm all saved sales and requests in Sync center before making a credit sale.');
+   if(!active.current)return;
    const selection=creditSelectionSchema.parse({clientId:draft.clientId,term:draft.term,officialReference:draft.officialReference});
    if(!client)throw Error('Choose a saved client for this credit sale.');
    if(amount===null||balance===null||amount<0||amount>=total)throw Error('Enter zero or a positive cash amount below the sale total.');
@@ -39,11 +42,14 @@ export function CreditCheckout({db,organizationId,branchId,lease,online,disabled
    data={...ctx,version:2,requestId:cart.attempt(),deviceId:lease.deviceId,cashierId:lease.cashierId,shiftId:lease.shiftId,items:structuredClone(cart.items),total,cashReceived:amount,...selection,expectedDueOn:creditDueOn(manilaDay(),draft.term),manualInvoiceConfirmed:true};
    // A held draft must retain the complete original request before submission.
    if(cart.heldDraftId)await db.transaction('rw',db.settings,async()=>{const held=await setting<HeldSale>(db,heldSaleKey(lease));if(!held||held.id!==cart.heldDraftId)throw Error('The held draft changed. Keep this basket and review it.');await db.settings.put({key:heldSaleKey(lease),value:{...held,credit:draft,creditAttempt:data}});});
+   if(!active.current)return;
    useCart.setState({creditAttempt:data});
   }
+  if(!active.current)return;
+  const saved=creditConfirmation(data,clients.find(c=>c.id===data.clientId)?.name);
   await onlineOperation(db,lease.cashierId,'record_credit_sale',data,'requestId');
-  await onSaved();
- }catch(e){setError(e instanceof Error?e.message:'Could not confirm the original credit sale. Keep this PC and check Sync center.');if(isDatabaseRejection(e))useCart.setState({creditAttempt:undefined});}finally{lock.current=false;onWorking(false);}}
+  if(active.current)await onSaved(saved);
+ }catch(e){if(active.current){setError(e instanceof Error?e.message:'Could not confirm the original credit sale. Keep this PC and check Sync center.');if(isDatabaseRejection(e))useCart.setState({creditAttempt:undefined});}}finally{lock.current=false;onWorking(false);}}
  return <form className="payment-form credit-checkout" aria-label="Credit checkout" onSubmit={e=>{e.preventDefault();void save();}}>
   {discountTotal>0&&<div className="subtotal discount-total"><span>Product discounts included</span><strong>−{money(discountTotal)}</strong></div>}
   <div className="amount-due"><span>Sale total</span><strong>{checkedTotal===null?'Check sale total':money(total)}</strong></div>
