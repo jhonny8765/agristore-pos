@@ -668,13 +668,13 @@ test("offline mixed sacks, quarters, halves and peso-weight sales synchronize ex
     .getByLabel(`Unit for ${name}`)
     .selectOption({ label: "Sack (50 kg)" });
   await add.click();
-  await page.getByLabel(`Selling options for ${name}`,{exact:true}).nth(1).click();
+  await page.getByLabel(`Loose selling options for ${name}`,{exact:true}).nth(1).click();
   await page.getByRole("button", { name: "¼ kg", exact: true }).last().click();
   await add.click();
-  await page.getByLabel(`Selling options for ${name}`,{exact:true}).nth(2).click();
+  await page.getByLabel(`Loose selling options for ${name}`,{exact:true}).nth(2).click();
   await page.getByRole("button", { name: "½ kg", exact: true }).last().click();
   await add.click();
-  await page.getByLabel(`Selling options for ${name}`,{exact:true}).nth(3).click();
+  await page.getByLabel(`Loose selling options for ${name}`,{exact:true}).nth(3).click();
   await page.getByRole("button",{name:"By peso amount",exact:true}).last().click();
   await page.getByLabel(`Customer budget (₱) for ${name}`).fill("50");
   await page
@@ -700,8 +700,10 @@ test("offline mixed sacks, quarters, halves and peso-weight sales synchronize ex
     .click();
   await expect(page.getByText("₱343.70 change", { exact: true })).toBeVisible();
   // The success icon must not constrain the printable item list to 53px.
-  const printed = page.locator(".receipt-print-details");
+  const printed = page.locator("body>.thermal-receipt .thermal-items");
   await expect(printed).toBeHidden();
+  await page.evaluate(()=>{window.print=()=>window.dispatchEvent(new Event("beforeprint"));});
+  await page.getByRole("button",{name:/^Print (?:58 mm )?receipt$/,exact:true}).click();
   await page.emulateMedia({ media: "print" });
   await expect(printed).toBeVisible();
   await expect(printed).toContainText("0.25 Kilo");
@@ -710,7 +712,7 @@ test("offline mixed sacks, quarters, halves and peso-weight sales synchronize ex
   const printLayout = await printed.evaluate((el) => {
     const details = el.getBoundingClientRect();
     const last = el.lastElementChild!.getBoundingClientRect();
-    const footer = el.nextElementSibling!.getBoundingClientRect();
+    const footer = el.closest(".thermal-receipt")!.querySelector(".thermal-footer")!.getBoundingClientRect();
     return {
       width: details.width,
       fits: el.scrollWidth <= el.clientWidth,
@@ -722,6 +724,7 @@ test("offline mixed sacks, quarters, halves and peso-weight sales synchronize ex
   expect(printLayout.fits).toBe(true);
   expect(printLayout.containsLines).toBe(true);
   expect(printLayout.footerAfter).toBe(true);
+  await page.evaluate(()=>window.dispatchEvent(new Event("afterprint")));
   await page.emulateMedia({ media: "screen" });
   await expect(page.getByRole("article").filter({ has: add })).toContainText(
     "9947.82 kg on hand",
@@ -1040,7 +1043,7 @@ test("owner approvals work without browser dialogs, stock refreshes without a sh
   await refund
     .getByRole("button", { name: "Confirm full refund", exact: true })
     .click();
-  await expect(page.getByText("Refunded", { exact: true })).toBeVisible();
+  await expect(page.getByRole("region",{name:"Receipt list",exact:true}).getByText("Refunded", { exact: true })).toBeVisible();
   await closeShift(page);
 
   const firstPC = await a.owner

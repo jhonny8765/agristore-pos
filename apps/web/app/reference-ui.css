@@ -90,3 +90,6 @@
 
 .reference-ui .receipt-detail .approval-form{width:100%;max-width:100%}
 .reference-ui .receipt-detail .approval-form fieldset{min-inline-size:0}
+
+.reference-ui .inventory-add{position:static;display:flex;flex-wrap:wrap;justify-content:flex-end;gap:8px;margin:0 0 16px}
+.reference-ui .heading-actions .button{min-height:44px;min-width:44px}

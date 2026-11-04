@@ -275,7 +275,7 @@ export function SaleLineEditor({
           g{budgetMode ? " · weight not confirmed" : ""}
         </p>
       )}
-      {kilo && !budgetMode && <details className="line-retail" open={loose}><summary aria-label={`Selling options for ${item.name}`} title="Loose selling options"><EllipsisVertical size={18}/><span>Loose selling options</span></summary>
+      {kilo && !budgetMode && <details className="line-retail" open={loose}><summary aria-label={`Loose selling options for ${item.name}`} title="Loose selling options"><EllipsisVertical size={18}/><span>Loose selling options</span></summary>
       {kilo && !budgetMode && (
         <div
           className="weight-shortcuts"
