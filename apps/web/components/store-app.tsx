@@ -2517,6 +2517,7 @@ export function StoreApp() {
 
           {view === "sales" && (
             <section className="sales-page">
+              {(practice?!sales.length:!branchSales.length)&&pageHeading}
               <h2 className="sr-only">{selectedBranch?.name} · cash sales</h2>
               {practice ? (
                 sales.length ? (

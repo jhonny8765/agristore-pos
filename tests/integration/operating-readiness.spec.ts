@@ -83,7 +83,7 @@ test("closed-shift offline reload retains the downloaded branch and receipts wit
  await expect(page.getByText("Branch stock loaded.",{exact:true})).toBeVisible();
  await context.setOffline(true);await page.reload();
  await expect(picker).toHaveValue(a.branches[1].id);
- await expect(page.locator(".workspace-footer")).toContainText(a.branches[1].code);
+ await expect(page.locator(".workspace-footer")).toContainText(a.branches[1].name);
  await page.getByRole("button",{name:/^Sync center(?:\s+\d+)?$/}).click();
  await expect(page.getByRole("heading",{name:"No local transactions yet",exact:true})).toBeVisible();
  await expect(page.getByText(original.receipt,{exact:true})).toHaveCount(0);

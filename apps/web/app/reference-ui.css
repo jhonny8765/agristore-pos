@@ -87,3 +87,6 @@
 .reference-ui .line-discount-error{clear:both;font-size:14px}
 .reference-ui .discount-total{color:var(--forest)}
 @media(max-width:650px){.reference-ui .receipt-item-top{clear:both}.reference-ui .line-discount>input{min-height:44px}}
+
+.reference-ui .receipt-detail .approval-form{width:100%;max-width:100%}
+.reference-ui .receipt-detail .approval-form fieldset{min-inline-size:0}

@@ -249,9 +249,11 @@ test("confirmed deliveries and opening imports stay saved when the following sto
   expect(created.data).toHaveLength(1);
   blockSnapshots = false;
   await page.getByRole("button", { name: "Refresh", exact: true }).click();
+  await page.getByRole("tab",{name:"Products",exact:true}).click();
   const createdRow = page.getByRole("row").filter({ hasText: "TEST confirmed packet" });
   await expect(createdRow).toContainText("0 piece");
-  await expect(createdRow).toContainText("Packet · ₱60.00");
+  await expect(createdRow.getByRole("cell",{name:"Packet",exact:true})).toBeVisible();
+  await expect(createdRow.getByRole("cell",{name:"₱60.00",exact:true})).toBeVisible();
 });
 
 test("transfers and count approvals identify separate lots, base quantities and exported batch IDs", async ({ page }) => {
@@ -666,9 +668,11 @@ test("offline mixed sacks, quarters, halves and peso-weight sales synchronize ex
     .getByLabel(`Unit for ${name}`)
     .selectOption({ label: "Sack (50 kg)" });
   await add.click();
-  await page.getByRole("button", { name: "¼ kg", exact: true }).nth(1).click();
+  await page.getByLabel(`Selling options for ${name}`,{exact:true}).nth(1).click();
+  await page.getByRole("button", { name: "¼ kg", exact: true }).last().click();
   await add.click();
-  await page.getByRole("button", { name: "½ kg", exact: true }).nth(2).click();
+  await page.getByLabel(`Selling options for ${name}`,{exact:true}).nth(2).click();
+  await page.getByRole("button", { name: "½ kg", exact: true }).last().click();
   await add.click();
   await page.getByLabel(`Selling options for ${name}`,{exact:true}).nth(3).click();
   await page.getByRole("button",{name:"By peso amount",exact:true}).last().click();
@@ -1444,6 +1448,7 @@ test("branch history pages beyond 1000, filters Manila days, recovers a failed p
     name: "Receiving history",
     exact: true,
   });
+  await empty.getByRole("button",{name:"Clear dates",exact:true}).click();
   await expect(
     empty.getByRole("heading", {
       name: "No receiving records yet",
@@ -1584,6 +1589,7 @@ test("partial transfers, held goods and stock issues reconcile through the owner
   await held.getByRole("button",{name:"Record outcome",exact:true}).click();
   await expect(held.getByRole("cell",{name:"0.75 kg",exact:true})).toBeVisible();
   const issue=page.getByRole("form",{name:"Record stock issue",exact:true});
+  await selectChoice(issue.getByLabel("Product / lot for stock issue",{exact:true}),`${a.productId}:none`);
   await issue.getByLabel("Issue quantity (base units)").fill("0.5");
   await issue.getByLabel("Issue evidence / reason").fill("TEST damaged stock weighed separately");
   await issue.getByRole("button",{name:"Submit stock issue",exact:true}).click();
