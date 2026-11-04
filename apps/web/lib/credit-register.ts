@@ -1,4 +1,7 @@
-import {creditAging,type CreditBook,type CreditInvoice} from '@agristore/domain';
+import {creditAging,clientCreditValue,exactCentavos,type CreditClient,type CreditBook,type CreditInvoice} from '@agristore/domain';
+export function sortCreditClients(clients:CreditClient[],direction:'ascending'|'descending'='descending'){
+ return [...clients].sort((a,b)=>{const av=exactCentavos(clientCreditValue(a,'outstanding')),bv=exactCentavos(clientCreditValue(b,'outstanding'));return av===bv?a.name.localeCompare(b.name,'en',{numeric:true})||a.id.localeCompare(b.id):(av>bv?1:-1)*(direction==='ascending'?1:-1);});
+}
 export type InvoiceFilter='all'|'unpaid'|'partial'|'paid'|'overdue'|'unconfirmed'|'opening';
 export function invoiceStatus(i:CreditInvoice){return i.balance===0?(i.credited>0?'Settled with credit':'Paid'):i.paid>0||i.credited>0?'Part paid':'Unpaid';}
 export function invoiceMatches(i:CreditInvoice,query:string,status:InvoiceFilter){const match=`${i.officialReference} ${i.reference} ${i.clientName}`.toLocaleLowerCase('en-PH').includes(query.trim().toLocaleLowerCase('en-PH'));return match&&(status==='all'||status==='paid'&&i.balance===0||status==='unpaid'&&i.balance>0&&i.paid===0&&i.credited===0||status==='partial'&&i.balance>0&&(i.paid>0||i.credited>0)||status==='overdue'&&i.balance>0&&!!i.dueOn&&creditAging(i.dueOn,i.balance)!=='notDue'||status==='unconfirmed'&&i.balance>0&&!i.dueOn||status==='opening'&&i.source==='opening');}
