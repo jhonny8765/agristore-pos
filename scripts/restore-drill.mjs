@@ -200,6 +200,10 @@ command('supplier_record_invoice',supplierBill);
 const supplierPayment={...ctx(),requestId:id(241),billId:id(240),expectedVersion:1,expectedBalance:100001,amount:40001,method:'bank',paidOn:supplierDay,reference:'TEST-SUPPLIER-BANK-RESTORE',reason:'TEST verified external bank payment',confirmed:true};
 command('supplier_record_payment',supplierPayment);
 command('supplier_credit_note',{...supplierPayment,requestId:id(242),expectedVersion:2,expectedBalance:60000,amount:10000,method:null,reference:'TEST-SUPPLIER-CREDIT-RESTORE'});
+sql(`insert into public.branches(id,organization_id,name,code) values('${id(249)}','${id(2)}','TEST linked purchasing restore','LINKED');`);
+const linkedPurchase={...ctx(249),requestId:id(250),receiptAction:'receive_stock',delivery:{receiptId:id(251),supplierId:supplierAccount.id,source:'purchase',reference:'TEST-LINKED-RESTORE',items:[{productId:id(4),unitId:id(7),quantity:'1'}]},invoice:{...supplierBill,...ctx(249),requestId:id(252),reference:'TEST-LINKED-BILL-RESTORE',mode:'new',paymentMode:'credit',paidAmount:20000,paymentId:id(253),paidOn:supplierDay,paymentReference:'TEST-LINKED-PAY-RESTORE',paymentConfirmed:true}};
+command('supplier_receive_purchase',linkedPurchase);
+
 // Structured import evidence, unit confirmation and one stock posting survive
 // an encrypted restore and retain their original request identities.
 sql(`insert into public.branches(id,organization_id,name,code) values('${id(260)}','${id(2)}','TEST review restore','REVIEW');
@@ -216,7 +220,7 @@ insert into public.unit_prices(organization_id,unit_id,version,price,cost) value
 const ownerReviewBefore=command('snapshot',ctx(260)).products.find(p=>p.id===id(266)).ownerReview;
 const ownerReviewAnswer={...ctx(260),productId:id(266),requestId:id(268),expectedReviewRevision:ownerReviewBefore.revision,note:'TEST owner verified packet and invoice',confirmed:true};
 command('complete_product_review',ownerReviewAnswer);
-const contactForRestore={...ctx(),clientId:id(269),requestId:id(270),name:'TEST no-limit client restored',phone:'TEST phone',expectedVersion:0};
+const contactForRestore={...ctx(),clientId:id(269),requestId:id(270),name:'TEST no-limit client restored',phone:'TEST phone',clientType:'distributor',expectedVersion:0};
 command('save_credit_contact',contactForRestore);
 const original = fingerprints("postgres");
 const before = command("snapshot",{...ctx(),transactionIds:[id(9)]});
@@ -264,11 +268,12 @@ try {
   assert.equal(command('confirm_import_stock',reviewedStock,database).duplicate,true);
   assert.equal(command('complete_product_review',ownerReviewAnswer,database).duplicate,true);
   assert.equal(command('save_credit_contact',contactForRestore,database).duplicate,true);
-  const restoredContact=command('credit_book',ctx(),database).clients.find(c=>c.id===id(269));assert.equal(restoredContact.name,contactForRestore.name);assert.equal(restoredContact.limit,0);assert.equal(restoredContact.enabled,false);
+  const restoredContact=command('credit_book',ctx(),database).clients.find(c=>c.id===id(269));assert.equal(restoredContact.name,contactForRestore.name);assert.equal(restoredContact.limit,0);assert.equal(restoredContact.enabled,false);assert.equal(restoredContact.clientType,'distributor');
   const restoredOwnerReview=command('snapshot',ctx(260),database).products.find(p=>p.id===id(266)).ownerReview;assert.equal(restoredOwnerReview.complete,true);assert.equal(restoredOwnerReview.note,ownerReviewAnswer.note);
   const restoredSource=command('product_review_state',{...ctx(260),productId:id(261)},database);assert.equal(Number(restoredSource.stock),1);assert.equal(restoredSource.sourceStock.quantity,'1000');assert.equal(restoredSource.sourceStock.pending,false);
     assert.equal(command('supplier_record_invoice',supplierBill,database).duplicate,true);assert.equal(command('supplier_record_payment',supplierPayment,database).duplicate,true);
     const restoredSupplier=command('supplier_invoice_history',{...ctx(),billId:id(240)},database);assert.equal(restoredSupplier.invoice.balance,50000);assert.equal(restoredSupplier.invoice.dueOn,supplierDue);assert.equal(restoredSupplier.entries.length,3);
+    assert.equal(command('supplier_receive_purchase',linkedPurchase,database).duplicate,true);const linkedRestored=command('supplier_invoice_history',{...ctx(249),billId:id(252)},database);assert.equal(linkedRestored.invoice.balance,80001);assert.equal(linkedRestored.receiptTotal,1);assert.equal(linkedRestored.receipts[0].id,id(251));
   assert.equal(command('record_sale',discountSale,database).status,'duplicate');
   const restoredDiscount=command('partial_refund_plan',{...ctx(230),saleId:id(233)},database);assert.equal(restoredDiscount.remainingCash,1440);assert.equal(restoredDiscount.lines[0].discountBps,1000);
   assert.equal(command('record_sale',archivedCash,database).status,'duplicate');

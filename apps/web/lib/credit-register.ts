@@ -1,6 +1,8 @@
 import {creditAging,clientCreditValue,exactCentavos,type CreditClient,type CreditBook,type CreditInvoice} from '@agristore/domain';
+export const clientTypes={normal:'Normal customer',distributor:'Distributor',owner:'Owner'};
+export function customerType(client:CreditClient){return client.clientType??'normal';}
 export function sortCreditClients(clients:CreditClient[],direction:'ascending'|'descending'='descending'){
- return [...clients].sort((a,b)=>{const av=exactCentavos(clientCreditValue(a,'outstanding')),bv=exactCentavos(clientCreditValue(b,'outstanding'));return av===bv?a.name.localeCompare(b.name,'en',{numeric:true})||a.id.localeCompare(b.id):(av>bv?1:-1)*(direction==='ascending'?1:-1);});
+ return [...clients].sort((a,b)=>{const order={normal:0,distributor:1,owner:2},group=order[customerType(a)]-order[customerType(b)];if(group)return group;const av=exactCentavos(clientCreditValue(a,'outstanding')),bv=exactCentavos(clientCreditValue(b,'outstanding'));return av===bv?a.name.localeCompare(b.name,'en',{numeric:true})||a.id.localeCompare(b.id):(av>bv?1:-1)*(direction==='ascending'?1:-1);});
 }
 export type InvoiceFilter='all'|'unpaid'|'partial'|'paid'|'overdue'|'unconfirmed'|'opening';
 export function invoiceStatus(i:CreditInvoice){return i.balance===0?(i.credited>0?'Settled with credit':'Paid'):i.paid>0||i.credited>0?'Part paid':'Unpaid';}
