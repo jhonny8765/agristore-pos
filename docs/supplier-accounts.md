@@ -9,6 +9,8 @@ Open **Purchasing → Supplier accounts** while signed in as the owner. This is 
 
 Adding an invoice does not receive stock again. Supplier payments do not initiate bank transfers or deduct cash from the sales drawer. Existing stock receipts are not automatically converted into debt: use the actual supplier invoices and recorded payments. Earlier unpaid bills can be entered using their original invoice dates and verified amounts.
 
+Imported **opening unpaid balances** retain the balance still owed on the source report date. Their recorded amount is not the original invoice gross, and earlier payments are not reconstructed. The original invoice date, exact printed due date, raw terms and source location remain available. Missing due dates stay unknown and are excluded from overdue and due-soon totals. Payments and credits recorded here reduce the opening balance from its stated date onward. Opening balances cannot link stock receipts or use the normal invoice-replacement form; correcting their source requires a reviewed opening correction.
+
 Mistaken entries use a linked reversal. An invoice with net payments or credits cannot be voided until those entries are corrected. A voided invoice remains in history and can be replaced with a linked correct invoice. Original records cannot be overwritten or deleted.
 
 ## Verification

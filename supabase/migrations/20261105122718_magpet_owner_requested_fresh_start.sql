@@ -1,0 +1,9 @@
+-- Version ledger for the owner-requested, one-time Magpet fresh start applied
+-- through Supabase on 2026-11-05 after a verified backup and full rehearsal.
+-- The reviewed operation archived the former Magpet sale/refund/stock state,
+-- rebuilt current inventory, preserved existing debts, and imported approved
+-- opening customer credit and supplier balances in one guarded transaction.
+-- Private source payloads and row hashes are retained in the protected archive
+-- bf15e4c3-e5b4-5f8f-bc98-7cdbe7ec231e, not in this repository.
+-- There was no lasting schema change in that operation. Fresh databases must
+-- not replay production business data; this file records its applied version.
