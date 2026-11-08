@@ -1180,8 +1180,7 @@ test("owner approvals work without browser dialogs, stock refreshes without a sh
   await page.getByRole("button",{name:"Inventory",exact:true}).click();await page.getByRole("tab",{name:"Stock counts",exact:true}).click();
   await page.getByRole("button", { name: "Review sealed counts", exact: true }).click();
   await sealedCount(a,{organizationId:a.organizationId,branchId:a.branches[1].id,productId:a.productId,batchId:null,countId:randomUUID(),counted:"19",reason:"TEST verify approved discrepancy"});
-  // Refresh the blind-count worklist itself, rather than the outer Inventory catalog.
-  await page.getByRole("button",{name:"Refresh counts",exact:true}).click();
+  await page.getByRole("button",{name:"Refresh",exact:true}).click();
   try {
     await expect(page.getByRole("button",{name:"Approve adjustment",exact:true})).toBeVisible();
   } catch (failure) {
