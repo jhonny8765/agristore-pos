@@ -301,6 +301,8 @@ export function StoreApp() {
     "pending" | "confirmed" | "failed"
   >("pending");
   const [cloud, setCloud] = useState<Record<string, Row[]>>({}),
+    [olderCloudEnd,setOlderCloudEnd]=useState<Record<string,boolean>>({}),
+    [olderCloudLoading,setOlderCloudLoading]=useState<string>(),
     [lastSync, setLastSync] = useState<string>(),
     [snapshotAt, setSnapshotAt] = useState<string>();
   const [message, setMessage] = useTransientMessage(),
@@ -350,6 +352,7 @@ export function StoreApp() {
   const committing = useRef(false);
   const operationBusy = useRef(false);
   const syncingRef = useRef(false);
+  const olderCloudLock = useRef(false);
   const contextGeneration = useRef(0);
   const cloudRequest = useRef(0);
   const [actionIssue,setActionIssue]=useState("");
@@ -483,8 +486,28 @@ export function StoreApp() {
       ...(page ? { sales: page.rows } : {}),
       summary: [summary],
     });
+    setOlderCloudEnd({});
     setSalesCursor(page?.next);
   }, [practice, member, branchId, db, view, lease]);
+  const loadOlderCloud = useCallback(async (table:string) => {
+    if(practice || !member || !navigator.onLine || olderCloudLock.current || olderCloudEnd[table] || !viewTables[view].includes(table))return;
+    const previous=cloud[table]??[];
+    if(previous.length<1000)return;
+    const context=contextGeneration.current,request=cloudRequest.current,scope=member.organizationId;
+    olderCloudLock.current=true;setOlderCloudLoading(table);
+    try{
+      const page=await rows(table,scope,undefined,supabase,previous.length);
+      if(context!==contextGeneration.current || request!==cloudRequest.current)return;
+      const known=new Set(previous.map(row=>String(row.id)));
+      const added=page.filter(row=>!known.has(String(row.id)));
+      setCloud(current=>{
+        if((current[table]??[]).length!==previous.length)return current;
+        return {...current,[table]:[...previous,...added]};
+      });
+      if(page.length<1000 || added.length===0)setOlderCloudEnd(current=>({...current,[table]:true}));
+    }catch(error){fail(error);}
+    finally{olderCloudLock.current=false;setOlderCloudLoading(undefined);}
+  },[practice,member,olderCloudEnd,cloud,view,fail]);
   const sync = useCallback(async () => {
     if (practice || !lease || !navigator.onLine || syncingRef.current) return;
     syncingRef.current = true;
@@ -1512,7 +1535,7 @@ export function StoreApp() {
         </header>
         <main data-view={view} id="main" className="main-content" tabIndex={-1}>
           {view !== "pos" && view !== "sales" && (view!=="credit"||practice) && pageHeading}
-          <div className="app-notices">{Notice}{!practice&&isOwner&&view!=="pos"&&Object.values(cloud).some(list=>list.length>=1000)&&<p role="status" className="notice">Some workspace previews may show only the first 1,000 rows. For complete older records, open Records &amp; exports and filter by date.</p>}</div>
+          <div className="app-notices">{Notice}{!practice&&isOwner&&view!=="pos"&&viewTables[view].some(table=>(cloud[table]?.length??0)>=1000)&&<section className="notice" aria-label="Older workspace records"><p>These workspace lists load in pages of up to 1,000 records. Open Records &amp; exports for a filtered, verified history; refresh returns to the newest preview.</p><div className="button-row">{viewTables[view].every(table=>(cloud[table]?.length??0)<1000||olderCloudEnd[table])&&<span role="status">All available older preview rows are loaded for this view.</span>}{viewTables[view].filter(table=>(cloud[table]?.length??0)>=1000&&!olderCloudEnd[table]).map(table=><Button key={table} type="button" variant="outline" size="sm" disabled={!online||busy||!!olderCloudLoading} onClick={()=>void loadOlderCloud(table)}>{olderCloudLoading===table?"Loading older records…":`Load older ${table.replaceAll("_"," ")}`}</Button>)}</div></section>}</div>
           {view==="records"&&!practice&&isOwner&&<><Button variant="ghost" onClick={()=>setView(recordTarget.back)}>Back to {titles[recordTarget.back]}</Button><RecordReports key={`${member.organizationId}:${branchId}:${recordTarget.kind}:${recordTarget.entity?.id??"all"}`} organizationId={member.organizationId} branchId={branchId} branchName={selectedBranch?.name??"Selected branch"} online={online} initialKind={recordTarget.kind} entity={recordTarget.entity}/></>}
           {!practice&&<AppUpdateNotice registration={registration} onOpen={()=>setView("settings")}/>}
           {!practice && view === "overview" && (
