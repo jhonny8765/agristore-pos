@@ -39,10 +39,9 @@ export function PasswordRecovery({ mode, onBack, onComplete }: PasswordRecoveryP
     setMessage("");
     try {
       if (mode === "request") {
-        const redirectTo = new URL("/", window.location.origin);
-        redirectTo.searchParams.set("password-recovery", "1");
+        // Match the existing signup redirect origin; PASSWORD_RECOVERY handles the return.
         const { error } = await supabase.auth.resetPasswordForEmail(email.trim(), {
-          redirectTo: redirectTo.toString(),
+          redirectTo: window.location.origin,
         });
         if (error) throw error;
         // Keep the same response whether or not the email belongs to a user.
