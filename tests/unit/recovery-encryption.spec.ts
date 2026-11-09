@@ -4,7 +4,7 @@ import {BACKUP_ENCRYPTION_FORMAT,decryptRecoveryBackup,encryptRecoveryBackup,isE
 const passphrase="a genuinely unique backup passphrase";
 const record={version:2,archive:{id:"backup-1",part:1,parts:1},sales:[{id:"sale-1",total:5200}],pendingOperations:[]};
 
-describe("versioned recovery encryption (not wired into existing backup flow)",()=>{
+describe("optional versioned recovery encryption and legacy compatibility",()=>{
   it("encrypts a recovery JSON payload and restores its exact values",async()=>{
     const result=await encryptRecoveryBackup(record,passphrase);
     expect(result.format).toBe(BACKUP_ENCRYPTION_FORMAT);
