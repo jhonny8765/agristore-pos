@@ -1512,7 +1512,7 @@ export function StoreApp() {
         </header>
         <main data-view={view} id="main" className="main-content" tabIndex={-1}>
           {view !== "pos" && view !== "sales" && (view!=="credit"||practice) && pageHeading}
-          <div className="app-notices">{Notice}</div>
+          <div className="app-notices">{Notice}{!practice&&isOwner&&view!=="pos"&&Object.values(cloud).some(list=>list.length>=1000)&&<p role="status" className="notice">Some workspace previews may show only the first 1,000 rows. For complete older records, open Records &amp; exports and filter by date.</p>}</div>
           {view==="records"&&!practice&&isOwner&&<><Button variant="ghost" onClick={()=>setView(recordTarget.back)}>Back to {titles[recordTarget.back]}</Button><RecordReports key={`${member.organizationId}:${branchId}:${recordTarget.kind}:${recordTarget.entity?.id??"all"}`} organizationId={member.organizationId} branchId={branchId} branchName={selectedBranch?.name??"Selected branch"} online={online} initialKind={recordTarget.kind} entity={recordTarget.entity}/></>}
           {!practice&&<AppUpdateNotice registration={registration} onOpen={()=>setView("settings")}/>}
           {!practice && view === "overview" && (
