@@ -158,6 +158,7 @@ import { StockLossReport } from "./stock-loss-report";
 import { PurchasingWorkspace } from "./purchasing-workspace";
 import { BlindCounts } from "./blind-counts";
 import { PasswordRecovery } from "./password-recovery";
+import {encryptRecoveryBackup,decryptRecoveryBackup,isEncryptedRecoveryBackup,type EncryptedRecoveryBackup} from "../lib/recovery-encryption";
 import { useServiceReachability } from "../lib/use-service-reachability";
 import { preferredBatch, outstandingTransfer } from "../lib/stock-controls";
 import type { HistoryKind } from "../lib/history";
@@ -271,8 +272,12 @@ export function StoreApp() {
   const [hasOlderLocal, setHasOlderLocal] = useState(false);
   const recoveryFileInput=useRef<HTMLInputElement>(null);
   const [recoverySelected,setRecoverySelected]=useState("");
+  const [secureExportPassphrase,setSecureExportPassphrase]=useState("");
+  const [secureExportConfirmation,setSecureExportConfirmation]=useState("");
+  const [encryptedRecoveryPending,setEncryptedRecoveryPending]=useState<{name:string;payload:EncryptedRecoveryBackup}>();
+  const [encryptedRecoveryPassphrase,setEncryptedRecoveryPassphrase]=useState("");
   const [recoveryArchive, setRecoveryArchive] = useState<{ id: string; next: number; parts: number; scope: string }>();
-  const [recoveryDownload, setRecoveryDownload] = useState<{ scope: string; filename: string; data: Awaited<ReturnType<typeof exportRecovery>> }>();
+  const [recoveryDownload, setRecoveryDownload] = useState<{ scope: string; filename: string; data: Awaited<ReturnType<typeof exportRecovery>>; payload?: EncryptedRecoveryBackup }>();
   const [allPendingCount, setAllPendingCount] = useState(0);
   const [branchPendingCount, setBranchPendingCount] = useState(0);
   const [allOperationCount, setAllOperationCount] = useState(0);
@@ -384,6 +389,7 @@ export function StoreApp() {
   const openRecords=(kind:RecordKind="receipts",entity?:{id:string;name:string})=>{if(!isOwner||practice)return;setRecordTarget({kind,entity,back:view==="records"?recordTarget.back:view});setView("records");};
   const recoveryScopeKey = member && branchId
     ? JSON.stringify([member.organizationId, branchId, member.userId, member.role]) : undefined;
+  useEffect(()=>{setEncryptedRecoveryPending(undefined);setEncryptedRecoveryPassphrase("");setSecureExportPassphrase("");setSecureExportConfirmation("");},[recoveryScopeKey]);
   const currentRecoveryArchive = recoveryArchive?.scope === recoveryScopeKey ? recoveryArchive : undefined;
   const currentRecoveryDownload = recoveryDownload?.scope === recoveryScopeKey ? recoveryDownload : undefined;
   const isStock = member?.role === "stock_staff";
@@ -848,7 +854,7 @@ export function StoreApp() {
       notify("Shift open. Your product catalog is saved on this PC.");
     });
   }
-  async function exportLocalRecovery() {
+  async function exportLocalRecovery(passphrase?:string) {
     if (!member || !branchId || !recoveryScopeKey)
       throw new Error("Select your authorized branch before exporting recovery records.");
     const generation = contextGeneration.current;
@@ -857,25 +863,39 @@ export function StoreApp() {
       ? await exportRecoveryPart(db, currentRecoveryArchive.id, currentRecoveryArchive.next, scope)
       : await exportRecovery(db, scope);
     if (generation !== contextGeneration.current) return;
-    const filename = `agristore-recovery-${data.archive.id}-part-${data.archive.part}-of-${data.archive.parts}.json`;
+    const encrypted=passphrase ? await encryptRecoveryBackup(data,passphrase) : undefined;
+    if (generation !== contextGeneration.current) return;
+    const filename = `agristore-recovery-${data.archive.id}-part-${data.archive.part}-of-${data.archive.parts}${encrypted?".encrypted":""}.json`;
     // Keep only this bounded part for a blocked/misplaced download retry. It is
     // never a second export or a new checkout, and is cleared on context changes.
-    setRecoveryDownload({ scope: recoveryScopeKey, filename, data });
+    setRecoveryDownload({ scope: recoveryScopeKey, filename, data, payload:encrypted });
     setRecoveryArchive(data.archive.part < data.archive.parts
       ? { id: data.archive.id, next: data.archive.part + 1, parts: data.archive.parts, scope: recoveryScopeKey } : undefined);
-    download(filename, data);
-    notify(`Download started for recovery part ${data.archive.part} of ${data.archive.parts}. Check your browser Downloads or chosen folder; the app cannot confirm the file was saved.`);
+    download(filename, encrypted??data);
+    notify(`${encrypted?"Encrypted d":"D"}ownload started for recovery part ${data.archive.part} of ${data.archive.parts}. Check your browser Downloads or chosen folder; the app cannot confirm the file was saved.`);
+  }
+  async function restoreRecoveryInput(input:unknown) {
+    const recovery=input as {sales?:LocalSale[]}|null;
+    if(!recovery || !Array.isArray(recovery.sales) || recovery.sales.length>100000)throw new Error("Invalid recovery file");
+    const confirmed:string[]=[];
+    for(let offset=0;offset<recovery.sales.length;offset+=1000){
+      const snapshot=await requestSnapshot(db,{...context(),transactionIds:recovery.sales.slice(offset,offset+1000).map(s=>s.payload.transactionId)});
+      confirmed.push(...snapshot.confirmedIds);
+      await applySnapshot(db,snapshot);
+    }
+    const count=await importRecovery(db,input,confirmed,{organizationId:member!.organizationId,branchId,cashierId:member!.userId,role:member!.role});
+    notify(`${count} sale records checked and restored. Original transaction IDs and online requests are retained. Review the Sync center before retrying.`);
   }
   function recoveryDownloadNotice() {
     if (!currentRecoveryDownload) return null;
-    const { filename, data } = currentRecoveryDownload;
+    const { filename, data, payload } = currentRecoveryDownload;
     return <section className="recovery-download" aria-label="Prepared recovery download">
       <h3>Check your recovery download</h3>
       <p>Part {data.archive.part} of {data.archive.parts} · {data.archive.recordCount} sale records · {data.pendingOperations.length} stock / owner requests in this file. This export covers {data.archive.totalRecords} sale records.</p>
       <p className="recovery-filename">{filename}</p>
       <p>Check your browser Downloads or chosen folder. The app cannot confirm the file was saved. If it is missing or blocked, download this same part again.</p>
       <Button variant="outline" disabled={busy} onClick={() => void run(async () => {
-        download(filename, data);
+        download(filename, payload??data);
         notify(`Download started again for part ${data.archive.part} of ${data.archive.parts}. Check Downloads or your chosen folder. Original records are unchanged.`);
       }, false)}>Download this part again</Button>
       <p className="muted">Keep every part private. New sales need a new export. This retry keeps the same records and does not advance to the next part. After closing or reloading the app, start a fresh export for any unresolved records.</p>
@@ -2876,29 +2896,31 @@ export function StoreApp() {
                       const file = e.target.files?.[0];
                       if (!file) return;
                       setRecoverySelected(file.name);
+                      setEncryptedRecoveryPending(undefined);
                       void run(async () => {
-                        if (file.size > 64 * 1024 * 1024) throw new Error("This file exceeds 64 MB. Use the bounded recovery parts from the original PC; keep this file for owner recovery.");
-                        const input = JSON.parse(await file.text());
-                        if (!Array.isArray(input.sales) || input.sales.length > 100000) throw new Error("Invalid recovery file");
-                        const confirmed: string[] = [];
-                        for (let offset = 0; offset < input.sales.length; offset += 1000) {
-                          const snapshot = await requestSnapshot(db, { ...context(), transactionIds: input.sales.slice(offset,offset+1000).map((s: LocalSale) => s.payload.transactionId) });
-                          confirmed.push(...snapshot.confirmedIds);
-                          await applySnapshot(db,snapshot);
+                        if(file.size>96*1024*1024)throw new Error("This file exceeds the safe recovery size. Keep every original part and ask your owner for help.");
+                        const input:unknown=JSON.parse(await file.text());
+                        if(isEncryptedRecoveryBackup(input)){
+                          setEncryptedRecoveryPending({name:file.name,payload:input});
+                          setEncryptedRecoveryPassphrase("");
+                          notify("Encrypted recovery selected. Enter its passphrase below before any transactions are restored.");
+                          return;
                         }
-                        const count = await importRecovery(
-                          db,
-                          input,
-                          confirmed,
-                          {organizationId:member.organizationId,branchId,cashierId:member.userId,role:member.role},
-                        );
-                        notify(
-                          `${count} sale records checked and restored. Original transaction IDs and online requests are retained. Review the Sync center before retrying.`,
-                        );
+                        if(file.size>64*1024*1024)throw new Error("This unencrypted recovery file exceeds 64 MB. Use the original bounded parts.");
+                        await restoreRecoveryInput(input);
                       });
                     }}
                   />
-                </label>{recoverySelected&&<p role="status" className="recovery-selected">Selected file: {recoverySelected}</p>}</section><section className="panel recovery-export"><span className="recovery-icon"><FileDown size={30}/></span><div className="recovery-copy"><h2>Export recovery file</h2><p>Create a file of saved transaction records for safekeeping.</p></div>
+                </label>{recoverySelected&&<p role="status" className="recovery-selected">Selected file: {recoverySelected}</p>}
+                {encryptedRecoveryPending&&<form aria-label="Unlock encrypted recovery" className="secure-recovery-form" onSubmit={e=>{
+                  e.preventDefault();const passphrase=encryptedRecoveryPassphrase;setEncryptedRecoveryPassphrase("");
+                  const selected=encryptedRecoveryPending;
+                  void run(async()=>{const data=await decryptRecoveryBackup(selected.payload,passphrase);await restoreRecoveryInput(data);setEncryptedRecoveryPending(undefined);});
+                }}>
+                  <p role="status">Encrypted file: {encryptedRecoveryPending.name}. Enter its original passphrase. A wrong passphrase restores nothing.</p>
+                  <label className="field"><span>Backup passphrase</span><input type="password" autoComplete="off" required minLength={12} maxLength={1024} value={encryptedRecoveryPassphrase} onChange={e=>setEncryptedRecoveryPassphrase(e.target.value)}/></label>
+                  <div className="button-row"><Button disabled={busy||!online}>Unlock and verify recovery</Button><Button type="button" variant="ghost" disabled={busy} onClick={()=>{setEncryptedRecoveryPending(undefined);setEncryptedRecoveryPassphrase("");}}>Cancel</Button></div>
+                </form>}</section><section className="panel recovery-export"><span className="recovery-icon"><FileDown size={30}/></span><div className="recovery-copy"><h2>Export recovery file</h2><p>Create a file of saved transaction records for safekeeping.</p></div>
                 <Button
                   variant="outline"
                   disabled={busy}
@@ -2906,6 +2928,19 @@ export function StoreApp() {
                 >
                   <span className="sr-only">{currentRecoveryArchive ? `Export recovery part ${currentRecoveryArchive.next} of ${currentRecoveryArchive.parts}` : "Export recovery file"}</span><span aria-hidden="true">Export file</span>
                 </Button>
+                <details className="secure-recovery-option"><summary>Export an encrypted copy (optional)</summary>
+                  <p>Use a unique passphrase of at least 12 characters. Save it in your password manager. If you lose it, no one can unlock that encrypted file. Use the same passphrase for every part of this backup.</p>
+                  <form className="secure-recovery-form" aria-label="Export encrypted recovery" onSubmit={e=>{
+                    e.preventDefault();
+                    if(secureExportPassphrase!==secureExportConfirmation){fail(new Error("Backup passphrases do not match."));return;}
+                    const passphrase=secureExportPassphrase;setSecureExportPassphrase("");setSecureExportConfirmation("");
+                    void run(()=>exportLocalRecovery(passphrase),false);
+                  }}>
+                    <label className="field"><span>Choose backup passphrase</span><input type="password" autoComplete="new-password" minLength={12} maxLength={1024} required value={secureExportPassphrase} onChange={e=>setSecureExportPassphrase(e.target.value)}/></label>
+                    <label className="field"><span>Confirm backup passphrase</span><input type="password" autoComplete="new-password" minLength={12} maxLength={1024} required value={secureExportConfirmation} onChange={e=>setSecureExportConfirmation(e.target.value)}/></label>
+                    <Button disabled={busy}>Download encrypted recovery part</Button>
+                  </form>
+                </details>
                 {recoveryDownloadNotice()}</section>
                 <details className="recovery-privacy"><summary>Recovery files contain transaction records. Keep them private.</summary><p>
                   Contains transaction records. Keep this file private. Pending
