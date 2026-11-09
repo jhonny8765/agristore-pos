@@ -1,0 +1,43 @@
+/* Optional encrypted recovery is an explicit choice; plaintext remains supported. */
+.secure-recovery-option {
+  margin-top: 18px;
+  padding: 14px 16px;
+  border: 1px solid #cbdaca;
+  border-radius: 12px;
+  background: #f4f8ee;
+}
+.secure-recovery-option summary {
+  cursor: pointer;
+  min-height: 44px;
+  display: flex;
+  align-items: center;
+  font-weight: 700;
+  color: #164832;
+}
+.secure-recovery-option > p,
+.secure-recovery-form > p {
+  color: #42564b;
+  line-height: 1.55;
+}
+.secure-recovery-form {
+  display: grid;
+  gap: 12px;
+  margin-top: 15px;
+  min-width: 0;
+}
+.secure-recovery-form .field {
+  display: grid;
+  gap: 6px;
+  min-width: 0;
+}
+.secure-recovery-form input {
+  width: 100%;
+  min-height: 46px;
+  font-size: 16px;
+}
+.secure-recovery-form .button-row { display:flex; gap:10px; flex-wrap:wrap; }
+.secure-recovery-form button { min-height:44px; }
+@media(max-width:520px) {
+  .secure-recovery-option { padding:12px; }
+  .secure-recovery-form .button-row button { width:100%; }
+}
