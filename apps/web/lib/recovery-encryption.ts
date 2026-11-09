@@ -5,7 +5,7 @@
  */
 export const BACKUP_ENCRYPTION_FORMAT = "agristore-recovery-encrypted";
 const VERSION = 1;
-const ITERATIONS = 310_000;
+const ITERATIONS = 600_000;
 const SALT_BYTES = 16;
 const IV_BYTES = 12;
 const MAX_CIPHERTEXT_BASE64 = 96 * 1024 * 1024;
