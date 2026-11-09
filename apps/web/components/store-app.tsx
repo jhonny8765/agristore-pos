@@ -326,7 +326,7 @@ export function StoreApp() {
   const [syncFilter,setSyncFilter]=useState("all");
   const [authMode, setAuthMode] = useState<"login" | "signup">("login");
   const [recoveryMode,setRecoveryMode]=useState<"request"|"update"|null>(null);
-  const allowPublicSignup=process.env.NEXT_PUBLIC_STAFF_SIGNUP_ENABLED==="true";
+  const allowPublicSignup=process.env.NEXT_PUBLIC_STAFF_SIGNUP_ENABLED!=="false";
   const serviceStatus=useServiceReachability(online,!practice&&ready&&signedIn);
   const [showPassword, setShowPassword] = useState(false);
   const [salesCursor, setSalesCursor] = useState<SalesCursor>();
@@ -1150,7 +1150,7 @@ export function StoreApp() {
             <p>
               {authMode === "login"
                 ? "Sign in to open your shift and get started."
-                : "Owners and employees use their own accounts."}
+                : "Create your sign-in account, then ask the store owner to grant branch access."}
             </p>
             {Notice}
             <form onSubmit={auth}>
@@ -1200,7 +1200,7 @@ export function StoreApp() {
               </Button>
             </form>
             {authMode==="login"&&<button type="button" className="text-button auth-switch" onClick={()=>setRecoveryMode("request")}>Forgot password?</button>}
-            {allowPublicSignup ? <button type="button" className="text-button auth-switch" onClick={()=>{setAuthMode(authMode==="login"?"signup":"login");setShowPassword(false);}}>{authMode==="login"?"First time here? Create an account":"Already registered? Sign in"}</button> : <p className="auth-access-note">New staff member? Ask the Better Yield administrator to authorize your account.</p>}
+            {allowPublicSignup ? <button type="button" className="text-button auth-switch" onClick={()=>{setAuthMode(authMode==="login"?"signup":"login");setShowPassword(false);}}>{authMode==="login"?"New employee? Create a sign-in account":"Already registered? Sign in"}</button> : <p className="auth-access-note">New staff member? Ask the Better Yield administrator to authorize your account.</p>}
             <div className="practice-entry">
               <span>OR</span>
               <Button
