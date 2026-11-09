@@ -2897,6 +2897,7 @@ export function StoreApp() {
                       if (!file) return;
                       setRecoverySelected(file.name);
                       setEncryptedRecoveryPending(undefined);
+                      e.currentTarget.value = "";
                       void run(async () => {
                         if(file.size>96*1024*1024)throw new Error("This file exceeds the safe recovery size. Keep every original part and ask your owner for help.");
                         const input:unknown=JSON.parse(await file.text());
