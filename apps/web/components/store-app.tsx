@@ -157,6 +157,8 @@ import { StockControls } from "./stock-controls";
 import { StockLossReport } from "./stock-loss-report";
 import { PurchasingWorkspace } from "./purchasing-workspace";
 import { BlindCounts } from "./blind-counts";
+import { PasswordRecovery } from "./password-recovery";
+import { useServiceReachability } from "../lib/use-service-reachability";
 import { preferredBatch, outstandingTransfer } from "../lib/stock-controls";
 import type { HistoryKind } from "../lib/history";
 
@@ -323,6 +325,9 @@ export function StoreApp() {
   const [syncQuery,setSyncQuery]=useState("");
   const [syncFilter,setSyncFilter]=useState("all");
   const [authMode, setAuthMode] = useState<"login" | "signup">("login");
+  const [recoveryMode,setRecoveryMode]=useState<"request"|"update"|null>(null);
+  const allowPublicSignup=process.env.NEXT_PUBLIC_STAFF_SIGNUP_ENABLED==="true";
+  const serviceStatus=useServiceReachability(online,!practice&&ready&&signedIn);
   const [showPassword, setShowPassword] = useState(false);
   const [salesCursor, setSalesCursor] = useState<SalesCursor>();
   const [savingSale, setSavingSale] = useState(false);
@@ -539,6 +544,9 @@ export function StoreApp() {
           data: { session },
         } = await supabase.auth.getSession();
         if (!current()) return;
+        if (new URLSearchParams(window.location.search).has("password-recovery")) {
+          setRecoveryMode("update");setSignedIn(false);setMembershipCheck("confirmed");setReady(true);return;
+        }
         setSignedIn(!!session || !!saved);
         if (navigator.onLine && session) {
           const found = await memberships();
@@ -612,6 +620,7 @@ export function StoreApp() {
   useEffect(() => {
     if (practice) return;
     const {data:{subscription}} = supabase.auth.onAuthStateChange((event) => {
+      if (event === "PASSWORD_RECOVERY") {setRecoveryMode("update");setSignedIn(false);setReady(true);return;}
       if (event !== "SIGNED_OUT") return;
       // Auth broadcasts across windows. Clear this window immediately as well
       // as fencing any outstanding downloads; immutable sales remain intact.
@@ -660,13 +669,12 @@ export function StoreApp() {
     };
   }, []);
   useEffect(() => {
-    if (!ready || !online) return;
-    if (!operationBusy.current) void sync();
-    const timer = setInterval(() => {
-      if (!operationBusy.current) void sync();
-    }, 15_000);
-    return () => clearInterval(timer);
-  }, [ready, online, sync]);
+    if (!ready || !online || recoveryMode) return;
+    const syncVisible=()=>{if(document.visibilityState==="visible"&&!operationBusy.current)void sync();};
+    syncVisible();const timer=setInterval(syncVisible,15_000);
+    document.addEventListener("visibilitychange",syncVisible);
+    return ()=>{clearInterval(timer);document.removeEventListener("visibilitychange",syncVisible);};
+  }, [ready, online, sync, recoveryMode]);
   useEffect(() => {
     const location = new URL(window.location.href);
     if (location.searchParams.has("app-update")) {
@@ -743,6 +751,7 @@ export function StoreApp() {
       await clearAccountCache(db);
       const email = inputValue(form, "email"),
         password = String(form.get("password") ?? "");
+      if(authMode==="signup"&&!allowPublicSignup)throw new Error("Ask the Better Yield owner to authorize your account.");
       const result =
         authMode === "login"
           ? await supabase.auth.signInWithPassword({ email, password })
@@ -783,29 +792,6 @@ export function StoreApp() {
       setView(found[0]?.role === "stock_staff" ? "inventory" : "pos");
       setSignedIn(true);
       notify("Signed in.");
-    });
-  }
-  async function bootstrap(event: FormEvent<HTMLFormElement>) {
-    event.preventDefault();
-    const f = new FormData(event.currentTarget);
-    await run(async () => {
-      await command("bootstrap", {
-        name: inputValue(f, "business"),
-        ownerName: inputValue(f, "name"),
-      });
-      const m = (await memberships())[0];
-      contextGeneration.current++;
-      setRecoveryArchive(undefined);
-      setRecoveryDownload(undefined);
-      setMember(m);
-      const b = await fetchBranches(m.organizationId);
-      setBranchList(b);
-      setBranchId(b[0].id);
-      await setSetting(db, "membership", m);
-      await setSetting(db, "branches", b);
-      notify(
-        "Your business is ready with three starter branches. Add more under Settings, then prepare products and opening stock.",
-      );
     });
   }
   async function openShift(event: FormEvent<HTMLFormElement>) {
@@ -1092,6 +1078,17 @@ export function StoreApp() {
         <p>Opening Better Yield…</p>
       </div>
     );
+  if (recoveryMode)
+    return <PasswordRecovery mode={recoveryMode} onBack={async()=>{
+      if(recoveryMode==="update")await supabase.auth.signOut();
+      const location=new URL(window.location.href);location.searchParams.delete("password-recovery");
+      window.history.replaceState(window.history.state,"",location.pathname+location.search);
+      setRecoveryMode(null);setAuthMode("login");
+    }} onComplete={()=>{
+      const location=new URL(window.location.href);location.searchParams.delete("password-recovery");
+      window.history.replaceState(window.history.state,"",location.pathname+location.search);
+      setRecoveryMode(null);setAuthMode("login");
+    }} />;
   if (!signedIn)
     return (
       <main className="auth-page">
@@ -1178,9 +1175,9 @@ export function StoreApp() {
                     autoComplete={
                       authMode === "login" ? "current-password" : "new-password"
                     }
-                    minLength={8}
+                    minLength={authMode==="signup"?8:undefined}
                     required
-                    placeholder="At least 8 characters"
+                    placeholder={authMode==="login"?"Your password":"At least 8 characters"}
                   />
                   <button
                     type="button"
@@ -1202,18 +1199,8 @@ export function StoreApp() {
                 <ArrowRight size={19} />
               </Button>
             </form>
-            <button
-              type="button"
-              className="text-button auth-switch"
-              onClick={() => {
-                setAuthMode(authMode === "login" ? "signup" : "login");
-                setShowPassword(false);
-              }}
-            >
-              {authMode === "login"
-                ? "First time here? Create an account"
-                : "Already registered? Sign in"}
-            </button>
+            {authMode==="login"&&<button type="button" className="text-button auth-switch" onClick={()=>setRecoveryMode("request")}>Forgot password?</button>}
+            {allowPublicSignup ? <button type="button" className="text-button auth-switch" onClick={()=>{setAuthMode(authMode==="login"?"signup":"login");setShowPassword(false);}}>{authMode==="login"?"First time here? Create an account":"Already registered? Sign in"}</button> : <p className="auth-access-note">New staff member? Ask the Better Yield administrator to authorize your account.</p>}
             <div className="practice-entry">
               <span>OR</span>
               <Button
@@ -1273,24 +1260,10 @@ export function StoreApp() {
           <h1>Your account needs store access.</h1>
           <p>
             To use the existing Better Yield store, ask the current administrator to
-            authorize your account for Magpet, then sign in again. Create business
-            below starts a separate empty business; it does not link existing records.
+            authorize your account for Magpet, then sign in again. This sign-in
+            cannot create a separate business or grant access to existing records.
           </p>
           {Notice}
-          <form onSubmit={bootstrap}>
-            <Field label="Business name">
-              <input
-                name="business"
-                required
-                maxLength={120}
-                placeholder="Your agricultural supply business"
-              />
-            </Field>
-            <Field label="Your name">
-              <input name="name" required placeholder="Owner name" />
-            </Field>
-            <Button disabled={busy || !online}>Create business</Button>
-          </form>
           <Button variant="ghost" onClick={() => void logout()}>
             Sign out
           </Button>
@@ -1527,15 +1500,9 @@ export function StoreApp() {
             <ChevronDown size={14} /></>}
           </div>
           <div className="topbar-right">
-            <span className={`connection ${online ? "" : "offline"}`}>
-              {online ? <Wifi size={15} /> : <WifiOff size={15} />}
-              <span>
-                {practice
-                  ? "Practice data"
-                  : online
-                    ? "Connected"
-                    : onlineCashOnly ? "Offline · checkout paused" : "Offline · sales saved here"}
-              </span>
+            <span className={`connection ${online&&serviceStatus==="available"?"":"offline"}`} title={practice?"Sample practice data":`Browser: ${online?"online":"offline"} · Service: ${serviceStatus} · Sync: ${syncing?"running":lastSync?"last completed "+lastSync:"not confirmed"}`}>
+              {online&&serviceStatus==="available"?<Wifi size={15} />:<WifiOff size={15} />}
+              <span>{practice?"Practice data":!online?(onlineCashOnly?"Offline · checkout paused":"Offline · sales saved here"):serviceStatus==="checking"?"Checking store service…":serviceStatus==="unavailable"?"Store service unavailable":syncing?"Syncing store…":"Service reachable"}</span>
             </span>
             {lease && view!=="close-shift" && (<Button className="close-shift-shortcut" variant="outline" size="sm" disabled={busy || savingSale || installingUpdate}
                   onClick={() => setView("close-shift")}>
