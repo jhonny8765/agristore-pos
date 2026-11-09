@@ -66,6 +66,9 @@ import {
   Leaf,
   Menu,
   LogOut,
+  Mail,
+  Eye,
+  EyeOff,
   Package,
   Plus,
   RefreshCw,
@@ -320,6 +323,7 @@ export function StoreApp() {
   const [syncQuery,setSyncQuery]=useState("");
   const [syncFilter,setSyncFilter]=useState("all");
   const [authMode, setAuthMode] = useState<"login" | "signup">("login");
+  const [showPassword, setShowPassword] = useState(false);
   const [salesCursor, setSalesCursor] = useState<SalesCursor>();
   const [savingSale, setSavingSale] = useState(false);
   const [historyRevision, setHistoryRevision] = useState(0);
@@ -1091,11 +1095,11 @@ export function StoreApp() {
   if (!signedIn)
     return (
       <main className="auth-page">
-        <section className="auth-story">
+        <section className="auth-story" aria-label="Better Yield">
           <div className="wordmark">
             <StoreBrand />
           </div>
-          <div>
+          <div className="auth-story-main">
             <h1>
               Your partner in
               <br />
@@ -1117,9 +1121,10 @@ export function StoreApp() {
               />
               <figcaption>From the Better Yield team</figcaption>
             </figure>
-            <div className="auth-proof">
-              <ShieldCheck size={21} />
-              <span>Cash checkout · Stock records · Your branches</span>
+            <div className="auth-proof" aria-label="Point of sale benefits">
+              <span><ShoppingBasket size={21} aria-hidden="true" /> Fast checkout</span>
+              <span><Package size={21} aria-hidden="true" /> Stock records</span>
+              <span><ShieldCheck size={21} aria-hidden="true" /> Your store</span>
             </div>
           </div>
           <a
@@ -1128,17 +1133,21 @@ export function StoreApp() {
             target="_blank"
             rel="noreferrer"
           >
-            Better Yield on Facebook <ArrowRight size={14} />
+            Better Yield on Facebook <ArrowRight size={16} />
           </a>
         </section>
-        <section className="auth-form">
+        <section className="auth-form" aria-label="Store sign in">
           <div className="auth-form-inner">
             <span className="small-brand">
               <StoreBrand />
             </span>
+            <span className="auth-branch">
+              <ShieldCheck size={17} aria-hidden="true" />
+              Magpet Branch
+            </span>
             <h2>
               {authMode === "login"
-                ? "Welcome to your store."
+                ? "Welcome back."
                 : "Create your account."}
             </h2>
             <p>
@@ -1149,25 +1158,40 @@ export function StoreApp() {
             {Notice}
             <form onSubmit={auth}>
               <Field label="Email address">
-                <input
-                  name="email"
-                  type="email"
-                  autoComplete="email"
-                  required
-                  placeholder="you@example.com"
-                />
+                <div className="auth-input-wrap">
+                  <Mail size={19} aria-hidden="true" />
+                  <input
+                    name="email"
+                    type="email"
+                    autoComplete="email"
+                    required
+                    placeholder="you@example.com"
+                  />
+                </div>
               </Field>
               <Field label="Password">
-                <input
-                  name="password"
-                  type="password"
-                  autoComplete={
-                    authMode === "login" ? "current-password" : "new-password"
-                  }
-                  minLength={8}
-                  required
-                  placeholder="At least 8 characters"
-                />
+                <div className="auth-input-wrap auth-password-wrap">
+                  <ShieldCheck size={19} aria-hidden="true" />
+                  <input
+                    name="password"
+                    type={showPassword ? "text" : "password"}
+                    autoComplete={
+                      authMode === "login" ? "current-password" : "new-password"
+                    }
+                    minLength={8}
+                    required
+                    placeholder="At least 8 characters"
+                  />
+                  <button
+                    type="button"
+                    className="auth-password-toggle"
+                    aria-label={showPassword ? "Hide password" : "Show password"}
+                    aria-pressed={showPassword}
+                    onClick={() => setShowPassword((visible) => !visible)}
+                  >
+                    {showPassword ? <EyeOff size={19} /> : <Eye size={19} />}
+                  </button>
+                </div>
               </Field>
               <Button disabled={busy || !online} type="submit">
                 {busy
@@ -1175,21 +1199,23 @@ export function StoreApp() {
                   : authMode === "login"
                     ? "Sign in"
                     : "Create account"}
-                <ArrowRight size={17} />
+                <ArrowRight size={19} />
               </Button>
             </form>
             <button
+              type="button"
               className="text-button auth-switch"
-              onClick={() =>
-                setAuthMode(authMode === "login" ? "signup" : "login")
-              }
+              onClick={() => {
+                setAuthMode(authMode === "login" ? "signup" : "login");
+                setShowPassword(false);
+              }}
             >
               {authMode === "login"
                 ? "First time here? Create an account"
                 : "Already registered? Sign in"}
             </button>
             <div className="practice-entry">
-              <span>Take a look around first</span>
+              <span>OR</span>
               <Button
                 variant="outline"
                 onClick={() => {
@@ -1198,8 +1224,9 @@ export function StoreApp() {
                   setPractice(true);
                 }}
               >
+                <ShoppingBasket size={18} aria-hidden="true" />
                 Try practice checkout
-                <ArrowRight size={16} />
+                <ArrowRight size={18} aria-hidden="true" />
               </Button>
               <small>
                 Sample products. Separate local data. No real transactions.
