@@ -89,8 +89,8 @@ export async function decryptRecoveryBackup(envelope: unknown, passphrase: strin
   try {
     const key=await keyFor(passphrase,salt);
     const clear=await crypto.subtle.decrypt(
-      {name:"AES-GCM",iv,additionalData:encoding.encode(`${BACKUP_ENCRYPTION_FORMAT}:${VERSION}`)},
-      key,ciphertext,
+      {name:"AES-GCM",iv:new Uint8Array(iv),additionalData:encoding.encode(`${BACKUP_ENCRYPTION_FORMAT}:${VERSION}`)},
+      key,new Uint8Array(ciphertext),
     );
     return JSON.parse(new TextDecoder("utf-8",{fatal:true}).decode(clear)) as unknown;
   } catch {
