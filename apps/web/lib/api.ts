@@ -149,7 +149,7 @@ export function cloudTransport(lease: Lease, db?: PosDatabase): Transport {
       requestSnapshot(db, { ...context, transactionIds }),
   };
 }
-export async function rows(table: string, org: string, branch?: string, client = supabase) {
+export async function rows(table: string, org: string, branch?: string, client = supabase, offset = 0) {
   let query = client.from(table).select(recordColumns(table)).eq("organization_id", org);
   if (branch) query = query.eq("branch_id", branch);
   const dateColumn = ["sales"].includes(table)
@@ -161,10 +161,11 @@ export async function rows(table: string, org: string, branch?: string, client =
         : ["devices", "staff_memberships", "suppliers"].includes(table)
           ? "id"
           : "created_at";
-  const { data, error } = await query
+  if (!Number.isSafeInteger(offset) || offset < 0) throw new Error("Invalid record page. Refresh the list.");
+  const ordered = query
     .order(dateColumn, { ascending: false })
-    .order("id", { ascending: false })
-    .limit(1000);
+    .order("id", { ascending: false });
+  const { data, error } = await (offset === 0 ? ordered.limit(1000) : ordered.range(offset, offset + 999));
   if (error) throw new Error(error.message);
   return (data ?? []) as unknown as Record<string, unknown>[];
 }

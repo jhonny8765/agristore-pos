@@ -6,6 +6,8 @@
 @import "./updated-ui.css";
 @import "./usability.css";
 @import "./auth-redesign.css";
+@import "./password-recovery.css";
+@import "./recovery-encryption.css";
 
 .record-pages { min-width: 0; width: 100%; }
 .record-pagination { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: .75rem; padding: .85rem 0; color: var(--muted); font-size: .85rem; }
@@ -2603,3 +2605,7 @@ td small {
 .inventory-sort:hover { text-decoration: underline; text-underline-offset: 4px; }
 .inventory-sort svg { flex: 0 0 16px; }
 .inventory-sort:focus-visible { outline: 2px solid var(--forest); outline-offset: 3px; border-radius: 3px; }
+
+/* Keep owner workspace navigation usable by touch and keyboard. */
+.workspace-tabs > button { min-height: 44px; }
+.workspace-tabs > button:focus-visible { outline: 3px solid #b8d98f; outline-offset: 3px; }
