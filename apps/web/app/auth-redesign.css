@@ -377,6 +377,7 @@ main.auth-page {
     display: block;
   }
   .auth-page .auth-story {
+    display: flex;
     min-height: 0;
     padding: 24px 28px;
     gap: 15px;
