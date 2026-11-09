@@ -455,3 +455,7 @@ main.auth-page {
     padding-inline: 12px;
   }
 }
+
+/* Keep staff onboarding guidance readable on compact sign-in cards. */
+.auth-page .auth-access-note {margin: 14px 0 0; color:#567064; font-size:13px; line-height:1.5;}
+.auth-page .auth-switch {min-height:40px; text-align:left;}
