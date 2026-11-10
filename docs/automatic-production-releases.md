@@ -27,6 +27,14 @@ The private repository's current GitHub plan does not support enforced branch pr
 Deployment gates are enforced by workflow code; maintainers can still edit that code.
 Keep deployment secrets away from pull requests and review changes to workflows.
 
+## Owner-authorized manual release
+
+On November 10, 2026, the owner explicitly requested publishing directly after the completed local checks, without waiting for the GitHub Actions billing restriction. This authorizes a manual Direct Upload to the existing Pages project for the owner inventory update. It does not disable future verification workflows.
+
+Keep the ordinary release identity rules: merge the reviewed PR into main, apply and verify the matching database migration, build that exact clean main commit against the existing public backend, and retain the prior healthy deployment. A project-scoped short-lived upload token may upload assets through Wrangler; the connected Cloudflare API creates the deployment with its manifest, worker, headers and routes. Check the live health release, served HTML hash, backend and migration identity. Roll back only this deployment if verification fails, without overwriting an intervening release.
+
+The owner inventory release has passed the recorded local checks in `docs/owner-product-editing.md`. Hosted Supabase Auth/PostgREST and Magpet integration remain unexecuted while the GitHub restriction persists. Preserve this distinction in release evidence.
+
 ## Configuration
 
 Repository variables:
