@@ -45,6 +45,7 @@ jobs:
       - run: npm run lint -- --max-warnings=0
       - run: npm test
       - run: npm run test:owner-metadata
+      - run: npm run test:owner-archive
       - run: npm run build:cloudflare -- --practice
       - name: Install test browser
         run: bash scripts/install-test-browser.sh
