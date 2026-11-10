@@ -1,6 +1,14 @@
 import {creditAging,clientCreditValue,exactCentavos,type CreditClient,type CreditBook,type CreditInvoice} from '@agristore/domain';
 export const clientTypes={normal:'Normal customer',distributor:'Distributor',owner:'Owner'};
 export function customerType(client:CreditClient){return client.clientType??'normal';}
+export type CreditRegister='customers'|'distribution'|'statements';
+export function creditRegisterClients(clients:CreditClient[],register:CreditRegister){
+ return clients.filter(client=>register==='statements'||(register==='distribution'?customerType(client)==='distributor':customerType(client)!=='distributor'));
+}
+/** Register totals use every account in the group, independent of search or table pages. */
+export function creditRegisterSummary(clients:CreditClient[]){
+ return clients.reduce((summary,client)=>{const balance=exactCentavos(clientCreditValue(client,'outstanding'));return {count:summary.count+1,outstanding:summary.outstanding+balance,owing:summary.owing+(balance>0n?1:0),unconfirmed:summary.unconfirmed+(client.unconfirmedInvoices??0)};},{count:0,outstanding:0n,owing:0,unconfirmed:0});
+}
 export function sortCreditClients(clients:CreditClient[],direction:'ascending'|'descending'='descending'){
  return [...clients].sort((a,b)=>{const order={normal:0,distributor:1,owner:2},group=order[customerType(a)]-order[customerType(b)];if(group)return group;const av=exactCentavos(clientCreditValue(a,'outstanding')),bv=exactCentavos(clientCreditValue(b,'outstanding'));return av===bv?a.name.localeCompare(b.name,'en',{numeric:true})||a.id.localeCompare(b.id):(av>bv?1:-1)*(direction==='ascending'?1:-1);});
 }

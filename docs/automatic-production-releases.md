@@ -35,6 +35,8 @@ Keep the ordinary release identity rules: merge the reviewed PR into main, apply
 
 The owner inventory release has passed the recorded local checks in `docs/owner-product-editing.md`. Hosted Supabase Auth/PostgREST and Magpet integration remain unexecuted while the GitHub restriction persists. Preserve this distinction in release evidence.
 
+The owner subsequently authorized the Distribution tab update, requesting local testing followed by publication through Cloudflare. The same manual release path applies if the GitHub billing restriction persists, after the relevant local checks pass. This change separates existing classifications in the frontend and requires no new live migration. Preserve customer and distributor records and verify the existing live migration and release identity before publication.
+
 ## Configuration
 
 Repository variables:
