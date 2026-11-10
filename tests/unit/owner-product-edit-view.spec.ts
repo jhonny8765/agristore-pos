@@ -10,7 +10,7 @@ const product={
   baseUnit:"kg",minimumStock:"5",setupPending:false,
   pricePending:false,costPending:false,batches:[],
   units:[{id:"unit-1",name:"Bag",price:10000,cost:7500,factor:"25",priceVersion:1}],
-} as Product;
+} as unknown as Product;
 const options={
   products:[product],disabled:false,organizationId:"org-1",branchId:"branch-1",
   onSave:vi.fn(async()=>undefined),initialProductId:product.id,showCatalog:true,
