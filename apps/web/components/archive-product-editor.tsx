@@ -19,7 +19,7 @@ export function ArchiveProductEditor({product,disabled,onSave,onArchived}:{
   const [error,setError]=useState("");
   const locking=useRef(false);
   const valid=typedSku.trim()===product.sku&&reason.trim().length>=3&&confirmed;
-  return <section className="panel owner-product-metadata" aria-label="Remove product from catalog">
+  return <section className="owner-product-metadata" aria-label="Remove product from catalog">
     <h4 id="review-product-archive">Remove from active catalog</h4>
     <p>Stop selling a product you no longer carry. This archives its catalog entry; sales history and stock records are preserved. You can only archive it when recorded stock is zero and outstanding stock reviews, holds and transfers are resolved.</p>
     {!expanded?<Button type="button" variant="outline" disabled={disabled} onClick={()=>setExpanded(true)}>Review removal</Button>:<>
