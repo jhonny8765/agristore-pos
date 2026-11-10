@@ -39,13 +39,13 @@ describe("owner inventory shortcuts", () => {
     expect(owner).toContain("Manage inventory");
     expect(owner).toContain("Add product");
     expect(owner).toContain("Add stock");
-    expect(owner).toContain("Edit price / cost");
+    expect(owner).toContain("Edit product");
     expect(owner).toContain("Add received stock for Test Feed");
-    expect(owner).toContain("Edit selling price and cost for Test Feed");
+    expect(owner).toContain("Edit details and prices for Test Feed");
     const staff = render(false);
     expect(staff).not.toContain("owner-inventory-toolbar");
     expect(staff).not.toContain("Add received stock for Test Feed");
-    expect(staff).not.toContain("Edit selling price and cost for Test Feed");
+    expect(staff).not.toContain("Edit details and prices for Test Feed");
   });
   it("keeps product identity, price, stock and status visible", () => {
     const markup = render(true);
