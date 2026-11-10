@@ -59,6 +59,21 @@ Then exercise:
 - Stock ledger, price versions, and old sale amounts remain unchanged.
 - Mobile viewport: form labels, fields, submit/reset actions, and validation messages stay usable.
 
+## Local verification on November 10, 2026
+
+| Check | Result |
+| --- | --- |
+| TypeScript and lint | Passed; zero lint warnings |
+| Unit tests | 621 passed |
+| Full browser suite | 81 passed |
+| Local full-schema PostgreSQL suite | 1,643 assertions passed |
+| Count backup/restore rehearsal | Passed |
+| Cloudflare practice production build | Passed |
+| Production dependency audit | Zero vulnerabilities |
+| All-dependency audit | Passed the high-severity gate; three development-only low-severity findings |
+
+The local database harness uses simulated Auth schema and claims. It does not replace the full Supabase Auth/PostgREST integration or Magpet CI checks. Those runners cannot currently start because GitHub reports an account billing/spending-limit restriction. An offline endurance unit test initially exceeded its five-second limit during concurrent browser/database runs; the complete unit suite passed on an isolated rerun without changing its timeout or application code.
+
 ### Change log
 
 2026-11-10: Reused the inventory controls from draft PRs #12–14, without the unrelated sign-in and recovery changes. Added Restore, a private owner-hidden catalog, safeguards for private blind counts and open purchasing, live-session checks, full-schema PostgreSQL assertions, and browser coverage for editing, pricing, hiding and restoring. The migration is `20261110075227_owner_inventory_controls.sql`; apply it before publishing the frontend, after the complete release gate passes. GitHub currently reports an account billing/spending-limit restriction that prevents hosted jobs from starting. No production inventory data is changed by this branch.
