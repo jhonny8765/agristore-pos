@@ -66,7 +66,9 @@ begin
     raise exception 'Refresh the product before editing its details';
   end if;
 
-  -- Same branch lock convention as price reviews and other owner stock controls.
+  -- Catalog identifiers are business-wide, so serialize SKU checks across branches.
+  perform pg_advisory_xact_lock(hashtextextended('catalog:'||org::text,1));
+  -- Also respect the branch lock used by other owner stock controls.
   perform pg_advisory_xact_lock(hashtextextended(org::text||branch::text,1));
   select * into prior from public.stock_control_events where id=request_id;
   if found then
