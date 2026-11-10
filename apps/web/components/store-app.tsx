@@ -330,13 +330,13 @@ export function StoreApp() {
   const [inventoryTab,setInventoryTab]=useState("products");
   const [inventoryReviewEntry,setInventoryReviewEntry]=useState<{serial:number;productId?:string;showCatalog:boolean}>({serial:0,showCatalog:false});
   const [inventoryReceiptJump,setInventoryReceiptJump]=useState(0);
+  const [purchasingTab,setPurchasingTab]=useState("orders");
   const quickReceiptHeading=useRef<HTMLHeadingElement>(null);
   useEffect(()=>{
     if(view!=="receiving"||purchasingTab!=="quick"||!inventoryReceiptJump)return;
     const frame=requestAnimationFrame(()=>{quickReceiptHeading.current?.scrollIntoView({block:"start"});quickReceiptHeading.current?.focus();});
     return ()=>cancelAnimationFrame(frame);
   },[inventoryReceiptJump,view,purchasingTab]);
-  const [purchasingTab,setPurchasingTab]=useState("orders");
   const [syncQuery,setSyncQuery]=useState("");
   const [syncFilter,setSyncFilter]=useState("all");
   const [authMode, setAuthMode] = useState<"login" | "signup">("login");
