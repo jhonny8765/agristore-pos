@@ -17,6 +17,7 @@
     "test:e2e": "playwright test",
     "test:db": "supabase test db",
     "test:db:preflight": "node scripts/local-database-check.mjs",
+    "test:owner-inventory": "node scripts/test-owner-inventory.mjs",
     "test:counts:local": "playwright test --config=playwright.counts-local.config.ts",
     "test:counts:restore": "node scripts/local-count-restore.mjs",
     "test:restore": "node scripts/restore-drill.mjs",

@@ -4,11 +4,64 @@ import {readFile,mkdir} from 'node:fs/promises';
 import AxeBuilder from '@axe-core/playwright';
 import {localPostgres} from '../../scripts/local-postgres.mjs';
 let bundle='',db:Awaited<ReturnType<typeof localPostgres>>;
-test.beforeAll(async()=>{bundle=(await build({entryPoints:['tests/fixtures/product-review.tsx'],bundle:true,write:false,format:'esm',jsx:'automatic',define:{'process.env.NODE_ENV':'"production"'},plugins:[{name:'isolated-review',setup(b){b.onResolve({filter:/\/lib\/api$/},args=>({path:args.path,namespace:'review'}));b.onLoad({filter:/.*/,namespace:'review'},()=>({contents:'export async function command(action,data){return window.reviewTestCommand(action,data)}',loader:'js'}));b.onResolve({filter:/^next\/image$/},()=>({path:'image',namespace:'image'}));b.onLoad({filter:/.*/,namespace:'image'},()=>({contents:'import {createElement} from "react";export default function Image({unoptimized,...props}){return createElement("img",props)}',loader:'js',resolveDir:process.cwd()}));}}]})).outputFiles[0].text;await mkdir('.impeccable/review',{recursive:true});});
+test.beforeAll(async()=>{bundle=(await build({entryPoints:['tests/fixtures/owner-inventory.tsx'],bundle:true,write:false,format:'esm',jsx:'automatic',define:{'process.env.NODE_ENV':'"production"'},plugins:[{name:'isolated-review',setup(b){b.onResolve({filter:/\/lib\/api$/},args=>({path:args.path,namespace:'review'}));b.onLoad({filter:/.*/,namespace:'review'},()=>({contents:'export async function command(action,data){return window.reviewTestCommand(action,data)}',loader:'js'}));b.onResolve({filter:/^next\/image$/},()=>({path:'image',namespace:'image'}));b.onLoad({filter:/.*/,namespace:'image'},()=>({contents:'import {createElement} from "react";export default function Image({unoptimized,...props}){return createElement("img",props)}',loader:'js',resolveDir:process.cwd()}));}}]})).outputFiles[0].text;await mkdir('.impeccable/review',{recursive:true});});
 test.beforeEach(async({page})=>{await page.route('**/*.supabase.co/**',route=>route.abort());db=await localPostgres();await db.exec((await readFile('supabase/tests/database/product-review.test.sql','utf8')).split('set local role authenticated;select pg_temp.login(12);')[0]+`update public.products set owner_review='{"questions":["TEST confirm selling unit, actual cost and source count."],"categories":["Unit needed","Cost unconfirmed"],"source":"TEST review","queuedAt":"2026-11-03"}';set local role authenticated;select pg_temp.login(11);`);
  let queue=Promise.resolve();await page.exposeFunction('reviewTestCommand',(action:string,data:unknown)=>{const next=queue.then(async()=>(await db.query<{result:unknown}>('select public.agri_command($1,$2::jsonb) result',[action,JSON.stringify(data)])).rows[0].result);queue=next.then(()=>undefined,()=>undefined);return next;});
  await page.goto('/');const links=await page.locator('link[rel=stylesheet]').evaluateAll(nodes=>nodes.map(n=>(n as HTMLLinkElement).href));await page.route('**/__review_fixture__',route=>route.fulfill({contentType:'text/html',body:`<html lang="en"><head><meta name="viewport" content="width=device-width, initial-scale=1"/><title>TEST product review</title>${links.map(h=>`<link rel="stylesheet" href="${h}">`).join('')}</head><body><div id="root"></div></body></html>`}));await page.goto('/__review_fixture__');await page.addScriptTag({type:'module',content:bundle});await expect(page.getByRole('heading',{name:'Inventory',exact:true})).toBeVisible();});
 test.afterEach(async()=>{await db?.close();});
+
+test('owner edits a selected product and its price, hides it and restores it without rewriting history',async({page})=>{
+ await db.exec(`reset role;update public.products set setup_pending=false,cost_pending=false,source_stock=null,owner_review=null;update public.product_units set name='Piece';set local role authenticated;select pg_temp.login(11);`);
+ await page.goto('/__review_fixture__');await page.addScriptTag({type:'module',content:bundle});
+ await page.getByRole('button',{name:'Open TEST measured liquid details and prices',exact:true}).click();
+ const metadata=page.getByRole('form',{name:'Edit details for TEST measured liquid',exact:true});
+ await metadata.getByLabel('Product name',{exact:true}).fill('TEST renamed product');
+ await metadata.getByLabel('SKU / barcode',{exact:true}).fill('TEST-EDIT');
+ await metadata.getByLabel('Reason for correction',{exact:true}).fill('TEST checked correct package label');await metadata.getByRole('checkbox').check();
+ await metadata.getByRole('button',{name:'Save product details',exact:true}).click();
+ await expect(page.getByRole('heading',{name:'TEST renamed product',exact:true})).toBeVisible();
+ const price=page.getByRole('form',{name:'Review product setup',exact:true});
+ await price.getByLabel('Selling price per unit (₱)',{exact:true}).fill('2.25');
+ await price.getByLabel('Actual cost per selling unit (₱, optional)',{exact:true}).fill('1.00');
+ await price.getByLabel('Review reason',{exact:true}).fill('TEST verified current price list');await price.getByRole('checkbox').check();
+ await price.getByRole('button',{name:'Save price / cost version',exact:true}).click();
+ await expect(page.getByRole('status').filter({hasText:'new price version'})).toBeVisible();
+ await page.getByRole('button',{name:'Hide this product',exact:true}).click();
+ const hide=page.getByRole('form',{name:'Hide TEST renamed product',exact:true});
+ await hide.getByLabel('Enter the exact SKU to confirm hiding',{exact:true}).fill('TEST-EDIT');
+ await hide.getByLabel('Reason for hiding',{exact:true}).fill('TEST no longer stocked');await hide.getByRole('checkbox').check();
+ await hide.getByRole('button',{name:'Hide product',exact:true}).click();
+ await expect(page.getByRole('heading',{name:'Choose a product',exact:true})).toBeVisible();
+ await page.getByRole('tab',{name:'Products',exact:true}).click();
+ await expect(page.getByRole('button',{name:'Open TEST renamed product details and prices',exact:true})).toHaveCount(0);
+ await page.getByRole('button',{name:'Hidden products / Restore',exact:true}).click();
+ await page.getByRole('button',{name:'Restore TEST renamed product',exact:true}).click();
+ const restore=page.getByRole('form',{name:'Restore TEST renamed product',exact:true});
+ await restore.getByLabel('Reason for restoring',{exact:true}).fill('TEST restocking original product');await restore.getByRole('checkbox').check();
+ await restore.getByRole('button',{name:'Restore product',exact:true}).click();
+ await expect(page.getByRole('status').filter({hasText:'restored to the product list'})).toBeVisible();
+ await page.getByRole('button',{name:'Back to products',exact:true}).click();
+ await expect(page.getByRole('button',{name:'Open TEST renamed product details and prices',exact:true})).toBeVisible();
+ await db.exec('reset role');
+ expect((await db.query<{n:number}>('select count(*)::int n from public.inventory_movements')).rows[0].n).toBe(0);
+ expect((await db.query<{price:number}>('select price from public.unit_prices order by version')).rows.map(r=>Number(r.price))).toEqual([140,225]);
+});
+
+test('owner inventory shortcuts and editing fit desktop and phone with keyboard access',async({page})=>{
+ for(const width of [1536,390]){
+  await page.setViewportSize({width,height:1024});
+  await expect(page.getByRole('button',{name:'Add product',exact:true})).toBeVisible();
+  expect(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth)).toBe(true);
+  await page.screenshot({path:`.impeccable/review/owner-inventory-${width}.png`,fullPage:true});
+  await page.getByRole('button',{name:'Open TEST measured liquid details and prices',exact:true}).click();
+  await expect(page.getByRole('heading',{name:'TEST measured liquid',exact:true})).toBeFocused();
+  expect(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth)).toBe(true);
+  expect((await new AxeBuilder({page}).include('#main').analyze()).violations).toEqual([]);
+  await page.screenshot({path:`.impeccable/review/owner-product-edit-${width}.png`,fullPage:true});
+  await page.getByRole('button',{name:'Back to product list',exact:true}).click();
+  await page.getByRole('tab',{name:'Products',exact:true}).click();
+ }
+});
 test('product review separates imported evidence from stock and posts only an explicitly reviewed balance',async({page})=>{
  const row=page.getByRole('row').filter({hasText:'TEST measured liquid'});await expect(row).toContainText('Stock not posted');await expect(row).not.toContainText('Out of stock');await expect(row).toContainText('Source: 1000 source units');
  await page.getByRole('button',{name:'Review imported stock',exact:true}).click();await page.getByRole('button',{name:'TEST measured liquid',exact:true}).click();const setup=page.getByRole('form',{name:'Review product setup',exact:true});await setup.getByRole('combobox',{name:'Stock measurement',exact:true}).selectOption('liter');await setup.getByLabel('Selling unit name',{exact:true}).fill('Milliliter');await setup.getByLabel('Stock units removed for each selling unit',{exact:true}).fill('0.001');await expect(page.locator('.conversion-preview')).toContainText('0.001 liter');await setup.getByLabel('Review reason',{exact:true}).fill('TEST verified package and source unit');await setup.getByRole('checkbox').check();await setup.getByRole('button',{name:'Confirm selling unit',exact:true}).click();await expect(page.getByRole('status').filter({hasText:'Selling unit confirmed'})).toBeVisible();await expect(page.locator('.source-evidence')).toContainText('0 liter');

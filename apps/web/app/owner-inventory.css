@@ -1,0 +1,103 @@
+/* Owner-facing shortcuts keep catalog changes traceable to existing POS workflows. */
+.reference-ui .owner-inventory-toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 20px;
+  padding: 22px 24px;
+  margin-bottom: 20px;
+  border: 1px solid #bfd3c5;
+  border-radius: 12px;
+  background: var(--white);
+}
+.reference-ui .owner-inventory-toolbar h2 {
+  margin: 0 0 5px;
+  font-size: clamp(20px, 2vw, 25px);
+  color: #123f30;
+}
+.reference-ui .owner-inventory-toolbar p {
+  margin: 0;
+  color: #355a47;
+  font-size: 14px;
+  max-width: 55ch;
+  line-height: 1.45;
+}
+.reference-ui .owner-inventory-toolbar-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  justify-content: flex-end;
+}
+.reference-ui .owner-inventory-toolbar-actions .button {
+  min-height: 46px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+  white-space: nowrap;
+}
+.reference-ui .inventory-row-actions > div,
+.reference-ui .inventory-mobile-actions {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+.reference-ui .inventory-row-actions .button,
+.reference-ui .inventory-mobile-actions .button {
+  min-height: 44px;
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 8px 10px;
+  white-space: nowrap;
+}
+.reference-ui .inventory-row-actions { min-width: 185px; }
+.reference-ui .inventory-row-actions,
+.reference-ui .owner-inventory-table thead th:last-child {
+  position: sticky;
+  right: 0;
+  background: var(--white);
+}
+.reference-ui .owner-inventory-table thead th:last-child { background: var(--soft); }
+.reference-ui .product-review-evidence { margin-block: 18px; }
+.reference-ui details.product-review-evidence > summary { min-height: 44px; cursor: pointer; padding-block: 10px; font-weight: 600; }
+.reference-ui .inventory-mobile-actions { display: none; }
+.reference-ui #quick-receipt-heading { scroll-margin-top: 28px; }
+.reference-ui #quick-receipt-heading:focus { outline: none; }
+
+@media (max-width: 1100px) {
+  .reference-ui .owner-inventory-toolbar {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+  .reference-ui .owner-inventory-toolbar-actions {
+    justify-content: flex-start;
+  }
+}
+@media (max-width: 760px) {
+  .reference-ui .owner-inventory-toolbar {
+    padding: 16px;
+    gap: 14px;
+    margin-bottom: 16px;
+  }
+  .reference-ui .owner-inventory-toolbar p { font-size: 14px; }
+  .reference-ui .owner-inventory-toolbar-actions {
+    width: 100%;
+    display: grid;
+    grid-template-columns: 1fr;
+  }
+  .reference-ui .owner-inventory-toolbar-actions .button { width: 100%; }
+  .reference-ui .inventory-row-actions { display: none; }
+  .reference-ui .inventory-mobile-actions {
+    display: flex;
+    margin-top: 10px;
+  }
+  .reference-ui .inventory-mobile-actions .button { flex: 1 1 auto; }
+  .reference-ui .owner-inventory-table .product-cell { min-width: 240px; align-items: flex-start; }
+  .reference-ui .inventory-register .inventory-add {
+    justify-content: flex-start;
+    gap: 8px;
+  }
+  .reference-ui .inventory-register .inventory-add .button { min-height: 44px; }
+}

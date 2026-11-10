@@ -20,15 +20,18 @@ import {Button} from './ui/button';
 
 type Page = {rows:BlindCount[];openCount:number};
 const field = (f:FormData,name:string) => String(f.get(name) ?? '').trim();
-export function BlindCounts({db,organizationId,branchId,actorId,products,owner,online,disabled,revision,execute,children}: {
+export function BlindCounts({db,organizationId,branchId,actorId,products,owner,online,disabled,revision,execute,initialProductId,children}: {
  db:PosDatabase;organizationId:string;branchId:string;actorId:string;products:Product[];owner:boolean;
- online:boolean;disabled:boolean;revision:number;execute:(fn:()=>Promise<void>)=>Promise<Error|undefined>;children?:ReactNode;
+ online:boolean;disabled:boolean;revision:number;execute:(fn:()=>Promise<void>)=>Promise<Error|undefined>;initialProductId?:string;children?:ReactNode;
 }) {
  const [rows,setRows]=useState<BlindCount[]>([]),[next,setNext]=useState<ReturnType<typeof countPage>['next']>();
  const [openCount,setOpenCount]=useState(0),[review,setReview]=useState(false),[loading,setLoading]=useState(false);
  const [error,setError]=useState(''),[feedback,setFeedback]=useState('');
- const [selectedId,setSelectedId]=useState(''),[showStart,setShowStart]=useState(false),[history,setHistory]=useState(false);
+ const [selectedId,setSelectedId]=useState(''),[showStart,setShowStart]=useState(Boolean(initialProductId)),[history,setHistory]=useState(false);
+ const suggestedProduct=products.find(product=>product.id===initialProductId);
+ const suggestedStock=suggestedProduct?`${suggestedProduct.id}:${suggestedProduct.batches[0]?.id??'none'}`:'';
  const selected=rows.find(r=>r.id===selectedId)??rows[0];
+ const waitingForOwner=owner?rows.filter(row=>canApproveCount(row,actorId,owner)):[];
  const generation=useRef(0);
  const load=useCallback(async(before?:{beforeAt:string;beforeId:string})=>{
   const token=++generation.current;setLoading(true);setError('');
@@ -51,8 +54,9 @@ export function BlindCounts({db,organizationId,branchId,actorId,products,owner,o
  }
  return <><section className="panel blind-counts" aria-label="Blind stock counts">
   <div className="section-heading"><h2>Blind stock counts</h2><Button aria-label="Start blind count: open new form" onClick={()=>{setShowStart(v=>!v);setHistory(false);setReview(false);}}>Start blind count</Button><Button variant="outline" disabled={disabled || !online || loading} onClick={()=>void execute(async()=>{await load();})}>Refresh counts</Button></div>
-  <p className="notice">Close and synchronize every branch shift before counting.</p><div className="count-steps"><div><span className="step-number">1</span><section><strong>First count</strong><p>Count items without seeing the system quantity.</p></section><ChevronRight/></div><div><span className="step-number">2</span><section><strong>Independent recount</strong><p>A different person counts the same items.</p></section><ChevronRight/></div><div><span className="step-number">3</span><section><strong>Owner approval</strong><p>A separate owner reviews both sealed entries.</p></section></div></div>
-  <div className="button-row"><Button variant={review?'outline':'default'} aria-pressed={!review} onClick={()=>{setReview(false);setHistory(false);}}>Enter blind counts</Button><Button variant={review?'default':'outline'} aria-pressed={review} onClick={()=>{setReview(true);setHistory(false);}}>Review sealed counts</Button><Button variant={history?"default":"outline"} aria-pressed={history} onClick={()=>setHistory(true)}>History</Button></div>
+  <p className="notice">Close and synchronize every branch shift before counting.</p>
+  {owner&&waitingForOwner.length>0&&<div className="notice success" role="status"><span><strong>{waitingForOwner.length} sealed count{waitingForOwner.length===1?"":"s"} ready for your approval</strong> in the loaded list. Review the evidence before posting an adjustment.</span><Button variant="outline" onClick={()=>{setSelectedId(waitingForOwner[0].id);setReview(true);setHistory(false);setShowStart(false);}}>Review now</Button></div>}<div className="count-steps"><div><span className="step-number">1</span><section><strong>First count</strong><p>Count items without seeing the system quantity.</p></section><ChevronRight/></div><div><span className="step-number">2</span><section><strong>Independent recount</strong><p>A different person counts the same items.</p></section><ChevronRight/></div><div><span className="step-number">3</span><section><strong>Owner approval</strong><p>A separate owner reviews both sealed entries.</p></section></div></div>
+  <div className="button-row"><Button variant={review?'outline':'default'} aria-pressed={!review} onClick={()=>{setReview(false);setHistory(false);}}>Enter blind counts</Button><Button variant={review?'default':'outline'} aria-pressed={review} onClick={()=>{if(waitingForOwner.length)setSelectedId(waitingForOwner[0].id);setReview(true);setHistory(false);}}>Review sealed counts</Button><Button variant={history?"default":"outline"} aria-pressed={history} onClick={()=>setHistory(true)}>History</Button></div>
   <p className="sr-only">{openCount} open count{openCount===1?'':'s'}. {review ? 'Comparisons appear only after both entries are sealed.' : 'Expected stock and previous quantities are hidden in this entry view. Count from the physical goods.'}</p>
   {!online && <p role="status" className="notice">Counts and approvals require a connection. Saved evidence remains on the server.</p>}
   {feedback && <p role="status" className="notice success">{feedback}</p>}
@@ -62,7 +66,7 @@ export function BlindCounts({db,organizationId,branchId,actorId,products,owner,o
    void execute(async()=>{await save('start_blind_count',{productId,batchId:batchId==='none'?null:batchId,reason:field(f,'reason')},'countId');form.reset();setSelectedId('');setShowStart(false);});
   }}>
    <h3>Start a blind count</h3>
-   <label className="field"><span>Product / batch</span><SearchableSelect name="stock" aria-label="Product / batch" required disabled={blocked}>
+   <label className="field"><span>Product / batch</span><SearchableSelect name="stock" aria-label="Product / batch" defaultValue={suggestedStock} required disabled={blocked}>
     {products.flatMap(p=>p.batches.length ? p.batches.map(b=><option key={b.id} value={`${p.id}:${b.id}`} data-search={`${p.sku} ${("originalCode" in p ? String(p.originalCode??"") : "")}`}>{p.name} · {b.lot} ({p.baseUnit})</option>) : [<option key={p.id} value={`${p.id}:none`} data-search={`${p.sku} ${("originalCode" in p ? String(p.originalCode??"") : "")}`}>{p.name} ({p.baseUnit})</option>])}
    </SearchableSelect></label>
    <label className="field"><span>Counting scope / reason</span><input name="reason" required minLength={3} maxLength={1000} disabled={blocked} placeholder="For example, end-of-day loose feeds" /></label>

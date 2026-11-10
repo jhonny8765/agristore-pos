@@ -25,6 +25,7 @@ import { SaleReceiptPrint } from "./sale-receipt-print";
 import {SupplierPurchaseFields,purchaseInvoice} from "./supplier-purchase-fields";
 import { SupplierAccounts } from "./supplier-accounts";
 import { InventoryWorkspace } from "./inventory-workspace";
+import {HiddenProducts} from './hidden-products';
 import { SettingsWorkspace } from "./settings-workspace";
 import {CashierPcMode} from './cashier-pc-mode';
 import { WorkspaceTabs } from "./workspace-ui";
@@ -316,7 +317,16 @@ export function StoreApp() {
   const closingCash = closingDraft?.shiftId === lease?.shiftId ? closingDraft?.cash ?? "" : "";
   const [inventoryQuery]=useState('');
   const [inventoryTab,setInventoryTab]=useState("products");
+  const [inventoryReviewEntry,setInventoryReviewEntry]=useState<{serial:number;productId?:string;showCatalog:boolean}>({serial:0,showCatalog:false});
+  const [inventoryCountEntry,setInventoryCountEntry]=useState<{serial:number;productId?:string}>({serial:0});
+  const [inventoryReceiptJump,setInventoryReceiptJump]=useState(0);
   const [purchasingTab,setPurchasingTab]=useState("orders");
+  const quickReceiptHeading=useRef<HTMLHeadingElement>(null);
+  useEffect(()=>{
+    if(view!=="receiving"||purchasingTab!=="quick"||!inventoryReceiptJump)return;
+    const frame=requestAnimationFrame(()=>{quickReceiptHeading.current?.scrollIntoView({block:"start"});quickReceiptHeading.current?.focus();});
+    return ()=>cancelAnimationFrame(frame);
+  },[inventoryReceiptJump,view,purchasingTab]);
   const [syncQuery,setSyncQuery]=useState("");
   const [syncFilter,setSyncFilter]=useState("all");
   const [authMode, setAuthMode] = useState<"login" | "signup">("login");
@@ -1329,7 +1339,22 @@ export function StoreApp() {
     "close-shift": "Count the cash in your drawer, then finish your shift.",
     settings: "Manage your people, branch and cashier PC.",
   };
-  const inventoryTabs = (<WorkspaceTabs label="Inventory sections" value={view==="counts"?"counts":["setup","prices","expiry"].includes(inventoryTab)?"products":inventoryTab} onChange={id=>{if(id==="counts")setView("counts");else {setInventoryTab(id);setView("inventory");}}} tabs={[{id:"products",label:"Products"},...(member.role!=="cashier"?[{id:"counts",label:"Stock counts"},{id:"controls",label:"Stock activity"}]:[]),...(isOwner?[{id:"review",label:"Needs review"}]:[])]}/>);
+  const openInventoryReview=(product?:Product,showCatalog=false)=>{
+    setInventoryReviewEntry(old=>({serial:old.serial+1,productId:product?.id,showCatalog:showCatalog||!!product}));
+    setInventoryTab("review");
+    setView("inventory");
+  };
+  const receiveInventory=(product?:Product)=>{
+    setQuickUnit(product?.units[0]?.id??"");
+    setPurchasingTab("quick");
+    setView("receiving");
+    setInventoryReceiptJump(n=>n+1);
+  };
+  const countInventory=(product:Product)=>{
+    setInventoryCountEntry(current=>({serial:current.serial+1,productId:product.id}));
+    setView("counts");
+  };
+  const inventoryTabs = (<WorkspaceTabs label="Inventory sections" value={view==="counts"?"counts":["setup","prices","expiry","hidden"].includes(inventoryTab)?"products":inventoryTab} onChange={id=>{if(id==="counts"){setInventoryCountEntry(current=>({serial:current.serial+1}));setView("counts");}else if(id==="review")openInventoryReview();else {setInventoryTab(id);setView("inventory");}}} tabs={[{id:"products",label:"Products"},...(member.role!=="cashier"?[{id:"counts",label:"Stock counts"},{id:"controls",label:"Stock activity"}]:[]),...(isOwner?[{id:"review",label:"Needs review"}]:[])]}/>);
   const pageHeading = (<div className="page-heading">
             <div>
               <div className="title-line"><h1 ref={contentHeading} tabIndex={-1}>
@@ -1983,11 +2008,12 @@ export function StoreApp() {
 
           {view === "inventory" && (
             <>{inventoryTab!=="products"&&inventoryTabs}<div hidden={inventoryTab!=="products"}>
-              <InventoryWorkspace tabs={inventoryTabs} products={products} stock={stock} onControls={()=>setInventoryTab("controls")} onExpiry={()=>setInventoryTab("expiry")} onAdd={()=>setInventoryTab("setup")} onPrices={()=>setInventoryTab("prices")} onReview={()=>setInventoryTab("review")} canManage={isOwner}/></div>
+              <InventoryWorkspace tabs={inventoryTabs} products={products} stock={stock} onControls={()=>setInventoryTab("controls")} onExpiry={()=>setInventoryTab("expiry")} onAdd={()=>setInventoryTab("setup")} onReceive={receiveInventory} onCount={countInventory} onEdit={product=>openInventoryReview(product,true)} onEditCatalog={()=>openInventoryReview(undefined,true)} onHidden={()=>setInventoryTab("hidden")} onPrices={()=>setInventoryTab("prices")} onReview={()=>openInventoryReview()} canManage={isOwner&&!practice}/></div>
+              {isOwner&&!practice&&inventoryTab==='hidden'&&<HiddenProducts key={`${member.organizationId}:${branchId}`} organizationId={member.organizationId} branchId={branchId} disabled={busy||!online} onBack={()=>setInventoryTab('products')} onSave={async(action,data)=>{const problem=await run(async()=>{await onlineOperation(db,member.userId,action,{...context(),...data},'requestId');},true,true);if(problem)throw problem;}}/>}
               {!practice && member.role !== "cashier" && <div hidden={inventoryTab!=="controls"&&inventoryTab!=="expiry"}><StockControls focus={inventoryTab==="expiry"?"expiry":"all"} key={`${member.organizationId}:${branchId}`} db={db} organizationId={member.organizationId} branchId={branchId} actorId={member.userId} products={products} owner={isOwner} canAssign={isOwner || member.role === "manager"} online={online} disabled={busy} revision={historyRevision} execute={fn => run(fn,true,true)} /></div>}
               {isOwner && (
                 <div hidden={inventoryTab!=="setup"&&inventoryTab!=="review"}>
-                  {!practice&&<div hidden={inventoryTab!=="review"}><ImportedProductReview stock={stock} products={products} organizationId={member.organizationId} branchId={branchId} disabled={busy||!online} onSave={async (action,data)=>{const problem=await run(async()=>{await onlineOperation(db,member.userId,action,{...context(),...data},"requestId");},true,true);if(problem)throw problem;}}/></div>}
+                  {!practice&&<div hidden={inventoryTab!=="review"}><ImportedProductReview key={`review:${branchId}:${inventoryReviewEntry.serial}`} initialProductId={inventoryReviewEntry.productId} showCatalog={inventoryReviewEntry.showCatalog} stock={stock} products={products} organizationId={member.organizationId} branchId={branchId} disabled={busy||!online} onSave={async (action,data)=>{const problem=await run(async()=>{await onlineOperation(db,member.userId,action,{...context(),...data},"requestId");},true,true);if(problem)throw problem;}}/></div>}
                   <section className="panel" hidden={inventoryTab!=="setup"}>
                     <Button variant="ghost" onClick={()=>setInventoryTab("products")}>Back to products</Button><h2>Add a product</h2>
                     <p className="muted">
@@ -2024,7 +2050,7 @@ export function StoreApp() {
               {!practice && member.role !== "cashier" && purchasingTab!=="accounts" && <PurchasingWorkspace onBillSaved={openSupplierBill} pane={purchasingTab} onPaneChange={setPurchasingTab} key={`purchasing:${member.organizationId}:${branchId}`} db={db} organizationId={member.organizationId} branchId={branchId} branchName={selectedBranch?.name ?? "Selected branch"} actorId={member.userId} products={products} suppliers={(cloud.suppliers ?? []).map(s => ({ id: str(s,"id"), name: str(s,"name") }))} role={member.role} online={online} disabled={busy} revision={historyRevision} reversalBlocked={allPendingCount > 0 || syncing || !!lease || cart.items.length > 0} execute={fn => run(fn,true,true)} />}
               <div className="two-column">
                 <section className="panel" hidden={purchasingTab!=="quick"}>
-                  <h2>Quick receipt · saleable goods only</h2>
+                  <h2 id="quick-receipt-heading" ref={quickReceiptHeading} tabIndex={-1}>Quick receipt · saleable goods only</h2>
                   <p className="muted">
                     Record an unplanned, fully saleable receipt. For purchase orders, held or rejected goods, use Inspect supplier delivery above. Never record the same delivery in both forms.
                   </p>
@@ -2456,7 +2482,7 @@ export function StoreApp() {
           {view === "counts" && <>{inventoryTabs}</>}
           {view === "counts" && (
             practice ? <section className="panel"><h2>Blind stock counts</h2><p>Use the connected staging business with separate staff accounts to rehearse blind counts and owner approval. Practice mode never changes server stock.</p></section> : member.role === "cashier" ? <section className="panel"><h2>Stock counts</h2><p>Stock counts require a stock-staff, manager or owner account. Cashiers cannot submit or approve adjustments.</p></section> :
-            <BlindCounts key={`${member.organizationId}:${branchId}:${member.userId}`} db={db} organizationId={member.organizationId} branchId={branchId} actorId={member.userId} products={products.filter(p=>!p.setupPending)} owner={isOwner} online={online} disabled={busy || !!pending.length} revision={historyRevision} execute={fn => run(fn,true,true)}>
+            <BlindCounts key={`${member.organizationId}:${branchId}:${member.userId}:${inventoryCountEntry.serial}`} initialProductId={inventoryCountEntry.productId} db={db} organizationId={member.organizationId} branchId={branchId} actorId={member.userId} products={products.filter(p=>!p.setupPending)} owner={isOwner} online={online} disabled={busy || !!pending.length} revision={historyRevision} execute={fn => run(fn,true,true)}>
               {!practice && (
                 <HistoryRegister
                   {...historyProps}
