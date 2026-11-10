@@ -36,7 +36,7 @@ export function CreditWorkspace({db,organizationId,branchId,actorId,owner,online
   if(cached){setSnapshot({key:bookKey,data:cached});setError('');setLoading(false);return;}
   const previous=!scopeId?cache.current.peek(bookKey,cacheRevision):undefined;if(previous)setSnapshot({key:bookKey,data:previous});
   setLoading(true);setError('');
-  let read=pending.current?.key===bookKey&&pending.current.revision===cacheRevision?pending.current.read:undefined;
+  let read=!scopeId&&pending.current?.key===bookKey&&pending.current.revision===cacheRevision?pending.current.read:undefined;
   if(!read){const request=command<CreditBook>('credit_book',{organizationId,branchId,...(scopeId?{clientId:scopeId}:{}),...(registerOnly?{includeHistory:false}:{})}).finally(()=>{if(pending.current?.read===request)pending.current=undefined;});pending.current={key:bookKey,revision:cacheRevision,read:request};read=request;}
   void read.then(data=>{if(active&&run===generation.current){setSnapshot({key:bookKey,data});if(!scopeId)cache.current.set(bookKey,data,cacheRevision);setError('');}}).catch(e=>{if(active&&run===generation.current)setError(e.message);}).finally(()=>{if(active&&run===generation.current)setLoading(false);});return()=>{active=false;};
  },[organizationId,branchId,scopeId,bookKey,cacheRevision,screen,registerOnly,online,practice]);
