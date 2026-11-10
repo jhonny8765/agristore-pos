@@ -1,0 +1,93 @@
+/* Owner product correction form: readable, touch-friendly and compact on phones. */
+.reference-ui .owner-product-metadata {
+  margin: 22px 0;
+  padding: clamp(16px, 2.2vw, 24px);
+  border: 1px solid #b8d2c0;
+  border-radius: 16px;
+  background: linear-gradient(155deg, #eef7ee 0%, #fafdf9 75%);
+}
+.reference-ui .owner-product-metadata h4 {
+  margin: 0 0 6px;
+  color: #163d2f;
+  font-size: clamp(19px, 2vw, 23px);
+}
+.reference-ui .owner-product-metadata > p {
+  margin: 0 0 16px;
+  color: #41604e;
+  line-height: 1.5;
+}
+.reference-ui .owner-product-metadata .notice {
+  margin-bottom: 12px;
+}
+.reference-ui .owner-product-metadata-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  gap: 16px;
+  padding: 0;
+  margin: 0;
+  border: 0;
+  min-width: 0;
+}
+.reference-ui .owner-product-metadata-grid .field {
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+  min-width: 0;
+  margin: 0;
+}
+.reference-ui .owner-product-metadata-grid .field > span {
+  font-weight: 650;
+  color: #193c31;
+}
+.reference-ui .owner-product-metadata-grid input:not([type="checkbox"]),
+.reference-ui .owner-product-metadata-grid textarea {
+  min-width: 0;
+  width: 100%;
+  min-height: 46px;
+  padding: 11px 12px;
+  border: 1px solid #8fa79a;
+  border-radius: 10px;
+  background: #fff;
+  color: #1d3028;
+  font-size: 16px;
+}
+.reference-ui .owner-product-metadata-grid textarea { min-height: 88px; resize: vertical; }
+.reference-ui .owner-product-metadata-grid input:focus-visible,
+.reference-ui .owner-product-metadata-grid textarea:focus-visible {
+  outline: 3px solid #8ec9a6;
+  outline-offset: 2px;
+  border-color: #276543;
+}
+.reference-ui .owner-product-metadata-wide { grid-column: 1 / -1; }
+.reference-ui .owner-product-metadata-grid .checkbox {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  line-height: 1.55;
+  color: #284537;
+}
+.reference-ui .owner-product-metadata-grid .checkbox input {
+  width: 20px;
+  height: 20px;
+  min-width: 20px;
+  margin-top: 2px;
+  accent-color: #18543b;
+}
+.reference-ui .owner-product-metadata-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px;
+}
+.reference-ui .owner-product-metadata-actions .button {
+  min-height: 48px;
+  justify-content: center;
+}
+.reference-ui #review-product-metadata { scroll-margin-top: 30px; }
+
+@media (max-width: 760px) {
+  .reference-ui .owner-product-metadata { margin: 14px 0; padding: 16px; }
+  .reference-ui .owner-product-metadata-grid { grid-template-columns: minmax(0, 1fr); gap: 14px; }
+  .reference-ui .owner-product-metadata-actions { flex-direction: column; align-items: stretch; }
+  .reference-ui .owner-product-metadata-actions .button { width: 100%; }
+}
