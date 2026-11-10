@@ -10,7 +10,7 @@ The credit and supplier workspaces retain component-owned read snapshots for up 
 
 Refresh keeps the last matching snapshot visible with its checked time. Supplier filter changes explicitly label previous results and disable their actions until the current filters load. Failed reads keep the displayed snapshot, block changes and leave Refresh available. Request generations fence older results, errors and pagination completions from newer views.
 
-The supporting migration is `20261110093037_fast_credit_register.sql`; apply it before shipping this UI. The new private snapshot overload is not executable directly by anonymous or authenticated clients. No account, stock, invoice or payment row is changed by this migration.
+The supporting migration is `20261110095515_fast_credit_register.sql`; apply it before shipping this UI. The new private snapshot overload is not executable directly by anonymous or authenticated clients. No account, stock, invoice or payment row is changed by this migration.
 
 ### Separate Customers and Distribution registers — November 10, 2026
 
