@@ -37,6 +37,8 @@ The owner inventory release has passed the recorded local checks in `docs/owner-
 
 The owner subsequently authorized the Distribution tab update, requesting local testing followed by publication through Cloudflare. The same manual release path applies if the GitHub billing restriction persists, after the relevant local checks pass. This change separates existing classifications in the frontend and requires no new live migration. Preserve customer and distributor records and verify the existing live migration and release identity before publication.
 
+The follow-up account-list loading fix is authorized by the owner's request to continue the diagnosed performance improvement. Complete local verification, apply and verify its read-only compatibility migration, then publish the exact merged main commit through the same Cloudflare project. Preserve the prior healthy deployment and all financial and inventory records. Hosted integration gaps must remain explicit while GitHub cannot start runners.
+
 ## Configuration
 
 Repository variables:

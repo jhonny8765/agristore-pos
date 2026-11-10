@@ -2,6 +2,16 @@
 
 ## Current build
 
+### Faster account lists — November 10, 2026
+
+Customers, Distribution and the statement account picker request `credit_book` with `includeHistory: false`. The database retains the original permissions and exact balance calculations but omits invoice/payment rows and their cursor. Opening an account or explicitly visiting invoice/payment history uses the original full-history read. Legacy callers remain compatible.
+
+The credit and supplier workspaces retain component-owned read snapshots for up to 15 seconds, scoped by organization, branch, signed-in actor and view/filter. These snapshots are held only in memory. They are cleared or invalidated on writes, revision changes and reconnection. Credit tabs share an in-flight register request. Account details are always fetched on entry; snapshots never authorize writes, and versioned server checks remain authoritative.
+
+Refresh keeps the last matching snapshot visible with its checked time. Supplier filter changes explicitly label previous results and disable their actions until the current filters load. Failed reads keep the displayed snapshot, block changes and leave Refresh available. Request generations fence older results, errors and pagination completions from newer views.
+
+The supporting migration is `20261110095515_fast_credit_register.sql`; apply it before shipping this UI. The new private snapshot overload is not executable directly by anonymous or authenticated clients. No account, stock, invoice or payment row is changed by this migration.
+
 ### Separate Customers and Distribution registers — November 10, 2026
 
 **Customers & credit** now places **Distribution** beside **Customers**. Customers contains normal customers (including legacy accounts without an explicit type) and any owner accounts; Distribution contains distributor accounts. Both use the same account table, search, balance filters, ordering, pagination, account details, payments and statements. The summary cards cover the entire selected account group, independent of table pages or search, with exact integer monetary totals. Invoices, Payments and Statements remain shared all-account views.
