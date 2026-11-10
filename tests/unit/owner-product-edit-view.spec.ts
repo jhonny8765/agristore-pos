@@ -26,12 +26,15 @@ describe("owner's selected product edit view",()=>{
     expect(html).toContain("Update selling price or cost");
     expect(html).toContain("Save product details");
     expect(html).toContain("Save price / cost version");
+    expect(html).toContain("Remove from active catalog");
+    expect(html).toContain("Review removal");
   });
   it("keeps details editing out of the review-only flow",()=>{
     const html=renderToStaticMarkup(createElement(ImportedProductReview,{
       ...options,showCatalog:false,
     }));
     expect(html).not.toContain("Save product details");
+    expect(html).not.toContain("Remove from active catalog");
     expect(html).toContain("Needs review");
   });
 });

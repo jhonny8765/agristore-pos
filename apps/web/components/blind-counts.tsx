@@ -20,14 +20,16 @@ import {Button} from './ui/button';
 
 type Page = {rows:BlindCount[];openCount:number};
 const field = (f:FormData,name:string) => String(f.get(name) ?? '').trim();
-export function BlindCounts({db,organizationId,branchId,actorId,products,owner,online,disabled,revision,execute,children}: {
+export function BlindCounts({db,organizationId,branchId,actorId,products,owner,online,disabled,revision,execute,initialProductId,children}: {
  db:PosDatabase;organizationId:string;branchId:string;actorId:string;products:Product[];owner:boolean;
- online:boolean;disabled:boolean;revision:number;execute:(fn:()=>Promise<void>)=>Promise<Error|undefined>;children?:ReactNode;
+ online:boolean;disabled:boolean;revision:number;execute:(fn:()=>Promise<void>)=>Promise<Error|undefined>;initialProductId?:string;children?:ReactNode;
 }) {
  const [rows,setRows]=useState<BlindCount[]>([]),[next,setNext]=useState<ReturnType<typeof countPage>['next']>();
  const [openCount,setOpenCount]=useState(0),[review,setReview]=useState(false),[loading,setLoading]=useState(false);
  const [error,setError]=useState(''),[feedback,setFeedback]=useState('');
- const [selectedId,setSelectedId]=useState(''),[showStart,setShowStart]=useState(false),[history,setHistory]=useState(false);
+ const [selectedId,setSelectedId]=useState(''),[showStart,setShowStart]=useState(Boolean(initialProductId)),[history,setHistory]=useState(false);
+ const suggestedProduct=products.find(product=>product.id===initialProductId);
+ const suggestedStock=suggestedProduct?`${suggestedProduct.id}:${suggestedProduct.batches[0]?.id??'none'}`:'';
  const selected=rows.find(r=>r.id===selectedId)??rows[0];
  const waitingForOwner=owner?rows.filter(row=>canApproveCount(row,actorId,owner)):[];
  const generation=useRef(0);
@@ -64,7 +66,7 @@ export function BlindCounts({db,organizationId,branchId,actorId,products,owner,o
    void execute(async()=>{await save('start_blind_count',{productId,batchId:batchId==='none'?null:batchId,reason:field(f,'reason')},'countId');form.reset();setSelectedId('');setShowStart(false);});
   }}>
    <h3>Start a blind count</h3>
-   <label className="field"><span>Product / batch</span><SearchableSelect name="stock" aria-label="Product / batch" required disabled={blocked}>
+   <label className="field"><span>Product / batch</span><SearchableSelect name="stock" aria-label="Product / batch" defaultValue={suggestedStock} required disabled={blocked}>
     {products.flatMap(p=>p.batches.length ? p.batches.map(b=><option key={b.id} value={`${p.id}:${b.id}`} data-search={`${p.sku} ${("originalCode" in p ? String(p.originalCode??"") : "")}`}>{p.name} · {b.lot} ({p.baseUnit})</option>) : [<option key={p.id} value={`${p.id}:none`} data-search={`${p.sku} ${("originalCode" in p ? String(p.originalCode??"") : "")}`}>{p.name} ({p.baseUnit})</option>])}
    </SearchableSelect></label>
    <label className="field"><span>Counting scope / reason</span><input name="reason" required minLength={3} maxLength={1000} disabled={blocked} placeholder="For example, end-of-day loose feeds" /></label>
@@ -111,3 +113,4 @@ export function BlindCounts({db,organizationId,branchId,actorId,products,owner,o
   {next && <Button variant="outline" disabled={blocked} onClick={()=>void load(next)}>Load older counts</Button>}
  </section>{history && children}</>;
 }
+

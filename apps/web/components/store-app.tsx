@@ -329,6 +329,7 @@ export function StoreApp() {
   const [inventoryQuery]=useState('');
   const [inventoryTab,setInventoryTab]=useState("products");
   const [inventoryReviewEntry,setInventoryReviewEntry]=useState<{serial:number;productId?:string;showCatalog:boolean}>({serial:0,showCatalog:false});
+  const [inventoryCountEntry,setInventoryCountEntry]=useState<{serial:number;productId?:string}>({serial:0});
   const [inventoryReceiptJump,setInventoryReceiptJump]=useState(0);
   const [purchasingTab,setPurchasingTab]=useState("orders");
   const quickReceiptHeading=useRef<HTMLHeadingElement>(null);
@@ -1391,7 +1392,11 @@ export function StoreApp() {
     setView("receiving");
     setInventoryReceiptJump(n=>n+1);
   };
-  const inventoryTabs = (<WorkspaceTabs label="Inventory sections" value={view==="counts"?"counts":["setup","prices","expiry"].includes(inventoryTab)?"products":inventoryTab} onChange={id=>{if(id==="counts")setView("counts");else if(id==="review")openInventoryReview();else {setInventoryTab(id);setView("inventory");}}} tabs={[{id:"products",label:"Products"},...(member.role!=="cashier"?[{id:"counts",label:"Stock counts"},{id:"controls",label:"Stock activity"}]:[]),...(isOwner?[{id:"review",label:"Needs review"}]:[])]}/>);
+  const countInventory=(product:Product)=>{
+    setInventoryCountEntry(current=>({serial:current.serial+1,productId:product.id}));
+    setView("counts");
+  };
+  const inventoryTabs = (<WorkspaceTabs label="Inventory sections" value={view==="counts"?"counts":["setup","prices","expiry"].includes(inventoryTab)?"products":inventoryTab} onChange={id=>{if(id==="counts"){setInventoryCountEntry(current=>({serial:current.serial+1}));setView("counts");}else if(id==="review")openInventoryReview();else {setInventoryTab(id);setView("inventory");}}} tabs={[{id:"products",label:"Products"},...(member.role!=="cashier"?[{id:"counts",label:"Stock counts"},{id:"controls",label:"Stock activity"}]:[]),...(isOwner?[{id:"review",label:"Needs review"}]:[])]}/>);
   const pageHeading = (<div className="page-heading">
             <div>
               <div className="title-line"><h1 ref={contentHeading} tabIndex={-1}>
@@ -2039,7 +2044,7 @@ export function StoreApp() {
 
           {view === "inventory" && (
             <>{inventoryTab!=="products"&&inventoryTabs}<div hidden={inventoryTab!=="products"}>
-              <InventoryWorkspace tabs={inventoryTabs} products={products} stock={stock} onControls={()=>setInventoryTab("controls")} onExpiry={()=>setInventoryTab("expiry")} onAdd={()=>setInventoryTab("setup")} onReceive={receiveInventory} onEdit={product=>openInventoryReview(product,true)} onEditCatalog={()=>openInventoryReview(undefined,true)} onPrices={()=>setInventoryTab("prices")} onReview={()=>openInventoryReview()} canManage={isOwner&&!practice}/></div>
+              <InventoryWorkspace tabs={inventoryTabs} products={products} stock={stock} onControls={()=>setInventoryTab("controls")} onExpiry={()=>setInventoryTab("expiry")} onAdd={()=>setInventoryTab("setup")} onReceive={receiveInventory} onCount={countInventory} onEdit={product=>openInventoryReview(product,true)} onEditCatalog={()=>openInventoryReview(undefined,true)} onPrices={()=>setInventoryTab("prices")} onReview={()=>openInventoryReview()} canManage={isOwner&&!practice}/></div>
               {!practice && member.role !== "cashier" && <div hidden={inventoryTab!=="controls"&&inventoryTab!=="expiry"}><StockControls focus={inventoryTab==="expiry"?"expiry":"all"} key={`${member.organizationId}:${branchId}`} db={db} organizationId={member.organizationId} branchId={branchId} actorId={member.userId} products={products} owner={isOwner} canAssign={isOwner || member.role === "manager"} online={online} disabled={busy} revision={historyRevision} execute={fn => run(fn,true,true)} /></div>}
               {isOwner && (
                 <div hidden={inventoryTab!=="setup"&&inventoryTab!=="review"}>
@@ -2512,7 +2517,7 @@ export function StoreApp() {
           {view === "counts" && <>{inventoryTabs}</>}
           {view === "counts" && (
             practice ? <section className="panel"><h2>Blind stock counts</h2><p>Use the connected staging business with separate staff accounts to rehearse blind counts and owner approval. Practice mode never changes server stock.</p></section> : member.role === "cashier" ? <section className="panel"><h2>Stock counts</h2><p>Stock counts require a stock-staff, manager or owner account. Cashiers cannot submit or approve adjustments.</p></section> :
-            <BlindCounts key={`${member.organizationId}:${branchId}:${member.userId}`} db={db} organizationId={member.organizationId} branchId={branchId} actorId={member.userId} products={products.filter(p=>!p.setupPending)} owner={isOwner} online={online} disabled={busy || !!pending.length} revision={historyRevision} execute={fn => run(fn,true,true)}>
+            <BlindCounts key={`${member.organizationId}:${branchId}:${member.userId}:${inventoryCountEntry.serial}`} initialProductId={inventoryCountEntry.productId} db={db} organizationId={member.organizationId} branchId={branchId} actorId={member.userId} products={products.filter(p=>!p.setupPending)} owner={isOwner} online={online} disabled={busy || !!pending.length} revision={historyRevision} execute={fn => run(fn,true,true)}>
               {!practice && (
                 <HistoryRegister
                   {...historyProps}
@@ -3580,3 +3585,4 @@ function StockSelect({ products,onChange,value }: { products: Product[];onChange
     </Field>
   );
 }
+
