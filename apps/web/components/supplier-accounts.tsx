@@ -16,19 +16,19 @@ import type {RecordKind} from '../lib/record-reports';
 
 type Save=(action:string,data:Record<string,unknown>,message:string)=>Promise<boolean>;
 export function SupplierAccounts({db,organizationId,branchId,actorId,online,disabled,execute,onRecords,initialBillId=""}:{initialBillId?:string;onRecords?:(kind:RecordKind,entity?:{id:string;name:string})=>void;db:PosDatabase;organizationId:string;branchId:string;actorId:string;online:boolean;disabled:boolean;execute:(fn:()=>Promise<void>)=>Promise<Error|undefined>}){
- const [snapshot,setSnapshot]=useState<{scope:string;key:string;data:SupplierBook}>(),[history,setHistory]=useState<SupplierHistory>(),[selected,setSelected]=useState(initialBillId),[supplier,setSupplier]=useState(''),[query,setQuery]=useState(''),[status,setStatus]=useState(initialBillId?'all':'outstanding'),[term,setTerm]=useState('all'),[revision,setRevision]=useState(0),[loading,setLoading]=useState(false),[saving,setSaving]=useState(false),[error,setError]=useState(''),[feedback,setFeedback]=useTransientMessage(),[adding,setAdding]=useState(false),[replacement,setReplacement]=useState<SupplierBill>();
+ const [snapshot,setSnapshot]=useState<{scope:string;key:string;data:SupplierBook}>(),[history,setHistory]=useState<SupplierHistory>(),[selected,setSelected]=useState(initialBillId),[supplier,setSupplier]=useState(''),[query,setQuery]=useState(''),[status,setStatus]=useState(initialBillId?'all':'outstanding'),[term,setTerm]=useState('all'),[revision,setRevision]=useState(0),[loading,setLoading]=useState(false),[saving,setSaving]=useState(false),[error,setError]=useState(''),[readFailed,setReadFailed]=useState(false),[feedback,setFeedback]=useTransientMessage(),[adding,setAdding]=useState(false),[replacement,setReplacement]=useState<SupplierBill>();
  const cache=useRef(new ReadSnapshotCache<SupplierBook>());
  const generation=useRef(0),detailGeneration=useRef(0),lock=useRef(false);const today=manilaDay(useBusinessClock()),ctx={organizationId,branchId};
  const scopeKey=JSON.stringify([organizationId,branchId,actorId]),requestKey=JSON.stringify([scopeKey,supplier,query,status,term,today]),cacheRevision=String(revision);
  const book=snapshot?.scope===scopeKey?snapshot.data:undefined,sources=book??{suppliers:[],receipts:[]},previousResults=!!book&&snapshot?.key!==requestKey;
- const blocked=disabled||saving||loading||!!error||!online||previousResults;
+ const blocked=disabled||saving||loading||readFailed||!online||previousResults;
  function setBook(data:SupplierBook){setSnapshot({scope:scopeKey,key:requestKey,data});cache.current.set(requestKey,data,cacheRevision);}
  useEffect(()=>{const token=++generation.current;let active=true;
   if(!online){cache.current.clear();setLoading(false);return;}
-  const cached=cache.current.get(requestKey,cacheRevision);if(cached){setSnapshot({scope:scopeKey,key:requestKey,data:cached});setError('');setLoading(false);return;}
+  const cached=cache.current.get(requestKey,cacheRevision);if(cached){setSnapshot({scope:scopeKey,key:requestKey,data:cached});setReadFailed(false);setError('');setLoading(false);return;}
   const previous=cache.current.peek(requestKey,cacheRevision);if(previous)setSnapshot({scope:scopeKey,key:requestKey,data:previous});
-  setLoading(true);setError('');
-  const timer=setTimeout(()=>void command<SupplierBook>('supplier_account_book',{openingBalancesSupported:true,organizationId,branchId,supplierId:supplier||null,query,status,term}).then(data=>{if(active&&token===generation.current){setSnapshot({scope:scopeKey,key:requestKey,data});cache.current.set(requestKey,data,cacheRevision);}}).catch(e=>{if(active&&token===generation.current)setError(e.message);}).finally(()=>{if(active&&token===generation.current)setLoading(false);}),query?200:0);
+  setLoading(true);setReadFailed(false);setError('');
+  const timer=setTimeout(()=>void command<SupplierBook>('supplier_account_book',{openingBalancesSupported:true,organizationId,branchId,supplierId:supplier||null,query,status,term}).then(data=>{if(active&&token===generation.current){setSnapshot({scope:scopeKey,key:requestKey,data});cache.current.set(requestKey,data,cacheRevision);}}).catch(e=>{if(active&&token===generation.current){setReadFailed(true);setError(e.message);}}).finally(()=>{if(active&&token===generation.current)setLoading(false);}),query?200:0);
   return()=>{active=false;clearTimeout(timer);};
  },[organizationId,branchId,supplier,query,status,term,online,requestKey,scopeKey,cacheRevision]);
  useEffect(()=>{const token=++detailGeneration.current;setHistory(undefined);if(!selected||!online)return;let active=true;void command<SupplierHistory>('supplier_invoice_history',{openingBalancesSupported:true,organizationId,branchId,billId:selected}).then(data=>{if(active&&token===detailGeneration.current)setHistory(data);}).catch(e=>{if(active)setError(e.message);});return()=>{active=false;};},[organizationId,branchId,selected,online,revision]);
