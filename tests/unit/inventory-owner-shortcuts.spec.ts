@@ -23,6 +23,7 @@ const handlers = {
   onAdd: vi.fn(),
   onReceive: vi.fn(),
   onEdit: vi.fn(),
+  onCount: vi.fn(),
   onEditCatalog: vi.fn(),
   onReview: vi.fn(),
   onPrices: vi.fn(),
@@ -41,10 +42,14 @@ describe("owner inventory shortcuts", () => {
     expect(owner).toContain("Add stock");
     expect(owner).toContain("Edit product");
     expect(owner).toContain("Add received stock for Test Feed");
+    expect(owner).toContain("Start stock count for Test Feed");
+    expect(owner).toContain("Open Test Feed details and prices");
     expect(owner).toContain("Edit details and prices for Test Feed");
     const staff = render(false);
     expect(staff).not.toContain("owner-inventory-toolbar");
     expect(staff).not.toContain("Add received stock for Test Feed");
+    expect(staff).not.toContain("Start stock count for Test Feed");
+    expect(staff).not.toContain("Open Test Feed details and prices");
     expect(staff).not.toContain("Edit details and prices for Test Feed");
   });
   it("keeps product identity, price, stock and status visible", () => {
@@ -55,3 +60,4 @@ describe("owner inventory shortcuts", () => {
     expect(markup).toContain("Status");
   });
 });
+
