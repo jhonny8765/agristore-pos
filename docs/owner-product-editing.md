@@ -35,6 +35,7 @@ npm ci
 npm run typecheck
 npm run lint
 npm test -- tests/unit/product-metadata-edit.spec.ts tests/unit/inventory-owner-shortcuts.spec.ts
+npm run test:owner-metadata
 npm run build
 supabase start
 supabase db reset
@@ -51,4 +52,4 @@ Then exercise:
 
 ### Change log
 
-2026-11-10: Added owner product metadata editor, command validation and audit, responsive styling, and unit validation tests. Still awaiting staging database integration and CI confirmation.
+2026-11-10: Added owner product metadata editor, command validation and audit, responsive styling, unit tests, and an isolated in-memory Postgres regression test. Local focused UI and SQL tests passed; still awaiting full Supabase staging integration and hosted CI confirmation.
