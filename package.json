@@ -16,6 +16,7 @@
     "test": "vitest run",
     "test:e2e": "playwright test",
     "test:db": "supabase test db",
+    "test:owner-metadata": "node scripts/test-owner-product-metadata.mjs",
     "test:db:preflight": "node scripts/local-database-check.mjs",
     "test:counts:local": "playwright test --config=playwright.counts-local.config.ts",
     "test:counts:restore": "node scripts/local-count-restore.mjs",
