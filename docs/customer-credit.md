@@ -6,7 +6,7 @@
 
 **Customers & credit** now places **Distribution** beside **Customers**. Customers contains normal customers (including legacy accounts without an explicit type) and any owner accounts; Distribution contains distributor accounts. Both use the same account table, search, balance filters, ordering, pagination, account details, payments and statements. The summary cards cover the entire selected account group, independent of table pages or search, with exact integer monetary totals. Invoices, Payments and Statements remain shared all-account views.
 
-Opening an account remembers its register for the Back button. **Add distributor** defaults the new account to Distributor; the owner may still choose its actual classification. Changing an account's type places it in the appropriate register after refresh without copying the account or rewriting its invoices, payments or balance. This frontend-only change requires no database migration or data import.
+Opening an account remembers its register for the Back button. **Add distributor** defaults the new account to Distributor; the owner may still choose its actual classification. Changing an account's type places it in the appropriate register after refresh without copying the account or rewriting its invoices, payments or balance. Combined aging and full account totals remain in the shared views; individual registers show only their group's summary. This frontend-only change requires no database migration or data import.
 
 ### Checkout without limits — published November 3, 2026, 20:51 Manila
 
