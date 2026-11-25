@@ -6,7 +6,7 @@ import {RecordTable} from './record-pages';
 
 interface HiddenProduct{id:string;name:string;sku:string;hiddenRequestId:string;hiddenAt:string;reason:string}
 interface HiddenPage{rows:HiddenProduct[];total:number;next:string|null}
-export function HiddenProducts({organizationId,branchId,disabled,onSave,onBack}:{organizationId:string;branchId:string;disabled:boolean;onSave:(action:string,data:Record<string,unknown>)=>Promise<void>;onBack:()=>void}){
+export function HiddenProducts({organizationId,branchId,online,disabled,onSave,onBack}:{organizationId:string;branchId:string;online:boolean;disabled:boolean;onSave:(action:string,data:Record<string,unknown>)=>Promise<void>;onBack:()=>void}){
  const [page,setPage]=useState<HiddenPage>(),[query,setQuery]=useState(''),[applied,setApplied]=useState(''),[selected,setSelected]=useState<HiddenProduct>();
  const [loading,setLoading]=useState(false),[working,setWorking]=useState(false),[error,setError]=useState(''),[message,setMessage]=useState('');
  const generation=useRef(0),lock=useRef(false);
@@ -17,13 +17,14 @@ export function HiddenProducts({organizationId,branchId,disabled,onSave,onBack}:
   finally{if(token===generation.current)setLoading(false);}
  },[organizationId,branchId,applied]);
  const invalidate=useCallback(()=>{generation.current++;},[]);
- useEffect(()=>{void load();return invalidate;},[load,invalidate]);
+ useEffect(()=>{if(online)void load();return invalidate;},[online,load,invalidate]);
  const blocked=disabled||loading||working;
- return <section className="panel hidden-products" aria-label="Hidden products"><Button variant="ghost" onClick={onBack}>Back to products</Button><h2>Hidden products</h2><p>Restore products hidden here. Their original prices, units and history stay attached. Any unresolved selling setup still needs confirmation.</p>
+ return <section className="panel hidden-products" aria-label="Hidden products"><div className="section-heading"><h2>Hidden products</h2><Button variant="ghost" onClick={onBack}>Back to products</Button></div>
+  {!online&&<p role="status">Reconnect to search and restore hidden products.</p>}
   {error&&<p role="alert" className="notice error">{error}</p>}{message&&<p role="status" className="notice">{message}</p>}
-  <form className="register-filters" onSubmit={e=>{e.preventDefault();setSelected(undefined);if(applied===query.trim())void load();else setApplied(query.trim());}}><label className="field"><span>Search hidden products</span><input type="search" maxLength={180} value={query} onChange={e=>setQuery(e.target.value)}/></label><Button variant="outline" disabled={blocked}>Search</Button></form>
+  <form className="register-filters" onSubmit={e=>{e.preventDefault();setSelected(undefined);if(blocked)return;if(applied===query.trim())void load();else setApplied(query.trim());}}><label className="field"><span>Search hidden products</span><input type="search" maxLength={180} value={query} onChange={e=>setQuery(e.target.value)}/></label><Button variant="outline" disabled={blocked}>Search</Button></form>
   {loading&&<p role="status">Loading hidden products…</p>}
-  {page&&<><p>{page.total} hidden products match. Products retired during an inventory import are excluded.</p><div className="table-wrap" role="region" aria-label="Hidden product register" tabIndex={0}><RecordTable><thead><tr><th>Product / SKU</th><th>Hidden on</th><th>Reason</th><th>Action</th></tr></thead><tbody>{page.rows.map(p=><tr key={p.id}><td><strong>{p.name}</strong><small>{p.sku}</small></td><td>{new Date(p.hiddenAt).toLocaleDateString('en-PH',{timeZone:'Asia/Manila'})}</td><td>{p.reason}</td><td><Button variant="outline" disabled={blocked} onClick={()=>{setSelected(p);setMessage('');}}>Restore {p.name}</Button></td></tr>)}</tbody></RecordTable></div>{!page.rows.length&&<p>No products have been hidden here.</p>}{page.next&&<Button variant="outline" disabled={blocked} onClick={()=>void load(page.next!)}>Load more hidden products</Button>}</>}
+  {page&&<><p>{page.total} matching hidden products</p><div className="table-wrap" role="region" aria-label="Hidden product register" tabIndex={0}><RecordTable paginationPosition="bottom" key={applied}><thead><tr><th>Product / SKU</th><th>Hidden on</th><th>Reason</th><th>Action</th></tr></thead><tbody>{page.rows.map(p=><tr key={p.id}><td><strong>{p.name}</strong><small>{p.sku}</small></td><td>{new Date(p.hiddenAt).toLocaleDateString('en-PH',{timeZone:'Asia/Manila'})}</td><td>{p.reason}</td><td><Button variant="outline" disabled={blocked} aria-label={`Restore ${p.name}`} onClick={()=>{setSelected(p);setMessage('');}}>Restore</Button></td></tr>)}</tbody></RecordTable></div>{!page.rows.length&&<p>No products have been hidden here.</p>}{page.next&&<Button variant="outline" disabled={blocked} onClick={()=>void load(page.next!)}>Load more hidden products</Button>}</>}
   {selected&&<form className="owner-product-metadata" key={selected.hiddenRequestId} aria-label={`Restore ${selected.name}`} onSubmit={async e=>{
    e.preventDefault();if(lock.current||blocked)return;const f=new FormData(e.currentTarget);lock.current=true;setWorking(true);setError('');
    try{await onSave('restore_product',{productId:selected.id,expectedName:selected.name,expectedSku:selected.sku,hiddenRequestId:selected.hiddenRequestId,reason:String(f.get('reason')).trim(),confirmed:f.get('confirmed')==='on'});setSelected(undefined);setMessage(`${selected.name} restored to the product list.`);await load();}

@@ -7,6 +7,7 @@ export const metadata: Metadata = {
   title: "Better Yield POS",
   description: "Cash checkout and inventory for your agricultural stores.",
   manifest: "/manifest.webmanifest",
+  icons: {icon:'/icon.svg',apple:'/icon-192.png'},
   appleWebApp: { capable: true, title: "Better Yield POS" },
 };
 export const viewport: Viewport = {

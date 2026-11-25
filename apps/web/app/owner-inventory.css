@@ -101,3 +101,50 @@
   }
   .reference-ui .inventory-register .inventory-add .button { min-height: 44px; }
 }
+
+.reference-ui .inventory-pricing-grid { max-width: 100%; }
+.reference-ui .inventory-pricing-grid table { table-layout: auto; min-width: 560px; }
+.reference-ui .inventory-pricing-grid th:first-child { min-width: 180px; }
+.reference-ui .inventory-pricing-grid tbody th,
+.reference-ui .inventory-pricing-grid thead th:first-child {
+  position: sticky;
+  left: 0;
+  z-index: 1;
+  background: var(--white, white);
+  text-align: left;
+}
+.reference-ui .pricing-product,
+.reference-ui .pricing-cell { display: flex; align-items: center; gap: 8px; }
+.reference-ui .pricing-product input { flex-shrink: 0; width: 17px; height: 17px; }
+.reference-ui .pricing-cell { flex-wrap: wrap; }
+.reference-ui .pricing-cell strong { font-size: .9rem; white-space: nowrap; }
+.reference-ui .pricing-cell .button { min-height: 32px; padding: 4px 9px; }
+.reference-ui .inventory-inline-panel { padding: 16px; margin-block: 12px; border: 1px solid var(--line); border-radius: 8px; }
+.reference-ui .inventory-review-scroll { max-height: 360px; overflow: auto; }
+.reference-ui .inventory-inline-panel fieldset { min-width: 0; }
+.reference-ui .inventory-inline-panel .inventory-panel-actions { margin-block: 8px; }
+
+.reference-ui .pricing-mobile-branch { display: none; }
+
+@media (max-width: 650px) {
+  .reference-ui .pricing-mobile-branch { display: flex; }
+  .reference-ui .inventory-pricing-grid .pricing-mobile-hidden { display: none; }
+  .reference-ui .inventory-pricing-grid table { min-width: 0; }
+  .reference-ui .inventory-pricing-grid th:first-child { min-width: 112px; max-width: 140px; }
+  .reference-ui .inventory-pricing-grid tbody th { overflow-wrap: anywhere; }
+  .reference-ui .inventory-pricing-grid tbody th small { white-space: normal; }
+  .reference-ui .inventory-inline-panel { padding: 10px; }
+}
+
+.reference-ui .inventory-count-grid table { min-width: 680px; }
+.reference-ui .inventory-count-grid td:last-child { min-width: 130px; }
+.reference-ui .inventory-count-grid input { width: 100%; min-width: 80px; }
+.reference-ui .inventory-count-grid th[scope="row"] { text-align: left; }
+.reference-ui .inventory-count-grid td:last-child .button { margin-top: 4px; }
+.reference-ui .owner-stock-worksheet .inventory-panel-actions { margin-block: 10px; }
+
+@media (max-width: 650px) {
+  .reference-ui .inventory-workspace .button { max-width: 100%; white-space: normal; overflow-wrap: anywhere; }
+  .reference-ui .inventory-workspace .register-filters { grid-template-columns: minmax(0, 1fr); }
+  .reference-ui .inventory-pricing-grid::before { content: none; }
+}

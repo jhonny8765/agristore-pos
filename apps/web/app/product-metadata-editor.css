@@ -91,3 +91,29 @@
   .reference-ui .owner-product-metadata-actions { flex-direction: column; align-items: stretch; }
   .reference-ui .owner-product-metadata-actions .button { width: 100%; }
 }
+
+.reference-ui .review-columns.catalog-edit-columns {
+  grid-template-columns: minmax(0, .85fr) minmax(0, 1fr);
+  gap: 14px;
+}
+.reference-ui .catalog-edit-columns .catalog-price-detail { grid-column: 2; }
+.reference-ui .catalog-edit-columns .review-register { grid-row: span 2; min-width: 0; }
+.reference-ui .catalog-edit-columns .review-register table { table-layout: fixed; }
+.reference-ui .catalog-edit-columns .owner-product-metadata-grid { grid-template-columns: 1fr; }
+.reference-ui .catalog-edit-columns .catalog-price-detail fieldset { min-width: 0; }
+.reference-ui .catalog-edit-columns .review-next-step { display: flex; flex-wrap: wrap; gap: 5px; }
+
+@media (min-width: 1200px) {
+  .reference-ui .review-columns.catalog-edit-columns.review-selected:has(.catalog-price-detail) {
+    grid-template-columns: minmax(0, .85fr) minmax(0, 1fr) minmax(0, .9fr);
+  }
+  .reference-ui .catalog-edit-columns .catalog-price-detail { grid-column: 3; }
+  .reference-ui .catalog-edit-columns .review-register { grid-row: auto; }
+}
+
+@media (max-width: 800px) {
+  .reference-ui .review-columns.catalog-edit-columns { display: grid; grid-template-columns: minmax(0, 1fr); }
+  .reference-ui .review-columns.catalog-edit-columns.review-selected > .review-register { display: block; }
+  .reference-ui .catalog-edit-columns .catalog-price-detail { grid-column: 1; }
+  .reference-ui .catalog-edit-columns .review-register { grid-row: auto; }
+}

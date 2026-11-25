@@ -32,7 +32,7 @@ export function productSetup(form: FormData): ProductSetup {
     sku = value(form, "sku");
   const baseUnit = value(form, "baseUnit"),
     unitName = value(form, "unit");
-  if (!name || !sku || !unitName)
+  if (!name || !sku || !unitName || unitName.length > 40)
     throw new Error("Enter the product name, SKU and selling unit name.");
   if (!["kg", "liter", "meter", "piece"].includes(baseUnit))
     throw new Error("Choose the stock measurement.");
@@ -57,8 +57,11 @@ export function productSetup(form: FormData): ProductSetup {
       throw new Error(
         "The main unit already uses the stock measurement. Add only one price for it.",
       );
-    const retailName =
+    const defaultName =
       baseUnit === "kg" ? "Kilo" : baseUnit === "liter" ? "Liter" : baseUnit === "meter" ? "Meter" : "Piece";
+    const retailName = form.has("retailName") ? value(form, "retailName") : defaultName;
+    if (!retailName || retailName.length > 40)
+      throw new Error("Enter a retail selling unit name up to 40 characters.");
     if (unitName.toLowerCase() === retailName.toLowerCase())
       throw new Error(`Give the pack a different name from ${retailName}.`);
     units.push({

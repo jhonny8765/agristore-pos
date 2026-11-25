@@ -10,12 +10,14 @@ import type {
 import { setting, setSetting, type PosDatabase, type Transport } from "@agristore/offline";
 import { recordColumns } from "./record-columns";
 import { commandError, isDatabaseRejection } from "./command-error";
+import type {BranchNetwork} from './branch-network';
+import type {BranchPriceBook} from './branch-pricing';
 
 export const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL ??
-    "https://vbmnnouwmxcuibywdkjw.supabase.co",
+    "http://127.0.0.1:55321",
   process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY ??
-    "sb_publishable_A6uf2-Je7dOIj5kv0Vx88A_k7mvkaxZ",
+    "local-practice-placeholder",
   {
     auth: {
       persistSession: true,
@@ -72,7 +74,13 @@ export async function memberships(): Promise<Membership[]> {
     name: m.name,
   }));
 }
-export async function branches(org: string): Promise<Branch[]> {
+export async function branchNetwork(org:string):Promise<BranchNetwork>{
+ return command<BranchNetwork>('branch_network',{organizationId:org});
+}
+export async function branchPriceBook(input:{organizationId:string;branchId:string;query:string;cursor?:string}):Promise<BranchPriceBook>{
+ return command<BranchPriceBook>('branch_price_book',input);
+}
+export async function branches(org: string, permittedIds?:string[]): Promise<Branch[]> {
   const { data, error } = await supabase
     .from("branches")
     .select("id,name,code,managementLocked:management_locked,multiPc:multi_pc")
@@ -80,7 +88,7 @@ export async function branches(org: string): Promise<Branch[]> {
     .eq("active", true)
     .order("code");
   if (error) throw new Error(error.message);
-  return data ?? [];
+  return (data ?? []).filter(branch=>!permittedIds||permittedIds.includes(branch.id));
 }
 export async function requestSnapshot(db: PosDatabase | undefined, input: Record<string, unknown>): Promise<Snapshot> {
   const localRequestId = db ? crypto.randomUUID() : undefined;
@@ -130,6 +138,7 @@ export function cloudTransport(lease: Lease, db?: PosDatabase): Transport {
       }
     },
     push: async (sale: Sale) => {
+      if(db&&(await db.sales.get(sale.transactionId))?.allocation)throw Error('Use the original allocated cash receipt synchronizer for this sale');
       try {
         return await command<SyncAck>(
           "record_sale",
@@ -217,4 +226,23 @@ export async function salesPage(
         ? { occurredAt: String(last.occurred_at), id: String(last.id) }
         : undefined,
   };
+}
+
+export interface ExpenseDrawerCursor {organizationId:string;branchId:string;openedAt:string;id:string}
+export interface ExpenseDrawerChoice {id:string;deviceId:string;cashierId:string;openedAt:string;closedAt:string|null;pc:string;cashier:string}
+export async function expenseDrawerChoices(org:string,branch:string,cursor?:ExpenseDrawerCursor):Promise<{items:ExpenseDrawerChoice[];nextCursor:ExpenseDrawerCursor|null}>{
+ const uuid=/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+ if(cursor&&(cursor.organizationId!==org||cursor.branchId!==branch||!uuid.test(cursor.id)||!/^\d{4}-\d\d-\d\dT\d\d:\d\d:\d\d(?:\.\d{1,6})?(?:Z|[+-]\d\d:\d\d)$/.test(cursor.openedAt)||!Number.isFinite(Date.parse(cursor.openedAt))))throw Error('Drawer lookup scope or cursor changed. Start with recent drawers.');
+ let query=supabase.from('cashier_shifts').select('id,device_id,cashier_id,opened_at,closed_at').eq('organization_id',org).eq('branch_id',branch).order('opened_at',{ascending:false}).order('id',{ascending:false});
+ if(cursor)query=query.or(`opened_at.lt.${cursor.openedAt},and(opened_at.eq.${cursor.openedAt},id.lt.${cursor.id})`);
+ const shifts=await query.limit(1000);if(shifts.error)throw Error(shifts.error.message);
+ const page=shifts.data??[];
+ async function names(table:'devices'|'staff_memberships',column:'id'|'user_id',ids:string[]){
+  const chunks:string[][]=[];for(let offset=0;offset<ids.length;offset+=100)chunks.push(ids.slice(offset,offset+100));
+  const results=await Promise.all(chunks.map(values=>supabase.from(table).select(`${column},name`).eq('organization_id',org).in(column,values).limit(1000)));
+  const labels=new Map<string,string>();for(const result of results){if(result.error)throw Error(result.error.message);for(const row of (result.data??[]) as unknown as Record<string,unknown>[])labels.set(String(row[column]),String(row.name));}return labels;
+ }
+ const [devices,staff]=await Promise.all([names('devices','id',[...new Set(page.map(s=>s.device_id))]),names('staff_memberships','user_id',[...new Set(page.map(s=>s.cashier_id))])]);
+ const items=page.map(s=>({id:s.id,deviceId:s.device_id,cashierId:s.cashier_id,openedAt:s.opened_at,closedAt:s.closed_at as string|null,pc:devices.get(s.device_id)??'Registered PC',cashier:staff.get(s.cashier_id)??'Original cashier'})),last=items.at(-1);
+ return {items,nextCursor:items.length===1000&&last?{organizationId:org,branchId:branch,openedAt:last.openedAt,id:last.id}:null};
 }

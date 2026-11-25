@@ -2,11 +2,13 @@
 @import "./reference-ui.css";
 @import "./receipt-print.css";
 @import "./supplier-accounts.css";
+@import "./supplier-directory.css";
 @import "./workflow.css";
 @import "./updated-ui.css";
 @import "./usability.css";
 @import "./owner-inventory.css";
 @import "./product-metadata-editor.css";
+@import "./audit-fixes.css";
 
 .record-pages { min-width: 0; width: 100%; }
 .record-pagination { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: .75rem; padding: .85rem 0; color: var(--muted); font-size: .85rem; }
@@ -2604,3 +2606,74 @@ td small {
 .inventory-sort:hover { text-decoration: underline; text-underline-offset: 4px; }
 .inventory-sort svg { flex: 0 0 16px; }
 .inventory-sort:focus-visible { outline: 2px solid var(--forest); outline-offset: 3px; border-radius: 3px; }
+
+/* Drawer expenses use the existing paper registers and standard form controls. */
+.drawer-expenses { display: grid; gap: 1.25rem; min-width: 0; }
+.drawer-expenses :is(fieldset, .field, select, td, .expense-details) { min-width: 0; overflow-wrap: anywhere; }
+.drawer-expenses fieldset { border: 0; margin: 0; padding: 0; }
+.drawer-expenses fieldset:disabled { opacity: .75; }
+.drawer-expenses .check-field { display: flex; gap: .75rem; align-items: flex-start; margin-block: 1rem; max-width: 70ch; }
+.drawer-expenses .check-field input { flex: 0 0 1.25rem; width: 1.25rem; height: 1.25rem; min-height: 1.25rem; margin-top: .3rem; }
+.drawer-expenses details { margin-block: 1rem; }
+.drawer-expenses summary { cursor: pointer; padding-block: .5rem; }
+.drawer-expenses pre { white-space: pre-wrap; overflow-wrap: anywhere; max-width: 100%; font: inherit; }
+.drawer-expenses p { max-width: 75ch; }
+.drawer-expenses .expense-details { padding-block: 1rem; border-top: 1px solid var(--border); }
+.drawer-expenses td small { display: block; }
+.drawer-expenses .compact-ledger dd { white-space: nowrap; }
+@media (max-width: 600px) {
+ .drawer-expenses .report-filters { grid-template-columns: 1fr; }
+ .drawer-expenses .pending-operation { flex-direction: column; align-items: stretch; }
+ .drawer-expenses .compact-ledger > div { flex-wrap: wrap; }
+}
+
+.drawer-expenses .button { max-width: 100%; white-space: normal; min-height: 44px; }
+
+.reference-ui main[data-view="expenses"] > .app-notices {
+ position: static;
+ max-width: none;
+ margin-block: 0 1rem;
+ z-index: auto;
+}
+
+/* Each basket line keeps its summary visible while its editor is folded. */
+.reference-ui .receipt-item.collapsible-sale-line { display:block; min-height:0; }
+.reference-ui .cart-line-header { display:flex; align-items:flex-start; gap:4px; }
+.reference-ui .cart-line-toggle { display:flex; align-items:center; gap:8px; flex:1; min-width:0; min-height:56px; padding:6px 0; background:none; border:0; color:var(--ink); text-align:left; border-radius:6px; }
+.reference-ui .cart-line-toggle:focus-visible,.reference-ui .cart-line-remove:focus-visible { outline:3px solid var(--green); outline-offset:2px; }
+.reference-ui .cart-line-photo { width:28px; flex-shrink:0; }
+.reference-ui .cart-line-photo .photo-placeholder small { display:none; }
+.reference-ui .cart-line-summary { display:flex; flex:1; min-width:0; flex-direction:column; gap:4px; overflow-wrap:anywhere; }
+.reference-ui .cart-line-summary strong { font-size:15px; }
+.reference-ui .cart-line-summary>span { font-size:13px; color:var(--muted); }
+.reference-ui .cart-line-summary .cart-line-warning { color:var(--green); font-weight:650; }
+.reference-ui .cart-line-total { flex-shrink:0; font-size:15px; font-weight:750; }
+.reference-ui .cart-line-toggle>svg { flex-shrink:0; }
+.reference-ui .cart-line-toggle[aria-expanded=true]>svg { transform:rotate(180deg); }
+.reference-ui .cart-line-remove { width:44px; min-width:44px; min-height:44px; display:grid; place-items:center; padding:8px; background:none; border:0; border-radius:6px; color:var(--muted); }
+.reference-ui .cart-line-body { padding:8px 0 4px 36px; }
+.reference-ui .cart-line-body[hidden] { display:none; }
+.reference-ui .offline-stock-status { min-width:0; padding:12px 16px; border-block:1px solid var(--line); background:var(--paper,#f8f7f2); }
+.reference-ui .offline-stock-status h3 { font-size:16px; margin:0 0 6px; }
+.reference-ui .offline-stock-status p { font-size:13px; line-height:1.5; margin:6px 0; }
+.reference-ui .offline-stock-status summary { min-height:44px; padding-block:10px; cursor:pointer; font-size:14px; font-weight:650; }
+.reference-ui .offline-stock-status .button { margin-top:8px; white-space:normal; }
+.reference-ui .offline-stock-status form { margin-top:14px; }
+.reference-ui .offline-stock-status label { display:flex; flex-direction:column; gap:6px; }
+.reference-ui .offline-stock-scroll { max-height:260px; overflow:auto; min-width:0; }
+.reference-ui .offline-stock-status table { width:100%; font-size:13px; border-collapse:collapse; }
+.reference-ui .offline-stock-status th,.reference-ui .offline-stock-status td { padding:8px; text-align:left; border-bottom:1px solid var(--line); overflow-wrap:anywhere; }
+.reference-ui .offline-stock-status small { display:block; }
+.reference-ui .product-offline-allowance { font-size:13px; margin:6px 0; grid-column:1/-1; }
+.reference-ui .offline-stock-issue { font-weight:600; }
+.reference-ui .offline-original-resolution form { display:grid; gap:12px; }
+.reference-ui .offline-original-resolution label:not(.checkbox) { display:grid; gap:6px; }
+.reference-ui .offline-original-resolution textarea { min-height:88px; resize:vertical; }
+.reference-ui .cart-line-body>.line-discount { width:min(100%,160px); display:flex; flex-direction:column; margin:0 0 8px; }
+.reference-ui .cart-line-body .line-retail { position:static; }
+@media(max-width:600px) {
+ .reference-ui .cart-line-body { padding-left:0; }
+ .reference-ui .cart-line-toggle { flex-wrap:wrap; }
+ .reference-ui .cart-line-summary { flex-basis:calc(100% - 44px); }
+ .reference-ui .cart-line-total { margin-left:36px; }
+}

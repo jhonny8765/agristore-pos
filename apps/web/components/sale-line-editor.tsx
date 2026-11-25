@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useId, useRef } from "react";
-import { Minus, Plus, X, EllipsisVertical } from "lucide-react";
+import { Minus, Plus, X, EllipsisVertical, ChevronDown, Package } from "lucide-react";
 import Decimal from "decimal.js";
 import {
   makeItem,
@@ -13,6 +13,7 @@ import {
   type SaleItem,
 } from "@agristore/domain";
 import { draftLineTotal, useCart } from "../lib/cart";
+import {basketPriceChanged,sellingUnitReady} from '../lib/branch-pricing';
 import {
   enteredQuantity,
   estimateBudget,
@@ -20,7 +21,6 @@ import {
   pesoBudget,
   quantityFromDisplay,
 } from "../lib/quantity-entry";
-import { ProductPhoto } from "./product-photo";
 import { Button } from "./ui/button";
 
 const confirmation = "Confirm the actual scale weight before checkout.";
@@ -32,6 +32,8 @@ export function SaleLineEditor({
   lineId,
   disabled,
   canDiscount=true,
+  expanded=true,
+  onExpandedChange,
 }: {
   item: SaleItem;
   product: Product;
@@ -39,6 +41,8 @@ export function SaleLineEditor({
   lineId: string;
   disabled: boolean;
   canDiscount?: boolean;
+  expanded?: boolean;
+  onExpandedChange?: (expanded: boolean) => void;
 }) {
   const cart = useCart();
   const { draft, display, budgetMode, budget, budgetError, original, focus, discount, discountKind, discountError } =
@@ -67,6 +71,13 @@ export function SaleLineEditor({
   const error = cart.quantityErrors[lineId];
   const displayedAmount = draftLineTotal(item, { draft, display, discountError });
   const amounts=lineAmounts(item);
+  const activeUnit=product.units.find(u=>u.id===item.unitId),priceChanged=basketPriceChanged(item,activeUnit);
+  const sealed=item.sellingPolicy==='sealed_whole';
+  // Keep unfinished measurements and errors visible even when another item opens.
+  const needsAttention=!!(error||discountError||priceChanged||budgetMode||focus);
+  const isExpanded=expanded||needsAttention;
+  const markError=cart.quantityError;
+  useEffect(()=>{if(priceChanged&&!disabled)markError(lineId,'The selling price or unit changed. Review the current price before checkout.');},[priceChanged,disabled,lineId,markError]);
   function setDiscount(value:string){
     cart.edit(lineId,{discount:value,discountKind:"amount"});
     try{const amount=value===''?0:moneyCentavos(value);cart.discount(index,amount);cart.edit(lineId,{discountError:undefined});}
@@ -91,8 +102,10 @@ export function SaleLineEditor({
   ) {
     setDraft(raw);
     try {
+      if(priceChanged)throw Error('Review the current selling price before changing this line.');
       const quantity = quantityFromDisplay(raw, inGrams);
-      cart.replace(index, applyAmountDiscount(makeItem(product, unitId, quantity, batchId),lineAmounts(item).discount));
+      const next=applyAmountDiscount(makeItem(product, unitId, quantity, batchId),lineAmounts(item).discount);
+      cart.replace(index,{...next,...(next.sellingPolicy==='sealed_whole'?{intactPackagingConfirmed:unitId===item.unitId&&quantity===item.quantity&&item.intactPackagingConfirmed===true}:{})});
       cart.quantityError(lineId, needsConfirmation ? confirmation : undefined);
       return true;
     } catch (error) {
@@ -124,12 +137,17 @@ export function SaleLineEditor({
   } catch {}
 
   return (
-    <div className="receipt-item" data-measured={loose||liquid||budgetMode}>
-      <div className="receipt-item-photo"><ProductPhoto product={product}/></div>
-      <div className="receipt-item-top">
-        <strong>{item.name}</strong>
-        {canDiscount&&<label className="line-discount"><span>Discount ₱</span><input aria-label={`Discount (₱) for ${item.name}`} title="Peso discount for this product line" inputMode="decimal" autoComplete="off" value={discountKind==='amount'?(discount??''):(amounts.discount?moneyInput(amounts.discount):'')} placeholder="0.00" maxLength={17} disabled={disabled} aria-invalid={!!discountError} aria-describedby={discountError?errorId+'-discount':errorId+'-discount-help'} onChange={event=>setDiscount(event.target.value)}/><small className="sr-only" id={errorId+'-discount-help'}>Amount off this entire line, not a percentage.</small></label>}
+    <div className="receipt-item collapsible-sale-line" data-measured={isExpanded&&(loose||liquid||budgetMode)}>
+      <div className="cart-line-header">
+        <button type="button" className="cart-line-toggle" aria-expanded={isExpanded} aria-controls={errorId+'-editor'} onClick={()=>onExpandedChange?.(!isExpanded)}>
+          <span className="sr-only">Edit </span>
+          <span className="cart-line-photo"><Package size={26} aria-hidden="true"/></span>
+          <span className="cart-line-summary"><strong>{item.name}</strong><span>{item.quantity} × {item.unitName}{amounts.discount>0?` · −${money(amounts.discount)} discount`:''}</span>{sealed&&item.intactPackagingConfirmed!==true&&<span className="cart-line-warning">Confirm sealed packs</span>}</span>
+          <span className="cart-line-total">{displayedAmount===null?'Check amount':money(displayedAmount)}</span>
+          <ChevronDown size={18} aria-hidden="true"/>
+        </button>
         <button
+          type="button" className="cart-line-remove"
           disabled={disabled}
           aria-label={`Remove ${item.name}`}
           onClick={() => cart.remove(index)}
@@ -137,7 +155,10 @@ export function SaleLineEditor({
           <X size={15} />
         </button>
       </div>
+      <div className="cart-line-body" id={errorId+'-editor'} hidden={!isExpanded} onFocusCapture={()=>{if(!expanded)onExpandedChange?.(true);}}>
+      {canDiscount&&<label className="line-discount"><span>Discount ₱</span><input aria-label={`Discount (₱) for ${item.name}`} title="Peso discount for this product line" inputMode="decimal" autoComplete="off" value={discountKind==='amount'?(discount??''):(amounts.discount?moneyInput(amounts.discount):'')} placeholder="0.00" maxLength={17} disabled={disabled} aria-invalid={!!discountError} aria-describedby={discountError?errorId+'-discount':errorId+'-discount-help'} onChange={event=>setDiscount(event.target.value)}/><small className="sr-only" id={errorId+'-discount-help'}>Amount off this entire line, not a percentage.</small></label>}
       <div className="receipt-item-config">
+        <label className="sale-unit-field"><span>Selling unit</span>
         <select
           aria-label={`Unit for ${item.name}`}
           value={item.unitId}
@@ -149,10 +170,11 @@ export function SaleLineEditor({
         >
           {product.units.map((unit) => (
             <option key={unit.id} value={unit.id}>
-              {unit.name}
+              {unit.name}{sellingUnitReady(product,unit)&&unit.price!==null?` · ${money(unit.price)}`:' · price needed'}{unit.sellingPolicy==='sealed_whole'?' · sealed whole packs':''}
             </option>
           ))}
         </select>
+        </label>
         {product.batches.length > 0 && (
           <select
             aria-label={`Batch for ${item.name}`}
@@ -175,6 +197,8 @@ export function SaleLineEditor({
         {loose ? " · loose weight" : ""}
       </p>
       {amounts.discount>0&&displayedAmount!==null&&<p className="line-discount-summary">Before discount {money(amounts.gross)} · Line discount −{money(amounts.discount)}</p>}
+      {priceChanged&&<div className="notice" role="alert"><p>The current {activeUnit?.name??'unit'} price is {activeUnit?.price==null?'not confirmed':money(activeUnit.price)}. The basket keeps its previous amount until reviewed.</p><Button type="button" variant="outline" disabled={disabled||!sellingUnitReady(product,activeUnit)} onClick={()=>{try{cart.replace(index,applyAmountDiscount(makeItem(product,item.unitId,quantityFromDisplay(draft,grams),item.batchId),lineAmounts(item).discount));}catch(e){report(e);}}}>Review and use current price</Button></div>}
+      {sealed&&<label className="checkbox packaging-confirmation"><input type="checkbox" disabled={disabled||priceChanged} checked={item.intactPackagingConfirmed===true} onChange={e=>cart.confirmPackaging(index,e.target.checked)}/><span>I checked that all {item.quantity} {item.unitName} packs are intact and sealed.</span></label>}
       {discountError&&<p className="quantity-error line-discount-error" id={errorId+'-discount'} role="alert">{discountError}</p>}
       <div className="receipt-item-bottom">
         <div className="quantity-entry">
@@ -395,7 +419,7 @@ export function SaleLineEditor({
             </p>
           )}
           <p>
-            Estimate uses {money(kilo!.price)} / kg, rounded down to whole
+            Estimate uses {kilo!.price===null?'unconfirmed price':money(kilo!.price)} / kg, rounded down to whole
             grams. Weigh the product and enter the actual scale weight above.
             The recorded weight sets the final price.
           </p>
@@ -463,6 +487,7 @@ export function SaleLineEditor({
           Customer budget: ₱{budget}. Recorded amount: {money(item.lineTotal)}.
         </p>
       )}
+      </div>
     </div>
   );
 }

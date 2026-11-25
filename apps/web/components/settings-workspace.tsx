@@ -5,9 +5,15 @@ import {WorkspaceTabs,workspaceSections} from './workspace-ui';
 import {RecordTable} from './record-pages';
 import {Button} from './ui/button';
 
-export function SettingsWorkspace({children,branchName,branchCode,cashierName,shiftOpen,cacheReady,onClose,staff=[],devices=[],onExport,onUpdate,updateDisabled=true,openingCash,openedAt,creditEnabled=false}:{creditEnabled?:boolean;staff?:{id:string;name:string;role:string;active:boolean}[];devices?:{id:string;name:string;active:boolean}[];onExport?:()=>void;onUpdate?:()=>void;updateDisabled?:boolean;openingCash?:string;openedAt?:string;children:ReactNode;branchName:string;branchCode:string;cashierName?:string;shiftOpen:boolean;cacheReady:boolean;onClose:()=>void}) {
- const [tab,setTab]=useState('general'),[detail,setDetail]=useState(''),[storage,setStorage]=useState('Checking…');
+export function SettingsWorkspace({children,branchName,branchCode,cashierName,shiftOpen,cacheReady,onClose,staff=[],devices=[],onExport,onUpdate,updateDisabled=true,openingCash,openedAt,applicationRequest=0,creditEnabled=false}:{applicationRequest?:number;creditEnabled?:boolean;staff?:{id:string;name:string;role:string;active:boolean}[];devices?:{id:string;name:string;active:boolean}[];onExport?:()=>void;onUpdate?:()=>void;updateDisabled?:boolean;openingCash?:string;openedAt?:string;children:ReactNode;branchName:string;branchCode:string;cashierName?:string;shiftOpen:boolean;cacheReady:boolean;onClose:()=>void}) {
+ const [tab,setTab]=useState(applicationRequest?'application':'general'),[detail,setDetail]=useState(''),[storage,setStorage]=useState('Checking…');
  useEffect(()=>{let active=true;if(navigator.storage?.persisted)void navigator.storage.persisted().then(v=>{if(active)setStorage(v?'Granted':'Not granted');}).catch(()=>{if(active)setStorage('Unknown');});else setStorage('Unavailable');return()=>{active=false;};},[]);
+ const [lastRequest,setLastRequest]=useState(applicationRequest);
+ if(lastRequest!==applicationRequest){
+  setLastRequest(applicationRequest);
+  setTab('application');
+  setDetail('');
+ }
  const sections=workspaceSections(children);
  const group=(title:string)=>/Staff access/i.test(title)?'staff':/cashier PCs/i.test(title)?'devices':/Application|recovery/i.test(title)?'application':/Cashier shift/i.test(title)?'shift':/^Branch/.test(title)?'branch':'guide';
  const app=sections.find(s=>group(s.title)==='application');const buttons:ReactNode[]=[];function collect(node:ReactNode){Children.forEach(node,n=>{if(!isValidElement<{children?:ReactNode}>(n))return;if(n.type===Button)buttons.push(n);else if(typeof n.type==='string')collect(n.props.children);});}if(app)collect(app.content);const update=buttons.find(n=>isValidElement<{children?:ReactNode}>(n)&&String(n.props.children).includes('Check for app update'));const exportButton=buttons.find(n=>isValidElement<{children?:ReactNode}>(n)&&String(n.props.children).includes('Export'));

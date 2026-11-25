@@ -2,3 +2,6 @@
 @media(max-width:1000px){.supplier-totals{grid-template-columns:1fr 1fr}.supplier-filters{grid-template-columns:1fr 1fr}}
 @media(max-width:650px){.supplier-totals{padding:16px;gap:18px 12px}.supplier-totals dd{font-size:20px}.supplier-filters,.supplier-form-grid{grid-template-columns:1fr}.supplier-accounts .section-heading>.button-row{width:100%}.supplier-accounts .section-heading>.button-row>.button{white-space:normal}.supplier-event-title{flex-wrap:wrap}.supplier-bill-detail>.detail-list>div{display:flex;gap:14px}.supplier-bill-detail>.detail-list dd{white-space:nowrap;text-align:right}.supplier-accounts textarea{font-size:16px}}
 .supplier-accounts .section-heading>div{min-width:0;max-width:100%;overflow-wrap:anywhere}.supplier-accounts .button-row{display:flex;flex-wrap:wrap;gap:10px}.supplier-bill-detail h3{overflow-wrap:anywhere}.supplier-register .record-link{max-width:260px;min-width:0;white-space:normal;overflow-wrap:anywhere;text-align:left}
+.supplier-accounts .supplier-detail-heading{margin-bottom:12px;align-items:center}
+.supplier-detail-heading h2{margin:0}
+.supplier-detail-error{margin-bottom:16px}

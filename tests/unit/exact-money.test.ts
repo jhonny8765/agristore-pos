@@ -2,7 +2,7 @@ import 'fake-indexeddb/auto';
 import {afterEach,describe,it,expect} from 'vitest';
 import {money,moneyInput,moneyCentavos,cashQuickAmounts,canonicalQuantity,lineAmounts,total,refundAllocation,availableCredit,creditTotalValue,type PartialRefundLine,type CreditBook,type CreditClient} from '@agristore/domain';
 import {useCart,hasCartErrors} from '../../apps/web/lib/cart';
-import {sale} from './fixtures';
+import {sale,uuid} from './fixtures';
 afterEach(()=>useCart.getState().clear());
 describe('exact money boundaries',()=>{
  it('preserves the centavo previously lost by credit input and currency display',()=>{expect(moneyCentavos('90071992547409.85')).toBe(9007199254740985);expect(money(9007199254740985)).toBe('₱90,071,992,547,409.85');expect(moneyInput(9007199254740985)).toBe('90071992547409.85');});
@@ -11,7 +11,18 @@ describe('exact money boundaries',()=>{
  it.each(['','NaN','Infinity','-1','1e3','1.001','90071992547409.92'])('rejects unsupported peso input %s',v=>expect(()=>moneyCentavos(v)).toThrow());
  it('does not silently round an unrepresentable base quantity to six decimals',()=>{expect(()=>canonicalQuantity('999999999999.999999','0.999999')).toThrow('precision');expect(canonicalQuantity('1250','0.001')).toBe('1.25');});
  it('prevents oversized baskets and totals while retaining the original basket',()=>{const first={...sale().items[0],quantity:'1',unitPrice:Number.MAX_SAFE_INTEGER,lineTotal:Number.MAX_SAFE_INTEGER};useCart.getState().add(first);expect(()=>useCart.getState().add({...first,unitPrice:1,lineTotal:1})).toThrow('too large');expect(useCart.getState().items).toEqual([first]);expect(()=>total([{lineTotal:Number.MAX_SAFE_INTEGER},{lineTotal:1}])).toThrow();expect(hasCartErrors({drafts:{},quantityErrors:{},items:[first,{...first,lineTotal:1}]})).toBe(true);});
- it('enforces the existing 100-line receipt limit before discarding or saving a sale',()=>{const line=sale().items[0];for(let n=0;n<100;n++)useCart.getState().add(line);expect(()=>useCart.getState().add(line)).toThrow('100 lines');expect(useCart.getState().items).toHaveLength(100);});
+ it('allows increasing an existing quantity but blocks a 101st receipt line',()=>{
+  const line=sale().items[0];
+  const lines=Array.from({length:101},(_,index)=>({
+   ...line,productId:uuid(1000+index),unitId:uuid(2000+index),
+  }));
+  for(const item of lines.slice(0,100))useCart.getState().add(item);
+  const [firstLineId]=useCart.getState().lineIds;
+  expect(useCart.getState().add(lines[0])).toBe(firstLineId);
+  expect(useCart.getState().items[0].quantity).toBe('2');
+  expect(()=>useCart.getState().add(lines[100])).toThrow('100 lines');
+  expect(useCart.getState().items).toHaveLength(100);
+ });
  it('uses exact tender shortcuts and never suggests an unsupported amount',()=>{expect(cashQuickAmounts(84000)).toEqual([84000,90000,100000]);expect(cashQuickAmounts(Number.MAX_SAFE_INTEGER)).toEqual([Number.MAX_SAFE_INTEGER]);});
  it('uses exact large customer debt when computing available credit',()=>{const c={limit:Number.MAX_SAFE_INTEGER,outstanding:0,outstandingExact:'18014398509481982'} as CreditClient;expect(availableCredit(c)).toBe(0);expect(availableCredit({...c,outstandingExact:'9007199254740985'})).toBe(6);expect(creditTotalValue({outstanding:0,exactTotals:{outstanding:'18014398509481982'}} as CreditBook,'outstanding')).toBe('18014398509481982');});
 });

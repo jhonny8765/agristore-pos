@@ -150,11 +150,11 @@ describe("stable checkout line drafts", () => {
     });
     expect(Object.keys(state.quantityErrors)).toHaveLength(2);
   });
-  it("retains the other duplicate product's draft and blocking error after removing a row", () => {
+  it("retains a separate weighed draft for the same product after removing a row", () => {
     const item = makeItem(product, uuid(12), "1", null);
-    useCart.getState().add(item);
-    useCart.getState().add(item);
-    const [first, second] = useCart.getState().lineIds;
+    const first = useCart.getState().add(item);
+    const second = useCart.getState().add(item, "weight");
+    expect(second).not.toBe(first);
     useCart.getState().edit(second, {
       draft: "0.",
       budgetMode: true,

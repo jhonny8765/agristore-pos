@@ -1,10 +1,15 @@
 import Dexie, { type Table } from "dexie";
+import type {LocalOfflineGrant,LocalAllocation} from './allocated';
+import {installOfflineGrant} from './allocated';
+export * from './allocated';
 import Decimal from "decimal.js";
 import {
   canonicalQuantity,
+  allocatedCashSchema,offlineGrantSchema,type OfflineGrant,
   requireLease,
   saleSchema,
   stableJSON,
+  validateSellingItem,
   type Lease,
   type Product,
   type Sale,
@@ -31,6 +36,7 @@ export interface LocalSale {
   receipt?: string;
   flags?: string[];
   error?: string;
+  allocation?: LocalAllocation;
 }
 export const unresolvedStates: SyncState[] = ["pending", "sending", "authentication_required", "retryable", "review_required"];
 interface Setting {
@@ -43,6 +49,7 @@ interface Lock {
   expiresAt: number;
 }
 export class PosDatabase extends Dexie {
+  offlineGrants!: Table<LocalOfflineGrant,string>;
   products!: Table<Product, string>;
   stocks!: Table<Stock, string>;
   sales!: Table<LocalSale, string>;
@@ -62,6 +69,7 @@ export class PosDatabase extends Dexie {
     this.version(2).stores({
       sales: "id,status,nextAttempt,[payload.organizationId+payload.branchId+payload.occurredAt+id],[payload.organizationId+payload.branchId+payload.cashierId+payload.occurredAt+id],[payload.organizationId+payload.branchId+status+id],[payload.organizationId+payload.branchId+payload.cashierId+status+id],[status+id]",
     });
+    this.version(3).stores({offlineGrants:'id,scope',sales:'id,status,nextAttempt,[payload.organizationId+payload.branchId+payload.occurredAt+id],[payload.organizationId+payload.branchId+payload.cashierId+payload.occurredAt+id],[payload.organizationId+payload.branchId+status+id],[payload.organizationId+payload.branchId+payload.cashierId+status+id],[status+id],allocation.original.grantId'});
   }
 }
 export async function setting<T>(
@@ -113,6 +121,7 @@ export async function saveCheckout(
       for (const item of sale.items) {
         const p = await db.products.get(item.productId);
         const u = p?.units.find((u) => u.id === item.unitId);
+        validateSellingItem(item, sale.branchId, u);
         if (
           !p?.active ||
           !u ||
@@ -198,7 +207,7 @@ export async function applySnapshot(db: PosDatabase, snapshot: Snapshot, syncGua
       await db.stocks.bulkPut(snapshot.stocks);
       for (const id of snapshot.confirmedIds) {
         const sale = await db.sales.get(id);
-        if (sale && sale.status !== "review_required")
+        if (sale && sale.status !== "review_required" && (!sale.allocation||sale.allocation.acknowledged))
           await db.sales.update(id, {
             status: "synced",
             error: undefined,
@@ -317,6 +326,7 @@ export async function syncOnce(
         s.payload.branchId === lease.branchId &&
         s.payload.organizationId === lease.organizationId &&
         s.payload.cashierId === lease.cashierId &&
+        !s.allocation &&
         s.status !== "synced" &&
         s.status !== "review_required",
     );
@@ -448,6 +458,11 @@ export async function readLocalSales(db: PosDatabase, scope: RecoveryScope, limi
 }
 
 export const recoveryOperationIds: Record<string, string> = {
+  prepare_pc_offline:'requestId',configure_offline_cash:'requestId',refresh_pc_stock_grant:'requestId',return_pc_stock_grant:'requestId',reconcile_allocated_cash_sale:'requestId',
+  record_drawer_expense: "requestId",
+  correct_drawer_expense: "requestId",
+  return_drawer_expense_cash: "requestId",
+  reconcile_drawer_expense: "requestId",
   record_online_sale: 'transactionId',
   configure_cashier_pcs: 'branchId',
   review_import_setup: 'requestId',
@@ -484,6 +499,7 @@ export type RecoveryActor = Pick<Lease, "organizationId" | "branchId" | "cashier
 const RECOVERY_PART_SIZE = 1000;
 interface RecoveryArchive {
   id: string; scope?: RecoveryScope; ids: string[]; operations: unknown[]; lease?: Lease; exportedAt: string;
+  grantIds?:string[];
 }
 async function checksum(value: unknown) {
   return [...new Uint8Array(await crypto.subtle.digest("SHA-256", new TextEncoder().encode(stableJSON(value))))]
@@ -499,7 +515,9 @@ export async function exportRecoveryPart(db: PosDatabase, archiveId: string, par
   // Hash the JSON representation actually written to disk. Optional undefined
   // fields (notably an owner's unrestricted cashier scope) disappear in JSON.
   // Do not change sale or operation fingerprints: their identities are retained.
-  const body: { sales: LocalSale[]; pendingOperations: unknown[] } = JSON.parse(JSON.stringify({ sales: records, pendingOperations: part === 1 ? archive.operations : [] }));
+  const grantIds=[...new Set([...records.flatMap(s=>s?.allocation?[s.allocation.original.grantId]:[]),...(part===1?archive.grantIds??[]:[])])];
+  const grants=(await db.offlineGrants.bulkGet(grantIds)).flatMap(g=>g?[g.grant]:[]);
+  const body: { sales: LocalSale[]; pendingOperations: unknown[];offlineGrants?:OfflineGrant[] } = JSON.parse(JSON.stringify({ sales: records, pendingOperations: part === 1 ? archive.operations : [],...(grants.length?{offlineGrants:grants}:{}) }));
   const manifest = { id: archive.id, part, parts, totalRecords: archive.ids.length, recordCount: records.length,
     ...(archive.scope ? { scope: JSON.parse(JSON.stringify(archive.scope)) as RecoveryScope } : {}) };
   const result = { version: 2, exportedAt: archive.exportedAt, archive: manifest,
@@ -520,6 +538,7 @@ export async function exportRecovery(db: PosDatabase, scope?: RecoveryScope) {
   const ids = (await db.sales.where("status").anyOf(unresolvedStates).filter(matches).primaryKeys()) as string[];
   const archive: RecoveryArchive = {
     id: crypto.randomUUID(), scope, ids: ids.sort(), exportedAt: new Date().toISOString(),
+    grantIds:(await db.offlineGrants.filter(g=>!g.returned&&(!scope||(g.grant.organizationId===scope.organizationId&&g.grant.branchId===scope.branchId&&(!scope.cashierId||g.grant.cashierId===scope.cashierId)))).primaryKeys()) as string[],
     operations: (
       await db.settings.where("key").startsWith("operation:").toArray()
     )
@@ -553,6 +572,7 @@ export async function importRecovery(db: PosDatabase, input: unknown, confirmedI
     version?: unknown;
     sales?: unknown;
     pendingOperations?: unknown;
+    offlineGrants?:unknown;
     checksum?: unknown;
     archive?: { id: string; part: number; parts: number; totalRecords: number; recordCount: number; scope?: RecoveryScope };
   };
@@ -575,7 +595,7 @@ export async function importRecovery(db: PosDatabase, input: unknown, confirmedI
     data.archive.parts !== Math.max(1,Math.ceil(data.archive.totalRecords/RECOVERY_PART_SIZE)) ||
     data.archive.recordCount !== data.sales.length ||
     data.archive.recordCount !== Math.max(0,Math.min(RECOVERY_PART_SIZE,data.archive.totalRecords-(data.archive.part-1)*RECOVERY_PART_SIZE)) ||
-    data.checksum !== await checksum({ archive:data.archive,sales: data.sales, pendingOperations: data.pendingOperations ?? [] })))
+    data.checksum !== await checksum({ archive:data.archive,sales: data.sales, pendingOperations: data.pendingOperations ?? [],...(data.offlineGrants!==undefined?{offlineGrants:data.offlineGrants}:{}) })))
     throw new Error("Recovery part is incomplete or its checksum does not match. Keep the original file.");
   if (data.archive?.scope && (data.archive.scope.organizationId !== context.organizationId ||
     data.archive.scope.branchId !== context.branchId))
@@ -591,10 +611,18 @@ export async function importRecovery(db: PosDatabase, input: unknown, confirmedI
       throw new Error(
         "Sign in as the original cashier or ask the owner to restore this file",
       );
+    const raw=(row as{allocation?:LocalAllocation}).allocation;
+    let allocation:LocalAllocation|undefined;
+    if(raw!==undefined){
+      const original=allocatedCashSchema.parse(raw.original);
+      if(stableJSON(original.sale)!==stableJSON(payload)||stableJSON(original)!==raw.fingerprint||typeof raw.grantFingerprint!=='string')throw Error('Invalid original allocated cash evidence. Keep both recovery files.');
+      allocation={original,fingerprint:raw.fingerprint,grantFingerprint:raw.grantFingerprint,acknowledged:false};
+    }
     return {
       payload,
       id: payload.transactionId,
       fingerprint: stableJSON(payload),
+      ...(allocation?{allocation}:{}),
     };
   };
   // Validate the complete part/legacy file before writing, without cloning all
@@ -615,6 +643,9 @@ export async function importRecovery(db: PosDatabase, input: unknown, confirmedI
   const operations = Array.isArray(data.pendingOperations)
     ? data.pendingOperations
     : [];
+  if(data.offlineGrants!==undefined&&(!Array.isArray(data.offlineGrants)||data.offlineGrants.length>1000))throw Error('Invalid offline grant recovery evidence');
+  const grantEvidence=(data.offlineGrants as unknown[]??[]).map(g=>offlineGrantSchema.parse(g));
+  for(const grant of grantEvidence)if(grant.organizationId!==context.organizationId||grant.branchId!==context.branchId||grant.cashierId!==context.cashierId&&context.role!=='owner')throw Error('Offline grant evidence belongs to another account or branch');
   if (operations.length > 100) throw new Error("Too many recovery operations");
   const safeOperations = operations.map((raw) => {
     const op = raw as {
@@ -645,6 +676,7 @@ export async function importRecovery(db: PosDatabase, input: unknown, confirmedI
     if(['review_import_setup','review_product_price','confirm_import_stock'].includes(op.action)&&context.role!=='owner')
       throw new Error('Only the owner can restore product review requests');
     if(op.action==='configure_cashier_pcs'&&context.role!=='owner')throw new Error('Only the owner can restore cashier PC mode requests');
+    if(['configure_offline_cash','reconcile_allocated_cash_sale'].includes(op.action)&&context.role!=='owner')throw Error('Only the owner can restore offline configuration or resolution requests');
     if(op.action==='record_online_sale'){
       const cash=saleSchema.safeParse(op.data);
       if(!cash.success||cash.data.cashierId!==op.actorId)throw new Error('Invalid original online cash sale. Keep the original recovery file for owner review.');
@@ -658,6 +690,7 @@ export async function importRecovery(db: PosDatabase, input: unknown, confirmedI
       key,
       value: {
         ...op,
+        ...(op.action.includes('pc_stock_grant')?{recovered:true}:{}),
         key,
         fingerprint: stableJSON(body),
         error: op.error ?? "Restored original request; verify before retrying",
@@ -676,7 +709,8 @@ export async function importRecovery(db: PosDatabase, input: unknown, confirmedI
   // Legacy >10k exports remain readable. Every 1000-record transaction can be
   // retried after interruption; conflicts never replace retained records.
   for (let offset = 0; offset < Math.max(1,sourceRows.length); offset += RECOVERY_PART_SIZE) {
-   await db.transaction("rw", [db.sales, db.settings], async () => {
+   await db.transaction("rw", [db.sales, db.settings,db.offlineGrants], async () => {
+    for(const grant of grantEvidence)await installOfflineGrant(db,lease??context as Lease,grant,'recovered');
     for (const op of safeOperations) {
       const existing = await db.settings.get(op.key);
       if (
@@ -699,16 +733,17 @@ export async function importRecovery(db: PosDatabase, input: unknown, confirmedI
       }
       const existing = await db.sales.get(record.id);
       if (existing) {
-        if (existing.fingerprint !== record.fingerprint)
+        if (existing.fingerprint !== record.fingerprint||stableJSON(existing.allocation?.original??null)!==stableJSON(record.allocation?.original??null))
           throw new Error(
             "Recovery conflicts with an existing transaction. Keep both files for owner review.",
           );
         continue;
       }
+      if(record.allocation)await db.offlineGrants.update(record.allocation.original.grantId,{frozen:true});
       await db.sales.add({
         ...record,
         status:
-          verified.has(record.id) ? "synced" : record.payload.cashierId === context.cashierId
+          verified.has(record.id)&&!record.allocation ? "synced" : record.payload.cashierId === context.cashierId
             ? "pending"
             : "review_required",
         attempts: 0,

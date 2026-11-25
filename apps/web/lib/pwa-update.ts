@@ -2,9 +2,10 @@ export async function findReadyUpdate(
   registration: ServiceWorkerRegistration,
   timeoutMs = 30_000,
 ): Promise<ServiceWorker | null> {
-  await registration.update();
+  const active = registration.active;
+  if (!registration.installing) await registration.update();
   const worker = registration.installing;
-  if (!worker) return registration.waiting;
+  if (!worker) return registration.waiting || (registration.active !== active ? registration.active : null);
   return new Promise((resolve, reject) => {
     const finish = (error?: Error, ready: ServiceWorker | null = null) => {
       clearTimeout(timer);
@@ -34,6 +35,21 @@ export async function findReadyUpdate(
     worker.addEventListener("statechange", changed);
     changed();
   });
+}
+
+export function updateCheckoutBlockers(cartItems: number, workInProgress = false) {
+  const messages: string[] = [];
+  if (cartItems) messages.push("Finish or hold the current sale in Checkout.");
+  if (workInProgress) messages.push("Wait for the current checkout or sync to finish.");
+  return messages;
+}
+
+export function savedUpdateWork(sales: number, requests: number) {
+  const records = [
+    sales ? `${sales} saved ${sales === 1 ? "sale" : "sales"}` : "",
+    requests ? `${requests} saved ${requests === 1 ? "request" : "requests"}` : "",
+  ].filter(Boolean).join(" and ");
+  return records ? `This browser will keep ${records} after the update, including records for other accounts or branches.` : "";
 }
 
 /** Restart only the requesting window, after activation and a fresh safety check.

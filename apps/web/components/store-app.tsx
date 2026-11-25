@@ -1,9 +1,11 @@
 "use client";
+import type { ReactNode } from "react";
 import {useTransientMessage} from "../lib/transient-message";
-import {RecordReports} from "./record-reports";
+import {useWorkspaceHistory} from "../lib/use-workspace-history";
+import dynamic from 'next/dynamic';
+import {drawerExpenseConfirmation} from '../lib/drawer-expense-ui';
 import type {RecordKind} from "../lib/record-reports";
 import { StateBadge } from "./state-badge";
-import {CreditWorkspace} from './credit-workspace';
 import {CreditCheckout} from './credit-checkout';
 import {CreditSaleConfirmation} from './credit-sale-confirmation';
 import type {ConfirmedCreditSale} from '../lib/credit-confirmation';
@@ -11,19 +13,35 @@ import { SearchableSelect } from "./search-select";
 import { RecordTable, RecordPages } from "./record-pages";
 import { HeldSaleControl } from "./held-sale";
 import {confirmOnlineCash,onlineCashKey} from '../lib/online-cash';
+import {refreshDrawerBaseline} from '../lib/local-drawer-cash';
+import {LocalDrawerCash} from './local-drawer-cash';
+import {OfflineStockStatus} from './offline-stock-status';
+import {OfflineOriginalReconciliation} from './offline-original-reconciliation';
+import {offlineCheckoutAvailability,type OfflineBranchStatus} from '../lib/offline-stock-ui';
+import {syncAllocatedCash,currentOfflineGrant,maintainAllocatedStock,offlineBranchStatus,prepareAllocatedPC,refreshAllocatedStock,pauseAllocatedStock,offlinePauseKey} from '../lib/allocated-cash';
 import { prepareHeldCheckout,removeHeldSale,heldSaleKey,type HeldSale } from "../lib/held-sale";
 import { DashboardAttention } from "./dashboard-attention";
 import { OverviewAccounts } from "./overview-accounts";
-import { AppUpdateNotice } from "./app-update-notice";
-import { PriceHistory } from "./price-history";
+import { AppUpdateNotice, useAppUpdateReady } from "./app-update-notice";
+const PriceHistory = dynamic(()=>import('./price-history').then(m=>m.PriceHistory));
+import {sellingUnitReady} from '../lib/branch-pricing';
+import {requestWorkspaceAllowed} from '../lib/branch-requests';
+const BranchStockRequests=dynamic(()=>import('./branch-stock-requests').then(m=>m.BranchStockRequests));
+const BranchTransfers=dynamic(()=>import('./branch-transfers').then(m=>m.BranchTransfers));
+const OutstandingDeliveries=dynamic(()=>import('./branch-transfer-receiving').then(m=>m.OutstandingDeliveries));
+const FinancialOriginalRecovery=dynamic(()=>import('./financial-original-recovery').then(m=>m.FinancialOriginalRecovery));
+import {saveBranchCash} from '../lib/local-cash';
 import { receiptActionCells } from "../lib/receipt-actions";
 import { OverviewDashboard } from "./overview-dashboard";
+import { notebookSalesReport } from "./notebook-sales-summary";
 import { WorkspaceStat } from "./workspace-ui";
 import { OrderWorkspace } from "./order-workspace";
 import { ReceiptWorkspace } from "./receipt-workspace";
+import { ReceivingRecords } from "./receiving-records";
 import { SaleReceiptPrint } from "./sale-receipt-print";
-import {SupplierPurchaseFields,purchaseInvoice} from "./supplier-purchase-fields";
-import { SupplierAccounts } from "./supplier-accounts";
+import { AddStock } from "./add-stock";
+import { SupplierDirectory } from "./supplier-directory";
+import { OwnerStockWorksheet } from "./owner-stock-worksheet";
 import { InventoryWorkspace } from "./inventory-workspace";
 import {HiddenProducts} from './hidden-products';
 import { SettingsWorkspace } from "./settings-workspace";
@@ -31,7 +49,6 @@ import {CashierPcMode} from './cashier-pc-mode';
 import { WorkspaceTabs } from "./workspace-ui";
 import type { ReceiptView } from "../lib/receipt-view";
 import { MeasuredQuantity } from "./measured-quantity";
-import { SalesAnalytics } from "./sales-analytics";
 import { PartialRefundControl } from "./partial-refund";
 
 /* WORLD: Reproduce the user-pinned November 3 screens: heavy sans, warm paper, forest rail, compact ledgers.
@@ -50,17 +67,14 @@ import {
   type FormEvent,
 } from "react";
 import {
-  ArrowDownToLine,
   FileUp,
   FileDown,
-  Wallet,
   Store as StoreFront,
   ArrowLeftRight,
   ArrowRight,
   BarChart3,
   Check,
   CheckCheck,
-  ChevronDown,
   ClipboardCheck,
   CloudOff,
   FileText,
@@ -77,8 +91,6 @@ import {
   Users,
   Sprout,
   Truck,
-  Wifi,
-  WifiOff,
   X,
 } from "lucide-react";
 import Decimal from "decimal.js";
@@ -88,6 +100,7 @@ import { ProductSetupForm } from "./product-setup-form";
 import { CheckoutProduct } from "./checkout-product";
 import { ImportedProductReview } from "./imported-product-review";
 import { resumeBranch } from "../lib/resume-branch";
+import {branchAdministrationLocked,cachedOperatingBranches,cachedOperatingLease,cachedCatalogScopeAllowed,networkWorkspaceAllowed,resolveOnlineBranchSession,type BranchNetwork} from "../lib/branch-network";
 import type { SaleEntry } from "../lib/cart";
 import { SaleLineEditor } from "./sale-line-editor";
 import { productStock } from "../lib/stock-display";
@@ -117,15 +130,16 @@ import {
   localStock,
   readLocalSales,
   retrySale,
-  saveCheckout,
   setSetting,
   setting,
   syncOnce,
   unresolvedStates,
   type LocalSale,
+  saveAllocatedCash,type LocalOfflineGrant,
 } from "@agristore/offline";
 import {
-  branches as fetchBranches,
+  branches as fetchBranchRows,
+  branchNetwork as fetchBranchNetwork,
   cloudTransport,
   command,
   requestSnapshot,
@@ -141,24 +155,36 @@ import {
   onlineOperation,
   pendingOperations,
   retryOperation,
+  visiblePendingOperations,
   requireNoPendingClosure,
   type PendingOperation,
 } from "../lib/operations";
 import { Button } from "./ui/button";
-import { activateReadyUpdate, findReadyUpdate } from "../lib/pwa-update";
+import { activateReadyUpdate, findReadyUpdate, savedUpdateWork, updateCheckoutBlockers } from "../lib/pwa-update";
 import { ApprovalForm } from "./approval-form";
 import { HistoryRegister } from "./history-register";
 import { StorageHealth } from "./storage-health";
 import { useAppInstall } from "../lib/use-app-install";
-import { OperatingGuide } from "./operating-guide";
-import { StockControls } from "./stock-controls";
-import { StockLossReport } from "./stock-loss-report";
-import { PurchasingWorkspace } from "./purchasing-workspace";
-import { BlindCounts } from "./blind-counts";
 import { preferredBatch, outstandingTransfer } from "../lib/stock-controls";
 import type { HistoryKind } from "../lib/history";
 
+const workspaceLoading=()=> <p role="status">Loading workspace…</p>;
+// Workbox precaches every emitted JS chunk, including these secondary screens.
+const RecordReports=dynamic(()=>import('./record-reports').then(m=>m.RecordReports),{loading:workspaceLoading});
+const CreditWorkspace=dynamic(()=>import('./credit-workspace').then(m=>m.CreditWorkspace),{loading:workspaceLoading});
+const SupplierAccounts=dynamic(()=>import('./supplier-accounts').then(m=>m.SupplierAccounts),{loading:workspaceLoading});
+const SalesAnalytics=dynamic(()=>import('./sales-analytics').then(m=>m.SalesAnalytics),{loading:workspaceLoading});
+const FinancialOverview=dynamic(()=>import('./financial-overview').then(m=>m.FinancialOverview),{loading:workspaceLoading});
+const OperatingGuide=dynamic(()=>import('./operating-guide').then(m=>m.OperatingGuide),{loading:workspaceLoading});
+const StockControls=dynamic(()=>import('./stock-controls').then(m=>m.StockControls),{loading:workspaceLoading});
+const StockLossReport=dynamic(()=>import('./stock-loss-report').then(m=>m.StockLossReport),{loading:workspaceLoading});
+const PurchasingWorkspace=dynamic(()=>import('./purchasing-workspace').then(m=>m.PurchasingWorkspace),{loading:workspaceLoading});
+const BlindCounts=dynamic(()=>import('./blind-counts').then(m=>m.BlindCounts),{loading:workspaceLoading});
+
+const DrawerExpenses=dynamic(()=>import('./drawer-expenses').then(m=>m.DrawerExpenses),{loading:workspaceLoading});
+
 type View =
+  | "expenses"
   | "records"
   | "credit"
   | "pos"
@@ -179,9 +205,10 @@ const navigation = [
   { id: "receiving", label: "Purchasing", icon: Truck },
   { id: "transfers", label: "Transfers", icon: ArrowLeftRight },
   { id: "sales", label: "Sales & receipts", icon: FileText },
-  { id: "credit", label: "Customers & credit", icon: Users },
+  { id: "credit", label: "Credit", icon: Users },
 ] as const;
 const viewTables: Record<View, string[]> = {
+  expenses: [],
   records: [],
   credit: [],
   pos: [],
@@ -257,11 +284,15 @@ function download(name: string, data: unknown) {
   setTimeout(() => URL.revokeObjectURL(url), 1000);
 }
 
+function OverviewReportSections({owner,children}:{owner:boolean;children:ReactNode}) {
+  return owner?<details className="panel"><summary>Sales, inventory, and cash reports</summary>{children}</details>:children;
+}
+
 export function StoreApp() {
   const appInstall = useAppInstall();
   const [dispatchStock,setDispatchStock]=useState("");
-  const [quickUnit,setQuickUnit]=useState("");
-  const [quickSupplier,setQuickSupplier]=useState(""),[supplierBillTarget,setSupplierBillTarget]=useState("");
+  const [quickProductTarget,setQuickProductTarget]=useState<{branchId:string;unitId?:string}>();
+  const [supplierBillTarget,setSupplierBillTarget]=useState("");
   const [partialRefundSaleId,setPartialRefundSaleId]=useState<string>();
   const [localHistoryLimit, setLocalHistoryLimit] = useState(50);
   const [hasOlderLocal, setHasOlderLocal] = useState(false);
@@ -285,10 +316,12 @@ export function StoreApp() {
     [view, setView] = useState<View>("pos");
   const contentHeading = useRef<HTMLHeadingElement>(null);
   const previousView = useRef(view);
+  const showInventory = view === "inventory" || view === "counts";
   const [lease, setLease] = useState<Lease>(),
     [member, setMember] = useState<Membership>(),
     [branchList, setBranchList] = useState<Branch[]>([]),
     [branchId, setBranchId] = useState("");
+  const [unresolvedShift,setUnresolvedShift]=useState(false);
   const [signedIn, setSignedIn] = useState(false),
     [products, setProducts] = useState<Product[]>([]),
     [stock, setStock] = useState<Map<string, string>>(new Map()),
@@ -300,7 +333,7 @@ export function StoreApp() {
     [lastSync, setLastSync] = useState<string>(),
     [snapshotAt, setSnapshotAt] = useState<string>();
   const [message, setMessage] = useTransientMessage(),
-    [error, setError] = useTransientMessage(),
+    [error, setError] = useState<{ text: string; autoDismiss?: boolean }>(),
     [busy, setBusy] = useState(false),
     [syncing, setSyncing] = useState(false),
     [registration, setRegistration] = useState<ServiceWorkerRegistration>();
@@ -308,8 +341,17 @@ export function StoreApp() {
     [category, setCategory] = useState("All products"),
     [cash, setCash] = useState(""),
     [checkoutDone, setCheckoutDone] = useState<LocalSale>();
+  const productSearch=useRef<HTMLInputElement>(null);
   const [creditDone,setCreditDone]=useState<ConfirmedCreditSale>();
   const [navigationOpen,setNavigationOpen]=useState(false);
+  const [sidebarCollapsed,setSidebarCollapsed]=useState(false);
+  const sidebarBrand=useRef<HTMLButtonElement>(null);
+  const sidebarRestore=useRef<HTMLButtonElement>(null);
+  function setSidebarHidden(hidden:boolean){
+    setSidebarCollapsed(hidden);
+    setNavigationOpen(false);
+    requestAnimationFrame(()=>(hidden?sidebarRestore:sidebarBrand).current?.focus());
+  }
   const navigationToggle=useRef<HTMLButtonElement>(null);
   const [heldDraftCount,setHeldDraftCount]=useState(0);
   useEffect(()=>{let active=true;if(lease)void setting<HeldSale>(db,heldSaleKey(lease)).then(value=>{if(active)setHeldDraftCount(value?1:0);});else setHeldDraftCount(0);return()=>{active=false;};},[db,lease]);
@@ -323,7 +365,7 @@ export function StoreApp() {
   const [purchasingTab,setPurchasingTab]=useState("orders");
   const quickReceiptHeading=useRef<HTMLHeadingElement>(null);
   useEffect(()=>{
-    if(view!=="receiving"||purchasingTab!=="quick"||!inventoryReceiptJump)return;
+    if(view!=="receiving"||purchasingTab!=="quick")return;
     const frame=requestAnimationFrame(()=>{quickReceiptHeading.current?.scrollIntoView({block:"start"});quickReceiptHeading.current?.focus();});
     return ()=>cancelAnimationFrame(frame);
   },[inventoryReceiptJump,view,purchasingTab]);
@@ -334,7 +376,20 @@ export function StoreApp() {
   const [savingSale, setSavingSale] = useState(false);
   const [historyRevision, setHistoryRevision] = useState(0);
   const [overviewUnconfirmed,setOverviewUnconfirmed]=useState(0);
+  const overviewReportTabs = [
+    {id:"products",label:"Popular products"},
+    {id:"period-totals",label:"Sales & refunds"},
+    {id:"stock",label:"Stock reconciliation"},
+    {id:"cash",label:"Cash reconciliation"},
+    {id:"movements",label:"Recent stock movements"},
+    {id:"audit",label:"Audit register"},
+  ];
+  const [overviewReport,setOverviewReport] = useState("stock");
   const [updateFeedback, setUpdateFeedback] = useState("");
+  const [applicationRequest, setApplicationRequest] = useState(0);
+  const [checkedUpdate, setCheckedUpdate] = useState<ServiceWorker>();
+  const browserUpdateReady = useAppUpdateReady(registration);
+  const updateReady = browserUpdateReady || checkedUpdate?.state === "activated";
   const [installingUpdate, setInstallingUpdate] = useState(false);
   const updateLock = useRef(false);
   const [openingImport, setOpeningImport] = useState<{
@@ -348,17 +403,24 @@ export function StoreApp() {
   }>();
   const [recordTarget,setRecordTarget]=useState<{kind:RecordKind;entity?:{id:string;name:string};back:View}>({kind:"receipts",back:"overview"});
   const cart = useCart();
+  const [offlineGrant,setOfflineGrant]=useState<LocalOfflineGrant>();
+  const [offlineBranch,setOfflineBranch]=useState<OfflineBranchStatus>();
+  const [offlineIssue,setOfflineIssue]=useState('');
+  const [offlineClock,setOfflineClock]=useState(()=>Date.now());
+  useEffect(()=>{if(!offlineGrant)return;const check=()=>setOfflineClock(Date.now());check();const timer=setTimeout(check,Math.max(0,offlineGrant.grant.expiresAt-Date.now()+1));window.addEventListener('focus',check);return()=>{clearTimeout(timer);window.removeEventListener('focus',check);};},[offlineGrant]);
+  const [cartEditor, setCartEditor] = useState<{latest?:string;open:string|null}>({open:null});
+  const latestCartLine=cart.lineIds.at(-1);
+  const openCartLine=cartEditor.latest===latestCartLine?cartEditor.open:latestCartLine;
   const committing = useRef(false);
   const operationBusy = useRef(false);
   const syncingRef = useRef(false);
   const contextGeneration = useRef(0);
   const cloudRequest = useRef(0);
-  const [actionIssue,setActionIssue]=useState("");
   const notify = useCallback((text: string) => {
     setMessage(text);
-    setError("");setActionIssue("");
+    setError(undefined);
   }, [setMessage,setError]);
-  const fail = useCallback((e: unknown) => {
+  const fail = useCallback((e: unknown, fromRefresh = false) => {
     const issue=
       e instanceof Error && "issues" in e
         ? (e as Error & { issues: { message: string }[] }).issues
@@ -367,17 +429,40 @@ export function StoreApp() {
         : e instanceof Error
           ? e.message
           : "Something went wrong. Your completed sales are still saved.";
-    setActionIssue(issue);setError(issue);
+    setError({
+      text: issue,
+      autoDismiss: fromRefresh && issue === "canceling statement due to statement timeout",
+    });
     setMessage("");
   }, [setMessage,setError]);
-  useEffect(()=>{setSupplierBillTarget("");setQuickSupplier("");},[branchId,member?.organizationId,member?.userId]);
+  const reportRefreshError = useCallback((e: unknown) => fail(e, true), [fail]);
+  useEffect(() => {
+    if (!error?.autoDismiss) return;
+    const timer = window.setTimeout(() => {
+      setError(current => current === error ? undefined : current);
+    }, 8000);
+    return () => window.clearTimeout(timer);
+  }, [error]);
+  useEffect(()=>{setSupplierBillTarget("");},[branchId,member?.organizationId,member?.userId]);
   const checkoutScopeGeneration=contextGeneration.current;
   const openSupplierBill=(id:string)=>{if(checkoutScopeGeneration!==contextGeneration.current)return;setSupplierBillTarget(id);setPurchasingTab("accounts");};
 
   const selectedBranch = branchList.find((b) => b.id === branchId);
   const onlineCashOnly=!practice&&(selectedBranch?.multiPc===true||lease?.onlineOnly===true);
+  const offlineAccess=offlineCheckoutAvailability(offlineGrant,lease,cart.items,offlineClock);
+  const allocatedMode=onlineCashOnly&&(offlineBranch?.enabled===true||!!offlineGrant);
+  const offlinePending=sales.filter(s=>s.allocation&&!s.allocation.acknowledged&&s.payload.cashierId===member?.userId&&s.payload.deviceId===lease?.deviceId).length;
   const onlineCashPending=operations.find(op=>op.action==='record_online_sale');
-  const branchLocked = branchList.some(b => b.managementLocked);
+  const [network,setNetwork]=useState<BranchNetwork>();
+  const branchManagementLocked=branchAdministrationLocked(branchList,network);
+  const branchLocked=network?.enabled!==true;
+  const fetchBranches=useCallback(async(org:string)=>{
+    const generation=contextGeneration.current;
+    const next=await fetchBranchNetwork(org);
+    const list=await fetchBranchRows(org,next.branches.map(branch=>branch.id));
+    if(generation===contextGeneration.current)setNetwork(next);
+    return list;
+  },[]);
   const isOwner = member?.role === "owner";
   const openRecords=(kind:RecordKind="receipts",entity?:{id:string;name:string})=>{if(!isOwner||practice)return;setRecordTarget({kind,entity,back:view==="records"?recordTarget.back:view});setView("records");};
   const recoveryScopeKey = member && branchId
@@ -385,6 +470,18 @@ export function StoreApp() {
   const currentRecoveryArchive = recoveryArchive?.scope === recoveryScopeKey ? recoveryArchive : undefined;
   const currentRecoveryDownload = recoveryDownload?.scope === recoveryScopeKey ? recoveryDownload : undefined;
   const isStock = member?.role === "stock_staff";
+  useEffect(()=>{
+    if(!networkWorkspaceAllowed(view,network))setView(isStock?'inventory':'pos');
+    if(network&&branchId&&!network.branches.some(branch=>branch.id===branchId)){
+      // Withhold operating authority and stale display data. Original cashier
+      // records/authorizations remain in IndexedDB for online reconciliation.
+      setLease(undefined);setBranchId("");setCloud({});setProducts([]);setStock(new Map());
+      setBranchList(current=>current.filter(branch=>network.branches.some(allowed=>allowed.id===branch.id)));
+    }
+  },[view,network,isStock,branchId]);
+
+  useWorkspaceHistory(view,setView,ready&&signedIn&&member&&branchId?JSON.stringify([practice,member.organizationId,branchId,member.userId,member.role]):undefined,
+    [...navigation.filter(n=>(!branchLocked&&!practice||n.id!=="transfers")&&(!isStock||!["pos","overview","sales","credit"].includes(n.id))).map(n=>n.id),"sync","settings","close-shift","counts",...(!isStock?["expenses" as const]:[]),...(isOwner&&!practice?["records" as const]:[])],isStock?"inventory":"pos");
   const pending = sales.filter((s) => s.status !== "synced");
   const context = useCallback(() => {
     if (!member || !branchId)
@@ -397,34 +494,30 @@ export function StoreApp() {
       b = lease?.branchId ?? branchId,
       user = lease?.cashierId ?? member?.userId,
       role = lease?.role ?? member?.role;
-    const [nextProducts,nextStock,local,allOperations,lastSync,snapshotAsOf] = await db.transaction(
-      "r",[db.products,db.stocks,db.sales,db.settings],()=>Promise.all([
+    const [nextProducts,nextStock,local,allOperations,lastSync,snapshotAsOf,catalogScope,grant] = await db.transaction(
+      "r",[db.products,db.stocks,db.sales,db.settings,db.offlineGrants],()=>Promise.all([
         db.products.toArray(),localStock(db),org && b
           ? readLocalSales(db,{organizationId:org,branchId:b,cashierId:role === "owner" ? undefined : user},localHistoryLimit)
           : db.sales.where("status").anyOf(unresolvedStates).count().then(allPendingCount=>({sales:[],allPendingCount,branchPendingCount:0,hasOlder:false})),
-        pendingOperations(db),setting<string>(db,"lastSync"),setting<string>(db,"snapshotAsOf"),
+        pendingOperations(db),setting<string>(db,"lastSync"),setting<string>(db,"snapshotAsOf"),setting<Snapshot["localScope"]>(db,"snapshotScope"),
+        setting<Lease>(db,'lease').then(current=>current&&current.organizationId===org&&current.branchId===b&&current.cashierId===user?currentOfflineGrant(db,current):undefined),
       ]),
     );
     if (generation !== contextGeneration.current) return;
-    setProducts(nextProducts);
-    setStock(nextStock);
+    const catalogPermitted=practice||cachedCatalogScopeAllowed(catalogScope,org,b);
+    setProducts(catalogPermitted?nextProducts:[]);
+    setOfflineGrant(catalogPermitted?grant:undefined);
+    setStock(catalogPermitted?nextStock:new Map());
     setSales(local.sales);
     setAllPendingCount(local.allPendingCount);
     setBranchPendingCount(local.branchPendingCount);
     setHasOlderLocal(local.hasOlder);
     setAllOperationCount(allOperations.length);
     setBranchOperationCount(allOperations.filter(op => op.data.organizationId === org && (!op.data.branchId || op.data.branchId === b)).length);
-    setOperations(
-      allOperations.filter(
-        (op) =>
-          op.data.organizationId === org &&
-          (!op.data.branchId || op.data.branchId === b) &&
-          (role === "owner" || op.actorId === user),
-      ),
-    );
+    setOperations(org&&b?visiblePendingOperations(allOperations,{organizationId:org,branchId:b,actorId:user,role}):[]);
     setLastSync(lastSync);
     setSnapshotAt(snapshotAsOf);
-  }, [db, lease, member, branchId, localHistoryLimit]);
+  }, [db, lease, member, branchId, localHistoryLimit, practice]);
   const refreshCloud = useCallback(async (forceStock = false) => {
     if (practice || !member || !branchId || !navigator.onLine) return;
     const generation = contextGeneration.current;
@@ -432,8 +525,8 @@ export function StoreApp() {
     const [nextBranches, results, summary, snapshot, page] = await Promise.all([
       fetchBranches(member.organizationId),
       Promise.all(
-        viewTables[view].map(
-          async (t) => [t, await rows(t, member.organizationId)] as const,
+        (view!=="transfers"||!branchLocked?viewTables[view]:[]).map(
+          async (table) => [table, await rows(table, member.organizationId, view === "overview" && table !== "audit_events" ? branchId : undefined)] as const,
         ),
       ),
       view !== "overview" || member.role === "stock_staff"
@@ -485,13 +578,17 @@ export function StoreApp() {
       summary: [summary],
     });
     setSalesCursor(page?.next);
-  }, [practice, member, branchId, db, view, lease]);
+  }, [practice, member, branchId, db, view, lease, fetchBranches, branchLocked]);
   const sync = useCallback(async () => {
-    if (practice || !lease || !navigator.onLine || syncingRef.current) return;
+    if (practice || !lease || !navigator.onLine || syncingRef.current || updateLock.current) return;
     syncingRef.current = true;
     setSyncing(true);
+    const generation=contextGeneration.current;
     try {
+      await syncAllocatedCash(db,lease);
       await syncOnce(db, cloudTransport(lease, db));
+      await refreshDrawerBaseline(db,lease).catch(()=>undefined);
+      if(lease.onlineOnly){try{const status=await maintainAllocatedStock(db,lease);if(generation===contextGeneration.current){setOfflineBranch(status);setOfflineIssue('');}}catch(e){if(generation===contextGeneration.current)setOfflineIssue(e instanceof Error?e.message:'Reconnect to check offline stock.');}}
     } catch (e) {
       fail(e);
     } finally {
@@ -502,9 +599,16 @@ export function StoreApp() {
       setSyncing(false);
     }
   }, [db, lease, practice, refreshLocal, fail]);
+  useEffect(()=>{setOfflineBranch(undefined);setOfflineIssue('');},[member?.organizationId,branchId,member?.userId]);
+  useEffect(()=>{
+    if(practice||!ready||!online||lease||!onlineCashOnly||!member||!branchId||isStock)return;
+    let alive=true;const generation=contextGeneration.current;
+    void(async()=>{const deviceId=await setting<string>(db,'deviceId');if(deviceId)await prepareAllocatedPC(db,{organizationId:member.organizationId,branchId,deviceId,cashierId:member.userId},process.env.NEXT_PUBLIC_APP_RELEASE??'local-build');const status=await offlineBranchStatus({organizationId:member.organizationId,branchId,...(deviceId?{deviceId}:{})});if(alive&&generation===contextGeneration.current)setOfflineBranch(status);})().catch(e=>{if(alive&&generation===contextGeneration.current)setOfflineIssue(e instanceof Error?e.message:'Check PC preparation online.');});
+    return()=>{alive=false;};
+  },[practice,ready,online,lease,onlineCashOnly,member,branchId,isStock,db]);
   useEffect(() => {
     const generation = ++contextGeneration.current;
-    setActionIssue("");
+    setError(undefined);
     let alive = true;
     const current = () => alive && generation === contextGeneration.current;
     (async () => {
@@ -520,6 +624,7 @@ export function StoreApp() {
         : await setting<Lease>(db, "lease");
       if (!current()) return;
       setLease(saved);
+      setUnresolvedShift(false);
       setBranchId(saved?.branchId ?? "");
       if (practice) {
         setMembershipCheck("confirmed");
@@ -535,12 +640,18 @@ export function StoreApp() {
         setSignedIn(true);
       } else {
         const cachedMember = await setting<Membership>(db, "membership");
-        const cachedBranches = (await setting<Branch[]>(db, "branches")) ?? [];
+        const oldBranches = (await setting<Branch[]>(db, "branches")) ?? [];
         const cachedScope = await setting<Snapshot["localScope"]>(db, "snapshotScope");
+        const cachedBranches=cachedOperatingBranches(oldBranches,saved?.branchId??cachedScope?.branchId);
+        setNetwork(undefined);
+        await setSetting(db,"branches",cachedBranches);
         if (!current()) return;
         setMember(cachedMember);
         setBranchList(cachedBranches);
-        setBranchId(saved?.branchId ?? resumeBranch(cachedMember, cachedBranches, cachedScope) ?? "");
+        const operatingLease=cachedOperatingLease(saved,cachedBranches);
+        setLease(operatingLease);
+        setUnresolvedShift(!!saved&&!operatingLease);
+        setBranchId(operatingLease?.branchId ?? resumeBranch(cachedMember, cachedBranches, cachedScope) ?? "");
         const {
           data: { session },
         } = await supabase.auth.getSession();
@@ -566,8 +677,10 @@ export function StoreApp() {
             const b = await fetchBranches(m.organizationId);
             if (!current()) return;
             setBranchList(b);
-            const savedBranchEnabled = !saved || b.some(branch => branch.id === saved.branchId);
-            const retiredCachedBranch = cachedScope?.organizationId === m.organizationId && !b.some(branch => branch.id === cachedScope.branchId);
+            const session=resolveOnlineBranchSession(m,b,saved,cachedScope);
+            const {savedBranchEnabled,retiredCachedBranch}=session;
+            setLease(session.lease);
+            setUnresolvedShift(session.unresolvedShift);
             if (!savedBranchEnabled || (!saved && retiredCachedBranch)) {
               // Retire authorization only; preserve all original sale/request evidence.
               const deviceId = await setting<string>(db, "deviceId");
@@ -575,7 +688,7 @@ export function StoreApp() {
               else await db.settings.delete("lease");
               setLease(undefined);
             }
-            const target = (savedBranchEnabled ? saved?.branchId : undefined) ?? resumeBranch(m, b, cachedScope) ?? (m.role === "owner" ? b[0]?.id : b.find(branch => branch.id === m.branchId)?.id);
+            const target=session.branchId;
             setBranchId(target ?? "");
             await db.transaction("rw",db.settings,async()=>{
               if (!current()) return;
@@ -611,10 +724,13 @@ export function StoreApp() {
       alive = false;
       db.close();
     };
-  }, [db, practice, fail]);
+  }, [db, practice, fail, fetchBranches]);
   useEffect(() => {
     if (ready) void refreshLocal().catch(fail);
   }, [ready, refreshLocal, fail]);
+  useEffect(() => {
+    if (ready && view === "sync") void refreshLocal().catch(fail);
+  }, [ready, view, refreshLocal, fail]);
   useEffect(() => {
     if (practice) return;
     const {data:{subscription}} = supabase.auth.onAuthStateChange((event) => {
@@ -628,6 +744,8 @@ export function StoreApp() {
       cloudRequest.current++;
       useCart.getState().clear();
       setSignedIn(false);
+      setNetwork(undefined);
+      setUnresolvedShift(false);
       setReady(true);
       setMember(undefined);
       setLease(undefined);
@@ -648,13 +766,15 @@ export function StoreApp() {
     return () => subscription.unsubscribe();
   }, [db, practice, fail]);
   useEffect(() => {
-    if (previousView.current === view) return;
+    const lastView = previousView.current;
+    if (lastView === view) return;
     previousView.current = view;
+    if (showInventory && (lastView === "inventory" || lastView === "counts")) return;
     if (ready && signedIn) contentHeading.current?.focus();
-  }, [view, ready, signedIn]);
+  }, [view, showInventory, ready, signedIn]);
   useEffect(() => {
-    if (ready && view !== "pos") void refreshCloud().catch(fail);
-  }, [ready, view, refreshCloud, fail]);
+    if (ready && view !== "pos") void refreshCloud().catch(reportRefreshError);
+  }, [ready, view, refreshCloud, reportRefreshError]);
   useEffect(() => {
     setOnline(navigator.onLine);
     const update = () => setOnline(navigator.onLine);
@@ -689,7 +809,7 @@ export function StoreApp() {
       return;
     let alive = true;
     void navigator.serviceWorker
-      .register("/sw.js")
+      .register("/sw.js", {updateViaCache:"none"})
       .then((r) => {
         if (alive) setRegistration(r);
       })
@@ -699,13 +819,13 @@ export function StoreApp() {
     };
   }, [fail, online]);
   const run = async (fn: () => Promise<void>, refresh = true, forceStock = false) => {
-    if (operationBusy.current)
+    if (operationBusy.current || updateLock.current)
       return new Error(
         "Wait for the current operation to finish, then try again.",
       );
     operationBusy.current = true;
     setBusy(true);
-    setError("");
+    setError(undefined);
     const generation = contextGeneration.current;
     let completed = false;
     try {
@@ -818,6 +938,7 @@ export function StoreApp() {
     event.preventDefault();
     const f = new FormData(event.currentTarget);
     await run(async () => {
+      if(unresolvedShift)throw new Error("Confirm the saved cashier shift under its original account before opening another drawer.");
       await requireNoPendingClosure(db, member!.organizationId, branchId);
       let deviceId = await setting<string>(db, "deviceId");
       if (!deviceId) {
@@ -842,6 +963,8 @@ export function StoreApp() {
         db,
         await transport.snapshot((await db.sales.where("status").anyOf(unresolvedStates).toArray()).map((s) => s.id)),
       );
+      await refreshDrawerBaseline(db,next).catch(()=>undefined);
+      if(next.onlineOnly){try{setOfflineBranch(await maintainAllocatedStock(db,next));setOfflineGrant(await currentOfflineGrant(db,next));setOfflineIssue('');}catch(e){setOfflineIssue(e instanceof Error?e.message:'Offline stock is not ready. Online checkout remains available.');}}
       notify("Shift open. Your product catalog is saved on this PC.");
     });
   }
@@ -887,7 +1010,7 @@ export function StoreApp() {
     try {
       if(cart.credit.enabled||cart.creditAttempt)throw new Error('Confirm the original credit sale before using cash checkout.');
       requireLease(lease);
-      if(onlineCashOnly&&!navigator.onLine)throw new Error('Multiple-PC checkout needs internet confirmation. Keep this basket and reconnect before taking payment or handing over goods.');
+      if(onlineCashOnly&&!navigator.onLine&&!offlineAccess.ready)throw new Error('Reconnect to prepare this PC’s offline allowance before taking payment. Keep this basket.');
       const original=onlineCashOnly?await setting<PendingOperation>(db,onlineCashKey(lease.organizationId,lease.branchId)):undefined;
       if (!original&&!cart.items.length)
         throw new Error("Add a product to the receipt first");
@@ -910,7 +1033,8 @@ export function StoreApp() {
       };
       const heldId=useCart.getState().heldDraftId;
       if(heldId){const draft=useCart.getState();await prepareHeldCheckout(db,lease,heldId,payload,{lineIds:[...draft.lineIds],drafts:structuredClone(draft.drafts),quantityErrors:{...draft.quantityErrors},cash});}
-      const saved = onlineCashOnly?await confirmOnlineCash(db,lease,payload):await saveCheckout(db, payload);
+      const allocated=onlineCashOnly&&!original&&offlineAccess.ready&&offlineAccess.withinAllowance&&offlineGrant;
+      const saved = allocated?await saveAllocatedCash(db,lease,offlineGrant.id,payload):onlineCashOnly?await confirmOnlineCash(db,lease,payload):await saveBranchCash(db,payload,navigator.onLine,practice);
       if(heldId){try{await removeHeldSale(db,lease,heldId);setHeldDraftCount(0);}catch{fail(new Error("Sale saved. A held-draft copy remains on this PC; it cannot be charged again. Remove it after checking the original receipt."));}}
       setCheckoutDone(saved);
       cart.clear();
@@ -919,7 +1043,7 @@ export function StoreApp() {
       notify(
         practice
           ? "Practice sale saved on this PC."
-          : onlineCashOnly?"Cash sale confirmed online. Receipt saved on this PC.":"Cash sale saved on this PC.",
+          : saved.allocation?"Cash sale saved on this PC. The original receipt will upload after reconnecting. Do not collect payment again.":onlineCashOnly?"Cash sale confirmed online. Receipt saved on this PC.":"Cash sale saved on this PC.",
       );
       void sync();
     } catch (e) {
@@ -939,10 +1063,10 @@ export function StoreApp() {
   ) {
     if (updateLock.current || committing.current || !lease || isStock) return;
     if(useCart.getState().creditAttempt||onlineCashPending){fail(new Error('Confirm the original sale in Sync center before changing this basket.'));return;}
-    if(p.pricePending||p.setupPending||!p.active||!p.units.length){fail(new Error('The owner must confirm this product’s price and selling unit in Inventory.'));return;}
+    if(!sellingUnitReady(p,p.units.find(u=>u.id===(unitId??p.units[0]?.id)))){fail(new Error('The owner must confirm this unit’s branch price and selling setup in Inventory.'));return;}
     try {
       const batch = preferredBatch(p,stock,new Date().toLocaleDateString("en-CA", { timeZone: "Asia/Manila" }));
-      cart.add(
+      const lineId=cart.add(
         makeItem(
           p,
           unitId ?? p.units[0].id,
@@ -951,6 +1075,7 @@ export function StoreApp() {
         ),
         entry,
       );
+      setCartEditor({latest:useCart.getState().lineIds.at(-1),open:lineId});
       setCheckoutDone(undefined);setCreditDone(undefined);
     setMessage("");
     } catch (e) {
@@ -1020,8 +1145,6 @@ export function StoreApp() {
   const dispatchOptions=useMemo(()=>products.flatMap(p=>p.batches.length?p.batches.map(b=>`${p.id}:${b.id}`):[`${p.id}:none`]),[products]);
   const dispatchSelection=dispatchOptions.includes(dispatchStock)?dispatchStock:"";
   const dispatchProduct=products.find(p=>p.id===dispatchSelection.split(":")[0]);
-  const quickProduct=products.find(p=>p.units.some(u=>u.id===quickUnit));
-  const quickSellingUnit=quickProduct?.units.find(u=>u.id===quickUnit);
   const stockQuantity = (row: Row, quantity: string) =>
     `${new Decimal(quantity).toFixed()} ${historicalStock(products, row).baseUnit || "(base unit unavailable)"}`;
   const branchName = (id: unknown) =>
@@ -1034,7 +1157,7 @@ export function StoreApp() {
     if(view === "sales") {
       const actionCells=practice?new Map<string,React.ReactNode>():receiptActionCells(body);
       const receipts:ReceiptView[]=practice?sales.map(s=>({id:s.id,receipt:s.receipt??s.id.slice(0,8),occurredAt:s.payload.occurredAt,total:s.payload.total,cashReceived:s.payload.cashReceived,status:"local",payload:s.payload,original:s as unknown as Row})):branchSales.map(s=>({id:String(s.id),receipt:String(s.receipt??String(s.id).slice(0,8)),occurredAt:String(s.occurred_at),total:Number(s.total),cashReceived:Number(s.cash_received),status:Array.isArray(s.sale_refund_corrections)&&s.sale_refund_corrections.length?"corrected":s.sale_reversals&&(!Array.isArray(s.sale_reversals)||s.sale_reversals.length)?"refunded":Array.isArray(s.sale_partial_refunds)&&s.sale_partial_refunds.length?"partial":s.review_required===true?"review":"completed",payload:s.payload as Sale,original:s}));
-      return <ReceiptWorkspace onRecords={!practice&&isOwner?()=>openRecords("receipts"):undefined} header={pageHeading} key={`${member?.organizationId}:${branchId}:${practice}`} rows={receipts} products={products} branchName={selectedBranch?.name??"Selected branch"} practice={practice} actions={r=>actionCells.get(r.id)}/>;
+      return <ReceiptWorkspace header={pageHeading} key={`${member?.organizationId}:${branchId}:${practice}`} rows={receipts} products={products} branchName={selectedBranch?.name??"Selected branch"} practice={practice} actions={r=>actionCells.get(r.id)}/>;
     }
     return (<div
       className={kind ? "table-wrap history-table" : "table-wrap"}
@@ -1069,22 +1192,159 @@ export function StoreApp() {
     disabled: busy,
     revision: historyRevision,
   };
+  const selectableBranches = branchList.filter(branch =>
+    network?.branches.some(allowed => allowed.id === branch.id) &&
+    (isOwner || branch.id === member?.branchId),
+  );
+  const branchSwitchHold = lease ? "Close the current shift to change branches."
+    : unresolvedShift ? "Resolve the saved shift to change branches."
+    : !online ? "Reconnect to change branches."
+    : cart.items.length ? "Finish the current basket to change branches."
+    : "";
+  const branchSwitchDisabled = !!branchSwitchHold || busy || syncing || savingSale || installingUpdate;
+
+  async function switchBranch(nextBranchId: string) {
+    if (!member || branchSwitchDisabled || !navigator.onLine || nextBranchId === branchId ||
+        !selectableBranches.some(branch => branch.id === nextBranchId)) return;
+
+    await run(async () => {
+      const change = ++contextGeneration.current;
+      const transactionIds = (await db.sales.where("status").anyOf(unresolvedStates).toArray())
+        .map(sale => sale.id);
+      const snapshot = await requestSnapshot(db, {
+        organizationId: member.organizationId,
+        branchId: nextBranchId,
+        transactionIds,
+      });
+      if (change !== contextGeneration.current) return;
+      await applySnapshot(db, snapshot);
+      const nextStock = await localStock(db);
+      if (change !== contextGeneration.current) return;
+
+      setRecoveryArchive(undefined);
+      setRecoveryDownload(undefined);
+      setCreditDone(undefined);
+      setCheckoutDone(undefined);
+      setNavigationOpen(false);
+      setOpeningImport(undefined);
+      setCloud({});
+      setOverviewUnconfirmed(0);
+      setSalesCursor(undefined);
+      if (!snapshot.catalogUnchanged) setProducts(snapshot.products);
+      setStock(nextStock);
+      setSnapshotAt(snapshot.asOf);
+      setBranchId(nextBranchId);
+      notify("Branch loaded.");
+    }, false);
+  }
+
+  function branchControl(location: "header" | "overview") {
+    const label = location === "overview" ? "Overview branch" : "Current branch";
+    const name = selectedBranch?.name ?? "Select a branch";
+    const canSwitch = !branchLocked && selectableBranches.length > 1;
+    const choose = (
+      <select
+        aria-label={label}
+        className={location === "overview" ? "analytics-branch" : "topbar-branch-select"}
+        disabled={branchSwitchDisabled}
+        title={branchSwitchHold || label}
+        value={branchId}
+        onChange={event => void switchBranch(event.target.value)}
+      >
+        {!branchId && <option value="" disabled>Select a branch</option>}
+        {selectableBranches.map(branch => <option key={branch.id} value={branch.id}>{branch.name}</option>)}
+      </select>
+    );
+    if (location === "overview") return canSwitch ? choose : <span className="analytics-branch">{name}</span>;
+    return (
+      <div className="branch-name-control">
+        <span className="branch-label" aria-hidden={canSwitch || undefined}>
+          {!canSwitch && <span className="sr-only">{label} </span>}
+          <strong>{name}</strong>
+        </span>
+        <span className={`branch-connection-dot${online ? "" : " offline"}`} aria-hidden="true" />
+        {canSwitch && <><span className="branch-chevron" aria-hidden="true"/>{choose}</>}
+      </div>
+    );
+  }
+
+  const updateBlockers = updateCheckoutBlockers(cart.items.length, savingSale || syncing);
+  const savedWork = savedUpdateWork(allPendingCount, allOperationCount);
+  const checkUpdateDisabled = !registration || !online || busy || installingUpdate;
+
+  async function checkAppUpdate() {
+    if (!registration || !navigator.onLine) return;
+    await run(async () => {
+      setUpdateFeedback("Checking for an app update…");
+      try {
+        const worker = await findReadyUpdate(registration);
+        if (worker) setCheckedUpdate(worker);
+        setUpdateFeedback(worker || checkedUpdate?.state === "activated"
+          ? "Update downloaded. Select Install app update when ready."
+          : "No new update is available.");
+        await refreshLocal().catch(() => undefined);
+      } catch (error) {
+        setUpdateFeedback(error instanceof Error ? error.message : "Could not check for an update. Try again online.");
+      }
+    }, false);
+  }
+
+  async function installAppUpdate() {
+    if (!registration || !navigator.onLine || updateLock.current) return;
+    await run(async () => {
+      updateLock.current = true;
+      setInstallingUpdate(true);
+      let restarting = false;
+      try {
+        const canRestart = async () => {
+          const issues = updateCheckoutBlockers(useCart.getState().items.length, committing.current || syncingRef.current);
+          if (issues.length) setUpdateFeedback(issues.join(" "));
+          return !issues.length;
+        };
+        if (!(await canRestart())) return;
+        const worker = registration.installing ? await findReadyUpdate(registration) : registration.waiting || checkedUpdate;
+        if (!worker || worker.state === "redundant") {
+          setCheckedUpdate(undefined);
+          setUpdateFeedback("The download is no longer available. Select Check for app update.");
+          return;
+        }
+        // An app restart keeps durable sales, requests and offline allocations.
+        setUpdateFeedback("Installing update.");
+        const result = await activateReadyUpdate(worker, canRestart, () => {
+          const destination = new URL(window.location.href);
+          destination.searchParams.set("app-update", String(Date.now()));
+          destination.hash = "";
+          window.location.replace(destination.href);
+        });
+        restarting = result === "restarting";
+        if (!restarting && worker.state === "activated") setCheckedUpdate(worker);
+      } catch (error) {
+        setUpdateFeedback(error instanceof Error ? error.message : "Could not install the update. Check again online.");
+      } finally {
+        if (!restarting) {
+          updateLock.current = false;
+          setInstallingUpdate(false);
+          await refreshLocal().catch(() => undefined);
+        }
+      }
+    }, false);
+  }
+
   const Notice = (
     <>
-      {error && (
-        <div role="alert" className="notice error">
-          <span>{error}</span>
-          <button aria-label="Dismiss error" onClick={() => setError("")}>
+      {error?.text && (
+        <div role="alert" className="notice error action-alert">
+          <span>{error.text}</span>
+          <button type="button" aria-label="Dismiss error" onClick={() => setError(undefined)}>
             <X size={16} />
           </button>
         </div>
       )}
-      {!error&&actionIssue&&<details className="action-issue"><summary>Review the last action message</summary><p>{actionIssue}</p><Button variant="ghost" onClick={()=>setActionIssue("")}>Dismiss reviewed message</Button></details>}
       {message && (
         <div role="status" className="notice success">
           <Check size={17} />
           <span>{message}</span>
-          <button aria-label="Dismiss message" onClick={() => setMessage("")}>
+          <button type="button" aria-label="Dismiss message" onClick={() => setMessage("")}>
             <X size={16} />
           </button>
         </div>
@@ -1225,6 +1485,7 @@ export function StoreApp() {
         <div className="setup-panel">
           <ShieldCheck size={34} />
           <h1>Check your store access.</h1>
+          {!practice&&<><OutstandingDeliveries db={db} online={online} disabled={busy} sessionKey="membership-unconfirmed"/><FinancialOriginalRecovery db={db} online={online} disabled={busy}/></>}
           <p>
             Your account access could not be confirmed. Reconnect and retry, or
             sign out and sign in again. Your saved sales remain on this PC.
@@ -1254,6 +1515,7 @@ export function StoreApp() {
         <div className="setup-panel">
           <Sprout size={34} />
           <h1>Your account needs store access.</h1>
+          {!practice&&<><OutstandingDeliveries db={db} online={online} disabled={busy} sessionKey="membership-hidden"/><FinancialOriginalRecovery db={db} online={online} disabled={busy}/></>}
           <p>
             To use the existing Better Yield store, ask the current administrator to
             authorize your account for Magpet, then sign in again. Create business
@@ -1290,6 +1552,7 @@ export function StoreApp() {
       (category === "All products" || p.category === category) &&
       `${p.name} ${p.sku}`.toLowerCase().includes(query.toLowerCase()),
   );
+  const checkoutCompleted = !cart.items.length && Boolean(checkoutDone || creditDone);
   const checkedGrandTotal = cartAmount(
     cart.items.filter((item, index) =>
       draftLineTotal(item, cart.drafts[cart.lineIds[index]]) !== null,
@@ -1306,14 +1569,19 @@ export function StoreApp() {
   const branchSales = (cloud.sales ?? []).filter(
     (s) => s.branch_id === branchId,
   );
+  const suppliers = (cloud.suppliers ?? []).map(row => ({
+    id: str(row,"id"), name: str(row,"name"), contact: str(row,"contact"), archived: !!row.archived_at,
+  }));
+  const activeSuppliers = suppliers.filter(supplier => !supplier.archived);
+  const canReceiveStock = !practice && ["owner", "manager"].includes(member.role);
   const visibleQueue = sales.filter(s=>(`${s.id} ${s.receipt??""}`.toLowerCase().includes(syncQuery.toLowerCase()))&&(syncFilter==="all"||syncFilter==="synced"&&s.status==="synced"||syncFilter==="pending"&&(s.status==="pending"||s.status==="sending")||syncFilter==="attention"&&s.status!=="synced"&&s.status!=="pending"&&s.status!=="sending"));
   const summary = cloud.summary?.[0] ?? {};
-  const summaryExact=(summary.exactTotals??{}) as Row;
   const branchCash=(id:string)=>{const row=branchTotals.find(t=>t.branchId===id);return (((row?.exactTotals??{}) as Row).total??row?.total??0) as number|string;};
   const branchTotals = (summary.branchTotals ?? []) as Row[];
   const titles: Record<View, string> = {
+    expenses: "Daily expenses",
     records: "Records & exports",
-    credit: "Customers & credit",
+    credit: "Credit",
     pos: "Checkout",
     overview: "Overview",
     inventory: "Inventory",
@@ -1325,16 +1593,16 @@ export function StoreApp() {
     "close-shift": "Close shift",
     settings: "Store settings",
   };
-  const descriptions: Record<View, string> = {
+  const descriptions: Record<Exclude<View, "pos">, string> = {
+    expenses: "Record cash already paid from your drawer and keep the original evidence.",
     records: "Search full history and export the records you need.",
     credit: "Track customer invoices, due dates and payments.",
-    pos: "Search, add items, then choose payment.",
     overview: "Your store, at a glance.",
     inventory: "Know what’s on hand, down to the last kilo.",
     receiving: "Track orders and inspect every delivery.",
     transfers: "Follow stock from dispatch to arrival.",
     counts: "Count the shelf, then reconcile the record.",
-    sales: "Every completed checkout, with its original record.",
+    sales: "",
     sync: "Keep every saved record accounted for.",
     "close-shift": "Count the cash in your drawer, then finish your shift.",
     settings: "Manage your people, branch and cashier PC.",
@@ -1344,8 +1612,12 @@ export function StoreApp() {
     setInventoryTab("review");
     setView("inventory");
   };
+  const openInventorySection = (section: string) => {
+    setInventoryTab(section);
+    setView("inventory");
+  };
   const receiveInventory=(product?:Product)=>{
-    setQuickUnit(product?.units[0]?.id??"");
+    setQuickProductTarget({branchId,unitId:product?.units[0]?.id});
     setPurchasingTab("quick");
     setView("receiving");
     setInventoryReceiptJump(n=>n+1);
@@ -1354,53 +1626,92 @@ export function StoreApp() {
     setInventoryCountEntry(current=>({serial:current.serial+1,productId:product.id}));
     setView("counts");
   };
-  const inventoryTabs = (<WorkspaceTabs label="Inventory sections" value={view==="counts"?"counts":["setup","prices","expiry","hidden"].includes(inventoryTab)?"products":inventoryTab} onChange={id=>{if(id==="counts"){setInventoryCountEntry(current=>({serial:current.serial+1}));setView("counts");}else if(id==="review")openInventoryReview();else {setInventoryTab(id);setView("inventory");}}} tabs={[{id:"products",label:"Products"},...(member.role!=="cashier"?[{id:"counts",label:"Stock counts"},{id:"controls",label:"Stock activity"}]:[]),...(isOwner?[{id:"review",label:"Needs review"}]:[])]}/>);
-  const pageHeading = (<div className="page-heading">
+  const catalogHub = network?.managed && network.hubBranchId && network.hubBranchId !== branchId
+    ? selectableBranches.find(branch => branch.id === network.hubBranchId) : undefined;
+  const goToCatalogHub = catalogHub && !branchSwitchDisabled ? () => void switchBranch(catalogHub.id) : undefined;
+  const inventorySections = [
+    { id: "products", label: "Products" },
+    ...(member.role !== "cashier" ? [{ id: "counts", label: "Stock counts" }] : []),
+    ...(isOwner && !practice ? [
+      { id: "prices", label: "Pricing" },
+      { id: "hidden", label: "Hidden products" },
+    ] : []),
+  ];
+  const inventorySection = view === "counts" ? "counts" : inventoryTab;
+  const inventoryTabs = (
+    <WorkspaceTabs label="Inventory sections"
+      value={inventorySections.some(section => section.id === inventorySection) ? inventorySection : "products"}
+      tabs={inventorySections}
+      onChange={id => {
+        if (id === "counts") {
+          setInventoryCountEntry(current => ({ serial: current.serial + 1 }));
+          setView("counts");
+          return;
+        }
+        openInventorySection(id);
+      }}
+    />
+  );
+  const refreshButton = !practice && (
+    <Button variant="outline" size="sm" disabled={!online || busy}
+      onClick={() => void run(async () => {
+        try {
+          await refreshCloud(true);
+        } catch (e) {
+          reportRefreshError(e);
+          return;
+        }
+        if (lease) await sync();
+        setHistoryRevision((revision) => revision + 1);
+        notify("Records refreshed.");
+      }, false)}
+    >
+      <RefreshCw size={15} /> Refresh
+    </Button>
+  );
+  const pageHeading = view === "sales" ? (
+    <div className="receipt-toolbar">
+      <h1 className="sr-only" ref={contentHeading} tabIndex={-1}>{titles.sales}</h1>
+      {!practice && <details className="purchasing-tools receipt-tools">
+        <summary>Tools</summary>
+        <div className="button-row">
+          {isOwner && <Button variant="outline" size="sm" onClick={()=>openRecords("receipts")}>Search &amp; export</Button>}
+          {refreshButton}
+        </div>
+      </details>}
+    </div>
+  ) : view !== "pos" && (<div className="page-heading">
             <div>
               <div className="title-line"><h1 ref={contentHeading} tabIndex={-1}>
                 {titles[view]}
-              </h1>{view==="sales"&&<span className="cash-mode-badge"><Wallet size={22}/>Sales records</span>}{lease&&view==="pos"&&<span className="shift-badge"><span/>Shift open</span>}</div>
+              </h1></div>
               <p>{descriptions[view]}</p>
             </div>
             <div className="heading-actions">
-              {!practice&&isOwner&&["overview","inventory","counts","receiving"].includes(view)&&!(view==="receiving"&&purchasingTab==="accounts")&&<Button variant="outline" onClick={()=>openRecords(view==="receiving"?"purchases":view==="inventory"?"stock":view==="counts"?"audit":"receipts")}>Records & exports</Button>}
-
-
-              {!practice && view !== "pos" && view !== "sync" && view !== "overview" && view !== "credit" && view !== "records" && !(view === "receiving" && purchasingTab === "accounts") && (
-                <Button
-                  variant="outline"
-                  size="sm"
-                  disabled={!online || busy || practice}
-                  onClick={() =>
-                    void run(async () => {
-                      await refreshCloud(true);
-                      if (lease) await sync();
-                      setHistoryRevision((revision) => revision + 1);
-                      notify("Records refreshed.");
-                    }, false)
-                  }
-                >
-                  <RefreshCw size={15} />
-                  Refresh
-                </Button>
-              )}
+              {!practice&&isOwner&&view==="overview"&&<Button variant="outline" onClick={()=>openRecords("receipts")}>Records & exports</Button>}
+              {view !== "sync" && view !== "overview" && view !== "credit" && view !== "records" && refreshButton}
             </div>
           </div>);
   return (
-    <div className="app-shell reference-ui">
+    <div className={`app-shell reference-ui${sidebarCollapsed?' sidebar-collapsed':''}`}>
       <a href="#main" className="skip-link">
         Skip to main content
       </a>
       {navigationOpen&&<button className="navigation-backdrop" tabIndex={-1} aria-label="Close navigation" onClick={()=>{setNavigationOpen(false);navigationToggle.current?.focus();}}/>}
-      <aside onBlur={e=>{if(navigationOpen&&!e.currentTarget.contains(e.relatedTarget as Node|null))setNavigationOpen(false);}} className={`sidebar${navigationOpen?' navigation-open':''}`} onKeyDown={e=>{if(e.key==='Escape'){setNavigationOpen(false);navigationToggle.current?.focus();}}}>
+      <aside id="store-sidebar" hidden={sidebarCollapsed} onBlur={e=>{if(navigationOpen&&!e.currentTarget.contains(e.relatedTarget as Node|null))setNavigationOpen(false);}} className={`sidebar${navigationOpen?' navigation-open':''}`} onKeyDown={e=>{if(e.key==='Escape'){setNavigationOpen(false);navigationToggle.current?.focus();}}}>
         <button ref={navigationToggle} type="button" className="navigation-toggle" aria-expanded={navigationOpen} aria-controls="store-navigation" onClick={()=>setNavigationOpen(open=>!open)}>{navigationOpen?<X size={22}/>:<Menu size={22}/>}<span>{navigationOpen?'Close menu':'Menu'}</span></button>
-        <a
-          href="#main"
-          className="wordmark"
-          aria-label="Better Yield Point of Sale home"
+        <button
+          ref={sidebarBrand}
+          type="button"
+          className="wordmark sidebar-brand"
+          aria-label="Better Yield Point of Sale: hide navigation"
+          title="Hide left menu"
+          aria-controls="store-sidebar"
+          aria-expanded={!sidebarCollapsed}
+          onClick={()=>setSidebarHidden(true)}
         >
           <StoreBrand />
-        </a>
+        </button>
         <nav id="store-navigation" aria-label="Main navigation">
           {navigation
             .filter(n => (!branchLocked && !practice) || n.id !== "transfers")
@@ -1475,66 +1786,25 @@ export function StoreApp() {
       <div className="workspace">
         <header className="topbar">
           <div className="branch-picker">
-            <span className="branch-icon">
-              <StoreFront size={23} />
-            </span>
-            {branchLocked ? <span><span className="sr-only">Current branch: </span><strong>{selectedBranch?.name ?? "Reconnect to load your branch"}</strong></span> : <><select
-              aria-label="Current branch"
-              value={branchId}
-              disabled={!!lease || busy || (!online && !practice)}
-              onChange={(e) => {
-                const nextBranchId = e.target.value;
-                void run(async () => {
-                  contextGeneration.current++;
-                  setRecoveryArchive(undefined);
-                  setRecoveryDownload(undefined);
-                  const snapshot = await requestSnapshot(db, {
-                    organizationId: member.organizationId,
-                    branchId: nextBranchId,
-                    transactionIds: (
-                      await db.sales
-                        .where("status")
-                        .anyOf(unresolvedStates)
-                        .toArray()
-                    ).map((sale) => sale.id),
-                  });
-                  await applySnapshot(db, snapshot);
-                  const nextStock = await localStock(db);
-                  // Change the displayed branch and its stock together. Failed
-                  // downloads leave the previously loaded branch selected.
-                  setBranchId(nextBranchId);setCreditDone(undefined);setCheckoutDone(undefined);setNavigationOpen(false);
-                  setOpeningImport(undefined);
-                  setCloud({});
-                  setSalesCursor(undefined);
-                  if (!snapshot.catalogUnchanged) setProducts(snapshot.products);
-                  setStock(nextStock);
-                  setSnapshotAt(snapshot.asOf);
-                  notify("Branch stock loaded.");
-                });
-              }}
-            >
-              {!branchId && <option value="" disabled>Reconnect to identify branch</option>}
-              {branchList
-                .filter((b) => isOwner || b.id === member.branchId)
-                .map((b) => (
-                  <option key={b.id} value={b.id}>
-                    {b.name}
-                  </option>
-                ))}
-            </select>
-            <ChevronDown size={14} /></>}
+            {sidebarCollapsed&&<button ref={sidebarRestore} type="button" className="sidebar-restore" aria-label="Better Yield Point of Sale: show navigation" title="Show left menu" aria-controls="store-sidebar" aria-expanded={false} onClick={()=>setSidebarHidden(false)}><StoreBrand/></button>}
+            <div className="branch-identity">
+              <span className="branch-icon" aria-hidden="true">
+                <StoreFront size={23} />
+              </span>
+              {branchControl("header")}
+              <span className={`connection branch-connection${online ? "" : " offline"}`} role="status">
+                <span className={online ? "sr-only" : undefined}>
+                  {online
+                    ? "This PC online"
+                    : practice
+                      ? "This PC offline"
+                      : onlineCashOnly ? offlineAccess.ready?"Offline · allowance ready":"Offline · reconnect to prepare" : "Offline · sales saved here"}
+                </span>
+              </span>
+            </div>
           </div>
           <div className="topbar-right">
-            <span className={`connection ${online ? "" : "offline"}`}>
-              {online ? <Wifi size={15} /> : <WifiOff size={15} />}
-              <span>
-                {practice
-                  ? "Practice data"
-                  : online
-                    ? "Connected"
-                    : onlineCashOnly ? "Offline · checkout paused" : "Offline · sales saved here"}
-              </span>
-            </span>
+            {!isStock&&<Button variant="outline" size="sm" disabled={busy||savingSale||installingUpdate} onClick={()=>setView("expenses")}>Daily expenses</Button>}
             {lease && view!=="close-shift" && (<Button className="close-shift-shortcut" variant="outline" size="sm" disabled={busy || savingSale || installingUpdate}
                   onClick={() => setView("close-shift")}>
                   <LogOut size={15} /> Close shift
@@ -1542,17 +1812,16 @@ export function StoreApp() {
           </div>
         </header>
         <main data-view={view} id="main" className="main-content" tabIndex={-1}>
-          {view !== "pos" && view !== "sales" && (view!=="credit"||practice) && pageHeading}
+          {view !== "pos" && view !== "sales" && view !== "overview" && view !== "receiving" && (view!=="credit"||practice) && !showInventory && pageHeading}
           <div className="app-notices">{Notice}</div>
+          {!practice&&<OutstandingDeliveries db={db} online={online} disabled={busy} sessionKey={member.userId}/>}
+          {view==="expenses"&&<><Button className="expense-back" variant="outline" onClick={()=>setView("pos")}>Back to Checkout</Button><DrawerExpenses key={`${practice}:${member.organizationId}:${branchId}:${member.userId}:${member.role}:${lease?.deviceId??"none"}:${lease?.shiftId??"none"}`} db={db} organizationId={member.organizationId} branchId={branchId} branchName={selectedBranch?.name??"Selected branch"} actorId={member.userId} actorName={member.name} role={member.role} online={online} practice={practice} lease={lease} pending={operations} unresolvedSales={allPendingCount>0} disabled={busy||savingSale||syncing||installingUpdate||cart.items.length>0} revision={historyRevision} execute={fn=>run(fn,true,true)} onSync={()=>setView("sync")}/></>}
           {view==="records"&&!practice&&isOwner&&<><Button variant="ghost" onClick={()=>setView(recordTarget.back)}>Back to {titles[recordTarget.back]}</Button><RecordReports key={`${member.organizationId}:${branchId}:${recordTarget.kind}:${recordTarget.entity?.id??"all"}`} organizationId={member.organizationId} branchId={branchId} branchName={selectedBranch?.name??"Selected branch"} online={online} initialKind={recordTarget.kind} entity={recordTarget.entity}/></>}
-          {!practice&&<AppUpdateNotice registration={registration} onOpen={()=>setView("settings")}/>}
-          {!practice && view === "overview" && (
-            <details className="overview-scope-note"><summary>Report scope</summary><p className="muted">
-              Sales totals include all confirmed records. Flag, reconciliation
-              and movement previews show up to the most recent 1,000 entries.
-              The audit register below has its own branch and date filters.
-            </p></details>
-          )}
+          {!practice&&updateReady&&<AppUpdateNotice onOpen={()=>{
+            setApplicationRequest(request=>request+1);
+            setView("settings");
+          }}/>}
+          {unresolvedShift&&<p className="notice" role="status">A saved cashier shift needs confirmation. Sign in as its original cashier before changing branches or opening another drawer.</p>}
           {!lease && !isStock && view === "pos" && (
             <section className="start-shift">
               <div>
@@ -1574,7 +1843,7 @@ export function StoreApp() {
                     required
                   />
                 </Field>
-                <Button disabled={!online || busy}>
+                <Button disabled={!online || busy || unresolvedShift}>
                   Open shift
                   <ArrowRight size={16} />
                 </Button>
@@ -1583,12 +1852,14 @@ export function StoreApp() {
           )}
           {view === "pos" && (
             <div className="checkout-layout">
-              <section className="catalog">{pageHeading}
+              <section className="catalog">
+                <h1 className="sr-only" ref={contentHeading} tabIndex={-1}>{titles.pos}</h1>
                 <div className="catalog-tools">
                   <label className="search-box">
                     <Search size={19} />
                     <input
                       aria-label="Search products"
+                      ref={productSearch}
                       placeholder="Search products or scan a barcode…"
                       value={query}
                       onChange={(e) => setQuery(e.target.value)}
@@ -1631,7 +1902,7 @@ export function StoreApp() {
                   <><h2 className="sr-only">Products</h2><RecordPages className="product-grid" label="Products" pageSize={6} paginationPosition="bottom" resetKey={`${query}:${category}`}>
                     {visible.map((p) => {
                       const available = productStock(p, stock);
-                      return <CheckoutProduct key={p.id} product={p} available={available} unavailable={!lease||isStock||installingUpdate} disabled={!lease||isStock||busy||installingUpdate} onAdd={(unitId,mode)=>addProduct(p,unitId,undefined,mode)}/>;
+                      return <CheckoutProduct key={p.id} product={p} available={available} offlineAllowance={allocatedMode?offlineGrant?.remaining.filter(a=>a.productId===p.id).reduce((n,a)=>n.plus(a.remaining),new Decimal(0)).toFixed()??'0':undefined} unavailable={!lease||isStock||installingUpdate} disabled={!lease||isStock||busy||installingUpdate} onAdd={(unitId,mode)=>addProduct(p,unitId,undefined,mode)}/>;
                     })}
                   </RecordPages></>
                 ) : (
@@ -1675,7 +1946,20 @@ export function StoreApp() {
                       {cart.items.length === 1 ? "item" : "items"} · {cart.credit.enabled||creditDone&&!cart.items.length?'Credit':'Cash'} payment
                     </span>
                   </div>
-                  <span className="cash-mode-badge"><Wallet size={18}/>{cart.credit.enabled||creditDone&&!cart.items.length?'Credit':'Cash'} payment</span>
+                  {!checkoutCompleted && (
+                    <div className="credit-payment-choice" role="group" aria-label="Payment type">
+                      <Button type="button" variant={!cart.credit.enabled ? "default" : "outline"}
+                        aria-pressed={!cart.credit.enabled} disabled={busy || !!cart.creditAttempt || !!onlineCashPending}
+                        onClick={() => useCart.setState(state => ({ credit: { ...state.credit, enabled: false } }))}>
+                        Cash
+                      </Button>
+                      <Button type="button" variant={cart.credit.enabled ? "default" : "outline"}
+                        aria-pressed={cart.credit.enabled} disabled={busy || !!cart.creditAttempt || !!onlineCashPending}
+                        onClick={() => useCart.setState(state => ({ credit: { ...state.credit, enabled: true } }))}>
+                        Credit
+                      </Button>
+                    </div>
+                  )}
                 </div>
                 {creditDone && !cart.items.length ? <CreditSaleConfirmation sale={creditDone} branchName={selectedBranch?.name??"Magpet Branch"} onNewSale={()=>{setCreditDone(undefined);setCash('');}} onAccounts={()=>setView("credit")}/> : checkoutDone && !cart.items.length ? (
                   <div className="checkout-success">
@@ -1701,7 +1985,7 @@ export function StoreApp() {
                     </small>
                     <Button variant="outline" onClick={() => window.print()}>
                       Print 58 mm receipt
-                    </Button><Button onClick={()=>{setCheckoutDone(undefined);setCreditDone(undefined);setCash('');}}>New sale</Button><Button variant="ghost" onClick={()=>setView("sales")}>View saved receipts</Button>
+                    </Button><Button onClick={()=>{setCheckoutDone(undefined);setCreditDone(undefined);setCash('');setQuery('');requestAnimationFrame(()=>productSearch.current?.focus());}}>New sale</Button><Button variant="ghost" onClick={()=>setView("sales")}>View saved receipts</Button>
                     <p className="receipt-print-hint">58 mm roll · Portrait · Scale 100%<br/>Turn off headers and footers in print settings.</p>
                   </div>
                 ) : cart.items.length ? (
@@ -1714,6 +1998,8 @@ export function StoreApp() {
                         product={products.find((p) => p.id === item.productId)!}
                         index={i}
                         canDiscount={practice||member.role==='owner'||member.role==='cashier'}
+                        expanded={openCartLine===cart.lineIds[i]}
+                        onExpandedChange={open=>setCartEditor({latest:latestCartLine,open:open?cart.lineIds[i]:null})}
                         disabled={busy || installingUpdate || !!cart.creditAttempt || !!onlineCashPending}
                       />
                     ))}
@@ -1725,10 +2011,14 @@ export function StoreApp() {
                     <p>Add a product to set its quantity and peso discount.</p>
                   </div>
                 )}
-                {onlineCashOnly&&<p className="notice" role="status">Multiple cashier PCs · Every sale requires online confirmation. Each PC keeps its own drawer.</p>}
+                {onlineCashOnly&&allocatedMode&&lease&&<LocalDrawerCash db={db} lease={lease}/>}
+                {allocatedMode&&<OfflineStockStatus grant={offlineGrant} status={offlineBranch} products={products} ready={offlineAccess.ready} online={online} pending={offlinePending} issue={offlineIssue} disabled={busy||syncing||cart.items.length>0} onRefresh={()=>void run(async()=>{if(!lease)return;await db.settings.delete(offlinePauseKey(lease));await sync();await refreshAllocatedStock(db,lease,true);setOfflineGrant(await currentOfflineGrant(db,lease));setOfflineBranch(await offlineBranchStatus({...context(),deviceId:lease.deviceId}));},false)}/>}
+                {allocatedMode&&cart.items.length>0&&offlineAccess.ready&&!offlineAccess.withinAllowance&&<p className="notice" role="status">This basket exceeds this PC’s offline allowance or needs an online unit check. {offlineAccess.issue} {online?'Complete online to check shared stock.':'Reconnect before collecting payment.'}</p>}
                 {onlineCashPending&&<p className="notice" role="status">Original cash sale awaiting confirmation · {money(Number(onlineCashPending.data.total))} · Cash tendered {money(Number(onlineCashPending.data.cashReceived))}. Retry this original sale or use Sync center. Do not collect payment again.</p>}
-                {!((checkoutDone||creditDone)&&!cart.items.length)&&!practice&&<div className="credit-payment-choice" role="group" aria-label="Payment type"><Button type="button" variant={!cart.credit.enabled?'default':'outline'} disabled={busy||!!cart.creditAttempt||!!onlineCashPending} onClick={()=>useCart.setState({credit:{...cart.credit,enabled:false}})}>Cash</Button><Button type="button" variant={cart.credit.enabled?'default':'outline'} disabled={busy||!!cart.creditAttempt||!!onlineCashPending} onClick={()=>useCart.setState({credit:{...cart.credit,enabled:true}})}>Credit · 30/60/90 days</Button></div>}
-                {!((checkoutDone||creditDone)&&!cart.items.length)&&(cart.credit.enabled&&!practice?<CreditCheckout key={`${member.organizationId}:${branchId}:${member.userId}`} db={db} organizationId={member.organizationId} branchId={branchId} lease={lease} online={online} disabled={busy||installingUpdate||isStock} onWorking={working=>{if(checkoutScopeGeneration!==contextGeneration.current)return;committing.current=working;setBusy(working);}} onSaved={async saved=>{if(checkoutScopeGeneration!==contextGeneration.current)return;const heldId=useCart.getState().heldDraftId;if(heldId&&lease){try{await removeHeldSale(db,lease,heldId);if(checkoutScopeGeneration!==contextGeneration.current)return;setHeldDraftCount(0);}catch{if(checkoutScopeGeneration!==contextGeneration.current)return;fail(new Error('Credit sale confirmed. A held copy remains; retry its original request to confirm, then remove it.'));}}if(checkoutScopeGeneration!==contextGeneration.current)return;cart.clear();setCash('');setCheckoutDone(undefined);setCreditDone(saved);setHistoryRevision(n=>n+1);notify('Credit sale confirmed. Print the linked credit record or start a new sale.');await sync();if(checkoutScopeGeneration!==contextGeneration.current)return;await refreshLocal();}}/>:<form className="payment-form" onSubmit={finishSale}>
+                {!checkoutCompleted && cart.credit.enabled && practice && (
+                  <p className="practice-credit-note" role="status">Credit checkout requires a connected account. Select Cash to try a practice sale.</p>
+                )}
+                {!checkoutCompleted && !(cart.credit.enabled && practice) && (cart.credit.enabled?<CreditCheckout key={`${member.organizationId}:${branchId}:${member.userId}`} db={db} organizationId={member.organizationId} branchId={branchId} lease={lease} online={online} disabled={busy||installingUpdate||isStock} onWorking={working=>{if(checkoutScopeGeneration!==contextGeneration.current)return;committing.current=working;setBusy(working);}} onSaved={async saved=>{if(checkoutScopeGeneration!==contextGeneration.current)return;const heldId=useCart.getState().heldDraftId;if(heldId&&lease){try{await removeHeldSale(db,lease,heldId);if(checkoutScopeGeneration!==contextGeneration.current)return;setHeldDraftCount(0);}catch{if(checkoutScopeGeneration!==contextGeneration.current)return;fail(new Error('Credit sale confirmed. A held copy remains; retry its original request to confirm, then remove it.'));}}if(checkoutScopeGeneration!==contextGeneration.current)return;cart.clear();setCash('');setCheckoutDone(undefined);setCreditDone(saved);setHistoryRevision(n=>n+1);notify('Credit sale confirmed. Print the linked credit record or start a new sale.');await sync();if(checkoutScopeGeneration!==contextGeneration.current)return;await refreshLocal();}}/>:<form className="payment-form" onSubmit={finishSale}>
                   <div className="subtotal">
                     <span>Subtotal</span>
                     <span>{money(grossSubtotal)}</span>
@@ -1742,9 +2032,9 @@ export function StoreApp() {
                     <input
                       aria-label="Cash received"
                       inputMode="decimal"
-                      type="number"
-                      min="0"
-                      step="0.01"
+                      type="text"
+                      pattern="[0-9]+([.][0-9]{1,2})?"
+                      autoComplete="off"
                       value={cash}
                       onChange={(e) => setCash(e.target.value)}
                       placeholder="0.00"
@@ -1783,7 +2073,7 @@ export function StoreApp() {
                       !lease ||
                       (!onlineCashPending&&!cart.items.length) ||
                       (!onlineCashPending&&hasCartErrors(cart)) ||
-                      (onlineCashOnly&&!online) ||
+                      (onlineCashOnly&&!online&&(!offlineAccess.ready||!offlineAccess.withinAllowance)) ||
                       isStock
                     }
                     className="complete-sale"
@@ -1795,7 +2085,7 @@ export function StoreApp() {
                     <ShieldCheck size={13} />
                     {practice
                       ? "Practice sales never upload"
-                      : onlineCashOnly?"Wait for online confirmation before handing over goods":"Saved on this PC before checkout completes"}
+                      : allocatedMode&&offlineAccess.ready&&offlineAccess.withinAllowance?"Saved on this PC using its reserved stock allowance":onlineCashOnly?"Wait for online confirmation before handing over goods":"Saved on this PC before checkout completes"}
                   </span>
                 </form>)}
                 {(!((checkoutDone||creditDone)&&!cart.items.length)||heldDraftCount>0)&&lease&&<HeldSaleControl onWorking={working=>{committing.current=working;setBusy(working);}} db={db} lease={lease} cash={cash} onCash={setCash} disabled={busy||savingSale||installingUpdate||isStock||!!onlineCashPending} revision={checkoutDone?.id??String(historyRevision)} onChange={()=>{setCheckoutDone(undefined);setCreditDone(undefined);void setting<HeldSale>(db,heldSaleKey(lease)).then(value=>setHeldDraftCount(value?1:0)).catch(()=>fail(new Error("Could not check the held draft. Keep site data and retry.")));}}/>}
@@ -1817,38 +2107,10 @@ export function StoreApp() {
 
           {view === "credit" && <CreditWorkspace onRecords={isOwner?openRecords:undefined} standaloneHeading key={`${member.organizationId}:${branchId}:${member.userId}`} db={db} organizationId={member.organizationId} branchId={branchId} actorId={member.userId} owner={isOwner} online={online} disabled={busy||savingSale||installingUpdate} lease={lease} practice={practice} revision={historyRevision} execute={fn=>run(fn,true,true)}/>}
           {view === "overview" && (
-            <>{practice&&<OverviewDashboard figures={[money(sales.reduce((n,r)=>n+r.payload.total,0)),String(sales.length),money(sales.length?Math.round(sales.reduce((n,r)=>n+r.payload.total,0)/sales.length):0),money(sales.reduce((n,r)=>n+r.payload.total,0))]} trend={Object.entries(sales.reduce<Record<string,number>>((a,r)=>{const date=new Date(Date.parse(r.payload.occurredAt)+8*3600000).toISOString().slice(0,10);a[date]=(a[date]??0)+r.payload.total;return a;},{})).sort(([a],[b])=>a.localeCompare(b)).map(([date,grossSales])=>({date,grossSales:String(grossSales)}))} topProducts={products.flatMap(p=>{const items=sales.flatMap(r=>r.payload.items).filter(i=>i.productId===p.id);return items.length?[{id:p.id,name:p.name,product:p,quantity:items.reduce((n,i)=>n.plus(new Decimal(i.quantity).mul(i.factor)),new Decimal(0)).toFixed(),baseUnit:p.baseUnit,amount:money(items.reduce((n,i)=>n+i.lineTotal,0))}]:[];})} attention={<DashboardAttention practice products={products} stock={stock} pendingCounts={0} onInventory={pane=>{setInventoryTab(pane);setView("inventory");}} onCounts={()=>setView("counts")}/>} activity={<dl className="compact-ledger"><div><dt>Practice receipts saved</dt><dd>{sales.length}</dd></div><div><dt>Live uploads</dt><dd>None</dd></div><div><dt>Stock scope</dt><dd>Local practice</dd></div></dl>} cash={<><dl className="compact-ledger"><div><dt>Practice cash sales</dt><dd>{money(sales.reduce((n,r)=>n+r.payload.total,0))}</dd></div><div><dt>Drawer count</dt><dd>Not counted</dd></div></dl><p className="muted">Separate from business cash.</p></>} scope="Practice overview · Local-only sample sales. Your live business is separate."/>}
-              {!practice && (isOwner || member.role === "manager") && <SalesAnalytics accounts={isOwner?<OverviewAccounts key={`${member.organizationId}:${branchId}`} organizationId={member.organizationId} branchId={branchId} online={online} revision={historyRevision} onCustomers={()=>setView("credit")} onSuppliers={()=>{setPurchasingTab("accounts");setView("receiving");}}onUnconfirmed={setOverviewUnconfirmed}/>:undefined} catalog={products} attention={<DashboardAttention canReview={isOwner} unconfirmedDueCount={overviewUnconfirmed} onCustomers={()=>setView("credit")} products={products} stock={stock} pendingCounts={Number(summary.pendingCounts??0)} onInventory={pane=>{setInventoryTab(pane);setView("inventory");}} onCounts={()=>setView("counts")}/>} key={`sales-analytics:${member.organizationId}:${branchId}:${member.userId}`} organizationId={member.organizationId} branchId={branchId} branchName={selectedBranch?.name ?? "Selected branch"} online={online} disabled={busy} revision={historyRevision} />}
-
-              <details className="extra-registers"><summary>All-time totals, cash reconciliation & audit</summary><h2>All-time recorded totals</h2>
-              <div className="summary-strip">
-                <div>
-                  <span>Recorded sales · {branchLocked ? selectedBranch?.name : "all branches"}</span>
-                  <strong>{money((summaryExact.grossSales ?? summary.grossSales ?? 0) as number|string)}</strong>
-                  <small>
-                    {Number(summary.transactions ?? 0)} completed transactions
-                  </small>
-                </div>
-                <div>
-                  <span>Net cash refunds</span>
-                  <strong>{money((summaryExact.netRefunds ?? summary.netRefunds ?? summary.refunds ?? 0) as number|string)}</strong>
-                  <small>Paid {money((summaryExact.refunds ?? summary.refunds ?? 0) as number|string)} · Recovered {money((summaryExact.refundRecoveries ?? summary.refundRecoveries ?? 0) as number|string)}</small>
-                </div>
-                <div>
-                  <span>In-transit transfers</span>
-                  <strong>{Number(summary.inTransit ?? 0)}</strong>
-                  <small>Awaiting destination receipt</small>
-                </div>
-                <div>
-                  <span>Pending count approvals</span>
-                  <strong>{Number(summary.pendingCounts ?? 0)}</strong>
-                  <small>Owner review required</small>
-                </div>
-              </div>
-              <div className="two-column">
-                <section className="panel">
-                  <h2>Branch activity</h2>
-                  {table(
+            <div className="overview-workspace"><h1 className="sr-only" ref={contentHeading} tabIndex={-1}>Overview</h1>
+              {practice&&<OverviewDashboard figures={[money(sales.reduce((n,r)=>n+r.payload.total,0)),String(sales.length),money(sales.reduce((n,r)=>n+r.payload.total,0))]} trend={Object.entries(sales.reduce<Record<string,number>>((a,r)=>{const date=new Date(Date.parse(r.payload.occurredAt)+8*3600000).toISOString().slice(0,10);a[date]=(a[date]??0)+r.payload.total;return a;},{})).sort(([a],[b])=>a.localeCompare(b)).map(([date,grossSales])=>({date,grossSales:String(grossSales)}))} topProducts={products.flatMap(p=>{const items=sales.flatMap(r=>r.payload.items).filter(i=>i.productId===p.id);return items.length?[{id:p.id,name:p.name,product:p,quantity:items.reduce((n,i)=>n.plus(new Decimal(i.quantity).mul(i.factor)),new Decimal(0)).toFixed(),baseUnit:p.baseUnit,amount:money(items.reduce((n,i)=>n+i.lineTotal,0))}]:[];})} attention={<DashboardAttention practice products={products} stock={stock} pendingCounts={0} onInventory={pane=>{setInventoryTab(pane);setView("inventory");}} onCounts={()=>setView("counts")}/>} activity={<dl className="compact-ledger"><div><dt>Practice receipts saved</dt><dd>{sales.length}</dd></div><div><dt>Live uploads</dt><dd>None</dd></div><div><dt>Stock scope</dt><dd>Local practice</dd></div></dl>} scope="Practice overview · Local-only sample sales. Your live business is separate."/>}
+              {!practice&&isOwner&&<FinancialOverview key={member.organizationId+":"+branchId} organizationId={member.organizationId} activeBranch={branchId} branches={branchList} online={online} revision={historyRevision}/>}
+              {!practice && (isOwner || member.role === "manager") && <OverviewReportSections owner={isOwner}><SalesAnalytics notebookSummary={isOwner ? notebookSalesReport : undefined} branchControl={branchControl("overview")} activity={table(
                     ["Branch", "Cash sales", "Last synchronized"],
                     branchList.map((b) => (
                       <tr key={b.id}>
@@ -1867,17 +2129,13 @@ export function StoreApp() {
                         </td>
                       </tr>
                     )),
-                  )}
-                </section>
-                <section className="panel">
-                  <h2>Stock investigations</h2>
-                  <p>{Number(summary.openStockExceptions ?? 0)} unresolved investigations {isOwner ? "across your branches" : "at this branch"}. They remain open until the owner records the outcome.</p>
-                  <p className="muted">Choose a branch, then open Inventory to review its oldest unresolved cases, held goods and stock issues.</p>
-                  <Button variant="outline" onClick={() => setView("inventory")}>Open stock controls</Button>
-                </section>
-              </div>
-              {!practice && (isOwner || member.role === "manager") && <StockLossReport singleBranch={branchLocked} key={`loss-report:${member.organizationId}:${branchId}`} db={db} organizationId={member.organizationId} branchId={branchId} branchName={selectedBranch?.name ?? "Selected branch"} actorId={member.userId} products={products} owner={isOwner} online={online} disabled={busy} revision={historyRevision} execute={fn => run(fn,true,true)} />}
-              <section className="panel">
+                  )} reportRegister={({popular,periodTotals})=>(<div className="overview-registers">
+                 <WorkspaceTabs label="Overview reports" value={overviewReport} onChange={setOverviewReport} tabs={overviewReportTabs}/>
+                 <div role="tabpanel" aria-label={overviewReportTabs.find(tab=>tab.id===overviewReport)?.label}>
+                   <div hidden={overviewReport!=="products"}>{popular}</div>
+                   <div hidden={overviewReport!=="period-totals"}>{periodTotals}</div>
+                   <div hidden={overviewReport!=="stock"}><StockLossReport report="reconciliation" singleBranch={branchLocked} key={`loss-report:${member.organizationId}:${branchId}`} db={db} organizationId={member.organizationId} branchId={branchId} branchName={selectedBranch?.name ?? "Selected branch"} actorId={member.userId} products={products} owner={isOwner} online={online} disabled={busy} revision={historyRevision} execute={fn => run(fn,true,true)} /></div>
+                   {overviewReport==="cash"&&(<section className="panel">
                 <h2>Cash reconciliation</h2>
                 {(cloud.cashier_shifts ?? []).length ? (
                   table(
@@ -1921,8 +2179,8 @@ export function StoreApp() {
                     opens.
                   </p>
                 )}
-              </section>
-              <section className="panel">
+              </section>)}
+                   {overviewReport==="movements"&&(<section className="panel">
                 <h2>Recent stock movements</h2>
                 {(cloud.inventory_movements ?? []).length ? (
                   table(
@@ -1949,9 +2207,8 @@ export function StoreApp() {
                     body="Receiving, sales, transfers, and approved counts create permanent entries here."
                   />
                 )}
-              </section>
-              {!practice && (
-                <HistoryRegister
+              </section>)}
+                   {overviewReport==="audit"&&(<HistoryRegister
                   {...historyProps}
                   key={`audit:${member.organizationId}:${branchId}`}
                   title="Audit register"
@@ -2001,26 +2258,38 @@ export function StoreApp() {
                       "audit",
                     )
                   }
-                </HistoryRegister>
-              )}
-            </details></>
+                </HistoryRegister>)}
+                 </div>
+               </div>)} accounts={isOwner?<OverviewAccounts key={`${member.organizationId}:${branchId}`} organizationId={member.organizationId} branchId={branchId} online={online} revision={historyRevision} onCustomers={()=>setView("credit")} onSuppliers={()=>{setPurchasingTab("accounts");setView("receiving");}}onUnconfirmed={setOverviewUnconfirmed}/>:undefined} catalog={products} attention={<DashboardAttention canReview={isOwner} unconfirmedDueCount={overviewUnconfirmed} onCustomers={()=>setView("credit")} products={products} stock={stock} pendingCounts={Number(summary.pendingCounts??0)} onInventory={pane=>{setInventoryTab(pane);setView("inventory");}} onCounts={()=>setView("counts")}/>} key={`sales-analytics:${member.organizationId}:${member.userId}`} organizationId={member.organizationId} branchId={branchId} branchName={selectedBranch?.name ?? "Selected branch"} online={online} disabled={busy} revision={historyRevision} /></OverviewReportSections>}
+
+            </div>
           )}
 
-          {view === "inventory" && (
-            <>{inventoryTab!=="products"&&inventoryTabs}<div hidden={inventoryTab!=="products"}>
-              <InventoryWorkspace tabs={inventoryTabs} products={products} stock={stock} onControls={()=>setInventoryTab("controls")} onExpiry={()=>setInventoryTab("expiry")} onAdd={()=>setInventoryTab("setup")} onReceive={receiveInventory} onCount={countInventory} onEdit={product=>openInventoryReview(product,true)} onEditCatalog={()=>openInventoryReview(undefined,true)} onHidden={()=>setInventoryTab("hidden")} onPrices={()=>setInventoryTab("prices")} onReview={()=>openInventoryReview()} canManage={isOwner&&!practice}/></div>
-              {isOwner&&!practice&&inventoryTab==='hidden'&&<HiddenProducts key={`${member.organizationId}:${branchId}`} organizationId={member.organizationId} branchId={branchId} disabled={busy||!online} onBack={()=>setInventoryTab('products')} onSave={async(action,data)=>{const problem=await run(async()=>{await onlineOperation(db,member.userId,action,{...context(),...data},'requestId');},true,true);if(problem)throw problem;}}/>}
+          {showInventory && (
+            <>
+              <h1 className="sr-only" ref={contentHeading} tabIndex={-1}>Inventory</h1>
+              <InventoryWorkspace
+                section={inventorySection} tabs={inventoryTabs}
+                products={products} stock={stock} canManage={isOwner&&!practice}
+                onAdd={()=>openInventorySection("setup")} onReceive={receiveInventory} onCount={countInventory}
+                onEdit={product=>openInventoryReview(product,true)} onEditCatalog={()=>openInventoryReview(undefined,true)}
+
+              >
+              {view === "inventory" && <>
+              {isOwner&&!practice&&inventoryTab==='hidden'&&<HiddenProducts key={`${member.organizationId}:${branchId}`} organizationId={member.organizationId} branchId={branchId} online={online} disabled={busy||!online} onBack={()=>setInventoryTab('products')} onSave={async(action,data)=>{const problem=await run(async()=>{await onlineOperation(db,member.userId,action,{...context(),...data},'requestId');},true,true);if(problem)throw problem;}}/>}
               {!practice && member.role !== "cashier" && <div hidden={inventoryTab!=="controls"&&inventoryTab!=="expiry"}><StockControls focus={inventoryTab==="expiry"?"expiry":"all"} key={`${member.organizationId}:${branchId}`} db={db} organizationId={member.organizationId} branchId={branchId} actorId={member.userId} products={products} owner={isOwner} canAssign={isOwner || member.role === "manager"} online={online} disabled={busy} revision={historyRevision} execute={fn => run(fn,true,true)} /></div>}
+              {!practice && (isOwner || member.role === "manager") && inventoryTab==="loss" &&
+                <StockLossReport report="loss" singleBranch={branchLocked} key={`loss-report:${member.organizationId}:${branchId}`} db={db} organizationId={member.organizationId} branchId={branchId} branchName={selectedBranch?.name ?? "Selected branch"} actorId={member.userId} products={products} owner={isOwner} online={online} disabled={busy} revision={historyRevision} execute={fn=>run(fn,true,true)} />}
               {isOwner && (
                 <div hidden={inventoryTab!=="setup"&&inventoryTab!=="review"}>
-                  {!practice&&<div hidden={inventoryTab!=="review"}><ImportedProductReview key={`review:${branchId}:${inventoryReviewEntry.serial}`} initialProductId={inventoryReviewEntry.productId} showCatalog={inventoryReviewEntry.showCatalog} stock={stock} products={products} organizationId={member.organizationId} branchId={branchId} disabled={busy||!online} onSave={async (action,data)=>{const problem=await run(async()=>{await onlineOperation(db,member.userId,action,{...context(),...data},"requestId");},true,true);if(problem)throw problem;}}/></div>}
+                  {!practice&&<div hidden={inventoryTab!=="review"}><ImportedProductReview key={`review:${branchId}:${inventoryReviewEntry.serial}`} initialProductId={inventoryReviewEntry.productId} showCatalog={inventoryReviewEntry.showCatalog} branchName={selectedBranch?.name} hubName={catalogHub?.name} onHub={goToCatalogHub} stock={stock} products={products} organizationId={member.organizationId} branchId={branchId} disabled={busy||!online} onSave={async (action,data)=>{const problem=await run(async()=>{await onlineOperation(db,member.userId,action,{...context(),...data},"requestId");},true,true);if(problem)throw problem;}}/></div>}
                   <section className="panel" hidden={inventoryTab!=="setup"}>
                     <Button variant="ghost" onClick={()=>setInventoryTab("products")}>Back to products</Button><h2>Add a product</h2>
                     <p className="muted">
                       Choose pack, weight, volume, length or piece selling. Each enabled selling
                       unit has its own price; loose selling is optional.
                     </p>
-                    <ProductSetupForm
+                    {catalogHub ? <div className="inventory-panel-actions"><p>Add products in {catalogHub.name}, where the shared catalog is managed.</p><Button type="button" variant="outline" disabled={!goToCatalogHub} onClick={goToCatalogHub}>Switch to {catalogHub.name}</Button></div> : <ProductSetupForm
                       disabled={busy || !online || practice}
                       onSave={(product) =>
                         run(async () => {
@@ -2037,159 +2306,155 @@ export function StoreApp() {
                           );
                         }, true, true)
                       }
-                    />
+                    />}
                   </section>
 
                 </div>
               )}
-            {practice&&(inventoryTab==="expiry"||inventoryTab==="controls"||inventoryTab==="prices")&&<section className="panel"><h2>{inventoryTab==="expiry"?"Expiry reminders":inventoryTab==="controls"?"Stock controls":"Price history"}</h2><p>Practice checkout does not load business holds, investigations or historical price records. Sign in to inspect those records. This sample catalog and its local stock remain separate from your business.</p><Button variant="outline" onClick={()=>setInventoryTab("products")}>Return to products</Button></section>}{isOwner&&!practice&&inventoryTab==="prices"&&<PriceHistory key={`${member.organizationId}:${branchId}`} organizationId={member.organizationId} branchId={branchId} products={products} online={online} disabled={busy}/>}</>
+            {practice&&(inventoryTab==="expiry"||inventoryTab==="controls"||inventoryTab==="prices")&&<section className="panel"><h2>{inventoryTab==="expiry"?"Expiry reminders":inventoryTab==="controls"?"Stock controls":"Price history"}</h2><p>Practice checkout does not load business holds, investigations or historical price records. Sign in to inspect those records. This sample catalog and its local stock remain separate from your business.</p><Button variant="outline" onClick={()=>setInventoryTab("products")}>Return to products</Button></section>}{isOwner&&!practice&&inventoryTab==="prices"&&<PriceHistory key={`${member.organizationId}:${branchId}`} organizationId={member.organizationId} branchId={branchId} products={products} online={online} disabled={busy} db={db} actorId={member.userId} execute={fn=>run(fn,true,true)}/>}</>}
+              {view === "counts" && (
+                practice ? <section className="panel"><h2>Blind stock counts</h2><p>Use the connected staging business with separate staff accounts to rehearse blind counts and owner approval. Practice mode never changes server stock.</p></section> : member.role === "cashier" ? <section className="panel"><h2>Stock counts</h2><p>Stock counts require a stock-staff, manager or owner account. Cashiers cannot submit or approve adjustments.</p></section> :
+                <>
+                {isOwner&&!inventoryCountEntry.productId&&<OwnerStockWorksheet key={`worksheet:${member.organizationId}:${branchId}:${member.userId}`} organizationId={member.organizationId} branchId={branchId} branchName={selectedBranch?.name??"Selected branch"} online={online} disabled={busy||allPendingCount>0||allOperationCount>0||!!lease} revision={historyRevision} onPost={async data=>{
+                  const problem=await run(async()=>{await onlineOperation(db,member.userId,"post_owner_stock_count",{...context(),...data},"requestId");},true,true);
+                  if(problem)throw problem;
+                }}/>}
+                <details className="panel" open={!isOwner||!!inventoryCountEntry.productId}><summary>Blind counts and count register</summary>
+                <BlindCounts key={`${member.organizationId}:${branchId}:${member.userId}:${inventoryCountEntry.serial}`} initialProductId={inventoryCountEntry.productId} db={db} organizationId={member.organizationId} branchId={branchId} actorId={member.userId} products={products.filter(p=>!p.setupPending)} owner={isOwner} online={online} disabled={busy || !!pending.length} revision={historyRevision} execute={fn => run(fn,true,true)}>
+                  {!practice && (
+                    <HistoryRegister
+                      {...historyProps}
+                      key={`counts:${member.organizationId}:${branchId}`}
+                      title="Count register"
+                      kind="counts"
+                      emptyTitle="No counts recorded"
+                      columns={[
+                        { label: "ID", value: (r) => r.id },
+                        ...stockHistoryColumns(products),
+                        { label: "Expected", numeric: true, value: (r) => r.expected },
+                        { label: "Counted", numeric: true, value: (r) => r.counted },
+                        {
+                          label: "Difference",
+                          numeric: true,
+                          value: (r) =>
+                            new Decimal(str(r, "counted"))
+                              .minus(str(r, "expected"))
+                              .toFixed(),
+                        },
+                        { label: "State", value: (r) => r.state },
+                        { label: "Reason", value: (r) => r.reason },
+                        { label: "Count date", value: (r) => r.count_date },
+                        { label: "Recorded at", value: (r) => r.created_at },
+                      ]}
+                    >
+                      {(records) =>
+                        table(
+                          [
+                            "Product / lot",
+                            "Expected",
+                            "Counted",
+                            "Difference",
+                            "Status",
+                            "Action",
+                          ],
+                          records.map((c) => (
+                            <tr key={str(c, "id")}>
+                              <td>
+                                {stockLabel(c)}
+                                <small>Reason: {str(c, "reason")}</small>
+                              </td>
+                              <td>{stockQuantity(c, str(c, "expected"))}</td>
+                              <td>{stockQuantity(c, str(c, "counted"))}</td>
+                              <td>
+                                {stockQuantity(
+                                  c,
+                                  new Decimal(str(c, "counted"))
+                                    .minus(str(c, "expected"))
+                                    .toFixed(),
+                                )}
+                              </td>
+                              <td>{str(c, "state")}</td>
+                              <td>
+                                <span>{c.count_method === 'owner_worksheet' ? `Owner worksheet · Count date ${str(c, "count_date") || "—"}` : c.count_method === 'blind_v1' ? 'Review the matching blind count above.' : c.state === 'pending' ? 'Legacy count: start a fresh blind count before any adjustment.' : 'Historical record retained.'}</span>
+                              </td>
+                            </tr>
+                          )),
+                          "counts",
+                        )
+                      }
+                    </HistoryRegister>
+                  )}
+                </BlindCounts>
+                </details>
+                </>
+              )}
+              </InventoryWorkspace>
+            </>
           )}
 
           {view === "receiving" && (
-            <><WorkspaceTabs label="Purchasing sections" value={["accounts","suppliers"].includes(purchasingTab)?purchasingTab:"deliveries"} onChange={id=>setPurchasingTab(id==="deliveries"?"orders":id)} tabs={[{id:"deliveries",label:"Orders & deliveries"},...(isOwner&&!practice?[{id:"accounts",label:"Supplier bills"}]:[]),{id:"suppliers",label:"Suppliers"}]}/>{!["accounts","suppliers"].includes(purchasingTab)&&<WorkspaceTabs label="Orders and receiving steps" value={purchasingTab} onChange={setPurchasingTab} tabs={[{id:"orders",label:"Orders"},{id:"inspections",label:"Inspect delivery"},{id:"quick",label:"Quick receipt"},{id:"history",label:"Receiving history"},...(isOwner?[{id:"opening",label:"Opening stock"}]:[])]}/>}{!practice&&isOwner&&purchasingTab==="accounts"&&<SupplierAccounts initialBillId={supplierBillTarget} onRecords={openRecords} key={`supplier-accounts:${member.organizationId}:${branchId}`} db={db} organizationId={member.organizationId} branchId={branchId} actorId={member.userId} online={online} disabled={busy} execute={fn=>run(fn,true,true)}/>}{practice&&purchasingTab==="orders"&&<div className="practice-purchasing"><Button className="practice-order-request" disabled title="Sign in to request a business purchase order"><Plus size={20}/>Request purchase order</Button><div className="workspace-stats three"><WorkspaceStat icon={ClipboardCheck} label="Awaiting approval" value="—"/><WorkspaceStat icon={Truck} label="Awaiting delivery" value="—"/><WorkspaceStat icon={Package} label="Supplier claims" value="—"/></div><OrderWorkspace orders={[]} products={products} disabled actions={()=>null} onInspect={()=>{}}/><p className="scope-note">Business purchasing requires signing in. Practice checkout does not create orders or stock.</p></div>}
-              {!practice && member.role !== "cashier" && purchasingTab!=="accounts" && <PurchasingWorkspace onBillSaved={openSupplierBill} pane={purchasingTab} onPaneChange={setPurchasingTab} key={`purchasing:${member.organizationId}:${branchId}`} db={db} organizationId={member.organizationId} branchId={branchId} branchName={selectedBranch?.name ?? "Selected branch"} actorId={member.userId} products={products} suppliers={(cloud.suppliers ?? []).map(s => ({ id: str(s,"id"), name: str(s,"name") }))} role={member.role} online={online} disabled={busy} revision={historyRevision} reversalBlocked={allPendingCount > 0 || syncing || !!lease || cart.items.length > 0} execute={fn => run(fn,true,true)} />}
-              <div className="two-column">
-                <section className="panel" hidden={purchasingTab!=="quick"}>
-                  <h2 id="quick-receipt-heading" ref={quickReceiptHeading} tabIndex={-1}>Quick receipt · saleable goods only</h2>
-                  <p className="muted">
-                    Record an unplanned, fully saleable receipt. For purchase orders, held or rejected goods, use Inspect supplier delivery above. Never record the same delivery in both forms.
-                  </p>
-                  <form
-                    onSubmit={(e) => {
-                      e.preventDefault();
-                      const form = e.currentTarget,
-                        f = new FormData(form);
-                      void run(async () => {
-                        const p = products.find((p) =>
-                          p.units.some((u) => u.id === inputValue(f, "unit")),
-                        );
-                        if (!p) throw new Error("Select a product");
-                        const delivery={
-                            ...context(),
-                            reference: inputValue(f, "reference"),
-                            source: "purchase",
-                            supplierId: inputValue(f, "supplier") || null,
-                            items: [
-                              {
-                                productId: p.id,
-                                unitId: inputValue(f, "unit"),
-                                quantity: inputValue(f, "quantity"),
-                                documentQuantity: inputValue(f,"documentQuantity") || null,
-                                deliveryNotes: inputValue(f,"deliveryNotes"),
-                                lot: inputValue(f, "lot"),
-                                expiresOn: inputValue(f, "expires") || null,
-                              },
-                            ],
-                          };
-                        const invoice=isOwner&&!practice?purchaseInvoice(f):null;
-                        const result=await onlineOperation(db,member.userId,invoice?"supplier_receive_purchase":"receive_stock",invoice?{...context(),receiptAction:"receive_stock",delivery:{...delivery,receiptId:crypto.randomUUID()},invoice}:delivery,invoice?"requestId":"receiptId");
-                        if(checkoutScopeGeneration!==contextGeneration.current)return;
-                        if(invoice&&typeof result.billId==="string")openSupplierBill(result.billId);
-                        form.reset();setQuickUnit("");setQuickSupplier("");
-                        notify("Delivery recorded.");
-                      }, true, true);
-                    }}
-                  >
-                    <Field label="Supplier">
-                      <SearchableSelect name="supplier" aria-label="Supplier" value={quickSupplier} onValueChange={setQuickSupplier}>
-                        <option value="">No supplier selected</option>
-                        {(cloud.suppliers ?? []).map((r) => (
-                          <option key={str(r, "id")} value={str(r, "id")}>
-                            {str(r, "name")}
-                          </option>
-                        ))}
-                      </SearchableSelect>
-                    </Field>
-                    <Field label="Delivery / invoice reference">
-                      <input name="reference" required />
-                    </Field>
-                    <Field label="Product and unit">
-                      <SearchableSelect name="unit" aria-label="Product and unit" required value={quickSellingUnit?.id??""} onValueChange={value =>setQuickUnit(value)}>
-                        {products.flatMap((p) =>
-                          p.units.map((u) => (
-                            <option key={u.id} value={u.id} data-search={`${p.sku} ${("originalCode" in p ? String(p.originalCode??"") : "")}`}>
-                              {p.name} · {u.name}
-                            </option>
-                          )),
-                        )}
-                      </SearchableSelect>
-                    </Field>
-                    <MeasuredQuantity key={`quick:${branchId}:${quickSellingUnit?.id}`} label="Quantity received" name="quantity" measurement={{baseUnit:quickProduct?.baseUnit??"base units",unitName:quickSellingUnit?.name??"selected unit",factor:quickSellingUnit?.factor??"1"}} positive disabled={busy||!online||!quickSellingUnit}/>
-
-                    <p className="muted">Enter only accepted, saleable goods above. Keep rejected or damaged goods separate.</p>
-                    <MeasuredQuantity key={`document:${branchId}:${quickSellingUnit?.id}`} label="Quantity on supplier document (optional)" entryLabel="Quantity on supplier document" name="documentQuantity" measurement={{baseUnit:quickProduct?.baseUnit??"base units",unitName:quickSellingUnit?.name??"selected unit",factor:quickSellingUnit?.factor??"1"}} required={false} disabled={busy||!online||!quickSellingUnit}/>
-                    <Field label="Delivery shortage / rejection notes"><input name="deliveryNotes" maxLength={1000} placeholder="Required when accepted goods differ from the supplier document" /></Field>
-                    <div className="form-grid">
-                      <Field label="Lot / batch">
-                        <input name="lot" />
-                      </Field>
-                      <Field label="Expiry date">
-                        <input name="expires" type="date" />
-                      </Field>
-                    </div>
-                    {isOwner&&!practice&&<SupplierPurchaseFields key={`${branchId}:${quickSupplier}:${historyRevision}`} organizationId={member.organizationId} branchId={branchId} supplierId={quickSupplier} disabled={busy||!online}/>}
-                    <Button
-                      disabled={
-                        busy || !online || practice || !["owner", "manager"].includes(member.role)
-                      }
-                    >
-                      Receive stock
-                      <ArrowDownToLine size={16} />
-                    </Button>
-                  </form>
-                </section>
-                <div>
-                  <section className="panel" hidden={purchasingTab!=="suppliers"}>
-                    <h2 id="purchasing-suppliers">Suppliers</h2>
-                    {(cloud.suppliers ?? []).length ? (
-                      <ul className="plain-list">
-                        {(cloud.suppliers ?? []).map((s) => (
-                          <li key={str(s, "id")}>
-                            <strong>{str(s, "name")}</strong>
-                            <small>
-                              {str(s, "contact") || "No contact details"}
-                            </small>
-                          </li>
-                        ))}
-                      </ul>
-                    ) : (
-                      <p className="muted">No suppliers added yet.</p>
-                    )}
-                    <form
-                      onSubmit={(e) => {
-                        e.preventDefault();
-                        const form = e.currentTarget;
-                        const f = new FormData(form);
-                        void run(async () => {
-                          await command("create_supplier", {
-                            ...context(),
-                            name: inputValue(f, "name"),
-                            contact: inputValue(f, "contact"),
-                          });
-                          form.reset();
-                          notify("Supplier added.");
-                        });
-                      }}
-                    >
-                      <Field label="Supplier name">
-                        <input name="name" required />
-                      </Field>
-                      <Field label="Contact details">
-                        <input name="contact" />
-                      </Field>
-                      <Button
-                        variant="outline"
-                        disabled={
-                          !online ||
-                          busy ||
-                          practice ||
-                          !["owner", "manager"].includes(member.role)
-                        }
-                      >
-                        Add supplier
-                      </Button>
-                    </form>
-                  </section>
+            <>
+              <h1 className="sr-only" ref={contentHeading} tabIndex={-1}>Purchasing</h1>
+              <div className="purchasing-nav">
+                <WorkspaceTabs label="Purchasing sections" value={purchasingTab==="quick"?"orders":purchasingTab}
+                  onChange={section=>{
+                    if(section==="accounts")setSupplierBillTarget("");
+                    setPurchasingTab(section);
+                  }}
+                  tabs={[
+                    ...(isOwner&&!practice?[{id:"accounts",label:"Supplier bills"}]:[]),
+                    {id:"suppliers",label:"Suppliers"},
+                    ...(!practice?[{id:"history",label:"Receiving history"}]:[]),
+                    {id:"orders",label:"Orders"},
+                    ...(!practice?[{id:"inspections",label:"Inspect delivery"}]:[]),
+                    ...(isOwner&&!practice?[{id:"opening",label:"Opening stock"}]:[]),
+                  ]}/>
+                {!practice&&<details className="purchasing-tools">
+                  <summary>Tools</summary>
+                  <div className="button-row">
+                    {isOwner&&<Button variant="outline" size="sm" onClick={()=>openRecords("purchases")}>Records & exports</Button>}
+                    {refreshButton}
+                  </div>
+                </details>}
+              </div>
+              {!practice&&isOwner&&purchasingTab==="accounts"&&<SupplierAccounts initialBillId={supplierBillTarget} onRecords={openRecords}
+                key={`supplier-accounts:${member.organizationId}:${branchId}:${supplierBillTarget}`} db={db} organizationId={member.organizationId}
+                branchId={branchId} actorId={member.userId} online={online} disabled={busy} execute={fn=>run(fn,true,true)}/>}
+              {practice&&purchasingTab==="orders"&&<div className="practice-purchasing"><Button className="practice-order-request" disabled title="Sign in to request a business purchase order"><Plus size={20}/>Request purchase order</Button><div className="workspace-stats three"><WorkspaceStat icon={ClipboardCheck} label="Awaiting approval" value="-"/><WorkspaceStat icon={Truck} label="Awaiting delivery" value="-"/><WorkspaceStat icon={Package} label="Supplier claims" value="-"/></div><OrderWorkspace orders={[]} products={products} disabled actions={()=>null} onInspect={()=>{}}/><p className="scope-note">Business purchasing requires signing in. Practice checkout does not create orders or stock.</p></div>}
+              {!practice && member.role !== "cashier" && purchasingTab!=="accounts" && <div hidden={purchasingTab!=="orders"&&purchasingTab!=="inspections"}><PurchasingWorkspace onBillSaved={openSupplierBill} pane={purchasingTab}
+                onPaneChange={setPurchasingTab} onAddStock={canReceiveStock?()=>setPurchasingTab("quick"):undefined} key={`purchasing:${member.organizationId}:${branchId}`} db={db}
+                organizationId={member.organizationId} branchId={branchId} branchName={selectedBranch?.name ?? "Selected branch"}
+                actorId={member.userId} products={products} suppliers={suppliers} role={member.role} online={online} disabled={busy}
+                revision={historyRevision} reversalBlocked={allPendingCount > 0 || syncing || !!lease || cart.items.length > 0}
+                execute={fn => run(fn,true,true)} /></div>}
+              {canReceiveStock&&<div hidden={purchasingTab!=="quick"}>
+                <Button type="button" variant="outline" onClick={()=>setPurchasingTab("orders")}>Back to orders</Button>
+                <AddStock key={`add-stock:${member.organizationId}:${branchId}:${member.userId}:${inventoryReceiptJump}`}
+                  headingRef={quickReceiptHeading} organizationId={member.organizationId} branchId={branchId}
+                  products={products} stock={stock} stockLoaded={!!snapshotAt} suppliers={activeSuppliers} initialUnitId={quickProductTarget?.branchId===branchId?quickProductTarget.unitId:undefined}
+                  canAttachBill={isOwner} disabled={busy||!online}
+                  onReceive={(draft,invoice)=>run(async()=>{
+                    const delivery={...context(),...draft,source:"purchase"};
+                    const result=await onlineOperation(db,member.userId,invoice?"supplier_receive_purchase":"receive_stock",
+                      invoice?{...context(),receiptAction:"receive_stock",delivery:{...delivery,receiptId:crypto.randomUUID()},invoice}:delivery,
+                      invoice?"requestId":"receiptId");
+                    if(checkoutScopeGeneration!==contextGeneration.current)return;
+                    setQuickProductTarget(undefined);
+                    if(invoice&&typeof result.billId==="string")openSupplierBill(result.billId);
+                    notify("Delivery recorded.");
+                  },true,true)}/>
+              </div>}
+              {purchasingTab==="suppliers"&&<section id="purchasing-suppliers">
+                <SupplierDirectory key={`suppliers:${member.organizationId}:${branchId}:${member.userId}`}
+                  suppliers={activeSuppliers} organizationId={member.organizationId} branchId={branchId} online={online} disabled={busy}
+                  canManage={canReceiveStock} canArchive={isOwner&&!practice}
+                  onHistory={isOwner&&!practice?supplier=>openRecords("supplier_invoices",supplier):undefined}
+                  onSave={(action,data)=>run(async()=>{
+                    const input={...context(),...data};
+                    if(action==="create_supplier")await command(action,input);
+                    else await onlineOperation(db,member.userId,action,input,"requestId");
+                  })}/>
+              </section>}
                   {isOwner && (
                     <section className="panel" hidden={purchasingTab!=="opening"}>
                       <h2>Import opening stock</h2>
@@ -2273,8 +2538,6 @@ export function StoreApp() {
                       )}
                     </section>
                   )}
-                </div>
-              </div>
               {!practice && (
                 <div hidden={purchasingTab!=="history"}><HistoryRegister
                   {...historyProps}
@@ -2290,50 +2553,16 @@ export function StoreApp() {
                     { label: "Recorded at", value: (r) => r.created_at },
                   ]}
                 >
-                  {(records) =>
-                    table(
-                      ["Recorded", "Reference", "Source", "Supplier", "Lines"],
-                      records.map((r) => (
-                        <tr key={str(r, "id")}>
-                          <td>{when(r.created_at)}</td>
-                          <td>
-                            <strong>{str(r, "reference")}</strong>
-                            <small>{str(r, "id").slice(0, 8)}</small>
-                          </td>
-                          <td>
-                            {str(r, "source") === "opening"
-                              ? "Opening stock"
-                              : "Purchase"}
-                          </td>
-                          <td>
-                            {r.supplier_id
-                              ? str(
-                                  (cloud.suppliers ?? []).find(
-                                    (s) => s.id === r.supplier_id,
-                                  ) ?? r,
-                                  "name",
-                                ) || str(r, "supplier_id")
-                              : "No supplier"}
-                          </td>
-                          <td>
-                            {Array.isArray(
-                              (r.payload as { items?: unknown[] })?.items,
-                            )
-                              ? (r.payload as { items: unknown[] }).items.length
-                              : "—"}
-                          </td>
-                        </tr>
-                      )),
-                      "purchases",
-                    )
-                  }
+                  {records => <ReceivingRecords rows={records} products={products} suppliers={suppliers} active={purchasingTab==="history"}/>}
                 </HistoryRegister></div>
               )}
             </>
           )}
 
-          {view === "transfers" && (
+          {view === "transfers" && !branchLocked && (
             <>
+              {!practice&&requestWorkspaceAllowed(network)&&<BranchStockRequests key={`requests:${member.organizationId}:${branchId}:${member.userId}`} organizationId={member.organizationId} branchId={branchId} actorId={member.userId} db={db} products={products} online={online} disabled={busy}/>}
+              {!practice&&requestWorkspaceAllowed(network)&&network&&<BranchTransfers key={`shipments:${member.organizationId}:${branchId}:${member.userId}`} organizationId={member.organizationId} branchId={branchId} actorId={member.userId} db={db} products={products} network={network} online={online} disabled={busy} owner={isOwner}/>}
               {!practice && (
                 <HistoryRegister
                   {...historyProps}
@@ -2371,14 +2600,14 @@ export function StoreApp() {
                             {branchName(t.branch_id)} →{" "}
                             {branchName(t.destination_branch_id)}
                           </td>
-                          <td>{stockQuantity(t, str(t, "quantity"))}<small>Accepted: {str(t,"received_quantity") || "0"} · Held: {str(t,"held_quantity") || "0"} · Lost: {str(t,"lost_quantity") || "0"}<br />Outstanding: {outstandingTransfer(t)}</small></td>
+                          <td>{stockQuantity(t, str(t, "quantity"))}<small>Accepted: {str(t,"received_quantity") || "0"} · Held: {str(t,"held_quantity") || "0"} · Lost: {str(t,"lost_quantity") || "0"} · Returned unreceived: {str(t,"returned_quantity") || "0"}<br />Outstanding: {outstandingTransfer(t)}</small></td>
                           <td>
                             <span className="status-tag">
                               {str(t, "state").replaceAll("_", " ")}
                             </span>
                           </td>
                           <td>
-                            {t.state === "in_transit" &&
+                            {!t.shipment_id && t.state === "in_transit" &&
                               t.destination_branch_id === branchId && (
                                 <ApprovalForm
                                   action="Confirm receipt"
@@ -2404,7 +2633,7 @@ export function StoreApp() {
                                   <MeasuredQuantity label="Damaged / held quantity received (base units)" entryLabel="Damaged / held quantity received" name="heldQuantity" measurement={{baseUnit:historicalStock(products,t).baseUnit||"base units",unitName:historicalStock(products,t).baseUnit||"base units",factor:"1"}} initial="0" max={outstandingTransfer(t)}/>
                                 </ApprovalForm>
                               )}
-                            {isOwner && t.state === "in_transit" && t.destination_branch_id === branchId && <ApprovalForm action="Record missing transfer goods" label="Investigation evidence / loss reason" description={`This closes an investigated shortage from the outstanding ${outstandingTransfer(t)} base units. It does not deduct the source stock again or add destination stock.`} confirmLabel="Record transfer loss" disabled={!online || busy || practice} onConfirm={(reason,f) => run(async () => {
+                            {!t.shipment_id && isOwner && t.state === "in_transit" && t.destination_branch_id === branchId && <ApprovalForm action="Record missing transfer goods" label="Investigation evidence / loss reason" description={`This closes an investigated shortage from the outstanding ${outstandingTransfer(t)} base units. It does not deduct the source stock again or add destination stock.`} confirmLabel="Record transfer loss" disabled={!online || busy || practice} onConfirm={(reason,f) => run(async () => {
                               await onlineOperation(db,member.userId,"write_off_transfer",{...context(),transferId:t.id,quantity:inputValue(f,"missingQuantity"),reason},"receiptId");
                               notify("Missing transfer goods recorded separately. Review and resolve the investigation in Inventory.");
                             },true,true)}><MeasuredQuantity label="Missing transfer quantity (base units)" entryLabel="Missing transfer quantity" name="missingQuantity" measurement={{baseUnit:historicalStock(products,t).baseUnit||"base units",unitName:historicalStock(products,t).baseUnit||"base units",factor:"1"}} positive max={outstandingTransfer(t)}/></ApprovalForm>}
@@ -2416,7 +2645,7 @@ export function StoreApp() {
                   }
                 </HistoryRegister>
               )}
-              <section className="panel narrow-panel">
+              {!requestWorkspaceAllowed(network)&&<section className="panel narrow-panel">
                 <h2>Dispatch a transfer</h2>
                 <form
                   onSubmit={(e) => {
@@ -2475,77 +2704,8 @@ export function StoreApp() {
                     <ArrowRight size={16} />
                   </Button>
                 </form>
-              </section>
+              </section>}
             </>
-          )}
-
-          {view === "counts" && <>{inventoryTabs}</>}
-          {view === "counts" && (
-            practice ? <section className="panel"><h2>Blind stock counts</h2><p>Use the connected staging business with separate staff accounts to rehearse blind counts and owner approval. Practice mode never changes server stock.</p></section> : member.role === "cashier" ? <section className="panel"><h2>Stock counts</h2><p>Stock counts require a stock-staff, manager or owner account. Cashiers cannot submit or approve adjustments.</p></section> :
-            <BlindCounts key={`${member.organizationId}:${branchId}:${member.userId}:${inventoryCountEntry.serial}`} initialProductId={inventoryCountEntry.productId} db={db} organizationId={member.organizationId} branchId={branchId} actorId={member.userId} products={products.filter(p=>!p.setupPending)} owner={isOwner} online={online} disabled={busy || !!pending.length} revision={historyRevision} execute={fn => run(fn,true,true)}>
-              {!practice && (
-                <HistoryRegister
-                  {...historyProps}
-                  key={`counts:${member.organizationId}:${branchId}`}
-                  title="Count register"
-                  kind="counts"
-                  emptyTitle="No counts recorded"
-                  columns={[
-                    { label: "ID", value: (r) => r.id },
-                    ...stockHistoryColumns(products),
-                    { label: "Expected", numeric: true, value: (r) => r.expected },
-                    { label: "Counted", numeric: true, value: (r) => r.counted },
-                    {
-                      label: "Difference",
-                      numeric: true,
-                      value: (r) =>
-                        new Decimal(str(r, "counted"))
-                          .minus(str(r, "expected"))
-                          .toFixed(),
-                    },
-                    { label: "State", value: (r) => r.state },
-                    { label: "Reason", value: (r) => r.reason },
-                    { label: "Recorded at", value: (r) => r.created_at },
-                  ]}
-                >
-                  {(records) =>
-                    table(
-                      [
-                        "Product / lot",
-                        "Expected",
-                        "Counted",
-                        "Difference",
-                        "Status",
-                        "Action",
-                      ],
-                      records.map((c) => (
-                        <tr key={str(c, "id")}>
-                          <td>
-                            {stockLabel(c)}
-                            <small>Reason: {str(c, "reason")}</small>
-                          </td>
-                          <td>{stockQuantity(c, str(c, "expected"))}</td>
-                          <td>{stockQuantity(c, str(c, "counted"))}</td>
-                          <td>
-                            {stockQuantity(
-                              c,
-                              new Decimal(str(c, "counted"))
-                                .minus(str(c, "expected"))
-                                .toFixed(),
-                            )}
-                          </td>
-                          <td>{str(c, "state")}</td>
-                          <td>
-                            <span>{c.count_method === 'blind_v1' ? 'Review the matching blind count above.' : c.state === 'pending' ? 'Legacy count: start a fresh blind count before any adjustment.' : 'Historical record retained.'}</span>
-                          </td>
-                        </tr>
-                      )),
-                      "counts",
-                    )
-                  }
-                </HistoryRegister>
-              )}
-            </BlindCounts>
           )}
 
           {view === "sales" && (
@@ -2610,7 +2770,7 @@ export function StoreApp() {
                           ) : (
                             <>
                             {Array.isArray(s.sale_partial_refunds)&&s.sale_partial_refunds.length>0&&<p className="status-tag">Refund recorded · check details</p>}
-                            {isOwner&&<Button size="sm" variant="outline" disabled={!online||busy} onClick={()=>setPartialRefundSaleId(String(s.id))}>Return / refund items</Button>}{isOwner&&(!lease||allPendingCount>0||operations.length>0||syncing||cart.items.length>0)&&<p className="refund-entry-help">{!lease?'Open your own cashier shift before confirming a return.':'Finish the basket and confirm pending records before returning items.'}{!lease&&<Button variant="ghost" size="sm" onClick={()=>setView('pos')}>Open cashier shift</Button>}</p>}
+                            {isOwner&&<Button size="sm" variant="outline" disabled={!online||busy} onClick={()=>setPartialRefundSaleId(String(s.id))}>Return / refund items</Button>}
                             {isOwner && (!Array.isArray(s.sale_partial_refunds)||s.sale_partial_refunds.length===0) && (!Array.isArray(s.sale_refund_corrections)||s.sale_refund_corrections.length===0) && (
                               <ApprovalForm
                                 action="Full refund"
@@ -2751,6 +2911,7 @@ export function StoreApp() {
                   {syncing ? "Synchronizing…" : "Sync now"}
                 </Button>
               </div><div className="workspace-stats three queue-stats"><div className="workspace-stat"><div><span>Waiting to upload</span><strong>{branchPendingCount}</strong></div></div><div className="workspace-stat"><div><span>Needs attention</span><strong>{sales.filter(s=>s.status!=="synced"&&s.status!=="pending"&&s.status!=="sending").length}</strong></div></div><div className="workspace-stat"><div><span>Confirmed loaded</span><strong>{sales.filter(s=>s.status==="synced").length}</strong></div></div></div></div>
+              {isOwner&&!practice&&<OfflineOriginalReconciliation db={db} organizationId={member.organizationId} branchId={branchId} actorId={member.userId} online={online} disabled={busy||syncing} execute={fn=>run(fn,true,true)}/>}
               <section className="panel queue-panel">
                 <h2>Saved transaction queue</h2>{sales.length>0&&!visibleQueue.length&&<div className="notice" role="status"><p>No transactions match these filters. Saved records remain on this PC.</p><Button variant="outline" onClick={()=>{setSyncQuery("");setSyncFilter("all");}}>Clear transaction filters</Button></div>}<div className="queue-filters"><WorkspaceTabs label="Saved transaction filters" value={syncFilter} onChange={setSyncFilter} tabs={[{id:"all",label:"All records"},{id:"pending",label:"Pending"},{id:"attention",label:"Needs attention"},{id:"synced",label:"Synced"}]}/><label className="field"><span className="sr-only">Search transaction</span><input type="search" aria-label="Search transaction" placeholder="Search transaction ID or receipt" value={syncQuery} onChange={e=>setSyncQuery(e.target.value)}/></label></div>
                 {sales.length ? (
@@ -2789,7 +2950,7 @@ export function StoreApp() {
                               Retry original sale
                             </Button>
                           )}
-                          {isOwner && !practice && s.status !== "synced" && (
+                          {isOwner && !practice && !s.allocation && s.status !== "synced" && (
                             <ApprovalForm
                               action="Approve recovery"
                               label="Recovery approval reason"
@@ -2846,10 +3007,12 @@ export function StoreApp() {
                     <div className="pending-operation" key={op.key}>
                       <div>
                         <strong>{op.action.replaceAll("_", " ")}</strong>
+                        {['publish_branch_unit_price','copy_branch_unit_prices'].includes(op.action)&&<p>{op.action==='copy_branch_unit_prices'?'Source branch':'Target branch'}: {branchList.find(b=>b.id===op.data.branchId)?.name??String(op.data.branchId)}{Array.isArray(op.data.copies)?` · Target branches: ${[...new Set((op.data.copies as {branchId:string}[]).map(c=>branchList.find(b=>b.id===c.branchId)?.name??c.branchId))].join(', ')}`:''}</p>}
                         <p>
                           {op.error ?? "Original request retained on this PC"}
                         </p>
                       </div>
+                      {["record_drawer_expense","correct_drawer_expense","return_drawer_expense_cash","reconcile_drawer_expense"].includes(op.action)&&<Button variant="outline" onClick={()=>setView("expenses")}>Expense evidence & owner resolution</Button>}
                       <Button
                         variant="outline"
                         disabled={
@@ -2866,7 +3029,8 @@ export function StoreApp() {
                               if(!saved)throw new Error('Check the original receipt in Sales & receipts before starting another sale.');
                               if(!useCart.getState().items.length||useCart.getState().attemptId===saved.id){cart.clear();setCash('');setCheckoutDone(saved);}
                               notify('Original cash sale confirmed. Do not collect its payment again. Open Checkout to print the saved receipt.');
-                            } else notify("Original operation confirmed.");
+                            } else if (["record_drawer_expense","correct_drawer_expense","return_drawer_expense_cash","reconcile_drawer_expense"].includes(op.action)) notify(drawerExpenseConfirmation(result));
+                            else notify("Original operation confirmed.");
                           })
                         }
                       >
@@ -2945,6 +3109,7 @@ export function StoreApp() {
                     if (useCart.getState().items.length) throw new Error("Finish or remove the unfinished basket before closing the shift. No sale has been saved for that basket.");
                     if (branchPendingCount) throw new Error("Synchronize every saved sale before closing the shift.");
                     if(await setting<HeldSale>(db,heldSaleKey(lease)))throw new Error("Resume or remove the held draft before closing this shift. It has not changed cash or stock.");
+                    await pauseAllocatedStock(db,lease);
                     const result = await onlineOperation(db, member.userId, "close_shift", {
                       ...context(), shiftId: lease.shiftId, countedCash: cents(counted),
                     });
@@ -2967,7 +3132,7 @@ export function StoreApp() {
           )}
 
           {view === "settings" && (
-            <SettingsWorkspace creditEnabled={!practice} staff={(cloud.staff_memberships??[]).map(m=>({id:str(m,"id"),name:str(m,"name"),role:str(m,"role"),active:m.active===true}))} devices={(cloud.devices??[]).map(d=>({id:str(d,"id"),name:str(d,"name"),active:d.active===true}))} branchName={selectedBranch?.name??"Selected branch"} branchCode={selectedBranch?.code??""} cashierName={lease?.name} shiftOpen={!!lease} cacheReady={!!registration?.active} onClose={()=>setView("close-shift")}><>
+            <SettingsWorkspace applicationRequest={applicationRequest} creditEnabled={!practice} staff={(cloud.staff_memberships??[]).map(m=>({id:str(m,"id"),name:str(m,"name"),role:str(m,"role"),active:m.active===true}))} devices={(cloud.devices??[]).map(d=>({id:str(d,"id"),name:str(d,"name"),active:d.active===true}))} branchName={selectedBranch?.name??"Selected branch"} branchCode={selectedBranch?.code??""} cashierName={lease?.name} shiftOpen={!!lease} cacheReady={!!registration?.active} onClose={()=>setView("close-shift")}><>
               <div className="two-column">
                 <section className="panel">
                   <h2>Cashier shift</h2>
@@ -3053,101 +3218,22 @@ export function StoreApp() {
                     {currentRecoveryArchive ? `Export recovery part ${currentRecoveryArchive.next} of ${currentRecoveryArchive.parts}` : "Export local recovery file"}
                   </Button>
                   {recoveryDownloadNotice()}
-                  <Button
-                    variant="outline"
-                    disabled={
-                      !registration ||
-                      !online ||
-                      busy ||
-                      installingUpdate ||
-                      !!cart.items.length ||
-                      allPendingCount > 0 ||
-                      allOperationCount > 0
-                    }
-                    onClick={() =>
-                      void run(async () => {
-                        setUpdateFeedback(
-                          "Checking and downloading any available update…",
-                        );
-                        let waiting: ServiceWorker | null;
-                        try {
-                          waiting = await findReadyUpdate(registration!);
-                        } catch (error) {
-                          setUpdateFeedback(
-                            error instanceof Error
-                              ? error.message
-                              : "Could not check for an update. Try again online.",
-                          );
-                          throw error;
-                        }
-                        if (!waiting) {
-                          setUpdateFeedback(
-                            "No new download is available. If an earlier update is not visible, close and reopen Better Yield. Keep this browser's site data.",
-                          );
-                          notify("No new app download is available.");
-                          return;
-                        }
-                        const canRestart = async () => {
-                          const [sales, operations] = await Promise.all([
-                            db.sales.where("status").anyOf(unresolvedStates).count(),
-                            pendingOperations(db),
-                          ]);
-                          return (
-                            !useCart.getState().items.length &&
-                            !committing.current &&
-                            !sales &&
-                            !operations.length
-                          );
-                        };
-                        updateLock.current = true;
-                        setInstallingUpdate(true);
-                        let restarting = false;
-                        try {
-                          setUpdateFeedback(
-                            "Update downloaded. Installing it before reopening Better Yield…",
-                          );
-                          const result = await activateReadyUpdate(
-                            waiting,
-                            canRestart,
-                            () => {
-                              setUpdateFeedback(
-                                "Update installed. Reopening Better Yield… If this window stays open, close it and reopen Better Yield. Keep this browser's site data.",
-                              );
-                              const destination = new URL(window.location.href);
-                              destination.searchParams.set(
-                                "app-update",
-                                String(Date.now()),
-                              );
-                              destination.hash = "";
-                              window.location.replace(destination.href);
-                            },
-                          );
-                          restarting = result === "restarting";
-                          if (!restarting)
-                            setUpdateFeedback(
-                              "Update ready. Finish checkout and confirm every pending record before reopening Better Yield.",
-                            );
-                        } catch (error) {
-                          setUpdateFeedback(
-                            error instanceof Error
-                              ? error.message
-                              : "Could not install the update. Check again online.",
-                          );
-                          throw error;
-                        } finally {
-                          if (!restarting) {
-                            updateLock.current = false;
-                            setInstallingUpdate(false);
-                          }
-                        }
-                      }, false)
-                    }
-                  >
+                  <Button variant="outline" disabled={checkUpdateDisabled} onClick={()=>void checkAppUpdate()}>
                     Check for app update
                   </Button>
-                  <small className="muted block">
-                    Updates wait until the cart and upload queue are clear.
-                  </small>
+                  {updateReady&&<Button
+                    disabled={checkUpdateDisabled||updateBlockers.length>0}
+                    onClick={()=>void installAppUpdate()}
+                  >{installingUpdate?"Installing app update…":"Install app update"}</Button>}
+                  {!online&&<p className="muted">Connect to the internet to update the POS.</p>}
+                  {updateReady&&savedWork&&<div className="app-update-blockers">
+                    <p>{savedWork}</p>
+                    <Button size="sm" variant="outline" onClick={()=>setView("sync")}>Open Sync center</Button>
+                  </div>}
+                  {updateBlockers.length>0&&<div className="app-update-blockers" role="status">
+                    {updateBlockers.map(blocker=><p key={blocker}>{blocker}</p>)}
+                    {cart.items.length>0&&<Button size="sm" variant="outline" onClick={()=>setView("pos")}>Go to Checkout</Button>}
+                  </div>}
                   {updateFeedback && (
                     <p role="status" className="muted">
                       {updateFeedback}
@@ -3248,6 +3334,7 @@ export function StoreApp() {
                   </section>
                   <section className="panel">
                     <h2>Registered cashier PCs</h2>
+                    {isOwner&&selectedBranch?.multiPc&&<OfflineStockStatus owner grant={offlineGrant} status={offlineBranch} products={products} ready={offlineAccess.ready} online={online} pending={offlinePending} issue={offlineIssue} disabled={busy||syncing||cart.items.length>0} onRefresh={()=>void run(async()=>{if(lease){await db.settings.delete(offlinePauseKey(lease));await sync();await refreshAllocatedStock(db,lease,true);}setOfflineBranch(await offlineBranchStatus(context()));await refreshLocal();},false)} onConfigure={!lease&&branchPendingCount===0&&branchOperationCount===0?async(enabled,reason)=>{await run(async()=>{await onlineOperation(db,member.userId,'configure_offline_cash',{...context(),enabled,confirmed:true,reason},'requestId');setOfflineBranch(await offlineBranchStatus(context()));notify(enabled?'Automatic offline allowances enabled. Open each PC’s own shift online to prepare its stock.':'Automatic offline allowances paused.');},false);}:undefined}/>}
                     {isOwner&&<CashierPcMode enabled={selectedBranch?.multiPc===true} disabled={!online||busy||practice||!!lease||branchPendingCount>0||branchOperationCount>0||cart.items.length>0} onEnable={reason=>run(async()=>{await onlineOperation(db,member.userId,'configure_cashier_pcs',{...context(),enabled:true,reason});notify('Multiple cashier PCs enabled. Each sale now needs online confirmation.');},true,true)}/>}
                     {table(
                       ["PC", "Branch", "Status", "Last sync", "Action"],
@@ -3358,7 +3445,7 @@ export function StoreApp() {
                     )}
                   </section>
                   <section className="panel">
-                    {branchLocked ? <><h2>Branch</h2><p><strong>{selectedBranch?.name}</strong></p><p className="muted">This store is configured for one branch. Contact your service provider for changes to the branch setup.</p></> : <><h2>Branches</h2>
+                    {branchManagementLocked ? <><h2>Branch</h2><p><strong>{selectedBranch?.name}</strong></p><p className="muted">{network?.enabled?"Branch setup is managed by your service provider. Contact them for changes.":"This store is configured for one branch. Contact your service provider for changes to the branch setup."}</p></> : <><h2>Branches</h2>
                     <p className="muted">
                       Rename your stores or add another branch as your business
                       grows.

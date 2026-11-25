@@ -1,4 +1,4 @@
-import { creditTerms, saleItemSchema, type SaleItem } from '@agristore/domain';
+import { isCreditSaleTerm, saleItemSchema, type SaleItem } from '@agristore/domain';
 
 export interface ConfirmedCreditSale {
   id: string;
@@ -29,7 +29,7 @@ export function verifyCreditAcknowledgement(data: Record<string, unknown>, resul
 export function creditConfirmation(data: Record<string, unknown>, clientName?: string): ConfirmedCreditSale {
   if (typeof data.requestId !== 'string' || typeof data.clientId !== 'string' ||
       typeof data.officialReference !== 'string' || typeof data.expectedDueOn !== 'string' ||
-      !creditTerms.includes(data.term as 30 | 60 | 90) || !Array.isArray(data.items)) {
+      !isCreditSaleTerm(data.term) || !Array.isArray(data.items)) {
     throw new Error('Keep the original credit sale and check its saved record in Customers & credit.');
   }
   return {
@@ -37,7 +37,7 @@ export function creditConfirmation(data: Record<string, unknown>, clientName?: s
     clientName: clientName || `Client account ${data.clientId.slice(0, 8).toUpperCase()}`,
     officialReference: data.officialReference.trim().toUpperCase(), dueOn: data.expectedDueOn,
     issuedOn: new Date(Date.parse(data.expectedDueOn+'T00:00:00Z')-Number(data.term)*86400000).toISOString().slice(0,10),
-    term: Number(data.term), total: Number(data.total), cashReceived: Number(data.cashReceived),
+    term: data.term, total: Number(data.total), cashReceived: Number(data.cashReceived),
     balance: Number(data.total) - Number(data.cashReceived), items: data.items.map(item => saleItemSchema.parse(item)),
   };
 }

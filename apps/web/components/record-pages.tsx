@@ -4,17 +4,19 @@ import { Children, cloneElement, isValidElement, useId, useState, type Component
 import { Button } from "./ui/button";
 
 /** Pages affect presentation only. Callers retain every record for totals and exports. */
-export function RecordPages({ children, label = "Records", resetKey = "", className, render,showSummary=true,pageSize=10,paginationPosition='both' }: {
+export function RecordPages({ children, label = "Records", resetKey = "", className, render,showSummary=true,pageSize=10,paginationPosition='both',initialRecordId }: {
   children: ReactNode; label?: string; resetKey?: string; className?: string;showSummary?:boolean;
   render?: (rows: ReactNode[]) => ReactNode;
   pageSize?:number;paginationPosition?:'both'|'bottom';
+  initialRecordId?:string;
 }) {
   const rows = Children.toArray(children);
   const identity = `${resetKey}:${isValidElement(rows[0]) ? rows[0].key : "empty"}`;
-  const [selection, setSelection] = useState({ identity, page: 0 });
   const size=Number.isSafeInteger(pageSize)&&pageSize>0?pageSize:10;
+  const initialPage=initialRecordId?Math.max(0,Math.floor(rows.findIndex(row=>isValidElement<{ 'data-record-id'?:string }>(row)&&row.props['data-record-id']===initialRecordId)/size)):0;
+  const [selection, setSelection] = useState({ identity, page: initialPage });
   const pages = Math.max(1, Math.ceil(rows.length / size));
-  const page = selection.identity === identity ? Math.min(selection.page, pages - 1) : 0;
+  const page = selection.identity === identity ? Math.min(selection.page, pages - 1) : initialPage;
   const contentId = useId();
   const change = (value: number) => setSelection({ identity, page: value });
   const controls = (position: string) => (rows.length > size || position==='below'&&showSummary) && <nav className="record-pagination" aria-label={`${label} pages ${position}`}>
@@ -32,7 +34,7 @@ export function RecordPages({ children, label = "Records", resetKey = "", classN
 }
 
 /** Keep native table semantics; only its body rows are paged. */
-export function RecordTable({ children, pageLabel,paginationPosition, ...props }: ComponentProps<"table"> & {pageLabel?:string;paginationPosition?:'both'|'bottom'}) {
+export function RecordTable({ children, pageLabel,paginationPosition,initialRecordId, ...props }: ComponentProps<"table"> & {pageLabel?:string;paginationPosition?:'both'|'bottom';initialRecordId?:string}) {
   const parts = Children.toArray(children);
   const body = parts.find(part => isValidElement(part) && part.type === "tbody") as ReactElement<{ children: ReactNode }> | undefined;
   if (!body) return <table {...props}>{children}</table>;
@@ -41,5 +43,5 @@ export function RecordTable({ children, pageLabel,paginationPosition, ...props }
   const firstRow=head?Children.toArray(head.props.children)[0]:undefined;
   const firstCell=isValidElement<{children:ReactNode}>(firstRow)?Children.toArray(firstRow.props.children)[0]:undefined;
   const label=pageLabel??`Table records: ${firstCell?text(firstCell):'Saved records'}`;
-  return <RecordPages label={label} paginationPosition={paginationPosition} render={rows => <table {...props}>{parts.map(part => part === body ? cloneElement(body, { children: rows }) : part)}</table>}>{body.props.children}</RecordPages>;
+  return <RecordPages label={label} paginationPosition={paginationPosition} initialRecordId={initialRecordId} render={rows => <table {...props}>{parts.map(part => part === body ? cloneElement(body, { children: rows }) : part)}</table>}>{body.props.children}</RecordPages>;
 }

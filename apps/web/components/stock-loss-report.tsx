@@ -53,10 +53,10 @@ function CostEvidenceFields({units,row,hint}:{units:PurchaseCostUnit[];row:LossR
 }
 
 type Filters = { fromDate: string; throughDate: string; filter: string; allBranches: boolean };
-export function StockLossReport({ db, organizationId, branchId, branchName, actorId, products, owner, online, disabled, revision, execute, singleBranch = false }: {
+export function StockLossReport({ db, organizationId, branchId, branchName, actorId, products, owner, online, disabled, revision, execute, report, singleBranch = false }: {
   db: PosDatabase; organizationId: string; branchId: string; branchName: string; actorId: string; products: Product[];
   owner: boolean; online: boolean; disabled: boolean; revision: number; execute: (fn: () => Promise<void>) => Promise<Error | undefined>;
-  singleBranch?: boolean;
+  report: "loss" | "reconciliation"; singleBranch?: boolean;
 }) {
   const [draft, setDraft] = useState<Filters>(() => { const today = businessDay(); return { fromDate: today.slice(0, 7) + "-01", throughDate: today, filter: "loss", allBranches: false }; });
   const [filters, setFilters] = useState(draft), [data, setData] = useState<LossReport>(), [loading, setLoading] = useState(false), [error, setError] = useState(""), [feedback, setFeedback] = useState("");
@@ -75,11 +75,13 @@ export function StockLossReport({ db, organizationId, branchId, branchName, acto
         reconciliation: mode === "losses" ? old?.reconciliation ?? result.reconciliation : mode === "reconciliation" ? [...old?.reconciliation ?? [], ...result.reconciliation] : result.reconciliation,
         reconciliationNext: mode === "losses" ? old?.reconciliationNext ?? null : result.reconciliationNext }));
       setError("");
-    } catch (e) { if (request === generation.current) setError(e instanceof Error ? e.message : "Could not load the stock-loss report. Reconnect and retry."); }
+    } catch (e) { if (request === generation.current) setError(e instanceof Error ? e.message : "Could not load the stock report. Reconnect and retry."); }
     finally { if (request === generation.current) setLoading(false); }
   }, [organizationId, branchId, filters]);
   useEffect(() => { if (online) void load(); else setLoading(false); return invalidate; }, [online, load, revision, invalidate]);
   const blocked = disabled || loading || !online;
+  const showLoss = report === "loss";
+  const title = showLoss ? "Stock loss at purchase cost" : "Stock reconciliation";
   const scope = data?.allBranches ? "All branches" : branchName;
   const filtersNotLoaded = data && ((filters.fromDate || null) !== (data.fromDate || null) || (filters.throughDate || null) !== (data.throughDate || null) || filters.filter !== data.filter || filters.allBranches !== data.allBranches);
   async function recordCost(row: LossRow, reason: string, fields: FormData) {
@@ -89,31 +91,47 @@ export function StockLossReport({ db, organizationId, branchId, branchName, acto
     setFeedback("Purchase-cost evidence saved. Previous versions and stock quantities are unchanged.");
     await load();
   }
-  return <>
+  const filterForm = (
+    <form className="form-grid" aria-label={`${title} filters`} onSubmit={e => {
+      e.preventDefault();
+      try {
+        historyBounds({ from: draft.fromDate, to: draft.throughDate });
+        setFilters({ ...draft });
+        setError("");
+      } catch (e) {
+        setError(e instanceof Error ? e.message : "Check the report dates.");
+      }
+    }}>
+      <label className="field"><span>From date</span><input type="date" value={draft.fromDate} onChange={e => setDraft({ ...draft, fromDate: e.target.value })} /></label>
+      <label className="field"><span>Through date</span><input type="date" value={draft.throughDate} onChange={e => setDraft({ ...draft, throughDate: e.target.value })} /></label>
+      {showLoss && <label className="field"><span>Removal category</span><select value={draft.filter} onChange={e => setDraft({ ...draft, filter: e.target.value })}><option value="loss">Posted losses / write-offs</option><option value="other_removal">Authorised use / supplier returns</option><option value="all">All recorded removals</option></select></label>}
+      {owner && !singleBranch && <label className="checkbox"><input type="checkbox" checked={draft.allBranches} onChange={e => setDraft({ ...draft, allBranches: e.target.checked })} />All branches</label>}
+      <Button disabled={blocked}>Apply filters</Button>
+    </form>
+  );
+
+  return (
     <section className="panel stock-loss-report">
-      <div className="section-heading"><h2>Stock loss at purchase cost</h2><Button variant="outline" disabled={blocked} onClick={() => void load()}>Refresh stock-loss report</Button></div>
-      <p>Posted shortages and write-offs are valued using owner-documented purchase costs. A missing cost stays unvalued. This report does not establish the cause of a shortage.</p>
-      <form className="form-grid" aria-label="Stock-loss report filters" onSubmit={e => { e.preventDefault(); try { historyBounds({ from: draft.fromDate, to: draft.throughDate }); setFilters({ ...draft }); setError(""); } catch (e) { setError(e instanceof Error ? e.message : "Check the report dates."); } }}>
-        <label className="field"><span>Loss report from date</span><input type="date" value={draft.fromDate} onChange={e => setDraft({ ...draft, fromDate: e.target.value })} /></label>
-        <label className="field"><span>Loss report through date</span><input type="date" value={draft.throughDate} onChange={e => setDraft({ ...draft, throughDate: e.target.value })} /></label>
-        <label className="field"><span id={`${id}-category`}>Removal category</span><select aria-labelledby={`${id}-category`} value={draft.filter} onChange={e => setDraft({ ...draft, filter: e.target.value })}><option value="loss">Posted losses / write-offs</option><option value="other_removal">Authorised use / supplier returns</option><option value="all">All recorded removals</option></select></label>
-        {owner && !singleBranch && <label className="checkbox"><input type="checkbox" checked={draft.allBranches} onChange={e => setDraft({ ...draft, allBranches: e.target.checked })} />Report all branches</label>}
-        <Button disabled={blocked}>Apply loss-report filters</Button>
-      </form>
+      <div className="section-heading">
+        <h2>{title}</h2>
+        {showLoss
+          ? <Button variant="outline" disabled={blocked} onClick={() => void load()}>Refresh</Button>
+          : <details className="stock-report-filters"><summary>Filters</summary>{filterForm}</details>}
+      </div>
+      {showLoss && filterForm}
       {feedback && <p className="notice success" role="status">{feedback}</p>}
-      {error && <p className="notice error" role="alert">{error} Previously loaded report rows are retained. Refresh online to retry.</p>}
-      {filtersNotLoaded&&!loading&&<p className="notice" role="status">Requested filters are not loaded. Rows, totals and exports below still use the displayed report snapshot. Apply the filters again to retry.</p>}
-      {!online && <p className="notice">Reconnect for current loss and cost records. Loaded rows retain their original snapshot time.</p>}
-      {loading && <p role="status">Loading stock-loss report…</p>}
-      {data ? <>
-        <p>{scope} · Stock-book recorded dates, Asia/Manila: {data.fromDate || "earliest"} through {data.throughDate || "latest"}. Snapshot: {stamp(data.asOf)}.</p>
-        <p>Category shown: {data.filter.replaceAll("_", " ")}. Cost basis: documented purchase cost per selected unit, converted to base quantity and rounded once per row. Liquid quantities also show ml. Use the documented cost of one selected purchase unit; each complete removal is valued and rounded once. This is an operational report, not a full inventory-cost accounting system.</p>
+      {error && <p className="notice error" role="alert">{error}</p>}
+      {filtersNotLoaded&&!loading&&<p className="notice" role="status">Showing the last loaded report. Apply the filters to retry.</p>}
+      {!online && <p className="notice">{data ? "Showing the last loaded report while offline." : "Reconnect to load the stock report."}</p>}
+      {loading && <p role="status">Loading stock report.</p>}
+      {data && <p className="stock-report-scope">{scope} · {data.fromDate || "Earliest"} to {data.throughDate || "Latest"}</p>}
+      {data && (showLoss ? <>
+        <p>Snapshot {stamp(data.asOf)}. Loss values use documented purchase costs.</p>
         <div className="loss-report-totals" aria-label="Full-range loss valuation totals">
           <p><strong>Documented-cost loss subtotal: {reportMoney(data.totals.documentedLossCentavos)}</strong><br />{data.totals.lossRows} posted loss rows in the complete range.</p>
           <p className={data.totals.missingLossCosts ? "quantity-error" : ""}>{data.totals.missingLossCosts ? `Incomplete valuation: ${data.totals.missingLossCosts} loss rows have no documented purchase cost. They are not valued at zero.` : "Every posted loss row in this range has documented cost evidence."}</p>
           <p>Other authorised removals: {reportMoney(data.totals.documentedOtherCentavos)} documented · {data.totals.otherRows} rows · {data.totals.missingOtherCosts} unvalued. This amount is separate from the loss subtotal.</p>
         </div>
-        <p>Held goods, pending counts, unreceived transfers and supplier-document shortfalls are not automatically posted losses. Review them in Inventory. Transfer shortages are attributed to the dispatch branch; disposing held goods is recorded once at the branch holding them.</p>
         {data.rows.length ? <div className="table-wrap history-table loss-table" role="region" aria-label="Purchase-cost stock-loss rows" tabIndex={0}><RecordTable role="table"><thead><tr><th scope="col">Product / lot / source</th><th scope="col">Removed quantity</th><th scope="col">Documented value / evidence</th></tr></thead><tbody>{data.rows.map(row => {
           const product = products.find(p => p.id === row.product_id);
           const units = row.purchase_units ?? product?.units ?? [];
@@ -135,13 +153,11 @@ export function StockLossReport({ db, organizationId, branchId, branchName, acto
         })}</tbody></RecordTable></div> : <p>No posted removals match this report. This does not prove that physical stock has no unrecorded shortage.</p>}
         <div className="loss-report-actions"><Button variant="outline" disabled={blocked || !data.next} onClick={() => void load("losses", data)}>Load more loss rows</Button><Button variant="outline" disabled={loading || !data.rows.length} onClick={() => downloadCsv("stock-loss-loaded-rows.csv", lossCsv(data, scope))}>Export loaded loss rows (CSV)</Button></div>
         <p>{data.rows.length} loss/removal rows loaded. {data.next ? "More matching rows are available." : "End of matching removals."} Totals above cover the complete range; CSV contains only loaded rows. Keep exported records private.</p>
-      </> : !loading && <p>Connect to load the report.</p>}
+
+      </> : <>
+        {data.reconciliation.length ? <div className="table-wrap history-table" role="region" aria-label="Stock-loss quantity reconciliation" tabIndex={0}><RecordTable paginationPosition="bottom"><thead><tr><th scope="col">Branch / product / lot</th>{reconciliationQuantities.map(([key, label]) => <th scope="col" key={key}>{label}</th>)}</tr></thead><tbody>{data.reconciliation.map(row => <tr key={`${row.branch_id}:${row.product_id}:${row.batch_id ?? "none"}`}><td><strong>{row.product_name}</strong><small>{row.branch_name} · {row.lot} · {row.base_unit}</small></td>{reconciliationQuantities.map(([key]) => <td className="numeric" key={key}>{new Decimal(row[key]).toFixed()}</td>)}</tr>)}</tbody></RecordTable></div> : <p>No stock-book movements match this cutoff.</p>}
+        <div className="loss-report-actions"><Button variant="outline" disabled={blocked || !data.reconciliationNext} onClick={() => void load("reconciliation", data)}>Load more stock reconciliation</Button><Button variant="outline" disabled={loading || !data.reconciliation.length} onClick={() => downloadCsv("stock-reconciliation-loaded-rows.csv", reconciliationCsv(data, scope))}>Export loaded reconciliation (CSV)</Button></div>
+      </>)}
     </section>
-    {data && <section className="panel stock-loss-report">
-      <h2>Stock reconciliation</h2><p>{scope} · Same recorded-date range and snapshot as the loss report. Starting quantity plus the signed movements equals closing book quantity. Held goods and outstanding dispatch are separate balances; do not add them into that equation.</p>
-      {data.reconciliation.length ? <div className="table-wrap history-table" role="region" aria-label="Stock-loss quantity reconciliation" tabIndex={0}><RecordTable><thead><tr><th scope="col">Branch / product / lot</th>{reconciliationQuantities.map(([key, label]) => <th scope="col" key={key}>{label}</th>)}</tr></thead><tbody>{data.reconciliation.map(row => <tr key={`${row.branch_id}:${row.product_id}:${row.batch_id ?? "none"}`}><td><strong>{row.product_name}</strong><small>{row.branch_name} · {row.lot} · {row.base_unit}</small></td>{reconciliationQuantities.map(([key]) => <td className="numeric" key={key}>{new Decimal(row[key]).toFixed()}</td>)}</tr>)}</tbody></RecordTable></div> : <p>No stock-book movements match this cutoff.</p>}
-      <div className="loss-report-actions"><Button variant="outline" disabled={blocked || !data.reconciliationNext} onClick={() => void load("reconciliation", data)}>Load more stock reconciliation</Button><Button variant="outline" disabled={loading || !data.reconciliation.length} onClick={() => downloadCsv("stock-reconciliation-loaded-rows.csv", reconciliationCsv(data, scope))}>Export loaded reconciliation (CSV)</Button></div>
-      <p>{data.reconciliation.length} product/lot rows loaded. {data.reconciliationNext ? "More stock rows are available." : "End of stock reconciliation."} Quantities from different base units are not combined into a single total.</p>
-    </section>}
-  </>;
+  );
 }

@@ -1,0 +1,14 @@
+.legend { display: flex; flex-wrap: wrap; gap: 6px 15px; margin: 4px 0 3px; color: var(--muted); font-size: 12px; }
+.legend span { display: inline-flex; align-items: center; gap: 6px; }
+.legend i { width: 17px; border-top: 2px solid var(--green); }
+.legend .expenses i { border-top: 2px dashed #9a4b15; }
+.inspector { display: flex; align-items: center; justify-content: space-between; gap: 6px; padding: 6px 8px 6px 12px; border: 1px solid var(--line); background: #f7f9f3; border-radius: 8px; }
+.reading { display: flex; align-items: baseline; flex-wrap: wrap; column-gap: 12px; row-gap: 2px; font-size: 13px; margin: 0; color: var(--forest); font-variant-numeric: tabular-nums; }
+.reading > strong { font-weight: 700; }
+.expenseValue { color: #813d11; }
+.controls { display: flex; flex: 0 0 auto; align-items: center; gap: 3px; }
+.controls button { display: grid; place-items: center; min-width: 32px; min-height: 32px; padding: 0; background: white; border: 1px solid var(--line); border-radius: 5px; color: var(--forest); cursor: pointer; }
+.controls button > svg { width: 18px; height: 18px; }
+.controls button:disabled { opacity: .48; cursor: default; }
+.controls button:focus-visible { outline: 2px solid var(--focus); outline-offset: 2px; }
+.empty { color: var(--muted); padding-block: 20px; }

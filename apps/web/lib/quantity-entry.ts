@@ -28,7 +28,7 @@ export function enteredQuantity(raw: string): string {
 
 export function kiloUnit(product: Product) {
   return product.baseUnit === "kg"
-    ? product.units.find((unit) => new Decimal(unit.factor).eq(1))
+    ? product.units.find((unit) => new Decimal(unit.factor).eq(1) && unit.sellingPolicy !== 'sealed_whole')
     : undefined;
 }
 
@@ -48,9 +48,9 @@ export function pesoBudget(rawPesos: string): number {
 
 /** A conservative whole-gram estimate; the cashier must record scale weight.
  * Retail price is explicit, never inferred by dividing a sack price. */
-export function estimateBudget(rawPesos: string, pricePerKilo: number) {
+export function estimateBudget(rawPesos: string, pricePerKilo: number | null) {
   const budget = new Decimal(pesoBudget(rawPesos));
-  if (!Number.isSafeInteger(pricePerKilo) || pricePerKilo <= 0)
+  if (pricePerKilo === null || !Number.isSafeInteger(pricePerKilo) || pricePerKilo <= 0)
     throw new Error(
       "A positive budget and a configured kilo price are required.",
     );

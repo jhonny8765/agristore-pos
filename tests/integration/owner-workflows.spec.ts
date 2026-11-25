@@ -547,16 +547,16 @@ test("owner product setup creates only enabled selling units with independent re
     .fill("TEST 25 kg feeds");
   await form.getByLabel("SKU / barcode", { exact: true }).fill("TEST-SETUP-25");
   await form.getByLabel("How customers buy this product").selectOption("sack");
-  await expect(form.getByLabel("Also sell loose kilos")).not.toBeChecked();
+  await expect(form.getByLabel("Add Retail Price")).not.toBeChecked();
   await expect(
-    form.getByLabel("Price per kilo (₱)", { exact: true }),
+    form.getByLabel("Price per Kilo (₱)", { exact: true }),
   ).toHaveCount(0);
   await form.getByLabel("Number of kg in one Sack").fill("25");
   await form.getByLabel("Price per Sack (₱)", { exact: true }).fill("900");
   await form.getByLabel("Cost per Sack (₱)", { exact: true }).fill("700");
-  await form.getByLabel("Also sell loose kilos").check();
-  await form.getByLabel("Price per kilo (₱)", { exact: true }).fill("45");
-  await form.getByLabel("Cost per kilo (₱)", { exact: true }).fill("28");
+  await form.getByLabel("Add Retail Price").check();
+  await form.getByLabel("Price per Kilo (₱)", { exact: true }).fill("45");
+  await form.getByLabel("Cost per Kilo (₱)", { exact: true }).fill("28");
   await expect(form.locator(".setup-summary")).toContainText("1 Sack = 25 kg");
   for (const width of [1440, 390, 418, 320]) {
     await page.setViewportSize({ width, height: 900 });
@@ -586,7 +586,7 @@ test("owner product setup creates only enabled selling units with independent re
   await form
     .getByLabel("How customers buy this product")
     .selectOption("sealed");
-  await expect(form.getByLabel("Also sell loose kilos")).toHaveCount(0);
+  await expect(form.getByLabel("Add Retail Price")).toHaveCount(0);
   await form.getByLabel("Price per Packet (₱)", { exact: true }).fill("60");
   await form.getByLabel("Cost per Packet (₱)", { exact: true }).fill("40");
   await form.getByRole("button", { name: "Add product", exact: true }).click();

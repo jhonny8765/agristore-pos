@@ -2,6 +2,7 @@ import Decimal from "decimal.js";
 import { z } from "zod";
 export * from './credit';
 export * from './money';
+export * from './offline-stock';
 
 export const OFFLINE_HOURS = 12;
 const ExactMoney=Decimal.clone({precision:80,rounding:Decimal.ROUND_HALF_UP});
@@ -22,6 +23,11 @@ export const saleItemSchema = z
     unitPrice: cents,
     unitCost: cents,
     priceVersion: z.number().int().positive(),
+    branchId: z.uuid().optional(),
+    branchPriceId: z.uuid().optional(),
+    branchPriceVersion: z.number().int().positive().optional(),
+    sellingPolicy: z.enum(['fractional','sealed_whole']).optional(),
+    intactPackagingConfirmed: z.boolean().optional(),
     discountBps: z.number().int().min(0).max(10000).optional(),
     discountAmount: cents.optional(),
     lineTotal: cents,
@@ -45,6 +51,9 @@ export const saleSchema = z
   .superRefine((sale, ctx) => {
     let sum = new Decimal(0);
     for (const item of sale.items) {
+      try { validateSellingItem(item, sale.branchId); } catch (e) {
+        ctx.addIssue({code:'custom',message:e instanceof Error?e.message:'Review the selling unit'});
+      }
       let valid=false;
       try{valid=lineAmounts(item).total===item.lineTotal;}catch{}
       if (!valid)
@@ -72,9 +81,13 @@ export interface Unit {
   id: string;
   name: string;
   factor: string;
-  price: number;
+  price: number | null;
   cost: number;
   priceVersion: number;
+  branchId?: string;
+  branchPriceId?: string | null;
+  branchPriceVersion?: number | null;
+  sellingPolicy?: 'fractional' | 'sealed_whole';
 }
 export interface Batch {
   id: string;
@@ -139,6 +152,7 @@ export interface Stock {
   quantity: string;
 }
 export interface Snapshot {
+  pricingMode?: 'legacy' | 'branch';
   products: Product[];
   stocks: Stock[];
   confirmedIds: string[];
@@ -252,6 +266,12 @@ export function makeItem(
   if (!product.active) throw new Error("This product is inactive");
   const unit = product.units.find((u) => u.id === unitId);
   if (!unit) throw new Error("Select a valid selling unit");
+  if(product.setupPending)throw new Error('Confirm the physical selling unit before selling.');
+  if(product.pricePending&&!unit.branchId)throw new Error('Confirm the selling price before selling.');
+  if (unit.price === null || (unit.branchId && (!unit.branchPriceId || !unit.branchPriceVersion)))
+    throw new Error('This branch needs a confirmed selling price for this unit.');
+  if (unit.sellingPolicy === 'sealed_whole' && !new Decimal(quantity).isInteger())
+    throw new Error('Sealed packs require whole quantities. Choose the loose selling unit for fractional weight.');
   const canonical = canonicalQuantity(quantity, unit.factor);
   if (product.baseUnit === "piece" && !new Decimal(canonical).isInteger())
     throw new Error("Piece stock must be a whole number");
@@ -271,8 +291,23 @@ export function makeItem(
     unitPrice: unit.price,
     unitCost: unit.cost,
     priceVersion: unit.priceVersion,
+    ...(unit.branchId ? {branchId:unit.branchId,branchPriceId:unit.branchPriceId!,branchPriceVersion:unit.branchPriceVersion!} : {}),
+    ...(unit.sellingPolicy ? {sellingPolicy:unit.sellingPolicy} : {}),
     lineTotal: lineTotal(quantity, unit.price),
   };
+}
+
+/** New basket validation only. Never reprice a completed or uncertain request. */
+export function validateSellingItem(item:SaleItem, branchId?:string, unit?:Unit) {
+  if (item.branchId && item.branchId !== branchId) throw new Error('This price belongs to another branch. Refresh and review the basket.');
+  if (!!item.branchPriceId !== !!item.branchPriceVersion || !!item.branchPriceId !== !!item.branchId)
+    throw new Error('The branch selling price identity is incomplete.');
+  if (unit && (unit.price === null || unit.price !== item.unitPrice || unit.branchId !== item.branchId || unit.branchPriceId != item.branchPriceId || unit.branchPriceVersion != item.branchPriceVersion || (unit.sellingPolicy??'fractional') !== (item.sellingPolicy??'fractional')))
+    throw new Error('The basket has changed prices or selling units. Review the current price before checkout.');
+  if ((unit?.sellingPolicy??item.sellingPolicy) === 'sealed_whole') {
+    if (!new Decimal(item.quantity).isInteger()) throw new Error('Sealed packs require whole quantities.');
+    if (!item.intactPackagingConfirmed) throw new Error('Confirm intact packaging for each sealed pack before checkout.');
+  }
 }
 
 export * from "./refunds";

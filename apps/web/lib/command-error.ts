@@ -4,9 +4,18 @@ export function isDatabaseRejection(error:unknown){
  const code=(error as {code?:unknown}|null)?.code;
  return typeof code==="string"&&/^(?:P0001|22[A-Z0-9]{3}|23[A-Z0-9]{3})$/.test(code);
 }
+function permissionMessage(detail: string) {
+ const message = detail.trim().replace(/[.!]$/, "");
+ if (/^you do not have access to this branch$/i.test(message)) {
+  return "You don’t have access to this branch. Ask the owner to check your access.";
+ }
+ return message ? `${message}. Ask the owner to check your permissions.`
+  : "Access denied. Ask the owner to check your permissions.";
+}
+
 export function commandError(error:{message:string;code?:string},status?:number){
  const expired=status===401||["PGRST301","PGRST302","PGRST303"].includes(error.code??"");
  const registeredPc=error.code==="23505"&&/\bone_active_device_per_branch\b/.test(error.message);
- const message=expired?"Your online sign-in needs renewal. Preserve this basket and every saved record. Reconnect and sign in as the original employee before retrying the original request in Sync center. Signing out clears an unfinished basket, so record its items first. Never re-enter a completed sale or clear browser data.":registeredPc?"A cashier PC is already registered for this branch. Use that registered browser, or ask the owner to open Settings > Registered cashier PCs. Synchronize or export the old PC's pending records before retiring its registration, then open a shift on this PC. Keep the old browser profile and site data.":error.code==="42501"?`${error.message} Your account or role could not authorize this action. Ask the owner to check access; keep the original request and saved sales for recovery. Do not create another request to bypass the refusal.`:error.message;
+ const message=expired?"Your online sign-in needs renewal. Preserve this basket and every saved record. Reconnect and sign in as the original employee before retrying the original request in Sync center. Signing out clears an unfinished basket, so record its items first. Never re-enter a completed sale or clear browser data.":registeredPc?"A cashier PC is already registered for this branch. Use that registered browser, or ask the owner to open Settings > Registered cashier PCs. Synchronize or export the old PC's pending records before retiring its registration, then open a shift on this PC. Keep the old browser profile and site data.":error.code==="42501" ? permissionMessage(error.message) : error.message;
  return Object.assign(new Error(message),{code:error.code,status,authenticationRequired:expired});
 }

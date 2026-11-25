@@ -1,0 +1,172 @@
+/* Keep readable product prices as the basket and navigation claim space. */
+.reference-ui .product-grid {
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 220px), 1fr));
+}
+.reference-ui .product .unit-label { overflow-wrap: anywhere; }
+
+/* The register also runs on touch PCs: frequent controls keep the same target
+   at either side of the tablet breakpoint and with any pointer type. */
+.reference-ui .receipt-item-top > button,
+.reference-ui .receipt-item .quantity-control button {
+  width: 44px;
+  min-width: 44px;
+  height: 44px;
+  min-height: 44px;
+  flex-shrink: 0;
+}
+.reference-ui .receipt-item .quantity-control,
+.reference-ui .receipt-item .quantity-control input {
+  height: 44px;
+  min-height: 44px;
+}
+.reference-ui .receipt-item .quantity-control input { min-width: 44px; font-size: 16px; }
+.reference-ui .receipt-item-config select,
+.reference-ui .quantity-entry-controls > select,
+.reference-ui .receipt-item .line-discount input {
+  min-height: 44px;
+  min-width: 44px;
+  font-size: 16px;
+  padding-block: 8px;
+}
+.reference-ui .cash-shortcuts { flex-wrap: wrap; }
+.reference-ui .cash-shortcuts button,
+.reference-ui .weight-shortcuts button,
+.reference-ui .line-selling-methods button,
+.reference-ui .peso-entry-actions button,
+.reference-ui .line-retail > summary {
+  min-height: 44px;
+  min-width: 44px;
+}
+.reference-ui .cash-shortcuts button { font-size: 14px; flex-basis: 70px; }
+.reference-ui .credit-payment-choice .button,
+.reference-ui .heading-actions .button,
+.reference-ui .topbar .close-shift-shortcut { min-height: 44px; }
+
+/* Give each editable line its own rows instead of squeezing the title,
+   discount, unit and quantity into the compact desktop four-column grid. */
+.reference-ui .receipt-item {
+  grid-template-columns: 28px minmax(0, 1fr) 44px;
+  gap: 6px 8px;
+  padding-block: 12px;
+}
+.reference-ui .receipt-item-photo { width: 28px; grid-row: 1 / 6; }
+.reference-ui .receipt-item-top { display: contents; }
+.reference-ui .receipt-item-top > strong { grid-column: 2; grid-row: 1; align-self: center; }
+.reference-ui .receipt-item-top > button { grid-column: 3; grid-row: 1; }
+.reference-ui .receipt-item-top > .line-discount {
+  grid-column: 2 / 4;
+  grid-row: 2;
+  width: min(100%, 160px);
+  flex-direction: column;
+  align-items: stretch;
+  margin: 0;
+}
+.reference-ui .receipt-item .line-discount input { width: 100%; }
+.reference-ui .receipt-item-config { grid-column: 2 / 4; grid-row: 3; }
+.reference-ui .receipt-item .line-rate { grid-column: 2 / 4; grid-row: 4; }
+.reference-ui .receipt-item-bottom {
+  grid-column: 2 / 4;
+  grid-row: 5;
+  flex-direction: row;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+.reference-ui .receipt-item .line-discount-summary,
+.reference-ui .receipt-item > .quantity-error,
+.reference-ui .receipt-item .line-retail,
+.reference-ui .receipt-item .line-measure { grid-column: 2 / 4; grid-row: auto; }
+.reference-ui .receipt-item[data-measured=false] .line-retail:not([open]) {
+  position: static;
+  justify-self: end;
+}
+.reference-ui .receipt-item[data-measured=false] .receipt-item-top > strong { max-width: none; }
+.reference-ui .receipt-panel:has(.receipt-item[data-measured=true]) { position: static; }
+.reference-ui .receipt-items:has(.receipt-item[data-measured=true]) { max-height: none; }
+
+@media (max-width: 650px) {
+  .reference-ui .product-grid { grid-template-columns: minmax(0, 1fr); }
+}
+
+/* Unit choices belong beside the product, before an item enters the sale. */
+.reference-ui .product-grid .product:has(.product-unit-picker) {
+  grid-template-rows: auto auto auto auto auto auto auto;
+}
+.reference-ui .product-unit-picker {
+  grid-column: 1 / -1;
+  grid-row: 5;
+  min-width: 0;
+  padding: 0;
+  margin: 8px 0 0;
+  border: 0;
+}
+.reference-ui .product-unit-picker legend {
+  padding: 0;
+  margin-bottom: 8px;
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--ink);
+}
+.reference-ui .product-unit-options {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 130px), 1fr));
+  gap: 8px;
+}
+.reference-ui .product-unit-option {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  justify-content: center;
+  gap: 4px;
+  min-width: 0;
+  min-height: 56px;
+  padding: 10px;
+  border: 1px solid var(--control-line);
+  border-radius: 8px;
+  color: var(--forest);
+  background: var(--white);
+  text-align: start;
+  font-size: 14px;
+  line-height: 1.3;
+  white-space: normal;
+  overflow-wrap: anywhere;
+}
+.reference-ui .product-unit-option strong { font-size: 16px; font-variant-numeric: tabular-nums; }
+.reference-ui .product-unit-option[aria-pressed=true] { background: var(--lime); border-color: var(--forest); }
+.reference-ui .product-unit-option:hover:not(:disabled) { background: var(--soft); }
+.reference-ui .product-unit-option:focus-visible { outline: 2px solid var(--forest); outline-offset: 2px; }
+.reference-ui .product-unit-option:disabled { color: var(--muted); cursor: not-allowed; }
+.reference-ui .product:has(.product-unit-picker) .stock-label { grid-row: 6; }
+.reference-ui .product:has(.product-unit-picker) .add-product { grid-row: 7; }
+.reference-ui .product:has(.product-unit-picker) .catalog-retail { grid-row: 8; }
+.reference-ui .product:has(.product-unit-picker) .scope-note,
+.reference-ui .product:has(.product-unit-picker) .catalog-warning { grid-column: 1 / -1; grid-row: auto; }
+.reference-ui .product .sealed-pack-note { grid-column: 1 / -1; grid-row: auto; min-width: 0; justify-self: stretch; }
+
+.reference-ui .sale-unit-field { display: flex; flex-direction: column; align-items: stretch; gap: 6px; min-width: 0; }
+.reference-ui .sale-unit-field > span { font-size: 14px; font-weight: 700; color: var(--ink); }
+.reference-ui .sale-unit-field > select {
+  width: 100%;
+  border: 1px solid var(--control-line);
+  border-radius: 8px;
+  background-color: var(--white);
+  padding-inline: 10px;
+}
+.reference-ui .receipt-item > .packaging-confirmation {
+  grid-column: 1 / -1;
+  grid-row: auto;
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  min-width: 0;
+  width: 100%;
+  margin: 10px 0;
+  font-size: 14px;
+  line-height: 1.5;
+}
+.reference-ui .packaging-confirmation > input { flex: 0 0 22px; width: 22px; height: 22px; min-height: 22px; margin: 0; }
+.reference-ui .packaging-confirmation > span { flex: 1; min-width: 0; }
+.reference-ui .receipt-panel:has(.packaging-confirmation) { position: static; }
+.reference-ui .receipt-items:has(.packaging-confirmation) { max-height: none; }
+.reference-ui .expense-back { min-height: 44px; margin-bottom: 16px; }

@@ -2,6 +2,8 @@ import { afterEach, expect, it, vi } from "vitest";
 import {
   activateReadyUpdate,
   findReadyUpdate,
+  savedUpdateWork,
+  updateCheckoutBlockers,
 } from "../../apps/web/lib/pwa-update";
 
 class Worker extends EventTarget {
@@ -76,7 +78,7 @@ it("restarts once after activation without relying on a controller-change event"
   expect(restart).toHaveBeenCalledTimes(1);
   expect(guard).toHaveBeenCalledTimes(2);
 });
-it("does not activate while checkout or pending records block restart", async () => {
+it("does not activate while a checkout blocks restart", async () => {
   const worker = waitingWorker();
   const restart = vi.fn();
   expect(
@@ -89,7 +91,7 @@ it("does not activate while checkout or pending records block restart", async ()
   expect(worker.postMessage).not.toHaveBeenCalled();
   expect(restart).not.toHaveBeenCalled();
 });
-it("checks again after activation and retains newly pending work", async () => {
+it("checks again after activation and retains a newly started checkout", async () => {
   const worker = waitingWorker();
   const restart = vi.fn();
   const guard = vi
@@ -105,6 +107,23 @@ it("checks again after activation and retains newly pending work", async () => {
   worker.transition("activated");
   expect(await result).toBe("blocked");
   expect(restart).not.toHaveBeenCalled();
+});
+it("allows a restart with saved browser records and blocks active checkout and sync", async () => {
+  const worker = waitingWorker();
+  const restart = vi.fn();
+  const saved = savedUpdateWork(2, 1);
+  expect(saved).toContain("will keep 2 saved sales and 1 saved request");
+  expect(updateCheckoutBlockers(0)).toEqual([]);
+  expect(updateCheckoutBlockers(1, true)).toHaveLength(2);
+  const result = activateReadyUpdate(
+    worker as unknown as ServiceWorker,
+    async () => updateCheckoutBlockers(0).length === 0,
+    restart,
+  );
+  await Promise.resolve();
+  worker.transition("activated");
+  expect(await result).toBe("restarting");
+  expect(restart).toHaveBeenCalledTimes(1);
 });
 it("handles an already activated worker without posting another activation", async () => {
   const worker = waitingWorker();

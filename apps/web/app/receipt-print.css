@@ -33,3 +33,11 @@
  .thermal-receipt{page:better-yield-receipt;position:static!important;left:auto;top:auto;visibility:visible!important;width:48mm;max-width:100%;margin:0!important;padding:0!important;border:0!important;box-shadow:none!important;overflow:visible!important;print-color-adjust:exact}
  .thermal-receipt *{visibility:visible!important}
 }
+.delivery-note-print{display:none}
+@media print{
+ body[data-delivery-print]:has(>.thermal-receipt)>:not(.delivery-note-print),body[data-delivery-print]>:not(.delivery-note-print){display:none!important}
+ body[data-delivery-print]:has(>.thermal-receipt)>.delivery-note-print,body[data-delivery-print]>.delivery-note-print{display:block!important;position:static!important;visibility:visible!important;width:auto!important;color:#000;background:#fff}
+ body[data-delivery-print]>.delivery-note-print *{visibility:visible!important}
+ body[data-delivery-print]>.delivery-note-print table{border-collapse:collapse;width:100%}
+ body[data-delivery-print]>.delivery-note-print th,body[data-delivery-print]>.delivery-note-print td{border:1px solid #333;padding:6px;text-align:left}
+}

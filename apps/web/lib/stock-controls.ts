@@ -25,5 +25,5 @@ export function preferredBatch(product: Product, stock: Map<string,string>, toda
 }
 export function outstandingTransfer(row: Record<string,unknown>) {
   return new Decimal(String(row.quantity ?? 0)).minus(String(row.received_quantity ?? 0))
-    .minus(String(row.held_quantity ?? 0)).minus(String(row.lost_quantity ?? 0)).toFixed();
+    .minus(String(row.held_quantity ?? 0)).minus(String(row.lost_quantity ?? 0)).minus(String(row.returned_quantity ?? 0)).toFixed();
 }

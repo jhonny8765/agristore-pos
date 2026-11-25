@@ -1,4 +1,5 @@
 import {describe,it,expect} from "vitest";
+import {combineNotebookSales} from "../../apps/web/lib/sales-analytics";
 import {analyticsDates,analyticsMoney,analyticsChange,analyticsBar,analyticsCsv,popularProducts,readSalesAnalytics,validateAnalyticsFilters,type PopularProduct,type SalesAnalytics,type SalesFilters} from "../../apps/web/lib/sales-analytics";
 const product=(id:string,purchases:number,grossSales:string,unit="kg"):PopularProduct=>({id,name:id,sku:`SKU-${id}`,base_unit:unit,quantity:"0.25",grossSales,purchases,previousPurchases:0});
 describe("sales reporting",()=>{
@@ -17,6 +18,45 @@ const filters:SalesFilters={period:"custom",interval:"day",fromDate:"2024-02-29"
 function snapshot():SalesAnalytics{return {version:1,branchId:"branch",period:"custom",interval:"day",fromDate:filters.fromDate,throughDate:filters.throughDate,previousFromDate:"2024-02-27",previousThroughDate:"2024-02-28",days:2,asOf:"2024-03-02T04:00:00Z",lastSync:null,
  totals:{grossSales:"300",salesCount:2,refunds:"200",recoveries:"100",netCash:"200",averageSale:"150"},previous:{grossSales:"400",salesCount:2,refunds:"0",recoveries:"0",netCash:"400",averageSale:"200"},
  trend:[{date:"2024-02-29",throughDate:"2024-02-29",grossSales:"100",salesCount:1,refunds:"0",recoveries:"0",netCash:"100"},{date:"2024-03-01",throughDate:"2024-03-01",grossSales:"200",salesCount:1,refunds:"200",recoveries:"100",netCash:"100"}],products:[{...product("kg",1,"100"),previousPurchases:2},{...product("liquid",1,"200","liter"),quantity:"0.125"}]};}
+
+describe("notebook sales in Overview",()=>{
+ const dates=["2026-11-16","2026-11-23","2026-11-24"];
+ const days=dates.map((date,index)=>({
+  date,throughDate:date,grossSales:index===0?"3541740":"0",salesCount:index===0?48:0,
+  refunds:"0",recoveries:"0",netCash:index===0?"3541740":"0",
+ }));
+ const notebooks=[
+  {business_date:"2026-11-23",gross_sales:1999200,reported_expenses:188000,closing_cash:999400},
+  {business_date:"2026-11-24",gross_sales:3085600,reported_expenses:156000,closing_cash:446400},
+ ];
+ it("includes dated notebook sales and reported expenses alongside existing POS receipts",()=>{
+  const result=combineNotebookSales(days,notebooks,days);
+  expect(result.grossSales).toBe("8626540");
+  expect(result.reportedExpenses).toBe("344000");
+  expect(result.trend.map(row=>[row.grossSales,row.reportedExpenses])).toEqual([
+   ["3541740","0"],["1999200","188000"],["3085600","156000"],
+  ]);
+  expect(result.trend.map(row=>row.salesCount)).toEqual([48,0,0]);
+ });
+ it("groups notebooks into the selected period and excludes overlapping POS dates from combined sales",()=>{
+  const overlapping=[days[0],{...days[1],salesCount:1,grossSales:"800",netCash:"800"},days[2]];
+  const month=[{...days[0],date:"2026-11-01",throughDate:"2026-11-30",grossSales:"3542540",salesCount:49}];
+  const result=combineNotebookSales(month,notebooks,overlapping);
+  expect(result.trend[0].grossSales).toBe("6628140");
+  expect(result.trend[0].reportedExpenses).toBe("344000");
+  expect(result.overlappingDates).toEqual(["2026-11-23"]);
+ });
+ it("excludes notebook dates outside the selected report",()=>{
+  const result=combineNotebookSales([days[0]],notebooks,days);
+  expect(result.grossSales).toBe("3541740");
+  expect(result.reportedExpenses).toBe("0");
+ });
+ it("keeps reported expenses available while overlapping sales are unverified",()=>{
+  const result=combineNotebookSales(days,notebooks,undefined);
+  expect(result.grossSales).toBe("3541740");
+  expect(result.reportedExpenses).toBe("344000");
+ });
+});
 describe("verified report snapshots",()=>{
  it("accepts a complete leap-day snapshot without mixing exact units",()=>expect(readSalesAnalytics(snapshot(),"branch",filters)).toEqual(snapshot()));
  it.each([null,{}, {version:1,branchId:"branch"}])("rejects incomplete responses without a render-time crash (%j)",v=>expect(()=>readSalesAnalytics(v,"branch",filters)).toThrow("could not be verified"));

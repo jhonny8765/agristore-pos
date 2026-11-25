@@ -1,9 +1,10 @@
+import {reportQualificationColumn,type OfflineReportState} from './report-qualification';
 import {historyBounds,historyCsv,type HistoryColumn} from './history';
 export const recordKinds={receipts:'Sales & receipts',credit_invoices:'Customer invoices',credit_payments:'Customer payments',supplier_invoices:'Supplier bills',supplier_payments:'Supplier activity',stock:'Stock movements',purchases:'Receiving history',audit:'Audit history'} as const;
 export type RecordKind=keyof typeof recordKinds;
 export type ReportRow=Record<string,string|null>;
 export interface ReportFilters{kind:RecordKind;query:string;status:string;from:string;to:string;entityId?:string}
-export interface RecordReport{organizationId:string;branchId:string;entityId:string;kind:RecordKind;asOf:string;filters:Omit<ReportFilters,'kind'|'entityId'>;rows:ReportRow[];total:number;next:number|null;complete:boolean}
+export interface RecordReport{offlineReport?:OfflineReportState;organizationId:string;branchId:string;entityId:string;kind:RecordKind;asOf:string;filters:Omit<ReportFilters,'kind'|'entityId'>;rows:ReportRow[];total:number;next:number|null;complete:boolean}
 export function defaultReport(kind:RecordKind,now=Date.now()):ReportFilters{
  const today=new Date(now+8*3600000).toISOString().slice(0,10),debt=kind==='credit_invoices'||kind==='supplier_invoices';
  return {kind,query:'',status:debt?'outstanding':'all',from:debt?'':today.slice(0,8)+'01',to:debt?'':today};
@@ -34,6 +35,6 @@ export function reportColumns(kind:RecordKind):HistoryColumn[]{
 export function reportLocalTime(value:string){return new Date(Date.parse(value)+8*3600000).toISOString().replace('T',' ').replace('Z',' +08:00');}
 export function recordReportCsv(report:RecordReport){
  if(!report.complete||report.rows.length!==report.total)throw Error('Only a complete selection can be exported.');
- const columns:HistoryColumn[]=[{label:'Branch ID',value:()=>report.branchId},{label:'Checked at (Asia/Manila)',value:()=>reportLocalTime(report.asOf)},{label:'Account scope',value:()=>report.entityId||'All matching accounts'},...reportColumns(report.kind).map(c=>c.label==='Date / time (Asia/Manila)'?{...c,value:(r:Record<string,unknown>)=>reportLocalTime(String(r.at))}:c)];
+ const columns:HistoryColumn[]=[reportQualificationColumn(report),{label:'Branch ID',value:()=>report.branchId},{label:'Checked at (Asia/Manila)',value:()=>reportLocalTime(report.asOf)},{label:'Account scope',value:()=>report.entityId||'All matching accounts'},...reportColumns(report.kind).map(c=>c.label==='Date / time (Asia/Manila)'?{...c,value:(r:Record<string,unknown>)=>reportLocalTime(String(r.at))}:c)];
  return historyCsv(columns,report.rows);
 }

@@ -1,7 +1,7 @@
 import {requireLease,type Lease,type Sale,type SaleItem} from '@agristore/domain';
 import {setting,type PosDatabase} from '@agristore/offline';
-import type {LineDraft} from './cart';
-export interface HeldSale {id:string;organizationId:string;branchId:string;cashierId:string;shiftId:string;savedAt:string;items:SaleItem[];lineIds:string[];drafts:Record<string,LineDraft>;quantityErrors:Record<string,string>;attemptId:string|null;cash:string;checkout?:Sale;credit?:{enabled:boolean;clientId:string;term:30|60|90;officialReference:string;cash:string};creditAttempt?:Record<string,unknown>}
+import type {LineDraft,useCart} from './cart';
+export interface HeldSale {id:string;organizationId:string;branchId:string;cashierId:string;shiftId:string;savedAt:string;items:SaleItem[];lineIds:string[];drafts:Record<string,LineDraft>;quantityErrors:Record<string,string>;attemptId:string|null;cash:string;checkout?:Sale;credit?:ReturnType<typeof useCart.getState>['credit'];creditAttempt?:Record<string,unknown>}
 export const heldSaleKey=(lease:Lease)=>`held-sale:${lease.organizationId}:${lease.branchId}:${lease.cashierId}:${lease.shiftId}`;
 export function requireHeldScope(held:HeldSale,lease:Lease){requireLease(lease);if(held.organizationId!==lease.organizationId||held.branchId!==lease.branchId||held.cashierId!==lease.cashierId||held.shiftId!==lease.shiftId)throw Error('This held draft belongs to another cashier or shift. Keep it for that cashier.');}
 export async function prepareHeldCheckout(db:PosDatabase,lease:Lease,id:string,payload:Sale,draft:Pick<HeldSale,"lineIds"|"drafts"|"quantityErrors"|"cash">) {

@@ -14,6 +14,21 @@ function Field({ label, children }: { label: string; children: ReactNode }) {
   );
 }
 
+const sellingSetups = {
+  sack: { label: "Sacks", base: "kg", unit: "Sack", factor: "50" },
+  bag: { label: "Bags", base: "kg", unit: "Bag", factor: "" },
+  sealed: { label: "Sealed Items/Packs", base: "piece", unit: "Pack", factor: "1" },
+  container: { label: "Container", base: "liter", unit: "Container", factor: "" },
+  gallon: { label: "Gallon", base: "liter", unit: "Gallon", factor: "" },
+  liter: { label: "Liters", base: "liter", unit: "Liter", factor: "1" },
+  bottle: { label: "Bottle", base: "liter", unit: "Bottle", factor: "" },
+  meter: { label: "Meters", base: "meter", unit: "Meter", factor: "1" },
+  weight: { label: "Loose kilos only", base: "kg", unit: "Kilo", factor: "1" },
+  custom: { label: "Others", base: "piece", unit: "", factor: "1" },
+} as const;
+type SetupMode = keyof typeof sellingSetups;
+const retailDefaults: Record<string, string> = { kg: "Kilo", liter: "Liter", meter: "Meter", piece: "Piece" };
+
 export function ProductSetupForm({
   disabled,
   onSave,
@@ -21,11 +36,12 @@ export function ProductSetupForm({
   disabled: boolean;
   onSave: (product: ProductSetup) => Promise<Error | undefined>;
 }) {
-  const [mode, setMode] = useState("");
+  const [mode, setMode] = useState<SetupMode | "">("");
   const [base, setBase] = useState("kg");
   const [unit, setUnit] = useState("Sack");
   const [factor, setFactor] = useState("50");
   const [loose, setLoose] = useState(false);
+  const [retail, setRetail] = useState("Kilo");
   const [prices, setPrices] = useState({
     price: "",
     cost: "",
@@ -37,28 +53,22 @@ export function ProductSetupForm({
   const errorId = useId();
   const measurement =
     base === "kg" ? "kg" : base === "liter" ? "liter" : base === "meter" ? "meter" : "piece";
-  const retail = base === "kg" ? "kilo" : base === "liter" ? "liter" : base === "meter" ? "meter" : "piece";
+  const adjustableBase = mode === "custom" || mode === "bag" || mode === "bottle" || mode === "container";
+  const fixedConversion = mode === "weight" || mode === "meter" || mode === "liter";
   let packed = false;
   try {
-    packed = !new Decimal(factor).eq(1);
+    const quantity = new Decimal(factor);
+    packed = quantity.gt(0) && !quantity.eq(1);
   } catch {}
 
-  function choose(next: string) {
+  function choose(next: SetupMode | "") {
+    const setup = next ? sellingSetups[next] : sellingSetups.sack;
     setMode(next);
-    setBase(next === "sealed" ? "piece" : next === "liquid" ? "liter" : next === "length" ? "meter" : "kg");
-    setUnit(
-      next === "sack"
-        ? "Sack"
-        : next === "weight"
-          ? "Kilo"
-          : next === "sealed"
-            ? "Packet"
-            : next === "liquid"
-              ? "Liter"
-              : next === "length" ? "Meter" : "",
-    );
-    setFactor(next === "sack" ? "50" : "1");
+    setBase(setup.base);
+    setUnit(setup.unit);
+    setFactor(setup.factor);
     setLoose(false);
+    setRetail(retailDefaults[setup.base]);
     setPrices({ price: "", cost: "", basePrice: "", baseCost: "" });
     setError("");
   }
@@ -113,6 +123,7 @@ export function ProductSetupForm({
       }}
     >
       <fieldset className="product-setup-fields form-grid" disabled={disabled}>
+        <p className="setup-wide setup-help">Adding a product creates no stock. Record an actual delivery or reviewed opening count separately. Enter zero cost only when the actual cost is confirmed as zero.</p>
         <Field label="Product name">
           <input name="name" required />
         </Field>
@@ -138,26 +149,25 @@ export function ProductSetupForm({
           <select
             required
             value={mode}
-            onChange={(e) => choose(e.target.value)}
+            onChange={(e) => choose(e.target.value as SetupMode | "")}
           >
             <option value="">Choose a selling setup</option>
-              <option value="sack">Sacks / bags</option>
-            <option value="weight">Loose kilos only</option>
-              <option value="sealed">Sealed items / pieces</option>
-            <option value="liquid">Measured liters / milliliters</option>
-            <option value="length">Rope / measured meters</option>
-              <option value="custom">Other pack size</option>
+            {Object.entries(sellingSetups).map(([key, setup]) => (
+              <option key={key} value={key}>{setup.label}</option>
+            ))}
           </select>
         </Field>
         {mode && (
           <>
-            {mode === "custom" ? (
+            {adjustableBase ? (
               <Field label="Stock measured in">
                 <select
                   name="baseUnit"
                   value={base}
                   onChange={(e) => {
                     setBase(e.target.value);
+                    setRetail(retailDefaults[e.target.value]);
+                    setFactor("");
                     setLoose(false);
                     setPrices({
                       price: "",
@@ -181,21 +191,25 @@ export function ProductSetupForm({
                 name="unit"
                 value={unit}
                 required
+                maxLength={40}
                 onChange={(e) => setUnit(e.target.value)}
               />
             </Field>
-            {mode === "sack" || mode === "custom" ? (
+            {!fixedConversion ? (
               <Field
                 label={`Number of ${measurement} in one ${unit || "selling unit"}`}
               >
                 <input
                   name="factor"
                   type="number"
-                  min="0.000001"
-                  step="0.000001"
+                  min={base === "piece" ? "1" : "0.000001"}
+                  step={base === "piece" ? "1" : "0.000001"}
                   value={factor}
                   required
-                  onChange={(e) => setFactor(e.target.value)}
+                  onChange={(e) => {
+                    setFactor(e.target.value);
+                    if (Number(e.target.value) === 1) setLoose(false);
+                  }}
                 />
               </Field>
             ) : (
@@ -215,33 +229,23 @@ export function ProductSetupForm({
                   checked={loose}
                   onChange={(e) => setLoose(e.target.checked)}
                 />
-                {base === "kg"
-                  ? "Also sell loose kilos"
-                  : base === "liter"
-                    ? "Also sell measured liters"
-                    : base === "meter" ? "Also sell cut lengths in meters" : "Also sell individual pieces"}
+                Add Retail Price
               </label>
             )}
             {packed && loose && (
               <>
-                <p className="setup-wide setup-help">
-                  Set a separate retail price. The POS will not divide the pack
-                  price to calculate it.
-                </p>
-                {priceField("basePrice", `Price per ${retail} (₱)`, true)}
-                {priceField("baseCost", `Cost per ${retail} (₱)`)}
+                <Field label="Retail selling unit name">
+                  <input name="retailName" required maxLength={40} value={retail} onChange={e => setRetail(e.target.value)}/>
+                </Field>
+                <p className="setup-help">1 {retail || "retail unit"} = 1 {measurement}.</p>
+                {priceField("basePrice", `Price per ${retail || "retail unit"} (₱)`, true)}
+                {priceField("baseCost", `Cost per ${retail || "retail unit"} (₱)`)}
               </>
             )}
             <p className="setup-wide setup-summary">
               Stock conversion: 1 {unit || "selling unit"} = {factor || "…"}{" "}
               {measurement}.
-              {base === "piece" && !packed
-                ? " Sell whole sealed items; fractions are not allowed."
-                : packed && !loose
-                  ? ` Only the configured ${unit || "pack"} price will be available.`
-                  : base === "kg"
-                    ? " Cashiers can enter kilos, grams or a peso budget."
-                    : base === "liter" ? " For a one-liter selling unit, cashiers can switch between liters and milliliters. A 500 ml bottle is 0.5 liter; keep sealed bottles as pieces if they are never opened." : base === "meter" ? " Cashiers can enter cut lengths such as 0.5 or 1.25 meters. A roll needs its actual meter length and a separate cut-length price." : " Cashiers use the configured selling unit and quantity."}
+
             </p>
             <Field label={`Low-stock alert (${measurement})`}>
               <input

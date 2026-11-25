@@ -6,64 +6,156 @@ import {manilaDay} from '@agristore/domain';
 import type {PosDatabase} from '@agristore/offline';
 import {command} from '../lib/api';
 import {onlineOperation} from '../lib/operations';
-import {supplierAmountInput,supplierCents,supplierDueOn,supplierEntryLabels,supplierMethods,supplierMoney,supplierReminder,supplierPaymentStatus,supplierTermLabel,supplierAmountLabel,type SupplierBill,type SupplierBook,type SupplierEntry,type SupplierHistory,type SupplierTerm} from '../lib/supplier-accounts';
+import {maxSupplierTerm,supplierAmountInput,supplierCents,supplierDueOn,supplierEntryLabels,supplierMethods,supplierMoney,supplierReminder,supplierPaymentStatus,supplierTermLabel,supplierAmountLabel,supplierTermOptions,type SupplierBill,type SupplierBook,type SupplierEntry,type SupplierHistory} from '../lib/supplier-accounts';
 import {Button} from './ui/button';
 import {ReadSnapshotCache} from '../lib/read-snapshot-cache';
-import {RecordTable} from './record-pages';
 import {StateBadge} from './state-badge';
 import {useBusinessClock} from './workspace-ui';
 import type {RecordKind} from '../lib/record-reports';
 
 type Save=(action:string,data:Record<string,unknown>,message:string)=>Promise<boolean>;
+const invoicesPerPage=10;
+const invoicesPerFetch=50;
+const invoiceOffset=(page:number)=>Math.floor((page*invoicesPerPage)/invoicesPerFetch)*invoicesPerFetch;
+
 export function SupplierAccounts({db,organizationId,branchId,actorId,online,disabled,execute,onRecords,initialBillId=""}:{initialBillId?:string;onRecords?:(kind:RecordKind,entity?:{id:string;name:string})=>void;db:PosDatabase;organizationId:string;branchId:string;actorId:string;online:boolean;disabled:boolean;execute:(fn:()=>Promise<void>)=>Promise<Error|undefined>}){
  const [snapshot,setSnapshot]=useState<{scope:string;key:string;data:SupplierBook}>(),[history,setHistory]=useState<SupplierHistory>(),[selected,setSelected]=useState(initialBillId),[supplier,setSupplier]=useState(''),[query,setQuery]=useState(''),[status,setStatus]=useState(initialBillId?'all':'outstanding'),[term,setTerm]=useState('all'),[revision,setRevision]=useState(0),[loading,setLoading]=useState(false),[saving,setSaving]=useState(false),[error,setError]=useState(''),[readFailed,setReadFailed]=useState(false),[feedback,setFeedback]=useTransientMessage(),[adding,setAdding]=useState(false),[replacement,setReplacement]=useState<SupplierBill>();
+ const [customTerm,setCustomTerm]=useState(''),[page,setPage]=useState(0);
+ const [detailError,setDetailError]=useState(''),[detailRetry,setDetailRetry]=useState(0);
  const cache=useRef(new ReadSnapshotCache<SupplierBook>());
+ const detailHeading=useRef<HTMLHeadingElement>(null),registerHeading=useRef<HTMLHeadingElement>(null);
+ const restoreRegisterFocus=useRef(false);
  const generation=useRef(0),detailGeneration=useRef(0),lock=useRef(false);const today=manilaDay(useBusinessClock()),ctx={organizationId,branchId};
- const scopeKey=JSON.stringify([organizationId,branchId,actorId]),requestKey=JSON.stringify([scopeKey,supplier,query,status,term,today]),cacheRevision=String(revision);
+ const customDays=Number(customTerm);
+ const filterTerm=term==='custom'?(Number.isInteger(customDays)&&customDays>=1&&customDays<=maxSupplierTerm?String(customDays):'all'):term;
+ const offset=invoiceOffset(page);
+ const scopeKey=JSON.stringify([organizationId,branchId,actorId]),requestKey=JSON.stringify([scopeKey,supplier,query,status,filterTerm,today,offset]),cacheRevision=String(revision);
  const book=snapshot?.scope===scopeKey?snapshot.data:undefined,sources=book??{suppliers:[],receipts:[]},previousResults=!!book&&snapshot?.key!==requestKey;
  const blocked=disabled||saving||loading||readFailed||!online||previousResults;
- function setBook(data:SupplierBook){setSnapshot({scope:scopeKey,key:requestKey,data});cache.current.set(requestKey,data,cacheRevision);}
+ const pages=Math.max(1,Math.ceil((book?.matchingTotal??0)/invoicesPerPage));
+ if(book&&!previousResults&&page>=pages)setPage(pages-1);
+ const pageStart=page*invoicesPerPage;
+ const pageRows=book&&!previousResults?book.invoices.slice(pageStart-offset,pageStart-offset+invoicesPerPage):[];
+ const canGoTo=(target:number)=>!loading&&!previousResults&&target>=0&&target<pages&&(online||invoiceOffset(target)===offset);
+ const currentHistory=history?.invoice.id===selected?history:undefined;
  useEffect(()=>{const token=++generation.current;let active=true;
   if(!online){cache.current.clear();setLoading(false);return;}
   const cached=cache.current.get(requestKey,cacheRevision);if(cached){setSnapshot({scope:scopeKey,key:requestKey,data:cached});setReadFailed(false);setError('');setLoading(false);return;}
   const previous=cache.current.peek(requestKey,cacheRevision);if(previous)setSnapshot({scope:scopeKey,key:requestKey,data:previous});
   setLoading(true);setReadFailed(false);setError('');
-  const timer=setTimeout(()=>void command<SupplierBook>('supplier_account_book',{openingBalancesSupported:true,organizationId,branchId,supplierId:supplier||null,query,status,term}).then(data=>{if(active&&token===generation.current){setSnapshot({scope:scopeKey,key:requestKey,data});cache.current.set(requestKey,data,cacheRevision);}}).catch(e=>{if(active&&token===generation.current){setReadFailed(true);setError(e.message);}}).finally(()=>{if(active&&token===generation.current)setLoading(false);}),query?200:0);
+  const timer=setTimeout(()=>void command<SupplierBook>('supplier_account_book',{openingBalancesSupported:true,organizationId,branchId,supplierId:supplier||null,query,status,term:filterTerm,offset}).then(data=>{if(active&&token===generation.current){setSnapshot({scope:scopeKey,key:requestKey,data});cache.current.set(requestKey,data,cacheRevision);}}).catch(e=>{if(active&&token===generation.current){setReadFailed(true);setError(e.message);}}).finally(()=>{if(active&&token===generation.current)setLoading(false);}),query?200:0);
   return()=>{active=false;clearTimeout(timer);};
- },[organizationId,branchId,supplier,query,status,term,online,requestKey,scopeKey,cacheRevision]);
- useEffect(()=>{const token=++detailGeneration.current;setHistory(undefined);if(!selected||!online)return;let active=true;void command<SupplierHistory>('supplier_invoice_history',{openingBalancesSupported:true,organizationId,branchId,billId:selected}).then(data=>{if(active&&token===detailGeneration.current)setHistory(data);}).catch(e=>{if(active)setError(e.message);});return()=>{active=false;};},[organizationId,branchId,selected,online,revision]);
- const initialFilters=useRef(true);useEffect(()=>{if(initialFilters.current){initialFilters.current=false;return;}setSelected('');setHistory(undefined);},[supplier,query,status,term]);
+ },[organizationId,branchId,supplier,query,status,filterTerm,offset,online,requestKey,scopeKey,cacheRevision]);
+ useEffect(()=>{
+  const token=++detailGeneration.current;let active=true;
+  setHistory(undefined);setDetailError('');
+  if(selected&&online)void command<SupplierHistory>('supplier_invoice_history',{openingBalancesSupported:true,organizationId,branchId,billId:selected})
+   .then(data=>{if(active&&token===detailGeneration.current)setHistory(data);})
+   .catch(e=>{if(active&&token===detailGeneration.current)setDetailError(e instanceof Error?e.message:'Could not load this invoice.');});
+  return()=>{active=false;};
+ },[organizationId,branchId,selected,online,revision,detailRetry]);
+ useEffect(()=>{
+  if(selected){detailHeading.current?.focus();return;}
+  if(restoreRegisterFocus.current){registerHeading.current?.focus();restoreRegisterFocus.current=false;}
+ },[selected]);
  const save:Save=async(action,data,message)=>{if(lock.current)return false;lock.current=true;cache.current.clear();setSaving(true);setError('');try{const failure=await execute(async()=>{await onlineOperation(db,actorId,action,{...ctx,...data},'requestId');});if(failure){setError(failure.message);return false;}setFeedback(message);setRevision(n=>n+1);return true;}catch(e){setError(e instanceof Error?e.message:'Could not confirm the original request. Check Sync center.');return false;}finally{lock.current=false;setSaving(false);}};
- async function more(){if(book?.next==null)return;const token=generation.current;setLoading(true);try{const next=await command<SupplierBook>('supplier_account_book',{openingBalancesSupported:true,...ctx,supplierId:supplier||null,query,status,term,offset:book.next});if(token===generation.current)setBook({...next,invoices:[...book.invoices,...next.invoices.filter(i=>!book.invoices.some(b=>b.id===i.id))]});}catch(e){if(token===generation.current)setError(e instanceof Error?e.message:'Could not load older supplier invoices.');}finally{if(token===generation.current)setLoading(false);}}
  async function moreHistory(){if(!history||history.next==null)return;const token=detailGeneration.current;try{const next=await command<SupplierHistory>('supplier_invoice_history',{openingBalancesSupported:true,...ctx,billId:selected,offset:history.next});if(token===detailGeneration.current&&next.invoice.version!==history.invoice.version){setRevision(n=>n+1);return;}if(token===detailGeneration.current)setHistory(current=>current?{...next,receipts:current.receipts,receiptNext:current.receiptNext,receiptTotal:current.receiptTotal,entries:[...current.entries,...next.entries.filter(e=>!current.entries.some(p=>p.id===e.id))]}:current);}catch(e){if(token===detailGeneration.current)setError(e instanceof Error?e.message:'Could not load earlier payments.');}}
  async function moreReceipts(){if(!history||history.receiptNext==null)return;const token=detailGeneration.current;try{const next=await command<{rows:NonNullable<SupplierHistory['receipts']>;next:number|null;total:number}>('supplier_bill_receipts',{openingBalancesSupported:true,...ctx,billId:selected,offset:history.receiptNext});if(token===detailGeneration.current)setHistory(current=>current?{...current,receipts:[...current.receipts??[],...next.rows.filter(r=>!current.receipts?.some(p=>p.linkId===r.linkId))],receiptNext:next.next,receiptTotal:next.total}:current);}catch(e){if(token===detailGeneration.current)setError(e instanceof Error?e.message:'Could not load linked deliveries.');}}
- return <section className={`supplier-accounts ${selected?'detail-selected':''}`} aria-label="Supplier accounts payable">
-  {onRecords&&<div className="report-tools"><Button variant="outline" onClick={()=>onRecords("supplier_invoices",supplier?{id:supplier,name:sources.suppliers.find(s=>s.id===supplier)?.name??"Selected supplier"}:undefined)}>Search full supplier history & export</Button></div>}
-  <div className="section-heading"><div><h2>The store owes suppliers</h2><p>Supplier bills, source due dates, and payments already made.</p><p className="scope-note">Totals include recorded invoices and opening unpaid balances. Earlier payments on opening balances are not reconstructed.</p></div><div className="button-row"><Button variant="outline" disabled={disabled||saving||loading||!online} onClick={()=>setRevision(n=>n+1)}>Refresh supplier accounts</Button><Button disabled={blocked} onClick={()=>{setReplacement(undefined);setAdding(true);}}>Add supplier invoice</Button></div></div>
-  {error&&<p className="notice error" role="alert">{error}</p>}{readFailed&&book&&<p className="notice">Showing the last checked balances. Refresh to check again before making changes.</p>}{feedback&&<p className="notice success" role="status">{feedback}</p>}{!online&&<p className="notice" role="status">Reconnect before recording payments or checking current supplier balances.</p>}
-  {book&&<><dl className="supplier-totals"><div><dt>Store owes</dt><dd>{supplierMoney(book.outstanding)}</dd></div><div><dt>Overdue</dt><dd>{supplierMoney(book.overdue)}</dd></div><div><dt>Due within 7 days</dt><dd>{supplierMoney(book.dueSoon)}</dd></div><div><dt>Paid / settled bills</dt><dd>{book.paidCount}</dd></div></dl><p className="scope-note">{previousResults?'Previous filter snapshot':supplier?'Selected supplier':'All suppliers'} · All recorded bills · Checked {new Date(book.asOf).toLocaleString('en-PH',{timeZone:'Asia/Manila'})}. Search and status filters do not change these account totals.</p>{BigInt(book.unconfirmedDue??'0')>0n&&<p className="notice">{supplierMoney(book.unconfirmedDue!)} has no supplied due date and is excluded from overdue and due-soon totals.</p>}</>}
-  {adding&&<InvoiceForm key={replacement?.id??'new'} book={sources} replacement={replacement} today={today} disabled={blocked} onCancel={()=>{setAdding(false);setReplacement(undefined);}} onSave={async fields=>{const ok=await save('supplier_record_invoice',fields,'Supplier invoice recorded. Stock receiving and sales drawer totals are separate.');if(ok){setAdding(false);setReplacement(undefined);}return ok;}}/>}
-  <div className="panel supplier-register"><h3>Purchase and payment history</h3><div className="supplier-filters">
-   <label className="field"><span>Supplier</span><select value={supplier} onChange={e=>setSupplier(e.target.value)}><option value="">All suppliers</option>{sources.suppliers.map(s=><option key={s.id} value={s.id}>{s.name}</option>)}</select></label>
-   <label className="field"><span>Search supplier invoices</span><input type="search" maxLength={180} placeholder="Invoice, supplier or stock details" value={query} onChange={e=>setQuery(e.target.value)}/></label>
-   <label className="field"><span>Payment status</span><select value={status} onChange={e=>setStatus(e.target.value)}><option value="outstanding">All outstanding / may utang</option><option value="all">All statuses</option><option value="unpaid">Unpaid / May utang</option><option value="partial">Partly paid</option><option value="paid">Paid / settled</option><option value="overdue">Overdue</option><option value="dueSoon">Due within 7 days</option><option value="voided">Voided</option></select></label>
-   <label className="field"><span>Supplier payment term</span><select value={term} onChange={e=>setTerm(e.target.value)}><option value="all">All terms</option><option value="0">Due now</option>{[30,60,90].map(n=><option key={n} value={n}>{n} days</option>)}</select></label>
-  </div>{loading&&<p role="status">{book?(previousResults?'Updating filters… Previous results remain visible until the new list is ready.':'Refreshing supplier history… Displayed balances are from the checked snapshot.'):'Checking supplier history…'}</p>}{previousResults&&!loading&&<p className="notice">The displayed bills are from the previous filters. Refresh to retry the current filters.</p>}
-  {book&&<><div className="table-wrap" role="region" aria-label="Supplier invoice register" aria-busy={loading||previousResults} tabIndex={0}><RecordTable key={`${supplier}:${query}:${status}:${term}`}><thead><tr><th>Invoice / supplier</th><th>Due / term</th><th>Recorded amount</th><th>Recorded payments</th><th>Still owed</th><th>Status</th></tr></thead><tbody>{book.invoices.map(b=><RecordRow key={b.id} onOpen={()=>{if(!blocked&&!previousResults)setSelected(b.id);}} className={b.id===selected?'selected-record':''}><td><button className="record-link" disabled={blocked||previousResults} aria-pressed={b.id===selected} onClick={()=>setSelected(b.id)}>{b.reference}</button><small>{b.supplierName}</small></td><td>{b.dueOn??'Due date not supplied'}<small>{supplierTermLabel(b)}</small><small>{supplierReminder(b,today)}</small></td><td>{supplierMoney(b.amount)}<small>{supplierAmountLabel(b)}{b.source==='opening'?` as of ${b.openingAsOf}`:''}</small></td><td>{supplierMoney(b.paid)}{b.source==='opening'&&<small>Since opening balance</small>}</td><td><strong>{supplierMoney(b.balance)}</strong></td><td><StateBadge kind={b.voided?'closed':b.balance===0?'confirmed':b.dueOn&&b.dueOn<today?'warning':'pending'}>{supplierPaymentStatus(b)}</StateBadge></td></RecordRow>)}</tbody></RecordTable></div>{!book.invoices.length&&<p>No supplier bills match these filters. Choose All statuses or Paid / settled to find older settled bills. Record only verified supplier invoices.</p>}<p className="scope-note">{book.invoices.length} of {book.matchingTotal} matching invoices loaded. Filters search the full supplier history.</p>{book.next!=null&&<Button variant="outline" disabled={blocked} onClick={()=>void more()}>Load more supplier invoices</Button>}</>}
+
+ const invoiceForm=adding&&<InvoiceForm key={replacement?.id??'new'} book={sources} replacement={replacement} today={today} disabled={blocked} onCancel={()=>{setAdding(false);setReplacement(undefined);}} onSave={async fields=>{
+  const ok=await save('supplier_record_invoice',fields,'Supplier invoice recorded.');
+  if(ok){setAdding(false);setReplacement(undefined);}
+  return ok;
+ }}/>;
+ const notice=<>{error&&<p className="notice error" role="alert">{error}</p>}{feedback&&<p className="notice success" role="status">{feedback}</p>}</>;
+ if(selected)return <section className="supplier-accounts" aria-label="Supplier invoice view">
+  <div className="section-heading supplier-detail-heading">
+   <h2 tabIndex={-1} ref={detailHeading}>Supplier invoice</h2>
+   <Button variant="outline" onClick={()=>{
+    restoreRegisterFocus.current=true;
+    setSelected('');setHistory(undefined);setAdding(false);setReplacement(undefined);setError('');
+   }}>Back to supplier bills</Button>
   </div>
-  {selected&&<Button className="account-back" variant="ghost" onClick={()=>{setSelected('');setHistory(undefined);}}>Back to supplier bills</Button>}{selected&&!history&&online&&<p role="status">Loading selected supplier invoice…</p>}
-  {history&&book&&!previousResults&&<BillDetail key={`${history.invoice.id}:${history.invoice.version}`} history={history} today={today} blocked={blocked} onSave={save} onMoreReceipts={()=>void moreReceipts()} onMore={()=>void moreHistory()} onReplace={()=>{setReplacement(history.invoice);setAdding(true);}}/>}
-  <p className="supplier-help">Supplier invoices track what the store owes. Receive physical goods through Delivery inspections or Quick receipt. Record only payments already made by bank transfer, cleared cheque or owner cash outside the till; this history does not take money from the sales drawer.</p>
+  {notice}
+  {currentHistory&&invoiceForm}
+  {!online&&<p role="status">Reconnect to view this supplier invoice.</p>}
+  {online&&detailError&&<div className="supplier-detail-error"><p className="notice error" role="alert">{detailError}</p><Button variant="outline" onClick={()=>{detailHeading.current?.focus();setDetailRetry(value=>value+1);}}>Retry invoice</Button></div>}
+  {!currentHistory&&online&&!detailError&&<p role="status">Loading supplier invoice…</p>}
+  {currentHistory&&<BillDetail key={`${currentHistory.invoice.id}:${currentHistory.invoice.version}`} history={currentHistory} today={today} blocked={blocked||!book} onSave={save} onMoreReceipts={()=>void moreReceipts()} onMore={()=>void moreHistory()} onReplace={()=>{setReplacement(currentHistory.invoice);setAdding(true);}}/>}
+ </section>;
+
+ const pagination=(position:'above'|'below')=>book&&<nav className="record-pagination" aria-label={`Supplier invoice pages ${position}`}>
+  <span role="status">{previousResults?'Loading invoices…':book.matchingTotal?`${pageStart+1}–${pageStart+pageRows.length} of ${book.matchingTotal}`:'0 invoices'}</span>
+  {pages>1&&<div className="record-page-buttons">
+   <Button type="button" size="sm" variant="outline" disabled={!canGoTo(page-1)} onClick={()=>setPage(page-1)}>Previous</Button>
+   <span>Page {page+1} of {pages}</span>
+   <Button type="button" size="sm" variant="outline" disabled={!canGoTo(page+1)} onClick={()=>setPage(page+1)}>Next</Button>
+   {pages>2&&<><Button type="button" size="sm" variant="ghost" disabled={page===0||!canGoTo(0)} onClick={()=>setPage(0)}>First</Button><Button type="button" size="sm" variant="ghost" disabled={page===pages-1||!canGoTo(pages-1)} onClick={()=>setPage(pages-1)}>Last</Button></>}
+  </div>}
+ </nav>;
+ return <section className="supplier-accounts" aria-label="Supplier accounts payable">
+  {notice}
+  {!online&&<p className="notice" role="status">Reconnect to refresh supplier bills.</p>}
+  {book&&<dl className="supplier-totals"><div><dt>Store owes</dt><dd>{supplierMoney(book.outstanding)}</dd></div><div><dt>Overdue</dt><dd>{supplierMoney(book.overdue)}</dd></div><div><dt>Due within 7 days</dt><dd>{supplierMoney(book.dueSoon)}</dd></div><div><dt>Paid / settled bills</dt><dd>{book.paidCount}</dd></div></dl>}
+  {book&&BigInt(book.unconfirmedDue??'0')>0n&&<p className="scope-note">{supplierMoney(book.unconfirmedDue!)} has no confirmed due date.</p>}
+  {invoiceForm}
+  <div className="panel supplier-register">
+   <div className="section-heading">
+    <h2 ref={registerHeading} tabIndex={-1}>Purchase and payment history</h2>
+    <div className="button-row">
+     <Button size="sm" variant="outline" disabled={disabled||saving||loading||!online} onClick={()=>setRevision(n=>n+1)}>Refresh bills</Button>
+     {onRecords&&<Button size="sm" variant="outline" onClick={()=>onRecords("supplier_invoices",supplier?{id:supplier,name:sources.suppliers.find(s=>s.id===supplier)?.name??"Selected supplier"}:undefined)}>Search &amp; export</Button>}
+     <Button size="sm" disabled={blocked||!book} onClick={()=>{setReplacement(undefined);setAdding(true);}}>Add supplier invoice</Button>
+    </div>
+   </div>
+   <div className="supplier-filters">
+    <label className="field"><span>Supplier</span><select value={supplier} onChange={e=>{setSupplier(e.target.value);setPage(0);}}><option value="">All suppliers</option>{sources.suppliers.map(s=><option key={s.id} value={s.id}>{s.name}</option>)}</select></label>
+    <label className="field"><span>Search supplier invoices</span><input type="search" maxLength={180} placeholder="Invoice, supplier or stock details" value={query} onChange={e=>{setQuery(e.target.value);setPage(0);}}/></label>
+    <label className="field"><span>Payment status</span><select value={status} onChange={e=>{setStatus(e.target.value);setPage(0);}}><option value="outstanding">All outstanding / may utang</option><option value="all">All statuses</option><option value="unpaid">Unpaid / May utang</option><option value="partial">Partly paid</option><option value="paid">Paid / settled</option><option value="overdue">Overdue</option><option value="dueSoon">Due within 7 days</option><option value="voided">Voided</option></select></label>
+    <div>
+     <label className="field"><span>Supplier payment term</span><select value={term} onChange={e=>{setTerm(e.target.value);setPage(0);}}><option value="all">All terms</option><option value="0">Due now</option>{supplierTermOptions.map(n=><option key={n} value={n}>{n} days</option>)}<option value="custom">Other</option></select></label>
+     {term==='custom'&&<label className="field"><span>Filter terms by days</span><input type="number" min={1} max={maxSupplierTerm} step={1} value={customTerm} onChange={e=>{setCustomTerm(e.target.value);setPage(0);}}/></label>}
+    </div>
+   </div>
+   {loading&&!book&&<p role="status">Loading supplier bills…</p>}
+   {previousResults&&!loading&&readFailed&&<p className="notice">Select Refresh bills to retry.</p>}
+   {book&&<>
+    {pagination('above')}
+    <div className="table-wrap" role="region" aria-label="Supplier invoice register" aria-busy={loading||previousResults} tabIndex={0}>
+     <table><thead><tr><th>Invoice / supplier</th><th>Due / term</th><th>Recorded amount</th><th>Recorded payments</th><th>Still owed</th><th>Status</th></tr></thead>
+      <tbody>{pageRows.map(b=><RecordRow key={b.id} onOpen={()=>{if(!blocked)setSelected(b.id);}}>
+       <td><button type="button" className="record-link" disabled={blocked} onClick={()=>setSelected(b.id)}>{b.reference}</button><small>{b.supplierName}</small></td>
+       <td>{b.dueOn??'Due date not supplied'}<small>{supplierTermLabel(b)}</small><small>{supplierReminder(b,today)}</small></td>
+       <td>{supplierMoney(b.amount)}<small>{supplierAmountLabel(b)}{b.source==='opening'?` as of ${b.openingAsOf}`:''}</small></td>
+       <td>{supplierMoney(b.paid)}{b.source==='opening'&&<small>Since opening balance</small>}</td>
+       <td><strong>{supplierMoney(b.balance)}</strong></td>
+       <td><StateBadge kind={b.voided?'closed':b.balance===0?'confirmed':b.dueOn&&b.dueOn<today?'warning':'pending'}>{supplierPaymentStatus(b)}</StateBadge></td>
+      </RecordRow>)}</tbody>
+     </table>
+    </div>
+    {!previousResults&&!pageRows.length&&<p>No supplier bills match these filters.</p>}
+    {pages>1&&pagination('below')}
+   </>}
+  </div>
  </section>;
 }
 
 function InvoiceForm({book,replacement,today,disabled,onCancel,onSave}:{book:Pick<SupplierBook,'suppliers'|'receipts'>;replacement?:SupplierBill;today:string;disabled:boolean;onCancel:()=>void;onSave:(data:Record<string,unknown>)=>Promise<boolean>}){
- const [supplier,setSupplier]=useState(replacement?.supplierId??''),[issued,setIssued]=useState(replacement?.issuedOn??today),[term,setTerm]=useState<SupplierTerm>(replacement?.source!=='opening'&&replacement?.term!=null?replacement.term as SupplierTerm:30),[error,setError]=useState('');let due='';try{due=supplierDueOn(issued,term);}catch{}
- return <form className="panel supplier-invoice-form" aria-label="Record supplier invoice" onSubmit={e=>{e.preventDefault();const f=new FormData(e.currentTarget);try{const amount=supplierCents(String(f.get('amount')));if(!due)throw Error('Check the invoice date.');setError('');void onSave({supplierId:supplier,reference:String(f.get('reference')).trim(),issuedOn:issued,term,expectedDueOn:due,amount,receiptId:String(f.get('receiptId'))||null,replacesId:replacement?.id??null,reason:String(f.get('reason')).trim(),confirmed:f.get('confirmed')==='on'});}catch(e){setError(e instanceof Error?e.message:'Check this supplier invoice.');}}}>
+ const initialTerm=replacement?.source!=='opening'&&replacement?.term!=null?replacement.term:30;
+ const initialPreset=initialTerm===0||supplierTermOptions.some(days=>days===initialTerm);
+ const [supplier,setSupplier]=useState(replacement?.supplierId??''),[issued,setIssued]=useState(replacement?.issuedOn??today);
+ const [termChoice,setTermChoice]=useState(initialPreset?String(initialTerm):'custom'),[customTerm,setCustomTerm]=useState(initialPreset?'':String(initialTerm)),[error,setError]=useState('');
+ const term=Number(termChoice==='custom'?(customTerm||NaN):termChoice);
+ const supplierArchived=!!book.suppliers.find(s=>s.id===supplier)?.archivedAt;
+ const archivedReplacement=supplierArchived&&replacement?.supplierId===supplier;
+ const supplierChoices=book.suppliers.filter(s=>!s.archivedAt||s.id===replacement?.supplierId||book.receipts.some(receipt=>receipt.supplierId===s.id));
+ let due='';try{due=supplierDueOn(issued,term);}catch{}
+ return <form className="panel supplier-invoice-form" aria-label="Record supplier invoice" onSubmit={e=>{e.preventDefault();const f=new FormData(e.currentTarget);try{const amount=supplierCents(String(f.get('amount')));if(!due)throw Error('Check the invoice date and agreed term.');setError('');void onSave({supplierId:supplier,reference:String(f.get('reference')).trim(),issuedOn:issued,term,expectedDueOn:due,amount,receiptId:String(f.get('receiptId'))||null,replacesId:replacement?.id??null,reason:String(f.get('reason')).trim(),confirmed:f.get('confirmed')==='on'});}catch(e){setError(e instanceof Error?e.message:'Check this supplier invoice.');}}}>
   <fieldset disabled={disabled}><legend>{replacement?'Replace voided supplier invoice':'New supplier invoice'}</legend>{error&&<p role="alert">{error}</p>}{replacement&&<p>Replaces {replacement.reference}. The original invoice and its history remain available.</p>}
-   <div className="supplier-form-grid"><label className="field"><span>Invoice supplier</span><select required value={supplier} onChange={e=>setSupplier(e.target.value)}><option value="">Select supplier</option>{book.suppliers.map(s=><option key={s.id} value={s.id}>{s.name}</option>)}</select></label><label className="field"><span>Supplier invoice number</span><input name="reference" required minLength={1} maxLength={150} defaultValue={replacement?.reference}/></label>
-   <label className="field"><span>Supplier invoice date</span><input type="date" required max={today} value={issued} onChange={e=>setIssued(e.target.value)}/></label><label className="field"><span>Agreed payment term</span><select value={term} onChange={e=>setTerm(Number(e.target.value) as SupplierTerm)}><option value="0">Due now</option>{[30,60,90].map(n=><option key={n} value={n}>{n} calendar days</option>)}</select></label>
-   <label className="field"><span>Supplier invoice amount (₱)</span><input name="amount" inputMode="decimal" required defaultValue={replacement?supplierAmountInput(replacement.amount):''}/></label><label className="field"><span>Recent receiving reference (optional)</span><select name="receiptId" key={supplier} defaultValue=""><option value="">Keep separate from stock receiving</option>{book.receipts.filter(r=>r.supplierId===supplier).map(r=><option key={r.id} value={r.id}>{r.reference}</option>)}</select></label></div>
+   <div className="supplier-form-grid"><label className="field"><span>Invoice supplier</span><select required value={supplier} onChange={e=>setSupplier(e.target.value)}><option value="">Select supplier</option>{supplierChoices.map(s=><option key={s.id} value={s.id}>{s.name}{s.archivedAt?' (archived)':''}</option>)}</select></label><label className="field"><span>Supplier invoice number</span><input name="reference" required minLength={1} maxLength={150} defaultValue={replacement?.reference}/></label>
+   <label className="field"><span>Supplier invoice date</span><input type="date" required max={today} value={issued} onChange={e=>setIssued(e.target.value)}/></label><label className="field"><span>Agreed payment term</span><select value={termChoice} onChange={e=>setTermChoice(e.target.value)}><option value="0">Due now</option>{supplierTermOptions.map(n=><option key={n} value={n}>{n} days</option>)}<option value="custom">Other</option></select></label>
+   {termChoice==='custom'&&<label className="field"><span>Payment term in days</span><input type="number" required min={1} max={maxSupplierTerm} step={1} value={customTerm} onChange={e=>setCustomTerm(e.target.value)}/></label>}
+   <label className="field"><span>Supplier invoice amount (₱)</span><input name="amount" inputMode="decimal" required defaultValue={replacement?supplierAmountInput(replacement.amount):''}/></label><label className="field"><span>{supplierArchived&&!archivedReplacement?'Receiving reference':'Recent receiving reference (optional)'}</span><select name="receiptId" key={supplier} defaultValue="" required={supplierArchived&&!archivedReplacement}><option value="">{supplierArchived&&!archivedReplacement?'Select an existing delivery':'Keep separate from stock receiving'}</option>{book.receipts.filter(r=>r.supplierId===supplier).map(r=><option key={r.id} value={r.id}>{r.reference}</option>)}</select></label></div>
    <p className="supplier-due">Payment due: <strong>{due||'Choose a valid date'}</strong> · One final due date, not instalments.</p><label className="field"><span>Stock purchased / invoice note</span><textarea name="reason" required minLength={3} maxLength={2000} defaultValue={replacement?.description} placeholder="For example, 20 sacks of feeds. Match the supplier invoice."/></label>
    <label className="checkbox"><input name="confirmed" type="checkbox" required/>I checked the supplier invoice amount and agreed payment term.</label><div className="button-row"><Button>Save supplier invoice</Button><Button type="button" variant="ghost" onClick={onCancel}>Cancel invoice entry</Button></div>
   </fieldset>

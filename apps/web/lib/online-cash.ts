@@ -1,6 +1,7 @@
 import {saleSchema,stableJSON,type Lease,type Sale} from '@agristore/domain';
 import {setting,type PosDatabase} from '@agristore/offline';
 import {onlineOperation,type PendingOperation} from './operations';
+import {returnAllocatedStock} from './allocated-cash';
 
 export const onlineCashKey=(organizationId:string,branchId:string)=>`operation:record_online_sale:${organizationId}:${branchId}`;
 export async function confirmOnlineCash(db:PosDatabase,lease:Lease,proposed?:Sale){
@@ -13,6 +14,7 @@ export async function confirmOnlineCash(db:PosDatabase,lease:Lease,proposed?:Sal
   if(cached.status!=='synced'||stableJSON({...cached.payload,occurredAt:payload.occurredAt})!==stableJSON(payload))throw new Error('This sale reference already has different saved details. Check the original receipt.');
   return cached;
  }
+ if(!original)await returnAllocatedStock(db,lease);
  await onlineOperation(db,lease.cashierId,'record_online_sale',payload,'transactionId');
  const saved=await db.sales.get(payload.transactionId);
  if(!saved||saved.status!=='synced')throw new Error('The confirmed receipt could not be read on this PC. Check the original sale reference before selling again.');
